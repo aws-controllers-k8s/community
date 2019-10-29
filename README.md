@@ -18,9 +18,7 @@ actively developed, and this repo will serve as the new home for an updated
 Kubernetes Operator that exposes various AWS API objects as Kubernetes custom
 resource definitions (CRDs).
 
-We are in the early stages of planning the redesign of ASO. Check the [Issuesi
-list](https://github.com/aws/aws-service-operator-k8s/issues) for descriptions
-of work items. We invite any and all feedback and contributions, so please
+We are in the early stages of planning the redesign of ASO. Check the [issues list](https://github.com/aws/aws-service-operator-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please
 don't hesitate to submit an issue, a pull request or comment on an existing
 issue!
 
