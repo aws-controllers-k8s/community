@@ -8,7 +8,7 @@ The goal is to make sure that the roles and responsibilities are well defined an
 In the context of ASO, we consider the following roles:
 
 * __Users__ ... everyone using ASO, typically willing to provide feedback on ASO by proposing features and/or filing issues.
-* __Contributors__ ... everyone contributing code, documentation, examples, testing infra, and participating in feature proposals as well as design discussions. Code contributions will require a signed Contributor License Agreement (CLA).
+* __Contributors__ ... everyone contributing code, documentation, examples, testing infra, and participating in feature proposals as well as design discussions. Code contributions will require a Developer Certificate of Origin (DCO).
 *	__Maintainers__ ... are responsible for engaging with and assisting contributors to iterate on the contributions until it reaches acceptable quality. Maintainers can decide whether the contributions can be accepeted into the project or rejected. Any active contributor meeting the project quality can be made a Maintainer by the Advisory Board.
 *	__Advisory Board__ ... is responsible for defining the guidelines and processes that the project operates under. 
 
@@ -17,10 +17,10 @@ The initial members of the Advisory Board are `@jaypipes` and `@mhausenblas`.
 
 ## Communication
 
-The primary mechanism for communication will be via the `xxx` channel on the `yyy` Slack community. 
-All features and bug fixes will be tracked as issues in GitHub. All decisions will be made in GitHub issues.
+The primary mechanism for communication will be via the `#provider-aws` channel on the Kubernetes Slack community. 
+All features and bug fixes will be tracked as issues in GitHub. All decisions will be documented in GitHub issues.
 
-In the future, we may consider using a public mailing list, which will yield better to archiving and threaded communications. 
+In the future, we may consider using a public mailing list, which can be better archived. 
 
 ## Roadmap Planning
 
