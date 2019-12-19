@@ -12,6 +12,8 @@ Kubernetes manifests or `kubectl` plugins.
 
 As of end of 2019 we are in the early stages of planning the redesign of ASO. Check the [issues list](https://github.com/aws/aws-service-operator-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
 
+For discussions, please use the `#provider-aws` channel on the [Kubernetes Slack](https://kubernetes.slack.com) community or the [mailing list](https://groups.google.com/forum/#!forum/aws-service-operator-user/).
+
 ## Background
 
 Read about the [motivation for and background on](docs/background.md) the ASO.
