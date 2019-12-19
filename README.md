@@ -5,7 +5,7 @@ This repo contains the next generation AWS Service Operator for Kubernetes
 
 An operator in Kubernetes is the combination of one or more [custom resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and [controllers](https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller) managing said custom resources.
 
-The ASO will allow containerized applications and Kubernetes users to create, update, delete and retrieve the status of AWS service such as S3 buckets, DynamoDB, RDS databases, SNS, etc. using the Kubernetes API, for example using 
+The ASO will allow containerized applications and Kubernetes users to create, update, delete and retrieve the status of objects in AWS services such as S3 buckets, DynamoDB, RDS databases, SNS, etc. using the Kubernetes API, for example using 
 Kubernetes manifests or `kubectl` plugins.
 
 ## Status

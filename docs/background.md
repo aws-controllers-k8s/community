@@ -4,7 +4,7 @@ The AWS Service Operator (ASO) project was introduced by [Chris Hein in 10/2018]
 We reviewed the feedback from the wider community and stakeholders and [decided in 08/2019](https://github.com/aws/containers-roadmap/issues/456) to turn ASO into a first-tier OSS project with concrete commitments from the service team side, based on the following tenets:
 
 - It is a community-driven project, based on a governance model defining roles and responsibilities.
-- It is optimized for production usage with a full test coverage including performance and scalability test suites.
+- It is optimized for production usage with full test coverage including performance and scalability test suites.
 - It strives to be the only codebase exposing AWS services via a Kubernetes operator. 
 
 Since then, we worked on [design issues](https://github.com/aws/aws-service-operator-k8s/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Adesign) and gathering feedback around which services to prioritize.
