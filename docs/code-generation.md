@@ -37,16 +37,11 @@ isn't deploying an "application" that needs to have a controlled deployment
 plan. Instead, ASO is a controller that facilitates creation and management of
 various AWS service objects using Kubernetes CRD instances.
 
-kubebuilder is the recommended upstream tool for generating CRDs and controller
+`kubebuilder` is the recommended upstream tool for generating CRDs and controller
 stub code. It is a Go binary that creates the scaffolding for CRDs and
-controller Go code. Unfortunately, it doesn't really handle multiple API groups
-in the same source code repository, and we need that for ASO. For example, we
-will have an `s3.service-operator.aws` and an `iam.service-operator.aws` API
-group with CRDs representing those different API objects and interfaces.
-
-That said, much of kubebuilder simply sets up some templates and then runs the
-`controller-gen` binary from the sigs.kubernetes.io/controller-tools repository
-to generate Go code.
+controller Go code. It has support for multiple API groups (e.g. `s3.amazonaws.com`
+and `dynamodb.amazonaws.com`) in a single code repository, so allows for sensible
+separation of code.
 
 Our final option was to build a hybrid custom code generator that used
 controller-runtime under the hood but allowed us to generate controller stub
