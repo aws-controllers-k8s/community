@@ -19,7 +19,7 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
-github.com/gertd/go-pluralize v0.1.2 h1:8q9mYRD4K9X6fsldYCQKM3HZtNV/gfieh6xerucwoM4=
+github.com/gertd/go-pluralize v0.1.2 h1:3aljIkBHcMFPYdveAiihVWZ+7ZH2ALkRgJw0YPqqCrk=
 github.com/gertd/go-pluralize v0.1.2/go.mod h1:3DkM/CcGP3dn/Gt02QBhRit6Jh9Pt9nSV8HHSu88NuE=
 github.com/getkin/kin-openapi v0.3.1 h1:9mLtayAmieqUnNACL0HqHbxkTc+z1+15sxXpLoJOGEQ=
 github.com/getkin/kin-openapi v0.3.1/go.mod h1:W8dhxZgpE84ciM+VIItFqkmZ4eHtuomrdIHtASQIqi0=
