@@ -15,6 +15,7 @@ package command
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/ghodss/yaml"
+	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/resource"
@@ -39,13 +41,13 @@ const (
 
 var (
 	optGenVersion string
-	optResource   string
+	optOutputPath string
 )
 
-// typesCmd is the command that generates service API types
+// apiCmd is the command that generates service API types
 var typesCmd = &cobra.Command{
 	Use:   "types <file>",
-	Short: "Generate a new AWS service API type collection from an OpenAPI3 descriptor document",
+	Short: "Generates Go files containing type definitions and API machinery base initialization",
 	RunE:  generateTypes,
 }
 
@@ -54,9 +56,40 @@ func init() {
 		&optGenVersion, "version", "v", "v1alpha1", "the resource API Version to use when generating types",
 	)
 	typesCmd.PersistentFlags().StringVarP(
-		&optResource, "resource", "r", "", "only generate type for the specified resource",
+		&optOutputPath, "output", "o", "", "path to output directory to send generated files. If empty, outputs all files to stdout",
 	)
 	rootCmd.AddCommand(typesCmd)
+}
+
+// ensureOutputDir makes sure that the target output directory exists and
+// returns whether the directory already existed. If the output path has been
+// set to stdout, this is a noop and returns false.
+func ensureOutputDir() (bool, error) {
+	if optOutputPath == "" {
+		return false, nil
+	}
+	fi, err := os.Stat(optOutputPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, os.MkdirAll(optOutputPath, os.ModePerm)
+		} else {
+			return false, err
+		}
+	}
+	if !fi.IsDir() {
+		return false, fmt.Errorf("expected %s to be a directory.", optOutputPath)
+	}
+	// Make sure the directory is writeable by the calling user
+	testPath := filepath.Join(optOutputPath, "test")
+	f, err := os.OpenFile(testPath, os.O_WRONLY, 0666)
+	if err != nil {
+		if os.IsPermission(err) {
+			return true, fmt.Errorf("%s is not a writeable directory.", optOutputPath)
+		}
+		return true, err
+	}
+	f.Close()
+	return true, nil
 }
 
 // generateTypes generates the Go files for each resource in the AWS service
@@ -70,34 +103,110 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	structDefs, err := resource.StructDefsFromAPI(api, resources)
+	typeDefs, err := resource.TypeDefsFromAPI(api, resources)
 	if err != nil {
 		return err
 	}
-	filtered := []*resource.Resource{}
+
+	if _, err := ensureOutputDir(); err != nil {
+		return err
+	}
+
+	if err = writeGroupVersionInfoGo(api); err != nil {
+		return err
+	}
+
+	if err = writeTypesGo(typeDefs); err != nil {
+		return err
+	}
+
 	for _, res := range resources {
-		if optResource != "" {
-			if strings.ToLower(optResource) != strings.ToLower(res.Kind) {
-				continue
-			}
+		if err = writeResourceGo(res); err != nil {
+			return err
 		}
-		filtered = append(filtered, res)
 	}
-	vars := &template.TypesTemplateVars{
-		Version:    optGenVersion,
-		Resources:  filtered,
-		StructDefs: structDefs,
+	return nil
+}
+
+func apiGroupFromSwagger(api *openapi3.Swagger) string {
+	apiAlias, found := api.Info.Extensions["x-aws-api-alias"]
+	apiAliasStr := []byte("unknown")
+	if found {
+		apiAliasStr, _ = apiAlias.(json.RawMessage).MarshalJSON()
 	}
+	apiGroup := fmt.Sprintf("%s.services.k8s.aws", apiAliasStr)
+	return strings.Replace(apiGroup, "\"", "", -1)
+}
+
+func writeGroupVersionInfoGo(api *openapi3.Swagger) error {
 	var b bytes.Buffer
-	tpl, err := template.NewTypesTemplate(templateDir)
+	apiGroup := apiGroupFromSwagger(api)
+	vars := &template.GroupVersionInfoTemplateVars{
+		APIVersion: optGenVersion,
+		APIGroup:   apiGroup,
+	}
+	tpl, err := template.NewGroupVersionInfoTemplate(templatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	fmt.Println(strings.TrimSpace(b.String()))
-	return nil
+	if optOutputPath == "" {
+		fmt.Println("============================= groupversion_info.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	} else {
+		path := filepath.Join(optOutputPath, "groupversion_info.go")
+		return ioutil.WriteFile(path, b.Bytes(), 0666)
+	}
+}
+
+func writeTypesGo(typeDefs []*resource.TypeDef) error {
+	vars := &template.TypesTemplateVars{
+		APIVersion: optGenVersion,
+		TypeDefs:   typeDefs,
+	}
+	var b bytes.Buffer
+	tpl, err := template.NewTypesTemplate(templatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optOutputPath == "" {
+		fmt.Println("============================= types.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	} else {
+		path := filepath.Join(optOutputPath, "types.go")
+		return ioutil.WriteFile(path, b.Bytes(), 0666)
+	}
+}
+
+func writeResourceGo(res *resource.Resource) error {
+	vars := &template.ResourceTemplateVars{
+		APIVersion: optGenVersion,
+		Resource:   res,
+	}
+	var b bytes.Buffer
+	tpl, err := template.NewResourceTemplate(templatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	resFileName := strcase.ToSnake(res.Kind) + ".go"
+	if optOutputPath == "" {
+		fmt.Printf("============================= %s ======================================\n", resFileName)
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	} else {
+		path := filepath.Join(optOutputPath, resFileName)
+		return ioutil.WriteFile(path, b.Bytes(), 0666)
+	}
 }
 
 // getAPI returns an OpenAPI3 Swagger object representing the API from

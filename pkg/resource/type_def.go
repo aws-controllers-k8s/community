@@ -21,7 +21,7 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-type StructDef struct {
+type TypeDef struct {
 	Name  string
 	Attrs map[string]*Attr
 }
@@ -71,11 +71,11 @@ func getPayloadsFromOp(api *openapi3.Swagger, op *openapi3.Operation) []string {
 	return res
 }
 
-func StructDefsFromAPI(
+func TypeDefsFromAPI(
 	api *openapi3.Swagger,
 	resources []*Resource,
-) ([]*StructDef, error) {
-	sdefs := []*StructDef{}
+) ([]*TypeDef, error) {
+	tdefs := []*TypeDef{}
 
 	// Payload schemas are not struct defs, so let's go through all our
 	// Operations and gather the names of all the payload structs
@@ -127,12 +127,12 @@ func StructDefsFromAPI(
 			// Just ignore these...
 			continue
 		}
-		sdefs = append(sdefs, &StructDef{
+		tdefs = append(tdefs, &TypeDef{
 			Name:  schemaName,
 			Attrs: attrs,
 		})
 	}
-	return sdefs, nil
+	return tdefs, nil
 }
 
 func inStrings(subject string, collection []string) bool {

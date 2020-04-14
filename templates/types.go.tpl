@@ -1,20 +1,10 @@
 {{ template "boilerplate" }}
 
-package {{ .Version }}
+package {{ .APIVersion }}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-{{ range $structDef := .StructDefs }}
-{{ template "struct_def" $structDef }}
+{{ range $typeDef := .TypeDefs }}
+{{ template "type_def" $typeDef }}
 {{- end }}
-
-{{- range $res := .Resources }}
-{{ template "resource" $res }}
-{{- end }}
-
-func init() {
-{{- range $res := .Resources }}
-	SchemeBuilder.Register(&{{ $res.Kind }}{}, &{{ $res.Kind }}List{})
-{{- end }}
-}

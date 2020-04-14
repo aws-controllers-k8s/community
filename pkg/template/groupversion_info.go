@@ -17,22 +17,20 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
-
-	"github.com/aws/aws-service-operator-k8s/pkg/resource"
 )
 
-type ResourceTemplateVars struct {
+type GroupVersionInfoTemplateVars struct {
 	APIVersion string
-	Resource   *resource.Resource
+	APIGroup   string
 }
 
-func NewResourceTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "resource.go.tpl")
+func NewGroupVersionInfoTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "groupversion_info.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("resource")
+	t := ttpl.New("groupversion_info")
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err
 	}

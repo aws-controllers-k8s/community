@@ -30,11 +30,13 @@ A tool to generate AWS service controller code`
 )
 
 var (
-	version            string
-	buildHash          string
-	buildDate          string
-	defaultTemplateDir string
-	templateDir        string
+	version             string
+	buildHash           string
+	buildDate           string
+	defaultTemplatesDir string
+	templatesDir        string
+	defaultServicesDir  string
+	servicesDir         string
 )
 
 var rootCmd = &cobra.Command{
@@ -49,6 +51,10 @@ func init() {
 		fmt.Printf("unable to determine current working directory: %s\n", err)
 		os.Exit(1)
 	}
+	// try to determine a default template and services directory. If the call
+	// is executing `ack-generate` via a checked-out ACK source repository,
+	// then the templates and services directory in the source repo can serve
+	// as sensible defaults
 	tryPaths := []string{
 		filepath.Join(cd, "templates"),
 		filepath.Join(cd, "..", "templates"),
@@ -56,13 +62,28 @@ func init() {
 	for _, tryPath := range tryPaths {
 		if fi, err := os.Stat(tryPath); err == nil {
 			if fi.IsDir() {
-				defaultTemplateDir = tryPath
+				defaultTemplatesDir = tryPath
+				break
+			}
+		}
+	}
+	tryPaths = []string{
+		filepath.Join(cd, "services"),
+		filepath.Join(cd, "..", "services"),
+	}
+	for _, tryPath := range tryPaths {
+		if fi, err := os.Stat(tryPath); err == nil {
+			if fi.IsDir() {
+				defaultServicesDir = tryPath
 				break
 			}
 		}
 	}
 	rootCmd.PersistentFlags().StringVar(
-		&templateDir, "template-dir", defaultTemplateDir, "Path to template directory",
+		&templatesDir, "templates-dir", defaultTemplatesDir, "Path to directory with templates to use in code generation",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&servicesDir, "services-dir", defaultServicesDir, "Path to directory to output service-specific code",
 	)
 }
 

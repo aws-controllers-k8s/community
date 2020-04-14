@@ -22,9 +22,8 @@ import (
 )
 
 type TypesTemplateVars struct {
-	Version    string
-	Resources  []*resource.Resource
-	StructDefs []*resource.StructDef
+	APIVersion string
+	TypeDefs   []*resource.TypeDef
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
@@ -39,8 +38,7 @@ func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	includes := []string{
 		"boilerplate",
-		"struct_def",
-		"resource",
+		"type_def",
 	}
 	for _, include := range includes {
 		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
