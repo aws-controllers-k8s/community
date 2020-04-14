@@ -18,14 +18,14 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/iancoleman/strcase"
+
+	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
 
 type Attr struct {
-	Name     string
-	JSONName string
-	GoType   string
-	Schema   *openapi3.Schema
+	Names  names.Names
+	GoType string
+	Schema *openapi3.Schema
 }
 
 func newAttr(
@@ -33,11 +33,11 @@ func newAttr(
 	name string,
 	schema *openapi3.Schema,
 ) *Attr {
+	names := names.New(name)
 	return &Attr{
-		Name:     strcase.ToCamel(name),
-		JSONName: name,
-		GoType:   getGoTypeFromSchema(strcase.ToCamel(name), api, schema),
-		Schema:   schema,
+		Names:  names,
+		GoType: getGoTypeFromSchema(names.GoExported, api, schema),
+		Schema: schema,
 	}
 }
 

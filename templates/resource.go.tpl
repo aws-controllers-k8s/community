@@ -1,21 +1,21 @@
 {{- define "resource" -}}
 // {{ .Kind }}Spec defines the desired state of {{ .Kind }}
 type {{ .Kind }}Spec struct {
-	// The Arn attr is on all AWS service API CRs. It represents the Amazon
+	// The ARN attr is on all AWS service API CRs. It represents the Amazon
 	// Resource Name for the object. CRs of this Kind that are created without
-	// an Arn attr will be created by the controller. CRs of this Kind that
-	// are created with a non-nil Arn attr are considered by the controller to
+	// an ARN attr will be created by the controller. CRs of this Kind that
+	// are created with a non-nil ARN attr are considered by the controller to
 	// already exist in the backend AWS service API.
-	Arn string `json:"arn,omitempty"`
+	ARN *string `json:"arn,omitempty"`
 	{{- range $attrName, $attr := .SpecAttrs }}
-	{{ $attrName }} {{ $attr.GoType }} `json:"{{ $attr.JSONName }},omitempty"`
+	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.JSON }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 
 // {{ .Kind }}Status defines the observed state of {{ .Kind }}
 type {{ .Kind }}Status struct {
 	{{- range $attrName, $attr := .StatusAttrs }}
-	{{ $attrName }} {{ $attr.GoType }} `json:"{{ $attr.JSONName }},omitempty"`
+	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.JSON }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 

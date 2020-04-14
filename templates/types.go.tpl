@@ -5,7 +5,6 @@ package {{ .Version }}
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 {{ range $structDef := .StructDefs }}
 {{ template "struct_def" $structDef }}
 {{- end }}

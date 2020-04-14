@@ -139,11 +139,11 @@ func (r *Resource) loadAttrs() {
 	inAttrs, outAttrs := r.getAttrsFromOp(r.Ops.CreateOp)
 	inAttrMap := make(map[string]*Attr, len(inAttrs))
 	for _, inAttr := range inAttrs {
-		inAttrMap[inAttr.Name] = inAttr
+		inAttrMap[inAttr.Names.Original] = inAttr
 	}
 	outAttrMap := make(map[string]*Attr, len(outAttrs))
 	for _, outAttr := range outAttrs {
-		outAttrMap[outAttr.Name] = outAttr
+		outAttrMap[outAttr.Names.Original] = outAttr
 	}
 	r.SpecAttrs = inAttrMap
 	r.StatusAttrs = outAttrMap
