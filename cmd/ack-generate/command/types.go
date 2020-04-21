@@ -81,7 +81,7 @@ func ensureOutputDir() (bool, error) {
 	}
 	// Make sure the directory is writeable by the calling user
 	testPath := filepath.Join(optOutputPath, "test")
-	f, err := os.OpenFile(testPath, os.O_WRONLY, 0666)
+	f, err := os.Create(testPath)
 	if err != nil {
 		if os.IsPermission(err) {
 			return true, fmt.Errorf("%s is not a writeable directory.", optOutputPath)
@@ -89,6 +89,7 @@ func ensureOutputDir() (bool, error) {
 		return true, err
 	}
 	f.Close()
+	os.Remove(testPath)
 	return true, nil
 }
 
