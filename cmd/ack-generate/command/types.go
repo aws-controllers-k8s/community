@@ -112,6 +112,10 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if err = writeDocGo(api); err != nil {
+		return err
+	}
+
 	if err = writeGroupVersionInfoGo(api); err != nil {
 		return err
 	}
@@ -136,6 +140,30 @@ func apiGroupFromSwagger(api *openapi3.Swagger) string {
 	}
 	apiGroup := fmt.Sprintf("%s.services.k8s.aws", apiAliasStr)
 	return strings.Replace(apiGroup, "\"", "", -1)
+}
+
+func writeDocGo(api *openapi3.Swagger) error {
+	var b bytes.Buffer
+	apiGroup := apiGroupFromSwagger(api)
+	vars := &template.DocTemplateVars{
+		APIVersion: optGenVersion,
+		APIGroup:   apiGroup,
+	}
+	tpl, err := template.NewDocTemplate(templatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optOutputPath == "" {
+		fmt.Println("============================= doc.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	} else {
+		path := filepath.Join(optOutputPath, "doc.go")
+		return ioutil.WriteFile(path, b.Bytes(), 0666)
+	}
 }
 
 func writeGroupVersionInfoGo(api *openapi3.Swagger) error {
