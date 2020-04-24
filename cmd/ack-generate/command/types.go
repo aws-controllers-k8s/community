@@ -108,6 +108,10 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	enumDefs, err := resource.EnumDefsFromAPI(api)
+	if err != nil {
+		return err
+	}
 
 	if _, err := ensureOutputDir(); err != nil {
 		return err
@@ -121,7 +125,7 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeTypesGo(typeDefs); err != nil {
+	if err = writeTypesGo(typeDefs, enumDefs); err != nil {
 		return err
 	}
 
@@ -191,10 +195,14 @@ func writeGroupVersionInfoGo(api *openapi3.Swagger) error {
 	}
 }
 
-func writeTypesGo(typeDefs []*resource.TypeDef) error {
+func writeTypesGo(
+	typeDefs []*resource.TypeDef,
+	enumDefs []*resource.EnumDef,
+) error {
 	vars := &template.TypesTemplateVars{
 		APIVersion: optGenVersion,
 		TypeDefs:   typeDefs,
+		EnumDefs:   enumDefs,
 	}
 	var b bytes.Buffer
 	tpl, err := template.NewTypesTemplate(templatesDir)

@@ -24,6 +24,7 @@ import (
 type TypesTemplateVars struct {
 	APIVersion string
 	TypeDefs   []*resource.TypeDef
+	EnumDefs   []*resource.EnumDef
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
@@ -38,6 +39,7 @@ func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	includes := []string{
 		"boilerplate",
+		"enum_def",
 		"type_def",
 	}
 	for _, include := range includes {

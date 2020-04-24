@@ -111,9 +111,6 @@ func TypeDefsFromAPI(
 		if inStrings(schemaName, payloads) {
 			continue
 		}
-		if strings.Contains(schemaName, "Error") || strings.Contains(schemaName, "Exception") {
-			continue
-		}
 		schema := getSchemaFromSchemaRef(api, schemaRef)
 		if schema.Type != "object" {
 			continue
