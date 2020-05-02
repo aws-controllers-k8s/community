@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-service-operator-k8s/pkg/names"
 	"github.com/gertd/go-pluralize"
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -50,6 +51,7 @@ type ResourceOps struct {
 
 type Resource struct {
 	api         *openapi3.Swagger
+	Names       names.Names
 	Kind        string
 	Plural      string
 	Ops         ResourceOps
@@ -188,10 +190,15 @@ func ResourcesFromAPI(api *openapi3.Swagger) ([]*Resource, error) {
 			continue
 		}
 
+		names := names.New(singularName)
+		kind := names.GoExported
+		plural := pluralize.Plural(kind)
+
 		resource := &Resource{
 			api:    api,
-			Kind:   singularName,
-			Plural: pluralName,
+			Names:  names,
+			Kind:   kind,
+			Plural: plural,
 			Ops:    ResourceOps{createOp},
 		}
 		resource.loadAttrs()

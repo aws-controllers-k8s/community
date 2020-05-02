@@ -1,7 +1,7 @@
 {{- define "type_def" -}}
-type {{ .Name }} struct {
+type {{ .Names.GoExported }} struct `aws:"{{ .Names.Original }}"` {
 {{- range $attrName, $attr := .Attrs }}
-	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.JSON }},omitempty" aws:"{{ $attr.Names.Original }}"`
+	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 {{- end -}}

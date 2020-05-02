@@ -17,12 +17,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-service-operator-k8s/pkg/names"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/iancoleman/strcase"
 )
 
 type TypeDef struct {
-	Name  string
+	Names names.Names
 	Attrs map[string]*Attr
 }
 
@@ -125,7 +126,7 @@ func TypeDefsFromAPI(
 			continue
 		}
 		tdefs = append(tdefs, &TypeDef{
-			Name:  schemaName,
+			Names: names.New(schemaName),
 			Attrs: attrs,
 		})
 	}
