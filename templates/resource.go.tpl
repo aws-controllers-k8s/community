@@ -16,14 +16,14 @@ type {{ .Resource.Kind }}Spec struct {
 	// already exist in the backend AWS service API.
 	ARN *string `json:"arn,omitempty"`
 	{{- range $attrName, $attr := .Resource.SpecAttrs }}
-	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.JSON }},omitempty" aws:"{{ $attr.Names.Original }}"`
+	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 
 // {{ .Resource.Kind }}Status defines the observed state of {{ .Resource.Kind }}
 type {{ .Resource.Kind }}Status struct {
 	{{- range $attrName, $attr := .Resource.StatusAttrs }}
-	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.JSON }},omitempty" aws:"{{ $attr.Names.Original }}"`
+	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 
