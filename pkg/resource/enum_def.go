@@ -14,6 +14,7 @@
 package resource
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -21,10 +22,15 @@ import (
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
 
+type EnumValue struct {
+	Original string
+	Clean    string
+}
+
 type EnumDef struct {
 	Names  names.Names
 	GoType string
-	Values []string
+	Values []EnumValue
 }
 
 func EnumDefsFromAPI(
@@ -51,13 +57,13 @@ func EnumDefsFromAPI(
 		default:
 			return nil, fmt.Errorf("cannot determine go type from enum schema type %s", schema.Type)
 		}
-		vals := make([]string, len(schema.Enum))
+		vals := make([]EnumValue, len(schema.Enum))
 		for x, item := range schema.Enum {
 			strVal, ok := item.(string)
 			if !ok {
 				return nil, fmt.Errorf("cannot convert %v to string", item)
 			}
-			vals[x] = strVal
+			vals[x] = newEnumVal(strVal)
 		}
 		edefs = append(edefs, &EnumDef{
 			Names:  names.New(schemaName),
@@ -66,4 +72,20 @@ func EnumDefsFromAPI(
 		})
 	}
 	return edefs, nil
+}
+
+func newEnumVal(orig string) EnumValue {
+	// Convert values like "m5.xlarge" into "m5_xlarge"
+	cleaner := func(r rune) rune {
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return '_'
+	}
+	clean := bytes.Map(cleaner, []byte(orig))
+
+	return EnumValue{
+		Original: orig,
+		Clean:    string(clean),
+	}
 }

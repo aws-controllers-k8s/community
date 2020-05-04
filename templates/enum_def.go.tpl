@@ -3,7 +3,7 @@ type {{ .Names.GoExported }} {{ .GoType }}
 
 const (
 {{- range $val := .Values }}
-	{{ $.Names.GoExported }}_{{ $val }} {{ $.GoType }} = {{ if eq $.GoType "string" }}"{{ end }}{{ $val }}{{ if eq $.GoType "string" }}"{{ end }}
+	{{ $.Names.GoExported }}_{{ $val.Clean }} {{ $.GoType }} = {{ if eq $.GoType "string" }}"{{ end }}{{ $val.Original }}{{ if eq $.GoType "string" }}"{{ end }}
 {{- end }}
 )
 {{- end -}}
