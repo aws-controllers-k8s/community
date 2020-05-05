@@ -19,7 +19,6 @@ import (
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/iancoleman/strcase"
 )
 
 type TypeDef struct {
@@ -110,16 +109,21 @@ func TypeDefsFromAPI(
 			continue
 		}
 		if inStrings(schemaName, payloads) {
+			// Payloads are not type defs
 			continue
 		}
 		schema := getSchemaFromSchemaRef(api, schemaRef)
 		if schema.Type != "object" {
 			continue
 		}
+		if isException(schema) {
+			// Neither are exceptions
+			continue
+		}
 		attrs := map[string]*Attr{}
 		for propName, propSchemaRef := range schema.Properties {
 			propSchema := getSchemaFromSchemaRef(api, propSchemaRef)
-			attrs[strcase.ToCamel(propName)] = newAttr(api, propName, propSchema)
+			attrs[propName] = newAttr(api, propName, propSchema)
 		}
 		if len(attrs) == 0 {
 			// Just ignore these...
@@ -140,4 +144,9 @@ func inStrings(subject string, collection []string) bool {
 		}
 	}
 	return false
+}
+
+func isException(schema *openapi3.Schema) bool {
+	_, found := schema.Extensions["x-aws-api-exception"]
+	return found
 }
