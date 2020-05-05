@@ -15,7 +15,6 @@ package command
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,7 +26,8 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/resource"
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	"github.com/aws/aws-service-operator-k8s/pkg/template"
 )
 
@@ -96,19 +96,19 @@ func ensureOutputDir() (bool, error) {
 // generateTypes generates the Go files for each resource in the AWS service
 // API.
 func generateTypes(cmd *cobra.Command, args []string) error {
-	api, err := getAPI(args)
+	sh, err := getSchemaHelper(args)
 	if err != nil {
 		return err
 	}
-	resources, err := resource.ResourcesFromAPI(api)
+	crds, err := sh.GetCRDs()
 	if err != nil {
 		return err
 	}
-	typeDefs, err := resource.TypeDefsFromAPI(api, resources)
+	typeDefs, err := sh.GetTypeDefs()
 	if err != nil {
 		return err
 	}
-	enumDefs, err := resource.EnumDefsFromAPI(api)
+	enumDefs, err := sh.GetEnumDefs()
 	if err != nil {
 		return err
 	}
@@ -117,11 +117,11 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeDocGo(api); err != nil {
+	if err = writeDocGo(sh); err != nil {
 		return err
 	}
 
-	if err = writeGroupVersionInfoGo(api); err != nil {
+	if err = writeGroupVersionInfoGo(sh); err != nil {
 		return err
 	}
 
@@ -129,27 +129,17 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	for _, res := range resources {
-		if err = writeResourceGo(res); err != nil {
+	for _, crd := range crds {
+		if err = writeCRDGo(crd); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func apiGroupFromSwagger(api *openapi3.Swagger) string {
-	apiAlias, found := api.Info.Extensions["x-aws-api-alias"]
-	apiAliasStr := []byte("unknown")
-	if found {
-		apiAliasStr, _ = apiAlias.(json.RawMessage).MarshalJSON()
-	}
-	apiGroup := fmt.Sprintf("%s.services.k8s.aws", apiAliasStr)
-	return strings.Replace(apiGroup, "\"", "", -1)
-}
-
-func writeDocGo(api *openapi3.Swagger) error {
+func writeDocGo(sh *schema.Helper) error {
 	var b bytes.Buffer
-	apiGroup := apiGroupFromSwagger(api)
+	apiGroup := sh.GetAPIGroup()
 	vars := &template.DocTemplateVars{
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,
@@ -171,9 +161,9 @@ func writeDocGo(api *openapi3.Swagger) error {
 	}
 }
 
-func writeGroupVersionInfoGo(api *openapi3.Swagger) error {
+func writeGroupVersionInfoGo(sh *schema.Helper) error {
 	var b bytes.Buffer
-	apiGroup := apiGroupFromSwagger(api)
+	apiGroup := sh.GetAPIGroup()
 	vars := &template.GroupVersionInfoTemplateVars{
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,
@@ -196,8 +186,8 @@ func writeGroupVersionInfoGo(api *openapi3.Swagger) error {
 }
 
 func writeTypesGo(
-	typeDefs []*resource.TypeDef,
-	enumDefs []*resource.EnumDef,
+	typeDefs []*model.TypeDef,
+	enumDefs []*model.EnumDef,
 ) error {
 	vars := &template.TypesTemplateVars{
 		APIVersion: optGenVersion,
@@ -222,33 +212,33 @@ func writeTypesGo(
 	}
 }
 
-func writeResourceGo(res *resource.Resource) error {
-	vars := &template.ResourceTemplateVars{
+func writeCRDGo(crd *model.CRD) error {
+	vars := &template.CRDTemplateVars{
 		APIVersion: optGenVersion,
-		Resource:   res,
+		CRD:        crd,
 	}
 	var b bytes.Buffer
-	tpl, err := template.NewResourceTemplate(templatesDir)
+	tpl, err := template.NewCRDTemplate(templatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	resFileName := strcase.ToSnake(res.Kind) + ".go"
+	crdFileName := strcase.ToSnake(crd.Kind) + ".go"
 	if optOutputPath == "" {
-		fmt.Printf("============================= %s ======================================\n", resFileName)
+		fmt.Printf("============================= %s ======================================\n", crdFileName)
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
 	} else {
-		path := filepath.Join(optOutputPath, resFileName)
+		path := filepath.Join(optOutputPath, crdFileName)
 		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
 }
 
-// getAPI returns an OpenAPI3 Swagger object representing the API from
+// getAPI returns a schema.Helper object representing the API from
 // either STDIN or an input file
-func getAPI(args []string) (*openapi3.Swagger, error) {
+func getSchemaHelper(args []string) (*schema.Helper, error) {
 	var b []byte
 	var err error
 	contentType := ctUnknown
@@ -292,5 +282,5 @@ func getAPI(args []string) (*openapi3.Swagger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return api, nil
+	return schema.NewHelper(api), nil
 }

@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package resource
+package schema
 
 import (
 	"fmt"
@@ -19,39 +19,21 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
-
-type Attr struct {
-	Names  names.Names
-	GoType string
-	Schema *openapi3.Schema
-}
-
-func newAttr(
-	api *openapi3.Swagger,
-	name string,
-	schema *openapi3.Schema,
-) *Attr {
-	names := names.New(name)
-	return &Attr{
-		Names:  names,
-		GoType: getGoTypeFromSchema(names.GoExported, api, schema),
-		Schema: schema,
-	}
-}
 
 // getAttrsFromRequestSchemaRef returns a slice of Attr representing the fields
 // for a Schema related to an HTTP request for an Operation with
 // application/json semantics.
-func (r *Resource) getAttrsFromRequestSchemaRef(
+func (h *Helper) getAttrsFromRequestSchemaRef(
 	schemaRef *openapi3.SchemaRef,
-) []*Attr {
-	attrs := []*Attr{}
+) []*model.Attr {
+	attrs := []*model.Attr{}
 	if schemaRef == nil {
 		return attrs
 	}
-	schema := getSchemaFromSchemaRef(r.api, schemaRef)
+	schema := h.getSchemaFromSchemaRef(schemaRef)
 	if schema == nil {
 		fmt.Printf("failed to find object schema for ref %s\n", schemaRef.Ref)
 		return attrs
@@ -62,8 +44,10 @@ func (r *Resource) getAttrsFromRequestSchemaRef(
 	}
 
 	for propName, propSchemaRef := range schema.Properties {
-		propSchema := getSchemaFromSchemaRef(r.api, propSchemaRef)
-		attrs = append(attrs, newAttr(r.api, propName, propSchema))
+		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
+		names := names.New(propName)
+		goType := h.getGoTypeFromSchema(names.GoExported, schema)
+		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
 	}
 	return attrs
 }
@@ -74,15 +58,16 @@ func (r *Resource) getAttrsFromRequestSchemaRef(
 // "wrapping" the returned response object in a JSON object with a single
 // attribute named the same as the created resource, we "flatten" the returned
 // attributes to be the attributes of the wrapped JSON object schema.
-func (r *Resource) getAttrsFromResponseSchemaRef(
+func (h *Helper) getAttrsFromResponseSchemaRef(
 	schemaRef *openapi3.SchemaRef,
-) []*Attr {
-	attrs := []*Attr{}
+	crdName string,
+) []*model.Attr {
+	attrs := []*model.Attr{}
 	if schemaRef == nil {
 		return attrs
 	}
 	var schema *openapi3.Schema
-	schema = getSchemaFromSchemaRef(r.api, schemaRef)
+	schema = h.getSchemaFromSchemaRef(schemaRef)
 	if schema == nil {
 		fmt.Printf("failed to find object schema for ref %s\n", schemaRef.Ref)
 		return attrs
@@ -94,28 +79,31 @@ func (r *Resource) getAttrsFromResponseSchemaRef(
 
 	if len(schema.Properties) == 1 {
 		for propName, propSchemaRef := range schema.Properties {
-			if strings.ToLower(propName) == strings.ToLower(r.Kind) {
+			if strings.ToLower(propName) == strings.ToLower(crdName) {
 				// "flatten" by unwrapping the wrapped response schema
-				schema = getSchemaFromSchemaRef(r.api, propSchemaRef)
+				schema = h.getSchemaFromSchemaRef(propSchemaRef)
 				break
 			}
 		}
 	}
 
 	for propName, propSchemaRef := range schema.Properties {
-		propSchema := getSchemaFromSchemaRef(r.api, propSchemaRef)
-		attrs = append(attrs, newAttr(r.api, propName, propSchema))
+		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
+		names := names.New(propName)
+		goType := h.getGoTypeFromSchema(names.GoExported, schema)
+		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
 	}
 	return attrs
 }
 
 // getAttrsFromOp returns two slices of Attr representing the input fields for
 // the operation request and the output fields for the operation response
-func (r *Resource) getAttrsFromOp(
+func (h *Helper) getAttrsFromOp(
 	op *openapi3.Operation,
-) ([]*Attr, []*Attr) {
-	inAttrs := []*Attr{}
-	outAttrs := []*Attr{}
+	crdName string,
+) ([]*model.Attr, []*model.Attr) {
+	inAttrs := []*model.Attr{}
+	outAttrs := []*model.Attr{}
 	if op.RequestBody != nil {
 		// Look to see if the request body has a content element that refers to
 		// a schema describing the object being created/patched
@@ -131,7 +119,7 @@ func (r *Resource) getAttrsFromOp(
 			if mediaType.Schema != nil {
 				inAttrs = append(
 					inAttrs,
-					r.getAttrsFromRequestSchemaRef(mediaType.Schema)...,
+					h.getAttrsFromRequestSchemaRef(mediaType.Schema)...,
 				)
 			}
 		}
@@ -152,7 +140,7 @@ func (r *Resource) getAttrsFromOp(
 				if mediaType.Schema != nil {
 					outAttrs = append(
 						outAttrs,
-						r.getAttrsFromResponseSchemaRef(mediaType.Schema)...,
+						h.getAttrsFromResponseSchemaRef(mediaType.Schema, crdName)...,
 					)
 				}
 			}

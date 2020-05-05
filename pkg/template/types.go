@@ -18,13 +18,13 @@ import (
 	"path/filepath"
 	ttpl "text/template"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/resource"
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
 type TypesTemplateVars struct {
 	APIVersion string
-	TypeDefs   []*resource.TypeDef
-	EnumDefs   []*resource.EnumDef
+	TypeDefs   []*model.TypeDef
+	EnumDefs   []*model.EnumDef
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
