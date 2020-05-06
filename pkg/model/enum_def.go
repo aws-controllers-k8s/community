@@ -15,6 +15,7 @@ package model
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -24,13 +25,27 @@ type EnumValue struct {
 	Clean    string
 }
 
+// EnumDef is the definition of an enumeration type for a field present in
+// either a CRD or a TypeDef
 type EnumDef struct {
 	Names  names.Names
 	GoType string
 	Values []EnumValue
 }
 
-func NewEnumVal(orig string) EnumValue {
+func NewEnumDef(names names.Names, goType string, values []interface{}) (*EnumDef, error) {
+	enumVals := make([]EnumValue, len(values))
+	for x, item := range values {
+		strVal, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("cannot convert %v to string", item)
+		}
+		enumVals[x] = newEnumVal(strVal)
+	}
+	return &EnumDef{names, goType, enumVals}, nil
+}
+
+func newEnumVal(orig string) EnumValue {
 	// Convert values like "m5.xlarge" into "m5_xlarge"
 	cleaner := func(r rune) rune {
 		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
