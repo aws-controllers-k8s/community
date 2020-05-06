@@ -18,21 +18,21 @@ import (
 	"path/filepath"
 	ttpl "text/template"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/resource"
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
-type ResourceTemplateVars struct {
+type CRDTemplateVars struct {
 	APIVersion string
-	Resource   *resource.Resource
+	CRD        *model.CRD
 }
 
-func NewResourceTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "resource.go.tpl")
+func NewCRDTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "crd.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("resource")
+	t := ttpl.New("crd")
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err
 	}
