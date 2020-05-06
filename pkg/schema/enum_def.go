@@ -43,19 +43,11 @@ func (h *Helper) GetEnumDefs() ([]*model.EnumDef, error) {
 		default:
 			return nil, fmt.Errorf("cannot determine go type from enum schema type %s", schema.Type)
 		}
-		vals := make([]model.EnumValue, len(schema.Enum))
-		for x, item := range schema.Enum {
-			strVal, ok := item.(string)
-			if !ok {
-				return nil, fmt.Errorf("cannot convert %v to string", item)
-			}
-			vals[x] = model.NewEnumVal(strVal)
+		edef, err := model.NewEnumDef(names.New(schemaName), goType, schema.Enum)
+		if err != nil {
+			return nil, err
 		}
-		edefs = append(edefs, &model.EnumDef{
-			Names:  names.New(schemaName),
-			GoType: goType,
-			Values: vals,
-		})
+		edefs = append(edefs, edef)
 	}
 	return edefs, nil
 }

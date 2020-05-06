@@ -46,7 +46,7 @@ func (h *Helper) getAttrsFromRequestSchemaRef(
 	for propName, propSchemaRef := range schema.Properties {
 		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
 		names := names.New(propName)
-		goType := h.getGoTypeFromSchema(names.GoExported, schema)
+		goType := h.getGoTypeFromSchema(propName, propSchema)
 		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
 	}
 	return attrs
@@ -90,7 +90,7 @@ func (h *Helper) getAttrsFromResponseSchemaRef(
 	for propName, propSchemaRef := range schema.Properties {
 		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
 		names := names.New(propName)
-		goType := h.getGoTypeFromSchema(names.GoExported, schema)
+		goType := h.getGoTypeFromSchema(names.GoExported, propSchema)
 		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
 	}
 	return attrs
