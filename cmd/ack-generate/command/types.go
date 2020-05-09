@@ -125,7 +125,11 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeTypesGo(typeDefs, enumDefs); err != nil {
+	if err = writeEnumsGo(enumDefs); err != nil {
+		return err
+	}
+
+	if err = writeTypesGo(typeDefs); err != nil {
 		return err
 	}
 
@@ -185,14 +189,37 @@ func writeGroupVersionInfoGo(sh *schema.Helper) error {
 	}
 }
 
+func writeEnumsGo(
+	enumDefs []*model.EnumDef,
+) error {
+	vars := &template.EnumsTemplateVars{
+		APIVersion: optGenVersion,
+		EnumDefs:   enumDefs,
+	}
+	var b bytes.Buffer
+	tpl, err := template.NewEnumsTemplate(templatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optOutputPath == "" {
+		fmt.Println("============================= enums.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	} else {
+		path := filepath.Join(optOutputPath, "enums.go")
+		return ioutil.WriteFile(path, b.Bytes(), 0666)
+	}
+}
+
 func writeTypesGo(
 	typeDefs []*model.TypeDef,
-	enumDefs []*model.EnumDef,
 ) error {
 	vars := &template.TypesTemplateVars{
 		APIVersion: optGenVersion,
 		TypeDefs:   typeDefs,
-		EnumDefs:   enumDefs,
 	}
 	var b bytes.Buffer
 	tpl, err := template.NewTypesTemplate(templatesDir)

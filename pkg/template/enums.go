@@ -21,25 +21,24 @@ import (
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
-type TypesTemplateVars struct {
+type EnumsTemplateVars struct {
 	APIVersion string
-	TypeDefs   []*model.TypeDef
 	EnumDefs   []*model.EnumDef
 }
 
-func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types.go.tpl")
+func NewEnumsTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "enums.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("types")
+	t := ttpl.New("enums")
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err
 	}
 	includes := []string{
 		"boilerplate",
-		"type_def",
+		"enum_def",
 	}
 	for _, include := range includes {
 		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
