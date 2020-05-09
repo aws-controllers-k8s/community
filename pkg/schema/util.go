@@ -145,11 +145,11 @@ func (h *Helper) deduceArrayOfObjectsType(
 	if guessObjectTypeName != "" {
 		// Check to see if there is a schema matching the guessed object type
 		// name and if so, return that schema name as the target object type
-		fmt.Printf("Looking up %s\n", guessObjectTypeName)
 		_, found := h.api.Components.Schemas[guessObjectTypeName]
 		if found {
 			return "*" + guessObjectTypeName
 		}
+		fmt.Printf("Failed to find %s when looking up arrayTypeName %s\n", guessObjectTypeName, arrayTypeName)
 		// TODO(jaypipes): Look through all schemas and try to match on known
 		// properties?
 	}
