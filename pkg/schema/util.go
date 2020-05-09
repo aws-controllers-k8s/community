@@ -134,7 +134,7 @@ func (h *Helper) deduceArrayOfObjectsType(
 	if strings.HasSuffix(arrayTypeName, "List") {
 		guessObjectTypeName = strings.TrimSuffix(arrayTypeName, "List")
 	} else if strings.HasSuffix(arrayTypeName, "Set") {
-
+		guessObjectTypeName = strings.TrimSuffix(arrayTypeName, "Set")
 	} else {
 		// Fall back to determining if the array type name is a plural
 		pluralize := pluralize.NewClient()

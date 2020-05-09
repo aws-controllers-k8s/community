@@ -17,26 +17,12 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
+	"github.com/aws/aws-service-operator-k8s/pkg/testutil"
 )
-
-func loadSwaggerYAML(t *testing.T, yamlContents string) *openapi3.Swagger {
-	jsonb, err := yaml.YAMLToJSON([]byte(yamlContents))
-	if err != nil {
-		t.Fatal(err)
-	}
-	api, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return api
-}
 
 func sortedOriginalValues(vals []model.EnumValue) []string {
 	res := []string{}
@@ -147,8 +133,7 @@ components:
 		},
 	}
 	for _, test := range tests {
-		api := loadSwaggerYAML(t, test.yaml)
-		sh := schema.NewHelper(api)
+		sh := testutil.NewSchemaHelperFromYAML(t, test.yaml)
 
 		edefs, err := sh.GetEnumDefs()
 		require.Nil(err)
