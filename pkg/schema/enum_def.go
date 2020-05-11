@@ -15,6 +15,7 @@ package schema
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
@@ -49,5 +50,8 @@ func (h *Helper) GetEnumDefs() ([]*model.EnumDef, error) {
 		}
 		edefs = append(edefs, edef)
 	}
+	sort.Slice(edefs, func(i, j int) bool {
+		return edefs[i].Names.GoExported < edefs[j].Names.GoExported
+	})
 	return edefs, nil
 }

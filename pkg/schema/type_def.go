@@ -14,6 +14,8 @@
 package schema
 
 import (
+	"sort"
+
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -66,5 +68,8 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 			Attrs: attrs,
 		})
 	}
+	sort.Slice(tdefs, func(i, j int) bool {
+		return tdefs[i].Names.GoExported < tdefs[j].Names.GoExported
+	})
 	return tdefs, nil
 }

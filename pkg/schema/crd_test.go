@@ -14,38 +14,15 @@
 package schema_test
 
 import (
-	"io/ioutil"
-	"path/filepath"
 	"sort"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
+	"github.com/aws/aws-service-operator-k8s/pkg/testutil"
 )
-
-func loadSwagger(t *testing.T, yamlFile string) *openapi3.Swagger {
-	path := filepath.Join("testdata", yamlFile)
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var jsonb []byte
-
-	if jsonb, err = yaml.YAMLToJSON(b); err != nil {
-		t.Fatal(err)
-	}
-
-	api, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return api
-}
 
 func attrExportedNames(attrs map[string]*model.Attr) []string {
 	res := []string{}
@@ -60,8 +37,7 @@ func TestGetCRDs(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	api := loadSwagger(t, "topic-api.yaml")
-	sh := schema.NewHelper(api)
+	sh := testutil.NewSchemaHelperFromFile(t, "topic-api.yaml")
 
 	crds, err := sh.GetCRDs()
 	require.Nil(err)

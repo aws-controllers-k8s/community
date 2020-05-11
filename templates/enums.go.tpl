@@ -5,7 +5,7 @@ package {{ .APIVersion }}
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-{{- range $typeDef := .TypeDefs }}
+{{- range $enumDef := .EnumDefs }}
 
-{{ template "type_def" $typeDef }}
+{{ template "enum_def" $enumDef }}
 {{- end -}}
