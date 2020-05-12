@@ -10,7 +10,7 @@ import (
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Spec struct {
 	// The ARN attr is on all AWS service API CRs. It represents the Amazon
-	// CRD Name for the object. CRs of this Kind that are created without
+	// Resource Name for the object. CRs of this Kind that are created without
 	// an ARN attr will be created by the controller. CRs of this Kind that
 	// are created with a non-nil ARN attr are considered by the controller to
 	// already exist in the backend AWS service API.

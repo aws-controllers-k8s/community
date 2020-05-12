@@ -25,7 +25,7 @@ type GroupVersionInfoTemplateVars struct {
 }
 
 func NewGroupVersionInfoTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "groupversion_info.go.tpl")
+	tplPath := filepath.Join(tplDir, "types", "groupversion_info.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err

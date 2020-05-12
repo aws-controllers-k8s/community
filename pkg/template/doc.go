@@ -25,7 +25,7 @@ type DocTemplateVars struct {
 }
 
 func NewDocTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "doc.go.tpl")
+	tplPath := filepath.Join(tplDir, "types", "doc.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err

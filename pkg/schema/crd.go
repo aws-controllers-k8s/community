@@ -15,6 +15,7 @@ package schema
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/gertd/go-pluralize"
@@ -82,6 +83,9 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 		crd.StatusAttrs = outAttrMap
 		crds = append(crds, crd)
 	}
+	sort.Slice(crds, func(i, j int) bool {
+		return crds[i].Names.GoExported < crds[j].Names.GoExported
+	})
 	h.crds = crds
 	return crds, nil
 }
