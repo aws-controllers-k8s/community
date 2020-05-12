@@ -192,6 +192,9 @@ func writeGroupVersionInfoGo(sh *schema.Helper) error {
 func writeEnumsGo(
 	enumDefs []*model.EnumDef,
 ) error {
+	if len(enumDefs) == 0 {
+		return nil
+	}
 	vars := &template.EnumsTemplateVars{
 		APIVersion: optGenVersion,
 		EnumDefs:   enumDefs,
