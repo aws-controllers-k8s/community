@@ -28,7 +28,7 @@ type TypesTemplateVars struct {
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types.go.tpl")
+	tplPath := filepath.Join(tplDir, "types", "types.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	includes := []string{
 		"boilerplate",
-		"type_def",
+		"types/type_def",
 	}
 	for _, include := range includes {
 		if t, err = IncludeTemplate(t, tplDir, include); err != nil {

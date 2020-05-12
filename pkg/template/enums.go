@@ -27,7 +27,7 @@ type EnumsTemplateVars struct {
 }
 
 func NewEnumsTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "enums.go.tpl")
+	tplPath := filepath.Join(tplDir, "types", "enums.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func NewEnumsTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	includes := []string{
 		"boilerplate",
-		"enum_def",
+		"types/enum_def",
 	}
 	for _, include := range includes {
 		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
