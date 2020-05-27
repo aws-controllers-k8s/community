@@ -12,8 +12,22 @@ type AWSResourceManagerFactory struct {
 	mock.Mock
 }
 
-// For provides a mock function with given fields: _a0
-func (_m *AWSResourceManagerFactory) For(_a0 types.AWSAccountID) (types.AWSResourceManager, error) {
+// GroupKind provides a mock function with given fields:
+func (_m *AWSResourceManagerFactory) GroupKind() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// ManagerFor provides a mock function with given fields: _a0
+func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSAccountID) (types.AWSResourceManager, error) {
 	ret := _m.Called(_a0)
 
 	var r0 types.AWSResourceManager
@@ -33,20 +47,6 @@ func (_m *AWSResourceManagerFactory) For(_a0 types.AWSAccountID) (types.AWSResou
 	}
 
 	return r0, r1
-}
-
-// GroupKind provides a mock function with given fields:
-func (_m *AWSResourceManagerFactory) GroupKind() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
 }
 
 // ResourceFactory provides a mock function with given fields:

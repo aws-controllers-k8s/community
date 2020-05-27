@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	ReconcilerBindControllerManagerError = fmt.Errorf(
+	ErrNotFound                        = fmt.Errorf("resource not found")
+	ErrReconcilerBindControllerManager = fmt.Errorf(
 		"error binding controller manager to reconciler before " +
 			"resource manager factory",
 	)

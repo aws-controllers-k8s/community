@@ -39,9 +39,11 @@ func (f *bookResourceManagerFactory) GroupKind() string {
 	return "example.services.k8s.aws:Book"
 }
 
-// For returns a resource manager object that can manage resources for a
+// ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
-func (f *bookResourceManagerFactory) For(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
+func (f *bookResourceManagerFactory) ManagerFor(
+	id acktypes.AWSAccountID,
+) (acktypes.AWSResourceManager, error) {
 	f.RLock()
 	rm, found := f.rmCache[id]
 	f.RUnlock()

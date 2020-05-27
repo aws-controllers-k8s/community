@@ -30,6 +30,9 @@ type AWSResourceFactory interface {
 // AWSResource represents a custom resource object in the Kubernetes API that
 // corresponds to a resource in an AWS service API.
 type AWSResource interface {
+	// AccountID returns the AWS account identifier in which the backend AWS
+	// resource resides
+	AccountID() AWSAccountID
 	// IsDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestemp
 	IsDeleted() bool

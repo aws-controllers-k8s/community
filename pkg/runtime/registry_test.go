@@ -33,8 +33,11 @@ func (rm *bookRM) Exists(r acktypes.AWSResource) bool {
 func (rm *bookRM) ReadOne(r acktypes.AWSResource) (acktypes.AWSResource, error) {
 	return nil, nil
 }
-func (rm *bookRM) Create(r acktypes.AWSResource) error {
-	return nil
+func (rm *bookRM) Create(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+	return nil, nil
+}
+func (rm *bookRM) Update(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+	return nil, nil
 }
 func (rm *bookRM) Delete(r acktypes.AWSResource) error {
 	return nil
@@ -46,6 +49,10 @@ type bookRes struct {
 
 func (r *bookRes) IsDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
+}
+
+func (r *bookRes) AccountID() acktypes.AWSAccountID {
+	return "example-account-id"
 }
 
 type bookRF struct{}
@@ -65,7 +72,7 @@ func (f *bookRMF) GroupKind() string {
 func (f *bookRMF) ResourceFactory() acktypes.AWSResourceFactory {
 	return &bookRF{}
 }
-func (f *bookRMF) For(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
+func (f *bookRMF) ManagerFor(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
 	return &bookRM{}, nil
 }
 

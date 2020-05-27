@@ -13,17 +13,26 @@ type AWSResourceManager struct {
 }
 
 // Create provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) Create(_a0 types.AWSResource) error {
+func (_m *AWSResourceManager) Create(_a0 types.AWSResource) (types.AWSResource, error) {
 	ret := _m.Called(_a0)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(types.AWSResource) error); ok {
+	var r0 types.AWSResource
+	if rf, ok := ret.Get(0).(func(types.AWSResource) types.AWSResource); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.AWSResource)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(types.AWSResource) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Delete provides a mock function with given fields: _a0
@@ -56,6 +65,29 @@ func (_m *AWSResourceManager) Exists(_a0 types.AWSResource) bool {
 
 // ReadOne provides a mock function with given fields: _a0
 func (_m *AWSResourceManager) ReadOne(_a0 types.AWSResource) (types.AWSResource, error) {
+	ret := _m.Called(_a0)
+
+	var r0 types.AWSResource
+	if rf, ok := ret.Get(0).(func(types.AWSResource) types.AWSResource); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.AWSResource)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(types.AWSResource) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: _a0
+func (_m *AWSResourceManager) Update(_a0 types.AWSResource) (types.AWSResource, error) {
 	ret := _m.Called(_a0)
 
 	var r0 types.AWSResource

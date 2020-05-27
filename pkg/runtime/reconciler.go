@@ -50,7 +50,7 @@ func (r *reconciler) GroupKind() string {
 // of an upstream controller-runtime.Manager
 func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	if r.rmf == nil {
-		return ReconcilerBindControllerManagerError
+		return ErrReconcilerBindControllerManager
 	}
 	r.kc = mgr.GetClient()
 	rf := r.rmf.ResourceFactory()
@@ -73,16 +73,77 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		return err
 	}
 
-	// TODO(jaypipes): Grab a resource manager from the factory for the AWS
-	// account referenced in the object's AWS metadata.
+	acctID := res.AccountID()
+	rm, err := r.rmf.ManagerFor(acctID)
 
 	if res.IsDeleted() {
-		// TODO(jaypipes): call rm.Delete()
-		return nil
+		return r.cleanup(rm, res)
 	}
-	// TODO(jaypipes): reconcile the state of the object using the resource
-	// manager
+
+	return r.sync(rm, res)
+}
+
+// sync ensures that the supplied AWSResource's backing API resource
+// matches the supplied desired state
+func (r *reconciler) sync(
+	rm acktypes.AWSResourceManager,
+	desired acktypes.AWSResource,
+) error {
+	var latest acktypes.AWSResource // the newly created or mutated resource
+
+	// TODO(jaypipes): Handle all dependent resources. The AWSResource
+	// interface needs to get some methods that return schema relationships,
+	// first though
+
+	_, err := rm.ReadOne(desired)
+	if err != nil {
+		if err != ErrNotFound {
+			return err
+		}
+		latest, err = rm.Create(desired)
+		if err != nil {
+			return err
+		}
+		r.log.V(1).Info(
+			"reconciler.sync created new resource",
+			"kind", r.rmf.GroupKind(),
+			"account_id", latest.AccountID(),
+		)
+	} else {
+		// TODO(jaypipes): implement checks here for whether the desired is
+		// already equal to the observed
+		latest, err = rm.Update(desired)
+		if err != nil {
+			return err
+		}
+		r.log.V(1).Info(
+			"reconciler.sync updated resource",
+			"kind", r.rmf.GroupKind(),
+			"account_id", latest.AccountID(),
+		)
+	}
+	// TODO(jaypipes): Set the CRD's Status and other stuff to the latest
+	// resource's object
 	return nil
+}
+
+// cleanup ensures that the supplied AWSResource's backing API resource is
+// destroyed along with all child dependent resources
+func (r *reconciler) cleanup(
+	rm acktypes.AWSResourceManager,
+	current acktypes.AWSResource,
+) error {
+	// TODO(jaypipes): Handle all dependent resources. The AWSResource
+	// interface needs to get some methods that return schema relationships,
+	// first though
+	observed, err := rm.ReadOne(current)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil
+		}
+		return err
+	}
+	return rm.Delete(observed)
 }
 
 // getAWSResource returns an AWSResource representing the requested Kubernetes

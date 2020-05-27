@@ -14,6 +14,8 @@
 package resource
 
 import (
+	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 )
 
@@ -23,6 +25,16 @@ type bookResource struct {
 	ko *svcapitypes.Book
 }
 
+// IsDeleted returns true if the Kubernetes resource has a non-zero deletion
+// timestemp
 func (r *bookResource) IsDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
+}
+
+// AccountID returns the AWS account identifier in which the backend AWS
+// resource resides
+func (r *bookResource) AccountID() acktypes.AWSAccountID {
+	// TODO(jaypipes): Returns AWS Account ID from the common metadata that all
+	// ACK CRs will share.
+	return "example-account-id"
 }
