@@ -16,11 +16,7 @@ package resource
 import (
 	"sync"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
-
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 )
 
 // bookResourceManagerFactory produces bookResourceManager objects. It
@@ -28,13 +24,13 @@ import (
 type bookResourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[types.AWSAccountID]*bookResourceManager
+	rmCache map[acktypes.AWSAccountID]*bookResourceManager
 }
 
-// ObjectPrototype returns the runtime.Object that resource managers produced
-// by this factory handle
-func (f *bookResourceManagerFactory) ObjectPrototype() runtime.Object {
-	return &svcapitypes.Book{}
+// ResourcePrototype returns an AWSResource that resource managers produced by
+// this factory will handle
+func (f *bookResourceManagerFactory) ResourceFactory() acktypes.AWSResourceFactory {
+	return &bookResourceFactory{}
 }
 
 // GroupKind returns a string representation of the CRs handled by this
@@ -45,7 +41,7 @@ func (f *bookResourceManagerFactory) GroupKind() string {
 
 // For returns a resource manager object that can manage resources for a
 // supplied AWS account
-func (f *bookResourceManagerFactory) For(id types.AWSAccountID) (types.AWSResourceManager, error) {
+func (f *bookResourceManagerFactory) For(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
 	f.RLock()
 	rm, found := f.rmCache[id]
 	f.RUnlock()

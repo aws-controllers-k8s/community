@@ -13,7 +13,16 @@
 
 package resource
 
+import (
+	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+)
+
 // bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
 // interface
 type bookResource struct {
+	ko *svcapitypes.Book
+}
+
+func (r *bookResource) IsDeleted() bool {
+	return !r.ko.DeletionTimestamp.IsZero()
 }

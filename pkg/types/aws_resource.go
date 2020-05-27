@@ -14,13 +14,23 @@
 package types
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// AWSResourceFactory produces AWSResource instances
+type AWSResourceFactory interface {
+	// EmptyObject returns an empty object prototype that may be used in
+	// apimachinery and k8s client operations
+	EmptyObject() runtime.Object
+	// ResourceFromObject returns an AWSResource that has been initialized with
+	// the supplied runtime.Object
+	ResourceFromObject(runtime.Object) AWSResource
+}
 
 // AWSResource represents a custom resource object in the Kubernetes API that
 // corresponds to a resource in an AWS service API.
 type AWSResource interface {
-	metav1.Object
-	runtime.Object
+	// IsDeleted returns true if the Kubernetes resource has a non-zero
+	// deletion timestemp
+	IsDeleted() bool
 }

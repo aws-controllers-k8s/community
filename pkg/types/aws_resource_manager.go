@@ -13,8 +13,6 @@
 
 package types
 
-import "k8s.io/apimachinery/pkg/runtime"
-
 // AWSResourceManager is responsible for providing a consistent way to perform
 // CRUD+L operations in a backend AWS service API for Kubernetes custom
 // resources (CR) corresponding to those AWS service API resources.
@@ -42,10 +40,11 @@ type AWSResourceManagerFactory interface {
 	// GroupKind returns a string representation of the CRs handled by resource
 	// managers returned by this factory
 	GroupKind() string
-	// ObjectPrototype returns a pointer to a runtime.Object that can be used
-	// by the upstream controller-runtime to introspect the CRs that the
-	// resource manager will manage
-	ObjectPrototype() runtime.Object
+	// ResourceFactory returns an AWSResourceFactory that can be used by the
+	// upstream controller-runtime to introspect the CRs that the resource
+	// manager will manage as well as produce Kubernetes runtime object
+	// prototypes
+	ResourceFactory() AWSResourceFactory
 	// For returns an AWSResourceManager that manages AWS resources on behalf
 	// of a particular AWS account
 	For(AWSAccountID) (AWSResourceManager, error)
