@@ -20,24 +20,48 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
+	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	bookstoretypes "github.com/aws/aws-service-operator-k8s/pkg/test/fixture/bookstore/apis/v1alpha1"
 )
 
 type bookRM struct{}
 
-func (rm *bookRM) Exists(r types.AWSResource) bool {
+func (rm *bookRM) Exists(r acktypes.AWSResource) bool {
 	return false
 }
-func (rm *bookRM) ReadOne(r types.AWSResource) (types.AWSResource, error) {
+func (rm *bookRM) ReadOne(r acktypes.AWSResource) (acktypes.AWSResource, error) {
 	return nil, nil
 }
-func (rm *bookRM) Create(r types.AWSResource) error {
+func (rm *bookRM) Create(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+	return nil, nil
+}
+func (rm *bookRM) Update(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+	return nil, nil
+}
+func (rm *bookRM) Delete(r acktypes.AWSResource) error {
 	return nil
 }
-func (rm *bookRM) Delete(r types.AWSResource) error {
-	return nil
+
+type bookRes struct {
+	ko *bookstoretypes.Book
+}
+
+func (r *bookRes) IsDeleted() bool {
+	return !r.ko.DeletionTimestamp.IsZero()
+}
+
+func (r *bookRes) AccountID() acktypes.AWSAccountID {
+	return "example-account-id"
+}
+
+type bookRF struct{}
+
+func (f *bookRF) EmptyObject() runtime.Object {
+	return &bookstoretypes.Book{}
+}
+func (f *bookRF) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
+	return &bookRes{ko: obj.(*bookstoretypes.Book)}
 }
 
 type bookRMF struct{}
@@ -45,10 +69,10 @@ type bookRMF struct{}
 func (f *bookRMF) GroupKind() string {
 	return "bookstore.services.k8s.aws/Book"
 }
-func (f *bookRMF) ObjectPrototype() runtime.Object {
-	return &bookstoretypes.Book{}
+func (f *bookRMF) ResourceFactory() acktypes.AWSResourceFactory {
+	return &bookRF{}
 }
-func (f *bookRMF) For(id types.AWSAccountID) (types.AWSResourceManager, error) {
+func (f *bookRMF) ManagerFor(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
 	return &bookRM{}, nil
 }
 

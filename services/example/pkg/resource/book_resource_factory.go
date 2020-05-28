@@ -14,27 +14,30 @@
 package resource
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
+
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 )
 
-// bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
-// interface
-type bookResource struct {
-	ko *svcapitypes.Book
+// bookResourceFactory implements the
+// `aws-service-operator-k8s/pkg/types.AWSResourceFactory` interface
+type bookResourceFactory struct {
 }
 
-// IsDeleted returns true if the Kubernetes resource has a non-zero deletion
-// timestemp
-func (r *bookResource) IsDeleted() bool {
-	return !r.ko.DeletionTimestamp.IsZero()
+// EmptyObject returns an empty object prototype that may be used in
+// apimachinery and k8s client operations
+func (r *bookResourceFactory) EmptyObject() runtime.Object {
+	return &svcapitypes.Book{}
 }
 
-// AccountID returns the AWS account identifier in which the backend AWS
-// resource resides
-func (r *bookResource) AccountID() acktypes.AWSAccountID {
-	// TODO(jaypipes): Returns AWS Account ID from the common metadata that all
-	// ACK CRs will share.
-	return "example-account-id"
+// ResourceFromObject returns an AWSResource that has been initialized with the
+// supplied runtime.Object
+func (r *bookResourceFactory) ResourceFromObject(
+	obj runtime.Object,
+) acktypes.AWSResource {
+	return &bookResource{
+		ko: obj.(*svcapitypes.Book),
+	}
 }

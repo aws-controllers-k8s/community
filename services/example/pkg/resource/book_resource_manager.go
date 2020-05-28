@@ -18,6 +18,7 @@ import (
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 	"github.com/aws/aws-service-operator-k8s/pkg/types"
+	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// awssdksvciface "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
 	awssdksvciface "github.com/aws/aws-service-operator-k8s/services/example/pkg/sdk/service/bookstore/bookstoreiface"
@@ -37,31 +38,51 @@ type bookResourceManager struct {
 	sdk awssdksvciface.BookstoreAPI
 }
 
-// Exists returns true if the supplied resource exists in the backend AWS
+// Exists returns true if the supplied AWSResource exists in the backend AWS
 // service API.
-func (r *bookResourceManager) Exists(res types.AWSResource) bool {
+func (r *bookResourceManager) Exists(
+	res acktypes.AWSResource,
+) bool {
 	return false
 }
 
-// ReadOne returns the currently-observed state of the supplied Resource
-// in the backend AWS service API.
-func (r *bookResourceManager) ReadOne(res types.AWSResource) (types.AWSResource, error) {
+// ReadOne returns the currently-observed state of the supplied AWSResource in
+// the backend AWS service API.
+func (r *bookResourceManager) ReadOne(
+	res acktypes.AWSResource,
+) (acktypes.AWSResource, error) {
 	return nil, nil
 }
 
-// Create attempts to create the supplied Resource in the backend AWS
+// Create attempts to create the supplied AWSResource in the backend AWS
+// service API, returning an AWSResource representing the newly-created
+// resource
+func (r *bookResourceManager) Create(
+	res acktypes.AWSResource,
+) (acktypes.AWSResource, error) {
+	return nil, nil
+}
+
+// Update attempts to mutate the supplied AWSResource in the backend AWS
+// service API, returning an AWSResource representing the newly-mutated
+// resource
+func (r *bookResourceManager) Update(
+	res acktypes.AWSResource,
+) (acktypes.AWSResource, error) {
+	return nil, nil
+}
+
+// Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
-func (r *bookResourceManager) Create(res types.AWSResource) error {
+func (r *bookResourceManager) Delete(
+	res acktypes.AWSResource,
+) error {
 	return nil
 }
 
-// Delete attempts to destroy the supplied Resource in the backend AWS
-// service API.
-func (r *bookResourceManager) Delete(res types.AWSResource) error {
-	return nil
-}
-
-func newBookResourceManager(id types.AWSAccountID) (*bookResourceManager, error) {
+func newBookResourceManager(
+	id types.AWSAccountID,
+) (*bookResourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
 		return nil, err

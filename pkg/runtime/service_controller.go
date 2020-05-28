@@ -85,7 +85,7 @@ func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager) error {
 	c.metaLock.Lock()
 	defer c.metaLock.Unlock()
 	for _, rmf := range c.rmFactories {
-		rec := NewReconciler(rmf)
+		rec := NewReconciler(rmf, c.log)
 		if err := rec.BindControllerManager(mgr); err != nil {
 			return err
 		}

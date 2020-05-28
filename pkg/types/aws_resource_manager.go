@@ -13,8 +13,6 @@
 
 package types
 
-import "k8s.io/apimachinery/pkg/runtime"
-
 // AWSResourceManager is responsible for providing a consistent way to perform
 // CRUD+L operations in a backend AWS service API for Kubernetes custom
 // resources (CR) corresponding to those AWS service API resources.
@@ -25,13 +23,18 @@ type AWSResourceManager interface {
 	// Exists returns true if the supplied resource exists in the backend AWS
 	// service API.
 	Exists(AWSResource) bool
-	// ReadOne returns the currently-observed state of the supplied Resource
+	// ReadOne returns the currently-observed state of the supplied AWSResource
 	// in the backend AWS service API.
 	ReadOne(AWSResource) (AWSResource, error)
-	// Create attempts to create the supplied Resource in the backend AWS
-	// service API.
-	Create(AWSResource) error
-	// Delete attempts to destroy the supplied Resource in the backend AWS
+	// Create attempts to create the supplied AWSResource in the backend AWS
+	// service API, returning an AWSResource representing the newly-created
+	// resource
+	Create(AWSResource) (AWSResource, error)
+	// Update attempts to mutate the supplied AWSResource in the backend AWS
+	// service API, returning an AWSResource representing the newly-mutated
+	// resource
+	Update(AWSResource) (AWSResource, error)
+	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
 	Delete(AWSResource) error
 }
@@ -42,11 +45,12 @@ type AWSResourceManagerFactory interface {
 	// GroupKind returns a string representation of the CRs handled by resource
 	// managers returned by this factory
 	GroupKind() string
-	// ObjectPrototype returns a pointer to a runtime.Object that can be used
-	// by the upstream controller-runtime to introspect the CRs that the
-	// resource manager will manage
-	ObjectPrototype() runtime.Object
-	// For returns an AWSResourceManager that manages AWS resources on behalf
-	// of a particular AWS account
-	For(AWSAccountID) (AWSResourceManager, error)
+	// ResourceFactory returns an AWSResourceFactory that can be used by the
+	// upstream controller-runtime to introspect the CRs that the resource
+	// manager will manage as well as produce Kubernetes runtime object
+	// prototypes
+	ResourceFactory() AWSResourceFactory
+	// ManagerFor returns an AWSResourceManager that manages AWS resources on
+	// behalf of a particular AWS account
+	ManagerFor(AWSAccountID) (AWSResourceManager, error)
 }
