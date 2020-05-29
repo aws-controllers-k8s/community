@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package runtime
+package requeue_test
 
 import (
 	"testing"
@@ -19,9 +19,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/aws/aws-service-operator-k8s/pkg/requeue"
 )
 
-func TestNewRequeueError(t *testing.T) {
+func TestRequeueNeeded(t *testing.T) {
 	type args struct {
 		err error
 	}
@@ -50,7 +52,7 @@ func TestNewRequeueError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewRequeueError(tt.args.err)
+			got := requeue.Needed(tt.args.err)
 			assert.Equal(t, tt.wantErr, got.Error())
 			if tt.wantUnwrap != nil {
 				assert.EqualError(t, got.Unwrap(), tt.wantUnwrap.Error())
@@ -61,7 +63,7 @@ func TestNewRequeueError(t *testing.T) {
 	}
 }
 
-func TestNewRequeueAfterError(t *testing.T) {
+func TestRequeueNeededAfter(t *testing.T) {
 	type args struct {
 		err      error
 		duration time.Duration
@@ -96,7 +98,7 @@ func TestNewRequeueAfterError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewRequeueAfterError(tt.args.err, tt.args.duration)
+			got := requeue.NeededAfter(tt.args.err, tt.args.duration)
 			assert.Equal(t, tt.wantErr, got.Error())
 			if tt.wantUnwrap != nil {
 				assert.EqualError(t, got.Unwrap(), tt.wantUnwrap.Error())

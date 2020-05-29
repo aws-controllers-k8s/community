@@ -25,6 +25,10 @@ type AWSResourceManager interface {
 	Exists(AWSResource) bool
 	// ReadOne returns the currently-observed state of the supplied AWSResource
 	// in the backend AWS service API.
+	//
+	// Implementers should return (nil, ackerrors.NotFound) when the backend
+	// AWS service API cannot find the resource identified by the supplied
+	// AWSResource's AWS identifier information.
 	ReadOne(AWSResource) (AWSResource, error)
 	// Create attempts to create the supplied AWSResource in the backend AWS
 	// service API, returning an AWSResource representing the newly-created

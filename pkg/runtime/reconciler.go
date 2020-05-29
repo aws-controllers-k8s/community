@@ -21,6 +21,8 @@ import (
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
+	"github.com/aws/aws-service-operator-k8s/pkg/requeue"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 )
 
@@ -50,7 +52,7 @@ func (r *reconciler) GroupKind() string {
 // of an upstream controller-runtime.Manager
 func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	if r.rmf == nil {
-		return ErrReconcilerBindControllerManager
+		return ackerr.NilResourceManagerFactory
 	}
 	r.kc = mgr.GetClient()
 	rf := r.rmf.ResourceFactory()
@@ -97,7 +99,7 @@ func (r *reconciler) sync(
 
 	_, err := rm.ReadOne(desired)
 	if err != nil {
-		if err != ErrNotFound {
+		if err != ackerr.NotFound {
 			return err
 		}
 		latest, err = rm.Create(desired)
@@ -138,7 +140,7 @@ func (r *reconciler) cleanup(
 	// first though
 	observed, err := rm.ReadOne(current)
 	if err != nil {
-		if err == ErrNotFound {
+		if err == ackerr.NotFound {
 			return nil
 		}
 		return err
@@ -167,18 +169,23 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 		return ctrlrt.Result{}, nil
 	}
 
-	var requeueAfterErr *RequeueAfterError
-	if errors.As(err, &requeueAfterErr) {
+	var requeueNeededAfter *requeue.RequeueNeededAfter
+	if errors.As(err, &requeueNeededAfter) {
+		after := requeueNeededAfter.Duration()
 		r.log.V(1).Info(
-			"requeue after due to error",
-			"duration", requeueAfterErr.Duration(),
-			"error", requeueAfterErr.Unwrap())
-		return ctrlrt.Result{RequeueAfter: requeueAfterErr.Duration()}, nil
+			"requeue needed after error",
+			"error", requeueNeededAfter.Unwrap(),
+			"after", after,
+		)
+		return ctrlrt.Result{RequeueAfter: after}, nil
 	}
 
-	var requeueError *RequeueError
-	if errors.As(err, &requeueError) {
-		r.log.V(1).Info("requeue due to error", "error", requeueError.Unwrap())
+	var requeueNeeded *requeue.RequeueNeeded
+	if errors.As(err, &requeueNeeded) {
+		r.log.V(1).Info(
+			"requeue needed after error",
+			"error", requeueNeeded.Unwrap(),
+		)
 		return ctrlrt.Result{Requeue: true}, nil
 	}
 
