@@ -14,6 +14,8 @@
 package resource
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
@@ -41,6 +43,7 @@ type bookResourceManager struct {
 // Exists returns true if the supplied AWSResource exists in the backend AWS
 // service API.
 func (r *bookResourceManager) Exists(
+	ctx context.Context,
 	res acktypes.AWSResource,
 ) bool {
 	return false
@@ -49,6 +52,7 @@ func (r *bookResourceManager) Exists(
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
 func (r *bookResourceManager) ReadOne(
+	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
 	return nil, nil
@@ -58,6 +62,7 @@ func (r *bookResourceManager) ReadOne(
 // service API, returning an AWSResource representing the newly-created
 // resource
 func (r *bookResourceManager) Create(
+	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
 	return nil, nil
@@ -67,6 +72,7 @@ func (r *bookResourceManager) Create(
 // service API, returning an AWSResource representing the newly-mutated
 // resource
 func (r *bookResourceManager) Update(
+	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
 	return nil, nil
@@ -75,6 +81,7 @@ func (r *bookResourceManager) Update(
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
 func (r *bookResourceManager) Delete(
+	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
 	return nil

@@ -14,6 +14,7 @@
 package runtime_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,19 +28,19 @@ import (
 
 type bookRM struct{}
 
-func (rm *bookRM) Exists(r acktypes.AWSResource) bool {
+func (rm *bookRM) Exists(ctx context.Context, r acktypes.AWSResource) bool {
 	return false
 }
-func (rm *bookRM) ReadOne(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+func (rm *bookRM) ReadOne(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
 	return nil, nil
 }
-func (rm *bookRM) Create(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+func (rm *bookRM) Create(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
 	return nil, nil
 }
-func (rm *bookRM) Update(r acktypes.AWSResource) (acktypes.AWSResource, error) {
+func (rm *bookRM) Update(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
 	return nil, nil
 }
-func (rm *bookRM) Delete(r acktypes.AWSResource) error {
+func (rm *bookRM) Delete(ctx context.Context, r acktypes.AWSResource) error {
 	return nil
 }
 

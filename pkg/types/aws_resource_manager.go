@@ -13,6 +13,8 @@
 
 package types
 
+import "context"
+
 // AWSResourceManager is responsible for providing a consistent way to perform
 // CRUD+L operations in a backend AWS service API for Kubernetes custom
 // resources (CR) corresponding to those AWS service API resources.
@@ -22,25 +24,25 @@ package types
 type AWSResourceManager interface {
 	// Exists returns true if the supplied resource exists in the backend AWS
 	// service API.
-	Exists(AWSResource) bool
+	Exists(context.Context, AWSResource) bool
 	// ReadOne returns the currently-observed state of the supplied AWSResource
 	// in the backend AWS service API.
 	//
 	// Implementers should return (nil, ackerrors.NotFound) when the backend
 	// AWS service API cannot find the resource identified by the supplied
 	// AWSResource's AWS identifier information.
-	ReadOne(AWSResource) (AWSResource, error)
+	ReadOne(context.Context, AWSResource) (AWSResource, error)
 	// Create attempts to create the supplied AWSResource in the backend AWS
 	// service API, returning an AWSResource representing the newly-created
 	// resource
-	Create(AWSResource) (AWSResource, error)
+	Create(context.Context, AWSResource) (AWSResource, error)
 	// Update attempts to mutate the supplied AWSResource in the backend AWS
 	// service API, returning an AWSResource representing the newly-mutated
 	// resource
-	Update(AWSResource) (AWSResource, error)
+	Update(context.Context, AWSResource) (AWSResource, error)
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
-	Delete(AWSResource) error
+	Delete(context.Context, AWSResource) error
 }
 
 // AWSResourceManagerFactory returns an AWSResourceManager that can be used to
