@@ -234,8 +234,6 @@ func (s *CreateBookOutput) SetBook(v *BookData) *CreateBookOutput {
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-//
-// See also, https://docs.aws.amazon.com/goto/WebAPI/awssdkapi-2019-01-25/CreateBook
 func (c *BookstoreAPI) CreateBookRequest(input *CreateBookInput) (req *request.Request, output *CreateBookOutput) {
 	op := &request.Operation{
 		Name:       opCreateBook,
@@ -252,7 +250,7 @@ func (c *BookstoreAPI) CreateBookRequest(input *CreateBookInput) (req *request.R
 	return
 }
 
-// CreateBook API operation for AWS App Book.
+// CreateBook API operation for AWS Bookstore.
 //
 // Creates a book.
 //
@@ -260,7 +258,7 @@ func (c *BookstoreAPI) CreateBookRequest(input *CreateBookInput) (req *request.R
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for AWS App Book's
+// See the AWS API reference guide for AWS Bookstore's
 // API operation CreateBook for usage and error information.
 //
 // Returned Error Types:
@@ -282,7 +280,7 @@ func (c *BookstoreAPI) CreateBookRequest(input *CreateBookInput) (req *request.R
 //   * LimitExceededException
 //   You have exceeded a service limit for your account. For more information,
 //   see Service Limits (https://docs.aws.amazon.com/app-book/latest/userguide/service_limits.html)
-//   in the AWS App Book User Guide.
+//   in the AWS Bookstore User Guide.
 //
 //   * NotFoundException
 //   The specified resource doesn't exist. Check your request syntax and try again.
@@ -291,7 +289,7 @@ func (c *BookstoreAPI) CreateBookRequest(input *CreateBookInput) (req *request.R
 //   The request has failed due to a temporary failure of the service.
 //
 //   * TooManyRequestsException
-//   The maximum request rate permitted by the App Book APIs has been exceeded
+//   The maximum request rate permitted by the Bookstore APIs has been exceeded
 //   for your account. For best results, use an increasing or variable sleep interval
 //   between requests.
 //
@@ -423,7 +421,7 @@ func (c *BookstoreAPI) DeleteBookRequest(input *DeleteBookInput) (req *request.R
 	return
 }
 
-// DeleteBook API operation for AWS App Book.
+// DeleteBook API operation for AWS Bookstore.
 //
 // Deletes an existing book.
 //
@@ -431,7 +429,7 @@ func (c *BookstoreAPI) DeleteBookRequest(input *DeleteBookInput) (req *request.R
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for AWS App Book's
+// See the AWS API reference guide for AWS Bookstore's
 // API operation DeleteBook for usage and error information.
 //
 // Returned Error Types:
@@ -456,7 +454,7 @@ func (c *BookstoreAPI) DeleteBookRequest(input *DeleteBookInput) (req *request.R
 //   The request has failed due to a temporary failure of the service.
 //
 //   * TooManyRequestsException
-//   The maximum request rate permitted by the App Book APIs has been exceeded
+//   The maximum request rate permitted by the Bookstore APIs has been exceeded
 //   for your account. For best results, use an increasing or variable sleep interval
 //   between requests.
 //
@@ -604,7 +602,7 @@ func (c *BookstoreAPI) ListBooksRequest(input *ListBooksInput) (req *request.Req
 	return
 }
 
-// ListBooks API operation for AWS App Book.
+// ListBooks API operation for AWS Bookstore.
 //
 // Returns a list of existing books.
 //
@@ -612,7 +610,7 @@ func (c *BookstoreAPI) ListBooksRequest(input *ListBooksInput) (req *request.Req
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for AWS App Book's
+// See the AWS API reference guide for AWS Bookstore's
 // API operation ListBooks for usage and error information.
 //
 // Returned Error Types:
@@ -633,7 +631,7 @@ func (c *BookstoreAPI) ListBooksRequest(input *ListBooksInput) (req *request.Req
 //   The request has failed due to a temporary failure of the service.
 //
 //   * TooManyRequestsException
-//   The maximum request rate permitted by the App Book APIs has been exceeded
+//   The maximum request rate permitted by the Bookstore APIs has been exceeded
 //   for your account. For best results, use an increasing or variable sleep interval
 //   between requests.
 //
@@ -709,6 +707,178 @@ func (c *BookstoreAPI) ListBooksPagesWithContext(ctx aws.Context, input *ListBoo
 	}
 
 	return p.Err()
+}
+
+const opDescribeBook = "DescribeBook"
+
+type DescribeBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// BookName is a required field
+	BookName *string `location:"uri" locationName:"bookName" min:"1" type:"string" required:"true"`
+
+	BookOwner *string `location:"querystring" locationName:"bookOwner" min:"12" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeBookInput"}
+	if s.BookName == nil {
+		invalidParams.Add(request.NewErrParamRequired("BookName"))
+	}
+	if s.BookName != nil && len(*s.BookName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("BookName", 1))
+	}
+	if s.BookOwner != nil && len(*s.BookOwner) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("BookOwner", 12))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBookName sets the BookName field's value.
+func (s *DescribeBookInput) SetBookName(v string) *DescribeBookInput {
+	s.BookName = &v
+	return s
+}
+
+// SetBookOwner sets the BookOwner field's value.
+func (s *DescribeBookInput) SetBookOwner(v string) *DescribeBookInput {
+	s.BookOwner = &v
+	return s
+}
+
+type DescribeBookOutput struct {
+	_ struct{} `type:"structure" payload:"Book"`
+
+	// An object that represents a service book returned by a describe operation.
+	//
+	// Book is a required field
+	Book *BookData `locationName:"book" type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeBookOutput) GoString() string {
+	return s.String()
+}
+
+// SetBook sets the Book field's value.
+func (s *DescribeBookOutput) SetBook(v *BookData) *DescribeBookOutput {
+	s.Book = v
+	return s
+}
+
+// DescribeBookRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeBook for more information on using the DescribeBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeBookRequest method.
+//    req, resp := client.DescribeBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/appmesh-2019-01-25/DescribeBook
+func (c *BookstoreAPI) DescribeBookRequest(input *DescribeBookInput) (req *request.Request, output *DescribeBookOutput) {
+	op := &request.Operation{
+		Name:       opDescribeBook,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v20190125/meshes/{meshName}",
+	}
+
+	if input == nil {
+		input = &DescribeBookInput{}
+	}
+
+	output = &DescribeBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeBook API operation for AWS Bookstore.
+//
+// Describes an existing service mesh.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Bookstore's
+// API operation DescribeBook for usage and error information.
+//
+// Returned Error Types:
+//   * BadRequestException
+//   The request syntax was malformed. Check your request syntax and try again.
+//
+//   * ForbiddenException
+//   You don't have permissions to perform this action.
+//
+//   * InternalServerErrorException
+//   The request processing has failed because of an unknown error, exception,
+//   or failure.
+//
+//   * NotFoundException
+//   The specified resource doesn't exist. Check your request syntax and try again.
+//
+//   * ServiceUnavailableException
+//   The request has failed due to a temporary failure of the service.
+//
+//   * TooManyRequestsException
+//   The maximum request rate permitted by the Bookstore APIs has been exceeded
+//   for your account. For best results, use an increasing or variable sleep interval
+//   between requests.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/appmesh-2019-01-25/DescribeBook
+func (c *BookstoreAPI) DescribeBook(input *DescribeBookInput) (*DescribeBookOutput, error) {
+	req, out := c.DescribeBookRequest(input)
+	return out, req.Send()
+}
+
+// DescribeBookWithContext is the same as DescribeBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *BookstoreAPI) DescribeBookWithContext(ctx aws.Context, input *DescribeBookInput, opts ...request.Option) (*DescribeBookOutput, error) {
+	req, out := c.DescribeBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opUpdateBook = "UpdateBook"
@@ -817,7 +987,7 @@ func (c *BookstoreAPI) UpdateBookRequest(input *UpdateBookInput) (req *request.R
 	return
 }
 
-// UpdateBook API operation for AWS App Book.
+// UpdateBook API operation for AWS Bookstore.
 //
 // Updates an existing book.
 //
@@ -825,7 +995,7 @@ func (c *BookstoreAPI) UpdateBookRequest(input *UpdateBookInput) (req *request.R
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for AWS App Book's
+// See the AWS API reference guide for AWS Bookstore's
 // API operation UpdateBook for usage and error information.
 //
 // Returned Error Types:
@@ -851,11 +1021,9 @@ func (c *BookstoreAPI) UpdateBookRequest(input *UpdateBookInput) (req *request.R
 //   The request has failed due to a temporary failure of the service.
 //
 //   * TooManyRequestsException
-//   The maximum request rate permitted by the App Book APIs has been exceeded
+//   The maximum request rate permitted by the Bookstore APIs has been exceeded
 //   for your account. For best results, use an increasing or variable sleep interval
 //   between requests.
-//
-// See also, https://docs.aws.amazon.com/goto/WebAPI/appbook-2019-01-25/UpdateBook
 func (c *BookstoreAPI) UpdateBook(input *UpdateBookInput) (*UpdateBookOutput, error) {
 	req, out := c.UpdateBookRequest(input)
 	return out, req.Send()

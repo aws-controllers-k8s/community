@@ -17,10 +17,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// implements sigs.k8s.io/apimachinery/pkg/runtime.Object
+// TODO(jaypipes): Move the identifier and account information into a common
+// acktypes.Metadata struct
+
+// BookSpec defines the desired state of Book
+type BookSpec struct {
+	// Name is the Bookstore API Book object's name.
+	// If unspecified or empty, it defaults to be "${name}" of k8s Book
+	// +optional
+	Name *string `json:"name,omitempty"`
+	// The AWS IAM account ID of the book owner.
+	// Required if the account ID is not your own.
+	// +optional
+	Owner *string `json:"owner,omitempty"`
+}
+
+// BookStatus defines the observed state of Book
+type BookStatus struct {
+	// ARN is the Bookstore API Book object's Amazon Resource Name
+	// +optional
+	ARN *string `json:"ARN,omitempty"`
+}
+
+// Book implements sigs.k8s.io/apimachinery/pkg/runtime.Object
 type Book struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   BookSpec   `json:"spec,omitempty"`
+	Status BookStatus `json:"status,omitempty"`
 }
 
 func init() {

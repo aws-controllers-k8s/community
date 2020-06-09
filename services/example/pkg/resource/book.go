@@ -17,12 +17,17 @@ import (
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
+	svcsdk "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
 )
 
 // bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
 // interface
 type bookResource struct {
+	// The Kubernetes-native CR representing the resource
 	ko *svcapitypes.Book
+	// The aws-sdk-go-native representation of the resource
+	sdko *svcsdk.BookData
 }
 
 // IsDeleted returns true if the Kubernetes resource has a non-zero deletion

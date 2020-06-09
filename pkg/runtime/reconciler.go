@@ -70,7 +70,8 @@ func (r *reconciler) Reconcile(req ctrlrt.Request) (ctrlrt.Result, error) {
 }
 
 func (r *reconciler) reconcile(req ctrlrt.Request) error {
-	res, err := r.getAWSResource(req)
+	ctx := context.Background()
+	res, err := r.getAWSResource(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -79,15 +80,16 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	rm, err := r.rmf.ManagerFor(acctID)
 
 	if res.IsDeleted() {
-		return r.cleanup(rm, res)
+		return r.cleanup(ctx, rm, res)
 	}
 
-	return r.sync(rm, res)
+	return r.sync(ctx, rm, res)
 }
 
 // sync ensures that the supplied AWSResource's backing API resource
 // matches the supplied desired state
 func (r *reconciler) sync(
+	ctx context.Context,
 	rm acktypes.AWSResourceManager,
 	desired acktypes.AWSResource,
 ) error {
@@ -97,12 +99,12 @@ func (r *reconciler) sync(
 	// interface needs to get some methods that return schema relationships,
 	// first though
 
-	_, err := rm.ReadOne(desired)
+	_, err := rm.ReadOne(ctx, desired)
 	if err != nil {
 		if err != ackerr.NotFound {
 			return err
 		}
-		latest, err = rm.Create(desired)
+		latest, err = rm.Create(ctx, desired)
 		if err != nil {
 			return err
 		}
@@ -114,7 +116,7 @@ func (r *reconciler) sync(
 	} else {
 		// TODO(jaypipes): implement checks here for whether the desired is
 		// already equal to the observed
-		latest, err = rm.Update(desired)
+		latest, err = rm.Update(ctx, desired)
 		if err != nil {
 			return err
 		}
@@ -132,28 +134,29 @@ func (r *reconciler) sync(
 // cleanup ensures that the supplied AWSResource's backing API resource is
 // destroyed along with all child dependent resources
 func (r *reconciler) cleanup(
+	ctx context.Context,
 	rm acktypes.AWSResourceManager,
 	current acktypes.AWSResource,
 ) error {
 	// TODO(jaypipes): Handle all dependent resources. The AWSResource
 	// interface needs to get some methods that return schema relationships,
 	// first though
-	observed, err := rm.ReadOne(current)
+	observed, err := rm.ReadOne(ctx, current)
 	if err != nil {
 		if err == ackerr.NotFound {
 			return nil
 		}
 		return err
 	}
-	return rm.Delete(observed)
+	return rm.Delete(ctx, observed)
 }
 
 // getAWSResource returns an AWSResource representing the requested Kubernetes
 // namespaced object
 func (r *reconciler) getAWSResource(
+	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
-	ctx := context.Background()
 	rf := r.rmf.ResourceFactory()
 	ko := rf.EmptyObject()
 	if err := r.kc.Get(ctx, req.NamespacedName, ko); err != nil {

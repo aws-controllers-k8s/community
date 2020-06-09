@@ -17,8 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 
-	// "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	awssdkapi "github.com/aws/aws-service-operator-k8s/services/example/pkg/sdk/service/bookstore"
+	awssdkapi "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
 )
 
 type BookstoreAPI interface {
@@ -33,6 +32,10 @@ type BookstoreAPI interface {
 	ListBooks(*awssdkapi.ListBooksInput) (*awssdkapi.ListBooksOutput, error)
 	ListBooksWithContext(aws.Context, *awssdkapi.ListBooksInput, ...request.Option) (*awssdkapi.ListBooksOutput, error)
 	ListBooksRequest(*awssdkapi.ListBooksInput) (*request.Request, *awssdkapi.ListBooksOutput)
+
+	DescribeBook(*awssdkapi.DescribeBookInput) (*awssdkapi.DescribeBookOutput, error)
+	DescribeBookWithContext(aws.Context, *awssdkapi.DescribeBookInput, ...request.Option) (*awssdkapi.DescribeBookOutput, error)
+	DescribeBookRequest(*awssdkapi.DescribeBookInput) (*request.Request, *awssdkapi.DescribeBookOutput)
 
 	UpdateBook(*awssdkapi.UpdateBookInput) (*awssdkapi.UpdateBookOutput, error)
 	UpdateBookWithContext(aws.Context, *awssdkapi.UpdateBookInput, ...request.Option) (*awssdkapi.UpdateBookOutput, error)
