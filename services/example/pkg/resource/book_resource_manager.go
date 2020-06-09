@@ -22,8 +22,10 @@ import (
 	"github.com/aws/aws-service-operator-k8s/pkg/types"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
-	// awssdksvciface "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
-	awssdksvciface "github.com/aws/aws-service-operator-k8s/services/example/pkg/sdk/service/bookstore/bookstoreiface"
+	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
+	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore/bookstoreiface"
+	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
+	svcsdk "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
 )
 
 // bookResourceManager is responsible for providing a consistent way to perform
@@ -37,12 +39,22 @@ type bookResourceManager struct {
 	sess *session.Session
 	// sdk is a pointer to the AWS service API interface exposed by the
 	// aws-sdk-go/services/{alias}/{alias}iface package.
-	sdk awssdksvciface.BookstoreAPI
+	sdkapi svcsdkapi.BookstoreAPI
+}
+
+// concreteResource returns a pointer to a bookResource from the supplied
+// generic AWSResource interface
+func (rm *bookResourceManager) concreteResource(
+	res acktypes.AWSResource,
+) *bookResource {
+	// cast the generic interface into a pointer type specific to the concrete
+	// implementing resource type managed by this resource manager
+	return res.(*bookResource)
 }
 
 // Exists returns true if the supplied AWSResource exists in the backend AWS
 // service API.
-func (r *bookResourceManager) Exists(
+func (rm *bookResourceManager) Exists(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) bool {
@@ -51,17 +63,41 @@ func (r *bookResourceManager) Exists(
 
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
-func (r *bookResourceManager) ReadOne(
+func (rm *bookResourceManager) ReadOne(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
-	return nil, nil
+	r := rm.concreteResource(res)
+	sdko, err := rm.findSDKBook(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return &bookResource{
+		ko:   r.ko,
+		sdko: sdko,
+	}, nil
+}
+
+// findSDKBook returns SDK-specific information about a supplied bookResource
+func (rm *bookResourceManager) findSDKBook(
+	ctx context.Context,
+	r *bookResource,
+) (*svcsdk.BookData, error) {
+	input := svcsdk.DescribeBookInput{
+		BookName:  r.ko.Spec.Name,
+		BookOwner: r.ko.Spec.Owner,
+	}
+	resp, err := rm.sdkapi.DescribeBookWithContext(ctx, &input)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Book, nil
 }
 
 // Create attempts to create the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-created
 // resource
-func (r *bookResourceManager) Create(
+func (rm *bookResourceManager) Create(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -71,7 +107,7 @@ func (r *bookResourceManager) Create(
 // Update attempts to mutate the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-mutated
 // resource
-func (r *bookResourceManager) Update(
+func (rm *bookResourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -80,7 +116,7 @@ func (r *bookResourceManager) Update(
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
-func (r *bookResourceManager) Delete(
+func (rm *bookResourceManager) Delete(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {

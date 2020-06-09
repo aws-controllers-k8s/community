@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	types "github.com/aws/aws-service-operator-k8s/pkg/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type AWSResourceManager struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) Create(_a0 types.AWSResource) (types.AWSResource, error) {
-	ret := _m.Called(_a0)
+// Create provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceManager) Create(_a0 context.Context, _a1 types.AWSResource) (types.AWSResource, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 types.AWSResource
-	if rf, ok := ret.Get(0).(func(types.AWSResource) types.AWSResource); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) types.AWSResource); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResource)
@@ -26,8 +28,8 @@ func (_m *AWSResourceManager) Create(_a0 types.AWSResource) (types.AWSResource, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSResource) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AWSResource) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -35,13 +37,13 @@ func (_m *AWSResourceManager) Create(_a0 types.AWSResource) (types.AWSResource, 
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) Delete(_a0 types.AWSResource) error {
-	ret := _m.Called(_a0)
+// Delete provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceManager) Delete(_a0 context.Context, _a1 types.AWSResource) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.AWSResource) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -49,13 +51,13 @@ func (_m *AWSResourceManager) Delete(_a0 types.AWSResource) error {
 	return r0
 }
 
-// Exists provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) Exists(_a0 types.AWSResource) bool {
-	ret := _m.Called(_a0)
+// Exists provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceManager) Exists(_a0 context.Context, _a1 types.AWSResource) bool {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(types.AWSResource) bool); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) bool); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -63,13 +65,13 @@ func (_m *AWSResourceManager) Exists(_a0 types.AWSResource) bool {
 	return r0
 }
 
-// ReadOne provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) ReadOne(_a0 types.AWSResource) (types.AWSResource, error) {
-	ret := _m.Called(_a0)
+// ReadOne provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceManager) ReadOne(_a0 context.Context, _a1 types.AWSResource) (types.AWSResource, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 types.AWSResource
-	if rf, ok := ret.Get(0).(func(types.AWSResource) types.AWSResource); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) types.AWSResource); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResource)
@@ -77,8 +79,8 @@ func (_m *AWSResourceManager) ReadOne(_a0 types.AWSResource) (types.AWSResource,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSResource) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AWSResource) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -86,13 +88,13 @@ func (_m *AWSResourceManager) ReadOne(_a0 types.AWSResource) (types.AWSResource,
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: _a0
-func (_m *AWSResourceManager) Update(_a0 types.AWSResource) (types.AWSResource, error) {
-	ret := _m.Called(_a0)
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceManager) Update(_a0 context.Context, _a1 types.AWSResource) (types.AWSResource, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 types.AWSResource
-	if rf, ok := ret.Get(0).(func(types.AWSResource) types.AWSResource); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) types.AWSResource); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResource)
@@ -100,8 +102,8 @@ func (_m *AWSResourceManager) Update(_a0 types.AWSResource) (types.AWSResource, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSResource) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AWSResource) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
