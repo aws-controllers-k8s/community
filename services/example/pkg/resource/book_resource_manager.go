@@ -171,7 +171,16 @@ func (rm *bookResourceManager) Delete(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
-	return nil
+	r := rm.concreteResource(res)
+	if r.sdko == nil {
+		// Should never happen... if it does, it's buggy code.
+		panic("resource manager's Update() method received resource with nil SDK object")
+	}
+	input := svcsdk.DeleteBookInput{
+		BookName: r.sdko.BookName,
+	}
+	_, err := rm.sdkapi.DeleteBookWithContext(ctx, &input)
+	return err
 }
 
 func newBookResourceManager(
