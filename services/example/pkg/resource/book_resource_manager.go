@@ -22,6 +22,8 @@ import (
 	"github.com/aws/aws-service-operator-k8s/pkg/types"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
+	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
+	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
 	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore/bookstoreiface"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
@@ -117,12 +119,50 @@ func (rm *bookResourceManager) Create(
 
 // Update attempts to mutate the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-mutated
-// resource
+// resource. Note that implementers should NOT check to see if the latest
+// observed resource differs from the supplied desired state. The higher-level
+// reonciler determines whether or not the desired differs from the latest
+// observed and decides whether to call the resource manager's Update method
 func (rm *bookResourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
-	return nil, nil
+	r := rm.concreteResource(res)
+	if r.sdko == nil {
+		// Should never happen... if it does, it's buggy code.
+		panic("resource manager's Update() method received resource with nil SDK object")
+	}
+	desired, err := rm.sdkoFromKO(r.ko)
+	if err != nil {
+		return nil, err
+	}
+	input := svcsdk.UpdateBookInput{
+		BookName: desired.BookName,
+	}
+	resp, err := rm.sdkapi.UpdateBookWithContext(ctx, &input)
+	if err != nil {
+		return nil, err
+	}
+	return &bookResource{
+		ko:   r.ko,
+		sdko: resp.Book,
+	}, nil
+}
+
+// sdkoFromKO constructs a BookData object from a Book CR
+func (rm *bookResourceManager) sdkoFromKO(
+	ko *svcapitypes.Book,
+) (*svcsdk.BookData, error) {
+	// TODO(jaypipes): isolate conversion/translation logic here. I'm not a
+	// huge fan of the sigs.k8s.io/apimachinery/pkg/conversion package and
+	// would prefer long-term to use something a bit more readable and less
+	// verbose, and since we have type information for both the k8s side and
+	// the SDK side, it should be possible to make non-generic conversion
+	// functions.
+	sdko := svcsdk.BookData{
+		BookName: ko.Spec.Name,
+	}
+	return &sdko, nil
 }
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
