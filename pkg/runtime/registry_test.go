@@ -59,12 +59,25 @@ func (r *bookRes) AccountID() acktypes.AWSAccountID {
 
 type bookRD struct{}
 
+func (d *bookRD) Equal(
+	a acktypes.AWSResource,
+	b acktypes.AWSResource,
+) bool {
+	return false
+}
+
+func (d *bookRD) Diff(
+	a acktypes.AWSResource,
+	b acktypes.AWSResource,
+) string {
+	return ""
+}
+
 func (d *bookRD) GroupKind() *metav1.GroupKind {
 	return &metav1.GroupKind{
 		Group: "bookstore.services.k8s.aws",
 		Kind:  "Book",
 	}
-
 }
 
 func (d *bookRD) EmptyObject() runtime.Object {

@@ -16,6 +16,20 @@ type AWSResourceDescriptor struct {
 	mock.Mock
 }
 
+// Diff provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceDescriptor) Diff(_a0 types.AWSResource, _a1 types.AWSResource) string {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(types.AWSResource, types.AWSResource) string); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // EmptyObject provides a mock function with given fields:
 func (_m *AWSResourceDescriptor) EmptyObject() runtime.Object {
 	ret := _m.Called()
@@ -27,6 +41,20 @@ func (_m *AWSResourceDescriptor) EmptyObject() runtime.Object {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(runtime.Object)
 		}
+	}
+
+	return r0
+}
+
+// Equal provides a mock function with given fields: _a0, _a1
+func (_m *AWSResourceDescriptor) Equal(_a0 types.AWSResource, _a1 types.AWSResource) bool {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(types.AWSResource, types.AWSResource) bool); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(bool)
 	}
 
 	return r0

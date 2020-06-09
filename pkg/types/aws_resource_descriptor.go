@@ -32,4 +32,14 @@ type AWSResourceDescriptor interface {
 	// ResourceFromObject returns an AWSResource that has been initialized with
 	// the supplied runtime.Object
 	ResourceFromObject(runtime.Object) AWSResource
+	// Equal returns true if the two supplied AWSResources have the same
+	// content. The underlying types of the two supplied AWSResources should be
+	// the same. In other words, the Equal() method should be called with the
+	// same concrete implementing AWSResource type
+	Equal(AWSResource, AWSResource) bool
+	// Diff returns a string representing the difference between two supplied
+	// AWSResources/ The underlying types of the two supplied AWSResources
+	// should be the same. In other words, the Diff() method should be called
+	// with the same concrete implementing AWSResource type
+	Diff(AWSResource, AWSResource) string
 }

@@ -18,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 )
@@ -54,4 +56,32 @@ func (d *bookResourceDescriptor) ResourceFromObject(
 	return &bookResource{
 		ko: obj.(*svcapitypes.Book),
 	}
+}
+
+// Equal returns true if the two supplied AWSResources have the same content.
+// The underlying types of the two supplied AWSResources should be the same. In
+// other words, the Equal() method should be called with the same concrete
+// implementing AWSResource type
+func (d *bookResourceDescriptor) Equal(
+	a acktypes.AWSResource,
+	b acktypes.AWSResource,
+) bool {
+	ac := a.(*bookResource)
+	bc := b.(*bookResource)
+	opts := cmpopts.EquateEmpty()
+	return cmp.Equal(ac.sdko, bc.sdko, opts)
+}
+
+// Diff returns a string representing the difference between two supplied
+// AWSResources/ The underlying types of the two supplied AWSResources should
+// be the same. In other words, the Diff() method should be called with the
+// same concrete implementing AWSResource type
+func (d *bookResourceDescriptor) Diff(
+	a acktypes.AWSResource,
+	b acktypes.AWSResource,
+) string {
+	ac := a.(*bookResource)
+	bc := b.(*bookResource)
+	opts := cmpopts.EquateEmpty()
+	return cmp.Diff(ac.sdko, bc.sdko, opts)
 }
