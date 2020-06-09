@@ -38,7 +38,11 @@ type AWSResourceManager interface {
 	Create(context.Context, AWSResource) (AWSResource, error)
 	// Update attempts to mutate the supplied AWSResource in the backend AWS
 	// service API, returning an AWSResource representing the newly-mutated
-	// resource
+	// resource. Note that implementers should NOT check to see if the latest
+	// observed resource differs from the supplied desired state. The
+	// higher-level reonciler determines whether or not the desired differs
+	// from the latest observed and decides whether to call the resource
+	// manager's Update method
 	Update(context.Context, AWSResource) (AWSResource, error)
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.

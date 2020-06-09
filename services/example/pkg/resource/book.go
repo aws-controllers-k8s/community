@@ -16,6 +16,7 @@ package resource
 import (
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
+	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
 	svcsdk "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
