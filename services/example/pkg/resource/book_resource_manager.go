@@ -101,7 +101,18 @@ func (rm *bookResourceManager) Create(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
-	return nil, nil
+	r := rm.concreteResource(res)
+	input := svcsdk.CreateBookInput{
+		BookName: r.ko.Spec.Name,
+	}
+	resp, err := rm.sdkapi.CreateBookWithContext(ctx, &input)
+	if err != nil {
+		return nil, err
+	}
+	return &bookResource{
+		ko:   r.ko,
+		sdko: resp.Book,
+	}, nil
 }
 
 // Update attempts to mutate the supplied AWSResource in the backend AWS
