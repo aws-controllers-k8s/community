@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
@@ -58,6 +59,14 @@ func (r *bookRes) AccountID() acktypes.AWSAccountID {
 
 type bookRD struct{}
 
+func (d *bookRD) GroupKind() *metav1.GroupKind {
+	return &metav1.GroupKind{
+		Group: "bookstore.services.k8s.aws",
+		Kind:  "Book",
+	}
+
+}
+
 func (d *bookRD) EmptyObject() runtime.Object {
 	return &bookstoretypes.Book{}
 }
@@ -67,9 +76,6 @@ func (d *bookRD) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
 
 type bookRMF struct{}
 
-func (f *bookRMF) GroupKind() string {
-	return "bookstore.services.k8s.aws/Book"
-}
 func (f *bookRMF) ResourceDescriptor() acktypes.AWSResourceDescriptor {
 	return &bookRD{}
 }

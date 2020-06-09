@@ -52,9 +52,6 @@ type AWSResourceManager interface {
 // AWSResourceManagerFactory returns an AWSResourceManager that can be used to
 // manage AWS resources for a particular AWS account
 type AWSResourceManagerFactory interface {
-	// GroupKind returns a string representation of the CRs handled by resource
-	// managers returned by this factory
-	GroupKind() string
 	// ResourceDescriptor returns an AWSResourceDescriptor that can be used by
 	// the upstream controller-runtime to introspect the CRs that the resource
 	// manager will manage as well as produce Kubernetes runtime object

@@ -30,7 +30,7 @@ func TestRegistry(t *testing.T) {
 	// There should be a resource manager factory for Book resources
 	foundBookRMF := false
 	for _, rmf := range rmfs {
-		if rmf.GroupKind() == "example.services.k8s.aws:Book" {
+		if rmf.ResourceDescriptor().GroupKind().String() == "Book.bookstore.services.k8s.aws" {
 			foundBookRMF = true
 		}
 	}

@@ -12,20 +12,6 @@ type AWSResourceManagerFactory struct {
 	mock.Mock
 }
 
-// GroupKind provides a mock function with given fields:
-func (_m *AWSResourceManagerFactory) GroupKind() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
 // ManagerFor provides a mock function with given fields: _a0
 func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSAccountID) (types.AWSResourceManager, error) {
 	ret := _m.Called(_a0)

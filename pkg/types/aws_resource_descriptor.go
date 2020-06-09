@@ -14,6 +14,7 @@
 package types
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -22,6 +23,9 @@ import (
 // prototype for that AWSResource, and the relationships between the
 // AWSResource and other AWSResources
 type AWSResourceDescriptor interface {
+	// GroupKind returns a Kubernetes metav1.GroupKind struct that describes
+	// the API Group and Kind of CRs described by the descriptor
+	GroupKind() *metav1.GroupKind
 	// EmptyObject returns an empty object prototype that may be used in
 	// apimachinery and k8s client operations
 	EmptyObject() runtime.Object

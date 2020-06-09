@@ -14,6 +14,7 @@
 package resource
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
@@ -21,20 +22,33 @@ import (
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 )
 
+var (
+	bookResourceGK = metav1.GroupKind{
+		Group: "bookstore.services.k8s.aws",
+		Kind:  "Book",
+	}
+)
+
 // bookResourceDescriptor implements the
 // `aws-service-operator-k8s/pkg/types.AWSResourceDescriptor` interface
 type bookResourceDescriptor struct {
 }
 
+// GroupKind returns a Kubernetes metav1.GroupKind struct that describes the
+// API Group and Kind of CRs described by the descriptor
+func (d *bookResourceDescriptor) GroupKind() *metav1.GroupKind {
+	return &bookResourceGK
+}
+
 // EmptyObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (r *bookResourceDescriptor) EmptyObject() runtime.Object {
+func (d *bookResourceDescriptor) EmptyObject() runtime.Object {
 	return &svcapitypes.Book{}
 }
 
 // ResourceFromObject returns an AWSResource that has been initialized with the
 // supplied runtime.Object
-func (r *bookResourceDescriptor) ResourceFromObject(
+func (d *bookResourceDescriptor) ResourceFromObject(
 	obj runtime.Object,
 ) acktypes.AWSResource {
 	return &bookResource{

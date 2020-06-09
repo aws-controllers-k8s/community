@@ -89,7 +89,7 @@ func TestServiceController(t *testing.T) {
 
 	foundBookRecon := false
 	for _, recon := range recons {
-		if recon.GroupKind() == "bookstore.services.k8s.aws/Book" {
+		if recon.GroupKind().String() == "Book.bookstore.services.k8s.aws" {
 			foundBookRecon = true
 		}
 	}

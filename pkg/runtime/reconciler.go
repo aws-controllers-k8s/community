@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,16 +37,17 @@ import (
 type reconciler struct {
 	kc  client.Client
 	rmf acktypes.AWSResourceManagerFactory
+	rd  acktypes.AWSResourceDescriptor
 	log logr.Logger
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
 // this reconciler
-func (r *reconciler) GroupKind() string {
-	if r.rmf == nil {
-		return ""
+func (r *reconciler) GroupKind() *metav1.GroupKind {
+	if r.rd == nil {
+		return nil
 	}
-	return r.rmf.GroupKind()
+	return r.rd.GroupKind()
 }
 
 // BindControllerManager sets up the AWSResourceReconciler with an instance
@@ -110,7 +112,7 @@ func (r *reconciler) sync(
 		}
 		r.log.V(1).Info(
 			"reconciler.sync created new resource",
-			"kind", r.rmf.GroupKind(),
+			"kind", r.rd.GroupKind().String(),
 			"account_id", latest.AccountID(),
 		)
 	} else {
@@ -122,7 +124,7 @@ func (r *reconciler) sync(
 		}
 		r.log.V(1).Info(
 			"reconciler.sync updated resource",
-			"kind", r.rmf.GroupKind(),
+			"kind", r.rd.GroupKind().String(),
 			"account_id", latest.AccountID(),
 		)
 	}
@@ -157,12 +159,11 @@ func (r *reconciler) getAWSResource(
 	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
-	rd := r.rmf.ResourceDescriptor()
-	ko := rd.EmptyObject()
+	ko := r.rd.EmptyObject()
 	if err := r.kc.Get(ctx, req.NamespacedName, ko); err != nil {
 		return nil, client.IgnoreNotFound(err)
 	}
-	return rd.ResourceFromObject(ko), nil
+	return r.rd.ResourceFromObject(ko), nil
 }
 
 // handleReconcileError will handle errors from reconcile handlers, which
@@ -202,6 +203,7 @@ func NewReconciler(
 ) acktypes.AWSResourceReconciler {
 	return &reconciler{
 		rmf: rmf,
+		rd:  rmf.ResourceDescriptor(),
 		log: log,
 	}
 }
