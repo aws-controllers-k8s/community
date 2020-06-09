@@ -49,16 +49,16 @@ func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSAccountID) (types.A
 	return r0, r1
 }
 
-// ResourceFactory provides a mock function with given fields:
-func (_m *AWSResourceManagerFactory) ResourceFactory() types.AWSResourceFactory {
+// ResourceDescriptor provides a mock function with given fields:
+func (_m *AWSResourceManagerFactory) ResourceDescriptor() types.AWSResourceDescriptor {
 	ret := _m.Called()
 
-	var r0 types.AWSResourceFactory
-	if rf, ok := ret.Get(0).(func() types.AWSResourceFactory); ok {
+	var r0 types.AWSResourceDescriptor
+	if rf, ok := ret.Get(0).(func() types.AWSResourceDescriptor); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.AWSResourceFactory)
+			r0 = ret.Get(0).(types.AWSResourceDescriptor)
 		}
 	}
 

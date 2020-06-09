@@ -29,8 +29,8 @@ type bookResourceManagerFactory struct {
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
 // this factory will handle
-func (f *bookResourceManagerFactory) ResourceFactory() acktypes.AWSResourceFactory {
-	return &bookResourceFactory{}
+func (f *bookResourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
+	return &bookResourceDescriptor{}
 }
 
 // GroupKind returns a string representation of the CRs handled by this

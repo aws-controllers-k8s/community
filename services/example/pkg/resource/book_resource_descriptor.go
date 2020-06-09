@@ -21,20 +21,20 @@ import (
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
 )
 
-// bookResourceFactory implements the
-// `aws-service-operator-k8s/pkg/types.AWSResourceFactory` interface
-type bookResourceFactory struct {
+// bookResourceDescriptor implements the
+// `aws-service-operator-k8s/pkg/types.AWSResourceDescriptor` interface
+type bookResourceDescriptor struct {
 }
 
 // EmptyObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (r *bookResourceFactory) EmptyObject() runtime.Object {
+func (r *bookResourceDescriptor) EmptyObject() runtime.Object {
 	return &svcapitypes.Book{}
 }
 
 // ResourceFromObject returns an AWSResource that has been initialized with the
 // supplied runtime.Object
-func (r *bookResourceFactory) ResourceFromObject(
+func (r *bookResourceDescriptor) ResourceFromObject(
 	obj runtime.Object,
 ) acktypes.AWSResource {
 	return &bookResource{

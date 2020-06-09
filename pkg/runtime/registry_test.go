@@ -56,12 +56,12 @@ func (r *bookRes) AccountID() acktypes.AWSAccountID {
 	return "example-account-id"
 }
 
-type bookRF struct{}
+type bookRD struct{}
 
-func (f *bookRF) EmptyObject() runtime.Object {
+func (d *bookRD) EmptyObject() runtime.Object {
 	return &bookstoretypes.Book{}
 }
-func (f *bookRF) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
+func (d *bookRD) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
 	return &bookRes{ko: obj.(*bookstoretypes.Book)}
 }
 
@@ -70,8 +70,8 @@ type bookRMF struct{}
 func (f *bookRMF) GroupKind() string {
 	return "bookstore.services.k8s.aws/Book"
 }
-func (f *bookRMF) ResourceFactory() acktypes.AWSResourceFactory {
-	return &bookRF{}
+func (f *bookRMF) ResourceDescriptor() acktypes.AWSResourceDescriptor {
+	return &bookRD{}
 }
 func (f *bookRMF) ManagerFor(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
 	return &bookRM{}, nil

@@ -55,11 +55,11 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 		return ackerr.NilResourceManagerFactory
 	}
 	r.kc = mgr.GetClient()
-	rf := r.rmf.ResourceFactory()
+	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
 	).For(
-		rf.EmptyObject(),
+		rd.EmptyObject(),
 	).Complete(r)
 }
 
@@ -157,12 +157,12 @@ func (r *reconciler) getAWSResource(
 	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
-	rf := r.rmf.ResourceFactory()
-	ko := rf.EmptyObject()
+	rd := r.rmf.ResourceDescriptor()
+	ko := rd.EmptyObject()
 	if err := r.kc.Get(ctx, req.NamespacedName, ko); err != nil {
 		return nil, client.IgnoreNotFound(err)
 	}
-	return rf.ResourceFromObject(ko), nil
+	return rd.ResourceFromObject(ko), nil
 }
 
 // handleReconcileError will handle errors from reconcile handlers, which
