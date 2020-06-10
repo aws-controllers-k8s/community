@@ -120,14 +120,13 @@ func (r *reconciler) sync(
 		// desired state and if so, simply return since there's nothing to do
 		if r.rd.Equal(desired, latest) {
 			return nil
-		} else {
-			diff := r.rd.Diff(desired, latest)
-			r.log.V(1).Info("desired resource state has changed",
-				"kind", r.rd.GroupKind().String(),
-				"account_id", latest.AccountID(),
-				"diff", diff,
-			)
 		}
+		diff := r.rd.Diff(desired, latest)
+		r.log.V(1).Info("desired resource state has changed",
+			"kind", r.rd.GroupKind().String(),
+			"account_id", latest.AccountID(),
+			"diff", diff,
+		)
 		latest, err = rm.Update(ctx, desired)
 		if err != nil {
 			return err

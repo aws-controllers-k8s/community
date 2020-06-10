@@ -16,10 +16,11 @@ package resource
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 
+	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
@@ -35,7 +36,7 @@ import (
 type bookResourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
-	awsAccountID types.AWSAccountID
+	awsAccountID acktypes.AWSAccountID
 	// sess is the AWS SDK Session object used to communicate with the backend
 	// AWS service API
 	sess *session.Session
@@ -91,6 +92,9 @@ func (rm *bookResourceManager) findSDKBook(
 	}
 	resp, err := rm.sdkapi.DescribeBookWithContext(ctx, &input)
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFoundException" {
+			return nil, ackerr.NotFound
+		}
 		return nil, err
 	}
 	return resp.Book, nil
@@ -184,7 +188,7 @@ func (rm *bookResourceManager) Delete(
 }
 
 func newBookResourceManager(
-	id types.AWSAccountID,
+	id acktypes.AWSAccountID,
 ) (*bookResourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
