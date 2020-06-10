@@ -49,7 +49,7 @@ type bookRes struct {
 	ko *bookstoretypes.Book
 }
 
-func (r *bookRes) IsDeleted() bool {
+func (r *bookRes) IsBeingDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
 }
 

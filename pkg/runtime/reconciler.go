@@ -81,7 +81,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	acctID := res.AccountID()
 	rm, err := r.rmf.ManagerFor(acctID)
 
-	if res.IsDeleted() {
+	if res.IsBeingDeleted() {
 		return r.cleanup(ctx, rm, res)
 	}
 

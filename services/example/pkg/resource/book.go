@@ -33,9 +33,9 @@ type bookResource struct {
 	sdko *svcsdk.BookData
 }
 
-// IsDeleted returns true if the Kubernetes resource has a non-zero deletion
-// timestemp
-func (r *bookResource) IsDeleted() bool {
+// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
+// deletion timestemp
+func (r *bookResource) IsBeingDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
 }
 
