@@ -122,7 +122,7 @@ func (r *reconciler) sync(
 			return nil
 		}
 		diff := r.rd.Diff(desired, latest)
-		r.log.V(1).Info("desired resource state has changed",
+		r.log.V(2).Info("desired resource state has changed",
 			"kind", r.rd.GroupKind().String(),
 			"account_id", latest.AccountID(),
 			"diff", diff,
@@ -137,9 +137,23 @@ func (r *reconciler) sync(
 			"account_id", latest.AccountID(),
 		)
 	}
-	// TODO(jaypipes): Set the CRD's Status and other stuff to the latest
-	// resource's object
-	return nil
+	changedStatus, err := r.rd.UpdateCRStatus(latest)
+	if err != nil {
+		return err
+	}
+	if !changedStatus {
+		return nil
+	}
+	err = r.kc.Status().Patch(ctx, latest.CR(), client.MergeFrom(desired.CR()))
+	if err != nil {
+		return err
+	}
+	r.log.V(2).Info(
+		"patched CR status",
+		"kind", r.rd.GroupKind().String(),
+		"account_id", latest.AccountID(),
+	)
+	return err
 }
 
 // cleanup ensures that the supplied AWSResource's backing API resource is

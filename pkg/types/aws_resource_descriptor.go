@@ -15,7 +15,7 @@ package types
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8srt "k8s.io/apimachinery/pkg/runtime"
 )
 
 // AWSResourceDescriptor provides metadata that describes the Kubernetes
@@ -28,10 +28,10 @@ type AWSResourceDescriptor interface {
 	GroupKind() *metav1.GroupKind
 	// EmptyObject returns an empty object prototype that may be used in
 	// apimachinery and k8s client operations
-	EmptyObject() runtime.Object
+	EmptyObject() k8srt.Object
 	// ResourceFromObject returns an AWSResource that has been initialized with
 	// the supplied runtime.Object
-	ResourceFromObject(runtime.Object) AWSResource
+	ResourceFromObject(k8srt.Object) AWSResource
 	// Equal returns true if the two supplied AWSResources have the same
 	// content. The underlying types of the two supplied AWSResources should be
 	// the same. In other words, the Equal() method should be called with the
@@ -42,4 +42,8 @@ type AWSResourceDescriptor interface {
 	// should be the same. In other words, the Diff() method should be called
 	// with the same concrete implementing AWSResource type
 	Diff(AWSResource, AWSResource) string
+	// UpdateCRStatus accepts an AWSResource object and changes the Status
+	// sub-object of the AWSResource's Kubernetes custom resource (CR) and
+	// returns whether any changes were made
+	UpdateCRStatus(AWSResource) (bool, error)
 }
