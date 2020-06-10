@@ -14,6 +14,7 @@
 package types
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	ctrlreconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -29,9 +30,10 @@ import (
 // those controllers.
 type AWSResourceReconciler interface {
 	ctrlreconcile.Reconciler
-	// GroupKind returns the string containing the API group and kind
-	// reconciled by this reconciler
-	GroupKind() string
+	// GroupKind returns the
+	// sigs.k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind containing the API
+	// group and kind reconciled by this reconciler
+	GroupKind() *metav1.GroupKind
 	// BindControllerManager sets up the AWSResourceReconciler with an instance
 	// of an upstream controller-runtime.Manager
 	BindControllerManager(ctrlrt.Manager) error

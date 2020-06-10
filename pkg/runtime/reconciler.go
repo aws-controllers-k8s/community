@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,16 +37,17 @@ import (
 type reconciler struct {
 	kc  client.Client
 	rmf acktypes.AWSResourceManagerFactory
+	rd  acktypes.AWSResourceDescriptor
 	log logr.Logger
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
 // this reconciler
-func (r *reconciler) GroupKind() string {
-	if r.rmf == nil {
-		return ""
+func (r *reconciler) GroupKind() *metav1.GroupKind {
+	if r.rd == nil {
+		return nil
 	}
-	return r.rmf.GroupKind()
+	return r.rd.GroupKind()
 }
 
 // BindControllerManager sets up the AWSResourceReconciler with an instance
@@ -55,11 +57,11 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 		return ackerr.NilResourceManagerFactory
 	}
 	r.kc = mgr.GetClient()
-	rf := r.rmf.ResourceFactory()
+	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
 	).For(
-		rf.EmptyObject(),
+		rd.EmptyObject(),
 	).Complete(r)
 }
 
@@ -99,7 +101,7 @@ func (r *reconciler) sync(
 	// interface needs to get some methods that return schema relationships,
 	// first though
 
-	_, err := rm.ReadOne(ctx, desired)
+	latest, err := rm.ReadOne(ctx, desired)
 	if err != nil {
 		if err != ackerr.NotFound {
 			return err
@@ -110,19 +112,29 @@ func (r *reconciler) sync(
 		}
 		r.log.V(1).Info(
 			"reconciler.sync created new resource",
-			"kind", r.rmf.GroupKind(),
+			"kind", r.rd.GroupKind().String(),
 			"account_id", latest.AccountID(),
 		)
 	} else {
-		// TODO(jaypipes): implement checks here for whether the desired is
-		// already equal to the observed
+		// Check to see if the latest observed state already matches the
+		// desired state and if so, simply return since there's nothing to do
+		if r.rd.Equal(desired, latest) {
+			return nil
+		} else {
+			diff := r.rd.Diff(desired, latest)
+			r.log.V(1).Info("desired resource state has changed",
+				"kind", r.rd.GroupKind().String(),
+				"account_id", latest.AccountID(),
+				"diff", diff,
+			)
+		}
 		latest, err = rm.Update(ctx, desired)
 		if err != nil {
 			return err
 		}
 		r.log.V(1).Info(
 			"reconciler.sync updated resource",
-			"kind", r.rmf.GroupKind(),
+			"kind", r.rd.GroupKind().String(),
 			"account_id", latest.AccountID(),
 		)
 	}
@@ -157,12 +169,11 @@ func (r *reconciler) getAWSResource(
 	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
-	rf := r.rmf.ResourceFactory()
-	ko := rf.EmptyObject()
+	ko := r.rd.EmptyObject()
 	if err := r.kc.Get(ctx, req.NamespacedName, ko); err != nil {
 		return nil, client.IgnoreNotFound(err)
 	}
-	return rf.ResourceFromObject(ko), nil
+	return r.rd.ResourceFromObject(ko), nil
 }
 
 // handleReconcileError will handle errors from reconcile handlers, which
@@ -202,6 +213,7 @@ func NewReconciler(
 ) acktypes.AWSResourceReconciler {
 	return &reconciler{
 		rmf: rmf,
+		rd:  rmf.ResourceDescriptor(),
 		log: log,
 	}
 }

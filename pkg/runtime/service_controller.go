@@ -73,7 +73,7 @@ func (c *ServiceController) WithResourceManagerFactories(
 	}
 
 	for _, rmf := range rmfs {
-		c.rmFactories[rmf.GroupKind()] = rmf
+		c.rmFactories[rmf.ResourceDescriptor().GroupKind().String()] = rmf
 	}
 	return c
 }
