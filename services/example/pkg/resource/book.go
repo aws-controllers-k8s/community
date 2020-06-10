@@ -14,6 +14,8 @@
 package resource
 
 import (
+	k8srt "k8s.io/apimachinery/pkg/runtime"
+
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
@@ -43,4 +45,10 @@ func (r *bookResource) AccountID() acktypes.AWSAccountID {
 	// TODO(jaypipes): Returns AWS Account ID from the common metadata that all
 	// ACK CRs will share.
 	return "example-account-id"
+}
+
+// CR returns the Kubernetes custom resource (CR) representation of the
+// AWSResource
+func (r *bookResource) CR() k8srt.Object {
+	return r.ko
 }

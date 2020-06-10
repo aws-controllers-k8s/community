@@ -56,6 +56,9 @@ func (r *bookRes) IsDeleted() bool {
 func (r *bookRes) AccountID() acktypes.AWSAccountID {
 	return "example-account-id"
 }
+func (r *bookRes) CR() runtime.Object {
+	return r.ko
+}
 
 type bookRD struct{}
 
@@ -79,12 +82,14 @@ func (d *bookRD) GroupKind() *metav1.GroupKind {
 		Kind:  "Book",
 	}
 }
-
 func (d *bookRD) EmptyObject() runtime.Object {
 	return &bookstoretypes.Book{}
 }
 func (d *bookRD) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
 	return &bookRes{ko: obj.(*bookstoretypes.Book)}
+}
+func (d *bookRD) UpdateCRStatus(res acktypes.AWSResource) (bool, error) {
+	return false, nil
 }
 
 type bookRMF struct{}

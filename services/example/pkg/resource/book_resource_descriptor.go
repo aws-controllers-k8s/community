@@ -15,7 +15,7 @@ package resource
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8srt "k8s.io/apimachinery/pkg/runtime"
 
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
@@ -44,14 +44,14 @@ func (d *bookResourceDescriptor) GroupKind() *metav1.GroupKind {
 
 // EmptyObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (d *bookResourceDescriptor) EmptyObject() runtime.Object {
+func (d *bookResourceDescriptor) EmptyObject() k8srt.Object {
 	return &svcapitypes.Book{}
 }
 
 // ResourceFromObject returns an AWSResource that has been initialized with the
 // supplied runtime.Object
 func (d *bookResourceDescriptor) ResourceFromObject(
-	obj runtime.Object,
+	obj k8srt.Object,
 ) acktypes.AWSResource {
 	return &bookResource{
 		ko: obj.(*svcapitypes.Book),
@@ -84,4 +84,14 @@ func (d *bookResourceDescriptor) Diff(
 	bc := b.(*bookResource)
 	opts := cmpopts.EquateEmpty()
 	return cmp.Diff(ac.sdko, bc.sdko, opts)
+}
+
+// UpdateCRStatus accepts an AWSResource object and changes the Status
+// sub-object of the AWSResource's Kubernetes custom resource (CR) and
+// returns whether any changes were made
+func (d *bookResourceDescriptor) UpdateCRStatus(
+	res acktypes.AWSResource,
+) (bool, error) {
+	updated := false
+	return updated, nil
 }

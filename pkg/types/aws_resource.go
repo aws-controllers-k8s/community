@@ -13,6 +13,10 @@
 
 package types
 
+import (
+	k8srt "k8s.io/apimachinery/pkg/runtime"
+)
+
 // AWSResource represents a custom resource object in the Kubernetes API that
 // corresponds to a resource in an AWS service API.
 type AWSResource interface {
@@ -22,4 +26,7 @@ type AWSResource interface {
 	// IsDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestemp
 	IsDeleted() bool
+	// CR returns the Kubernetes custom resource (CR) representation
+	// of the AWSResource
+	CR() k8srt.Object
 }
