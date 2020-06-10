@@ -19,9 +19,9 @@ import (
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
+	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
 // bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`

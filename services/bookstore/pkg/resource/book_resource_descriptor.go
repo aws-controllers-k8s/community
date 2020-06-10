@@ -21,7 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
 )
 
 var (

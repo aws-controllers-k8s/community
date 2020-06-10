@@ -14,98 +14,31 @@
 package runtime_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
-	bookstoretypes "github.com/aws/aws-service-operator-k8s/pkg/test/fixture/bookstore/apis/v1alpha1"
+	mocks "github.com/aws/aws-service-operator-k8s/mocks/pkg/types"
 )
-
-type bookRM struct{}
-
-func (rm *bookRM) Exists(ctx context.Context, r acktypes.AWSResource) bool {
-	return false
-}
-func (rm *bookRM) ReadOne(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
-	return nil, nil
-}
-func (rm *bookRM) Create(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
-	return nil, nil
-}
-func (rm *bookRM) Update(ctx context.Context, r acktypes.AWSResource) (acktypes.AWSResource, error) {
-	return nil, nil
-}
-func (rm *bookRM) Delete(ctx context.Context, r acktypes.AWSResource) error {
-	return nil
-}
-
-type bookRes struct {
-	ko *bookstoretypes.Book
-}
-
-func (r *bookRes) IsBeingDeleted() bool {
-	return !r.ko.DeletionTimestamp.IsZero()
-}
-
-func (r *bookRes) AccountID() acktypes.AWSAccountID {
-	return "example-account-id"
-}
-func (r *bookRes) CR() runtime.Object {
-	return r.ko
-}
-
-type bookRD struct{}
-
-func (d *bookRD) Equal(
-	a acktypes.AWSResource,
-	b acktypes.AWSResource,
-) bool {
-	return false
-}
-
-func (d *bookRD) Diff(
-	a acktypes.AWSResource,
-	b acktypes.AWSResource,
-) string {
-	return ""
-}
-
-func (d *bookRD) GroupKind() *metav1.GroupKind {
-	return &metav1.GroupKind{
-		Group: "bookstore.services.k8s.aws",
-		Kind:  "Book",
-	}
-}
-func (d *bookRD) EmptyObject() runtime.Object {
-	return &bookstoretypes.Book{}
-}
-func (d *bookRD) ResourceFromObject(obj runtime.Object) acktypes.AWSResource {
-	return &bookRes{ko: obj.(*bookstoretypes.Book)}
-}
-func (d *bookRD) UpdateCRStatus(res acktypes.AWSResource) (bool, error) {
-	return false, nil
-}
-
-type bookRMF struct{}
-
-func (f *bookRMF) ResourceDescriptor() acktypes.AWSResourceDescriptor {
-	return &bookRD{}
-}
-func (f *bookRMF) ManagerFor(id acktypes.AWSAccountID) (acktypes.AWSResourceManager, error) {
-	return &bookRM{}, nil
-}
 
 func TestRegistry(t *testing.T) {
 	require := require.New(t)
 
+	rd := &mocks.AWSResourceDescriptor{}
+	rd.On("GroupKind").Return(
+		&metav1.GroupKind{
+			Group: "bookstore.services.k8s.aws",
+			Kind:  "Book",
+		},
+	)
+
+	rmf := &mocks.AWSResourceManagerFactory{}
+	rmf.On("ResourceDescriptor").Return(rd)
+
 	reg := ackrt.NewRegistry()
-	rmf := &bookRMF{}
 
 	rmfs := reg.GetResourceManagerFactories()
 	require.Empty(rmfs)
@@ -114,4 +47,7 @@ func TestRegistry(t *testing.T) {
 	rmfs = reg.GetResourceManagerFactories()
 	require.NotEmpty(rmfs)
 	require.Contains(rmfs, rmf)
+
+	rmf.AssertCalled(t, "ResourceDescriptor")
+	rd.AssertCalled(t, "GroupKind")
 }

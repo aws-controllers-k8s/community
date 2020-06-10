@@ -18,7 +18,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-service-operator-k8s/services/example/pkg/resource"
+	"github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
 )
 
 func TestRegistry(t *testing.T) {
