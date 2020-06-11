@@ -61,7 +61,7 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
 	).For(
-		rd.EmptyObject(),
+		rd.EmptyRuntimeObject(),
 	).Complete(r)
 }
 
@@ -97,7 +97,7 @@ func (r *reconciler) sync(
 ) error {
 	var latest acktypes.AWSResource // the newly created or mutated resource
 
-	// TODO(jaypipes): Handle all dependent resources. The AWSResource
+	// TODO(jaypipes): Validate all dependent resources. The AWSResource
 	// interface needs to get some methods that return schema relationships,
 	// first though
 
@@ -106,6 +106,16 @@ func (r *reconciler) sync(
 		if err != ackerr.NotFound {
 			return err
 		}
+
+		// Before we create the backend AWS service resources, let's first mark
+		// the CR as being managed by ACK. Internally, this means adding a
+		// finalizer to the CR; a finalizer that is removed once ACK no longer
+		// manages the resource OR if the backend AWS service resource is
+		// properly deleted.
+		if err = r.setResourceManaged(ctx, desired); err != nil {
+			return err
+		}
+
 		latest, err = rm.Create(ctx, desired)
 		if err != nil {
 			return err
@@ -144,7 +154,11 @@ func (r *reconciler) sync(
 	if !changedStatus {
 		return nil
 	}
-	err = r.kc.Status().Patch(ctx, latest.CR(), client.MergeFrom(desired.CR()))
+	err = r.kc.Status().Patch(
+		ctx,
+		latest.RuntimeObject(),
+		client.MergeFrom(desired.RuntimeObject()),
+	)
 	if err != nil {
 		return err
 	}
@@ -173,7 +187,70 @@ func (r *reconciler) cleanup(
 		}
 		return err
 	}
-	return rm.Delete(ctx, observed)
+	if err = rm.Delete(ctx, observed); err != nil {
+		return err
+	}
+
+	// Now that external AWS service resources have been appropriately cleaned
+	// up, we remove the finalizer representing the CR is managed by ACK,
+	// allowing the CR to be deleted by the Kubernetes API server
+	return r.setResourceUnmanaged(ctx, observed)
+}
+
+// setResourceManaged marks the underlying CR in the supplied AWSResource with
+// a finalizer that indicates the object is under ACK management and will not
+// be deleted until that finalizer is removed (in setResourceUnmanaged())
+func (r *reconciler) setResourceManaged(
+	ctx context.Context,
+	res acktypes.AWSResource,
+) error {
+	if r.rd.IsManaged(res) {
+		return nil
+	}
+	orig := res.RuntimeObject().DeepCopyObject()
+	r.rd.MarkManaged(res)
+	err := r.kc.Patch(
+		ctx,
+		res.RuntimeObject(),
+		client.MergeFrom(orig),
+	)
+	if err != nil {
+		return err
+	}
+	r.log.V(2).Info(
+		"reconciler marked resource as managed",
+		"kind", r.rd.GroupKind().String(),
+		"account_id", res.AccountID(),
+	)
+	return nil
+}
+
+// setResourceUnmanaged removes a finalizer from the underlying CR in the
+// supplied AWSResource that indicates the object is under ACK management. This
+// allows the CR to be deleted by the Kubernetes API server.
+func (r *reconciler) setResourceUnmanaged(
+	ctx context.Context,
+	res acktypes.AWSResource,
+) error {
+	if !r.rd.IsManaged(res) {
+		return nil
+	}
+	orig := res.RuntimeObject().DeepCopyObject()
+	r.rd.MarkUnmanaged(res)
+	err := r.kc.Patch(
+		ctx,
+		res.RuntimeObject(),
+		client.MergeFrom(orig),
+	)
+	if err != nil {
+		return err
+	}
+	r.log.V(2).Info(
+		"reconciler removed resource from management",
+		"kind", r.rd.GroupKind().String(),
+		"account_id", res.AccountID(),
+	)
+	return nil
 }
 
 // getAWSResource returns an AWSResource representing the requested Kubernetes
@@ -182,11 +259,11 @@ func (r *reconciler) getAWSResource(
 	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
-	ko := r.rd.EmptyObject()
-	if err := r.kc.Get(ctx, req.NamespacedName, ko); err != nil {
+	ro := r.rd.EmptyRuntimeObject()
+	if err := r.kc.Get(ctx, req.NamespacedName, ro); err != nil {
 		return nil, client.IgnoreNotFound(err)
 	}
-	return r.rd.ResourceFromObject(ko), nil
+	return r.rd.ResourceFromRuntimeObject(ro), nil
 }
 
 // handleReconcileError will handle errors from reconcile handlers, which

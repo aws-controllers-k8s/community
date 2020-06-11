@@ -26,12 +26,12 @@ type AWSResourceDescriptor interface {
 	// GroupKind returns a Kubernetes metav1.GroupKind struct that describes
 	// the API Group and Kind of CRs described by the descriptor
 	GroupKind() *metav1.GroupKind
-	// EmptyObject returns an empty object prototype that may be used in
+	// EmptyRuntimeObject returns an empty object prototype that may be used in
 	// apimachinery and k8s client operations
-	EmptyObject() k8srt.Object
-	// ResourceFromObject returns an AWSResource that has been initialized with
-	// the supplied runtime.Object
-	ResourceFromObject(k8srt.Object) AWSResource
+	EmptyRuntimeObject() k8srt.Object
+	// ResourceFromRuntimeObject returns an AWSResource that has been
+	// initialized with the supplied runtime.Object
+	ResourceFromRuntimeObject(k8srt.Object) AWSResource
 	// Equal returns true if the two supplied AWSResources have the same
 	// content. The underlying types of the two supplied AWSResources should be
 	// the same. In other words, the Equal() method should be called with the
@@ -46,4 +46,22 @@ type AWSResourceDescriptor interface {
 	// sub-object of the AWSResource's Kubernetes custom resource (CR) and
 	// returns whether any changes were made
 	UpdateCRStatus(AWSResource) (bool, error)
+	// IsManaged returns true if the supplied AWSResource is under the
+	// management of an ACK service controller. What this means in practice is
+	// that the underlying custom resource (CR) in the AWSResource has had a
+	// resource-specific finalizer associated with it.
+	IsManaged(AWSResource) bool
+	// MarkManaged places the supplied resource under the management of ACK.
+	// What this typically means is that the resource manager will decorate the
+	// underlying custom resource (CR) with a finalizer that indicates ACK is
+	// managing the resource and the underlying CR may not be deleted until ACK
+	// is finished cleaning up any backend AWS service resources associated
+	// with the CR.
+	MarkManaged(AWSResource)
+	// MarkUnmanaged removes the supplied resource from management by ACK.
+	// What this typically means is that the resource manager will remove a
+	// finalizer underlying custom resource (CR) that indicates ACK is managing
+	// the resource. This will allow the Kubernetes API server to delete the
+	// underlying CR.
+	MarkUnmanaged(AWSResource)
 }
