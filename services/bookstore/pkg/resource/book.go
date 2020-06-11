@@ -19,9 +19,9 @@ import (
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
+	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/example/sdk/service/bookstore"
+	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
 // bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
@@ -33,9 +33,9 @@ type bookResource struct {
 	sdko *svcsdk.BookData
 }
 
-// IsDeleted returns true if the Kubernetes resource has a non-zero deletion
-// timestemp
-func (r *bookResource) IsDeleted() bool {
+// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
+// deletion timestemp
+func (r *bookResource) IsBeingDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
 }
 

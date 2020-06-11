@@ -23,8 +23,8 @@ import (
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 
-	svctypes "github.com/aws/aws-service-operator-k8s/services/example/apis/v1alpha1"
-	svcresource "github.com/aws/aws-service-operator-k8s/services/example/pkg/resource"
+	svctypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
+	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
 )
 
 var (

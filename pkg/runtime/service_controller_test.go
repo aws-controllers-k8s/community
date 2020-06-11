@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -31,7 +32,8 @@ import (
 
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 
-	bookstoretypes "github.com/aws/aws-service-operator-k8s/pkg/test/fixture/bookstore/apis/v1alpha1"
+	mocks "github.com/aws/aws-service-operator-k8s/mocks/pkg/types"
+	bookstoretypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
 )
 
 var (
@@ -65,8 +67,21 @@ func (m *fakeManager) GetWebhookServer() *webhook.Server                        
 func TestServiceController(t *testing.T) {
 	require := require.New(t)
 
+	rd := &mocks.AWSResourceDescriptor{}
+	rd.On("GroupKind").Return(
+		&metav1.GroupKind{
+			Group: "bookstore.services.k8s.aws",
+			Kind:  "Book",
+		},
+	)
+	rd.On("EmptyObject").Return(
+		&bookstoretypes.Book{},
+	)
+
+	rmf := &mocks.AWSResourceManagerFactory{}
+	rmf.On("ResourceDescriptor").Return(rd)
+
 	reg := ackrt.NewRegistry()
-	rmf := &bookRMF{}
 	reg.RegisterResourceManagerFactory(rmf)
 
 	sc := ackrt.NewServiceController("bookstore", "bookstore.services.k8s.aws")

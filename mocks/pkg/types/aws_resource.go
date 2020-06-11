@@ -44,8 +44,8 @@ func (_m *AWSResource) CR() runtime.Object {
 	return r0
 }
 
-// IsDeleted provides a mock function with given fields:
-func (_m *AWSResource) IsDeleted() bool {
+// IsBeingDeleted provides a mock function with given fields:
+func (_m *AWSResource) IsBeingDeleted() bool {
 	ret := _m.Called()
 
 	var r0 bool

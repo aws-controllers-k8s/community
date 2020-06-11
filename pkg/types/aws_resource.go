@@ -23,9 +23,9 @@ type AWSResource interface {
 	// AccountID returns the AWS account identifier in which the backend AWS
 	// resource resides
 	AccountID() AWSAccountID
-	// IsDeleted returns true if the Kubernetes resource has a non-zero
+	// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestemp
-	IsDeleted() bool
+	IsBeingDeleted() bool
 	// CR returns the Kubernetes custom resource (CR) representation
 	// of the AWSResource
 	CR() k8srt.Object
