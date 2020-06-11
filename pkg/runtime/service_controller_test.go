@@ -74,7 +74,7 @@ func TestServiceController(t *testing.T) {
 			Kind:  "Book",
 		},
 	)
-	rd.On("EmptyObject").Return(
+	rd.On("EmptyRuntimeObject").Return(
 		&bookstoretypes.Book{},
 	)
 
@@ -109,4 +109,5 @@ func TestServiceController(t *testing.T) {
 		}
 	}
 	require.True(foundBookRecon)
+	rd.AssertCalled(t, "EmptyRuntimeObject")
 }

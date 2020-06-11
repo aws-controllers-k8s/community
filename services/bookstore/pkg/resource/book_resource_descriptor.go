@@ -15,13 +15,18 @@ package resource
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8srt "k8s.io/apimachinery/pkg/runtime"
+	k8sapirt "k8s.io/apimachinery/pkg/runtime"
+	k8sctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
+)
+
+const (
+	bookFinalizerString = "finalizers.bookstore.services.k8s.aws/Book"
 )
 
 var (
@@ -42,16 +47,16 @@ func (d *bookResourceDescriptor) GroupKind() *metav1.GroupKind {
 	return &bookResourceGK
 }
 
-// EmptyObject returns an empty object prototype that may be used in
+// EmptyRuntimeObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (d *bookResourceDescriptor) EmptyObject() k8srt.Object {
+func (d *bookResourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
 	return &svcapitypes.Book{}
 }
 
-// ResourceFromObject returns an AWSResource that has been initialized with the
-// supplied runtime.Object
-func (d *bookResourceDescriptor) ResourceFromObject(
-	obj k8srt.Object,
+// ResourceFromRuntimeObject returns an AWSResource that has been initialized
+// with the supplied runtime.Object
+func (d *bookResourceDescriptor) ResourceFromRuntimeObject(
+	obj k8sapirt.Object,
 ) acktypes.AWSResource {
 	return &bookResource{
 		ko: obj.(*svcapitypes.Book),
@@ -94,4 +99,68 @@ func (d *bookResourceDescriptor) UpdateCRStatus(
 ) (bool, error) {
 	updated := false
 	return updated, nil
+}
+
+// IsManaged returns true if the supplied AWSResource is under the management
+// of an ACK service controller. What this means in practice is that the
+// underlying custom resource (CR) in the AWSResource has had a
+// resource-specific finalizer associated with it.
+func (d *bookResourceDescriptor) IsManaged(
+	res acktypes.AWSResource,
+) bool {
+	obj := res.RuntimeMetaObject()
+	if obj == nil {
+		// Should not happen. If it does, there is a bug in the code
+		panic("nil RuntimeMetaObject in AWSResource")
+	}
+	// Remove use of custom code once
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/994 is
+	// fixed. This should be able to be:
+	//
+	// return k8sctrlutil.ContainsFinalizer(obj, bookFinalizerString)
+	return containsFinalizer(obj, bookFinalizerString)
+}
+
+// Remove once https://github.com/kubernetes-sigs/controller-runtime/issues/994
+// is fixed.
+func containsFinalizer(obj acktypes.RuntimeMetaObject, finalizer string) bool {
+	f := obj.GetFinalizers()
+	for _, e := range f {
+		if e == finalizer {
+			return true
+		}
+	}
+	return false
+}
+
+// MarkManaged places the supplied resource under the management of ACK.  What
+// this typically means is that the resource manager will decorate the
+// underlying custom resource (CR) with a finalizer that indicates ACK is
+// managing the resource and the underlying CR may not be deleted until ACK is
+// finished cleaning up any backend AWS service resources associated with the
+// CR.
+func (d *bookResourceDescriptor) MarkManaged(
+	res acktypes.AWSResource,
+) {
+	obj := res.RuntimeMetaObject()
+	if obj == nil {
+		// Should not happen. If it does, there is a bug in the code
+		panic("nil RuntimeMetaObject in AWSResource")
+	}
+	k8sctrlutil.AddFinalizer(obj, bookFinalizerString)
+}
+
+// MarkUnmanaged removes the supplied resource from management by ACK.  What
+// this typically means is that the resource manager will remove a finalizer
+// underlying custom resource (CR) that indicates ACK is managing the resource.
+// This will allow the Kubernetes API server to delete the underlying CR.
+func (d *bookResourceDescriptor) MarkUnmanaged(
+	res acktypes.AWSResource,
+) {
+	obj := res.RuntimeMetaObject()
+	if obj == nil {
+		// Should not happen. If it does, there is a bug in the code
+		panic("nil RuntimeMetaObject in AWSResource")
+	}
+	k8sctrlutil.RemoveFinalizer(obj, bookFinalizerString)
 }

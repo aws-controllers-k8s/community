@@ -28,22 +28,6 @@ func (_m *AWSResource) AccountID() types.AWSAccountID {
 	return r0
 }
 
-// CR provides a mock function with given fields:
-func (_m *AWSResource) CR() runtime.Object {
-	ret := _m.Called()
-
-	var r0 runtime.Object
-	if rf, ok := ret.Get(0).(func() runtime.Object); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(runtime.Object)
-		}
-	}
-
-	return r0
-}
-
 // IsBeingDeleted provides a mock function with given fields:
 func (_m *AWSResource) IsBeingDeleted() bool {
 	ret := _m.Called()
@@ -53,6 +37,38 @@ func (_m *AWSResource) IsBeingDeleted() bool {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// RuntimeMetaObject provides a mock function with given fields:
+func (_m *AWSResource) RuntimeMetaObject() types.RuntimeMetaObject {
+	ret := _m.Called()
+
+	var r0 types.RuntimeMetaObject
+	if rf, ok := ret.Get(0).(func() types.RuntimeMetaObject); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.RuntimeMetaObject)
+		}
+	}
+
+	return r0
+}
+
+// RuntimeObject provides a mock function with given fields:
+func (_m *AWSResource) RuntimeObject() runtime.Object {
+	ret := _m.Called()
+
+	var r0 runtime.Object
+	if rf, ok := ret.Get(0).(func() runtime.Object); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(runtime.Object)
+		}
 	}
 
 	return r0

@@ -30,8 +30,8 @@ func (_m *AWSResourceDescriptor) Diff(_a0 types.AWSResource, _a1 types.AWSResour
 	return r0
 }
 
-// EmptyObject provides a mock function with given fields:
-func (_m *AWSResourceDescriptor) EmptyObject() runtime.Object {
+// EmptyRuntimeObject provides a mock function with given fields:
+func (_m *AWSResourceDescriptor) EmptyRuntimeObject() runtime.Object {
 	ret := _m.Called()
 
 	var r0 runtime.Object
@@ -76,8 +76,32 @@ func (_m *AWSResourceDescriptor) GroupKind() *v1.GroupKind {
 	return r0
 }
 
-// ResourceFromObject provides a mock function with given fields: _a0
-func (_m *AWSResourceDescriptor) ResourceFromObject(_a0 runtime.Object) types.AWSResource {
+// IsManaged provides a mock function with given fields: _a0
+func (_m *AWSResourceDescriptor) IsManaged(_a0 types.AWSResource) bool {
+	ret := _m.Called(_a0)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(types.AWSResource) bool); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MarkManaged provides a mock function with given fields: _a0
+func (_m *AWSResourceDescriptor) MarkManaged(_a0 types.AWSResource) {
+	_m.Called(_a0)
+}
+
+// MarkUnmanaged provides a mock function with given fields: _a0
+func (_m *AWSResourceDescriptor) MarkUnmanaged(_a0 types.AWSResource) {
+	_m.Called(_a0)
+}
+
+// ResourceFromRuntimeObject provides a mock function with given fields: _a0
+func (_m *AWSResourceDescriptor) ResourceFromRuntimeObject(_a0 runtime.Object) types.AWSResource {
 	ret := _m.Called(_a0)
 
 	var r0 types.AWSResource

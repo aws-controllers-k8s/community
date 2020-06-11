@@ -47,8 +47,15 @@ func (r *bookResource) AccountID() acktypes.AWSAccountID {
 	return "example-account-id"
 }
 
-// CR returns the Kubernetes custom resource (CR) representation of the
-// AWSResource
-func (r *bookResource) CR() k8srt.Object {
+// RuntimeObject returns the Kubernetes apimachinery/runtime representation of
+// the AWSResource
+func (r *bookResource) RuntimeObject() k8srt.Object {
+	return r.ko
+}
+
+// RuntimeMetaObject returns an object that implements both the Kubernetes
+// apimachinery/runtime.Object and the Kubernetes
+// apimachinery/apis/meta/v1.Object interfaces
+func (r *bookResource) RuntimeMetaObject() acktypes.RuntimeMetaObject {
 	return r.ko
 }
