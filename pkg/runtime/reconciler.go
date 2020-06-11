@@ -79,6 +79,12 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	}
 
 	acctID := res.AccountID()
+
+	r.log.WithValues(
+		"account_id", acctID,
+		"kind", r.rd.GroupKind().String(),
+	)
+
 	rm, err := r.rmf.ManagerFor(acctID)
 
 	if res.IsBeingDeleted() {
@@ -120,11 +126,7 @@ func (r *reconciler) sync(
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info(
-			"reconciler.sync created new resource",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
-		)
+		r.log.V(1).Info("reconciler.sync created new resource")
 	} else {
 		// Check to see if the latest observed state already matches the
 		// desired state and if so, simply return since there's nothing to do
@@ -132,20 +134,15 @@ func (r *reconciler) sync(
 			return nil
 		}
 		diff := r.rd.Diff(desired, latest)
-		r.log.V(2).Info("desired resource state has changed",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
+		r.log.V(2).Info(
+			"desired resource state has changed",
 			"diff", diff,
 		)
 		latest, err = rm.Update(ctx, desired)
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info(
-			"reconciler.sync updated resource",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
-		)
+		r.log.V(1).Info("reconciler.sync updated resource")
 	}
 	changedStatus, err := r.rd.UpdateCRStatus(latest)
 	if err != nil {
@@ -162,11 +159,7 @@ func (r *reconciler) sync(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"patched CR status",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", latest.AccountID(),
-	)
+	r.log.V(2).Info("patched CR status")
 	return err
 }
 
@@ -217,11 +210,7 @@ func (r *reconciler) setResourceManaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"reconciler marked resource as managed",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", res.AccountID(),
-	)
+	r.log.V(2).Info("reconciler marked resource as managed")
 	return nil
 }
 
@@ -245,11 +234,7 @@ func (r *reconciler) setResourceUnmanaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"reconciler removed resource from management",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", res.AccountID(),
-	)
+	r.log.V(2).Info("reconciler removed resource from management")
 	return nil
 }
 
