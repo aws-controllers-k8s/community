@@ -51,6 +51,9 @@ workflows:
           type: approval
           requires:
             - build
+          filters:
+            branches:
+              only: mvp
       - integration_test:
           requires:
             - build
