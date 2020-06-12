@@ -10,6 +10,9 @@ orbs:
 references:
   environment: &env
     GO111MODULE: "on"
+  filters: &branchfilters
+    branches:
+      only: mvp
 
 jobs:
   build:
@@ -52,11 +55,9 @@ workflows:
           requires:
             - build
           filters:
-            branches:
-              only: mvp
+            <<: *branchfilters
       - integration_test:
           requires:
-            - build
+            - hold
           filters:
-            branches:
-              only: mvp
+            <<: *branchfilters
