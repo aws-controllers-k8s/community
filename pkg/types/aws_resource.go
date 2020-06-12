@@ -30,15 +30,19 @@ type RuntimeMetaObject interface {
 // AWSResource represents a custom resource object in the Kubernetes API that
 // corresponds to a resource in an AWS service API.
 type AWSResource interface {
-	// AccountID returns the AWS account identifier in which the backend AWS
-	// resource resides
-	AccountID() AWSAccountID
+	// Identifiers returns an AWSResourceIdentifiers object containing various
+	// identifying information, including the AWS account ID that owns the
+	// resource, the resource's AWS Resource Name (ARN)
+	Identifiers() AWSResourceIdentifiers
 	// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestemp
 	IsBeingDeleted() bool
 	// RuntimeObject returns the Kubernetes apimachinery/runtime representation
 	// of the AWSResource
 	RuntimeObject() k8srt.Object
+	// MetaObject returns the Kubernetes apimachinery/apis/meta/v1.Object
+	// representation of the AWSResource
+	MetaObject() metav1.Object
 	// RuntimeMetaObject returns an object that implements both the Kubernetes
 	// apimachinery/runtime.Object and the Kubernetes
 	// apimachinery/apis/meta/v1.Object interfaces

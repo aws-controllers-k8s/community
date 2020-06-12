@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	v1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	types "github.com/aws/aws-service-operator-k8s/pkg/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -13,11 +14,11 @@ type AWSResourceManagerFactory struct {
 }
 
 // ManagerFor provides a mock function with given fields: _a0
-func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSAccountID) (types.AWSResourceManager, error) {
+func (_m *AWSResourceManagerFactory) ManagerFor(_a0 v1alpha1.AWSAccountID) (types.AWSResourceManager, error) {
 	ret := _m.Called(_a0)
 
 	var r0 types.AWSResourceManager
-	if rf, ok := ret.Get(0).(func(types.AWSAccountID) types.AWSResourceManager); ok {
+	if rf, ok := ret.Get(0).(func(v1alpha1.AWSAccountID) types.AWSResourceManager); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
@@ -26,7 +27,7 @@ func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSAccountID) (types.A
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSAccountID) error); ok {
+	if rf, ok := ret.Get(1).(func(v1alpha1.AWSAccountID) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

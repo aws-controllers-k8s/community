@@ -5,16 +5,12 @@ package {{ .APIVersion }}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 )
 
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Spec struct {
-	// The ARN attr is on all AWS service API CRs. It represents the Amazon
-	// Resource Name for the object. CRs of this Kind that are created without
-	// an ARN attr will be created by the controller. CRs of this Kind that
-	// are created with a non-nil ARN attr are considered by the controller to
-	// already exist in the backend AWS service API.
-	ARN *string `json:"arn,omitempty"`
 	{{- range $attrName, $attr := .CRD.SpecAttrs }}
 	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
@@ -22,6 +18,10 @@ type {{ .CRD.Kind }}Spec struct {
 
 // {{ .CRD.Kind }}Status defines the observed state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Status struct {
+	// All CRs managed by ACK will have a common `Status.ACKResourceMetadata`
+	// member that is used to contain resource sync state, account ownership,
+	// constructed ARN for the resource
+	ACKResourceMetadata *ackv1alpha1.ResourceMetadata `json:"ackResourceMetadata"`
 	{{- range $attrName, $attr := .CRD.StatusAttrs }}
 	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
@@ -39,7 +39,7 @@ type {{ .CRD.Kind }} struct {
 type {{ .CRD.Kind }}List struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []{{ .CRD.Kind }} `json:"items"`
+	Items []{{ .CRD.Kind }} `json:"items"`
 }
 
 func init() {

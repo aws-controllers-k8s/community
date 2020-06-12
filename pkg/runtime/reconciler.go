@@ -22,6 +22,7 @@ import (
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
 	"github.com/aws/aws-service-operator-k8s/pkg/requeue"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
@@ -78,7 +79,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		return err
 	}
 
-	acctID := res.AccountID()
+	acctID := r.getOwnerAccountID(res)
 
 	r.log.WithValues(
 		"account_id", acctID,
@@ -279,6 +280,25 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 	}
 
 	return ctrlrt.Result{}, err
+}
+
+// getOwnerAccountID returns the AWS account that owns the supplied resource.
+// The function looks to the common `Status.ACKResourceState` object, followed
+// by the ACK OwnerAccountAccountID annotation, followed by the default AWS
+// account ID associated with the Kubernetes Namespace in which the CR was
+// created, followed by the AWS Account in which the IAM Role that the service
+// controller is in.
+func (r *reconciler) getOwnerAccountID(
+	res acktypes.AWSResource,
+) ackv1alpha1.AWSAccountID {
+	acctID := res.Identifiers().OwnerAccountID()
+	if acctID != nil {
+		return *acctID
+	}
+	// OK, it's a new resource. Look for an override account ID annotation,
+	// which indicates a cross-account resource request
+	// TODO(jaypipes)
+	return ""
 }
 
 // NewReconciler returns a new reconciler object that

@@ -13,8 +13,15 @@
 
 package types
 
-// AWSAccountID represents an AWS account identifier
-type AWSAccountID string
+import (
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
+)
 
-// AWSResourceName represents an AWS Resource Name (ARN)
-type AWSResourceName string
+// AWSResourceIdentifiers has methods that returns common identifying
+// information about a resource
+type AWSResourceIdentifiers interface {
+	// OwnerAccountID returns the AWS account identifier in which the
+	// backend AWS resource resides, or nil if this information is not known
+	// for the resource
+	OwnerAccountID() *ackv1alpha1.AWSAccountID
+}
