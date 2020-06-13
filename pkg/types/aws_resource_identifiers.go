@@ -20,6 +20,10 @@ import (
 // AWSResourceIdentifiers has methods that returns common identifying
 // information about a resource
 type AWSResourceIdentifiers interface {
+	// ARN returns the AWS Resource Name for the backend AWS resource. If nil,
+	// this means the resource has not yet been created in the backend AWS
+	// service.
+	ARN() *ackv1alpha1.AWSResourceName
 	// OwnerAccountID returns the AWS account identifier in which the
 	// backend AWS resource resides, or nil if this information is not known
 	// for the resource

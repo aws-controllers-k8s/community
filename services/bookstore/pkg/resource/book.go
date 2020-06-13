@@ -17,7 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srt "k8s.io/apimachinery/pkg/runtime"
 
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
@@ -65,18 +64,4 @@ func (r *bookResource) MetaObject() metav1.Object {
 // apimachinery/apis/meta/v1.Object interfaces
 func (r *bookResource) RuntimeMetaObject() acktypes.RuntimeMetaObject {
 	return r.ko
-}
-
-type bookResourceIdentifiers struct {
-	meta *ackv1alpha1.ResourceMetadata
-}
-
-// OwnerAccountID returns the AWS account identifier in which the
-// backend AWS resource resides, or nil if this information is not known
-// for the resource
-func (ri *bookResourceIdentifiers) OwnerAccountID() *ackv1alpha1.AWSAccountID {
-	if ri.meta != nil {
-		return ri.meta.OwnerAccountID
-	}
-	return nil
 }

@@ -104,6 +104,8 @@ func (r *reconciler) sync(
 ) error {
 	var latest acktypes.AWSResource // the newly created or mutated resource
 
+	isAdopted := IsAdopted(desired)
+
 	// TODO(jaypipes): Validate all dependent resources. The AWSResource
 	// interface needs to get some methods that return schema relationships,
 	// first though
@@ -113,7 +115,9 @@ func (r *reconciler) sync(
 		if err != ackerr.NotFound {
 			return err
 		}
-
+		if isAdopted {
+			return ackerr.AdoptedResourceNotFound
+		}
 		// Before we create the backend AWS service resources, let's first mark
 		// the CR as being managed by ACK. Internally, this means adding a
 		// finalizer to the CR; a finalizer that is removed once ACK no longer
@@ -127,7 +131,10 @@ func (r *reconciler) sync(
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info("reconciler.sync created new resource")
+		r.log.V(1).Info(
+			"reconciler.sync created new resource",
+			"arn", latest.Identifiers().ARN(),
+		)
 	} else {
 		// Check to see if the latest observed state already matches the
 		// desired state and if so, simply return since there's nothing to do
@@ -138,6 +145,8 @@ func (r *reconciler) sync(
 		r.log.V(2).Info(
 			"desired resource state has changed",
 			"diff", diff,
+			"arn", latest.Identifiers().ARN(),
+			"is_adopted", isAdopted,
 		)
 		latest, err = rm.Update(ctx, desired)
 		if err != nil {
