@@ -37,6 +37,11 @@ type BookStatus struct {
 	// member that is used to contain resource sync state, account ownership,
 	// constructed ARN for the resource
 	ACKResourceMetadata *ackv1alpha1.ResourceMetadata `json:"ackResourceMetadata"`
+	// All CRS managed by ACK have a common `Status.Conditions` member that
+	// contains a collection of `ackv1alpha1.Condition` objects that describe
+	// the various terminal states of the CR and its backend AWS service API
+	// resource
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
 }
 
 // Book implements sigs.k8s.io/apimachinery/pkg/runtime.Object

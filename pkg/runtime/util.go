@@ -14,6 +14,8 @@
 package runtime
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 )
@@ -33,6 +35,17 @@ func IsAdopted(res acktypes.AWSResource) bool {
 	for k := range mo.GetAnnotations() {
 		if k == ackv1alpha1.AnnotationARN {
 			return true
+		}
+	}
+	return false
+}
+
+// IsSynced returns true if the supplied AWSResource's CR and associated
+// backend AWS service API resource are in sync.
+func IsSynced(res acktypes.AWSResource) bool {
+	for _, c := range res.Conditions() {
+		if c.Type == ackv1alpha1.ConditionTypeResourceSynced {
+			return c.Status == corev1.ConditionTrue
 		}
 	}
 	return false

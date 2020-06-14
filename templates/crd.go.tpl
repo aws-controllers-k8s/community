@@ -18,10 +18,15 @@ type {{ .CRD.Kind }}Spec struct {
 
 // {{ .CRD.Kind }}Status defines the observed state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Status struct {
-	// All CRs managed by ACK will have a common `Status.ACKResourceMetadata`
-	// member that is used to contain resource sync state, account ownership,
+	// All CRs managed by ACK have a common `Status.ACKResourceMetadata` member
+	// that is used to contain resource sync state, account ownership,
 	// constructed ARN for the resource
 	ACKResourceMetadata *ackv1alpha1.ResourceMetadata `json:"ackResourceMetadata"`
+	// All CRS managed by ACK have a common `Status.Conditions` member that
+	// contains a collection of `ackv1alpha1.Condition` objects that describe
+	// the various terminal states of the CR and its backend AWS service API
+	// resource
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
 	{{- range $attrName, $attr := .CRD.StatusAttrs }}
 	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}

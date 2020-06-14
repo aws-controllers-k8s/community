@@ -16,6 +16,8 @@ package types
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srt "k8s.io/apimachinery/pkg/runtime"
+
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 )
 
 // RuntimeMetaObject contains both the Kubernetes apimachinery/runtime.Object
@@ -34,6 +36,8 @@ type AWSResource interface {
 	// identifying information, including the AWS account ID that owns the
 	// resource, the resource's AWS Resource Name (ARN)
 	Identifiers() AWSResourceIdentifiers
+	// Conditions returns the ACK Conditions collection for the AWSResource
+	Conditions() []*ackv1alpha1.Condition
 	// IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 	// deletion timestemp
 	IsBeingDeleted() bool
