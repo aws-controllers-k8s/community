@@ -18,6 +18,8 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+
+	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
 )
 
 // bookResourceManagerFactory produces bookResourceManager objects. It
@@ -65,5 +67,5 @@ func (f *bookResourceManagerFactory) ManagerFor(
 }
 
 func init() {
-	RegisterManagerFactory(&bookResourceManagerFactory{})
+	svcresource.RegisterManagerFactory(&bookResourceManagerFactory{})
 }
