@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
@@ -36,7 +37,7 @@ import (
 type bookResourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
-	awsAccountID acktypes.AWSAccountID
+	awsAccountID ackv1alpha1.AWSAccountID
 	// sess is the AWS SDK Session object used to communicate with the backend
 	// AWS service API
 	sess *session.Session
@@ -188,7 +189,7 @@ func (rm *bookResourceManager) Delete(
 }
 
 func newBookResourceManager(
-	id acktypes.AWSAccountID,
+	id ackv1alpha1.AWSAccountID,
 ) (*bookResourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {

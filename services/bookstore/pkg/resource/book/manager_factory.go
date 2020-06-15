@@ -16,7 +16,10 @@ package resource
 import (
 	"sync"
 
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+
+	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
 )
 
 // bookResourceManagerFactory produces bookResourceManager objects. It
@@ -24,7 +27,7 @@ import (
 type bookResourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[acktypes.AWSAccountID]*bookResourceManager
+	rmCache map[ackv1alpha1.AWSAccountID]*bookResourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
@@ -42,7 +45,7 @@ func (f *bookResourceManagerFactory) GroupKind() string {
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
 func (f *bookResourceManagerFactory) ManagerFor(
-	id acktypes.AWSAccountID,
+	id ackv1alpha1.AWSAccountID,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
 	rm, found := f.rmCache[id]
@@ -64,5 +67,5 @@ func (f *bookResourceManagerFactory) ManagerFor(
 }
 
 func init() {
-	RegisterManagerFactory(&bookResourceManagerFactory{})
+	svcresource.RegisterManagerFactory(&bookResourceManagerFactory{})
 }

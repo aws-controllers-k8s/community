@@ -23,4 +23,5 @@ var (
 		"error binding controller manager to reconciler before " +
 			"setting resource manager factory",
 	)
+	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
 )

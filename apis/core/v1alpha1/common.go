@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package types
+package v1alpha1
 
 // AWSAccountID represents an AWS account identifier
 type AWSAccountID string

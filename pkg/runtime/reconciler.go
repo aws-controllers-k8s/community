@@ -22,6 +22,7 @@ import (
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
 	"github.com/aws/aws-service-operator-k8s/pkg/requeue"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
@@ -78,7 +79,13 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		return err
 	}
 
-	acctID := res.AccountID()
+	acctID := r.getOwnerAccountID(res)
+
+	r.log.WithValues(
+		"account_id", acctID,
+		"kind", r.rd.GroupKind().String(),
+	)
+
 	rm, err := r.rmf.ManagerFor(acctID)
 
 	if res.IsBeingDeleted() {
@@ -97,6 +104,8 @@ func (r *reconciler) sync(
 ) error {
 	var latest acktypes.AWSResource // the newly created or mutated resource
 
+	isAdopted := IsAdopted(desired)
+
 	// TODO(jaypipes): Validate all dependent resources. The AWSResource
 	// interface needs to get some methods that return schema relationships,
 	// first though
@@ -106,7 +115,9 @@ func (r *reconciler) sync(
 		if err != ackerr.NotFound {
 			return err
 		}
-
+		if isAdopted {
+			return ackerr.AdoptedResourceNotFound
+		}
 		// Before we create the backend AWS service resources, let's first mark
 		// the CR as being managed by ACK. Internally, this means adding a
 		// finalizer to the CR; a finalizer that is removed once ACK no longer
@@ -122,8 +133,7 @@ func (r *reconciler) sync(
 		}
 		r.log.V(1).Info(
 			"reconciler.sync created new resource",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
+			"arn", latest.Identifiers().ARN(),
 		)
 	} else {
 		// Check to see if the latest observed state already matches the
@@ -132,20 +142,17 @@ func (r *reconciler) sync(
 			return nil
 		}
 		diff := r.rd.Diff(desired, latest)
-		r.log.V(2).Info("desired resource state has changed",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
+		r.log.V(2).Info(
+			"desired resource state has changed",
 			"diff", diff,
+			"arn", latest.Identifiers().ARN(),
+			"is_adopted", isAdopted,
 		)
 		latest, err = rm.Update(ctx, desired)
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info(
-			"reconciler.sync updated resource",
-			"kind", r.rd.GroupKind().String(),
-			"account_id", latest.AccountID(),
-		)
+		r.log.V(1).Info("reconciler.sync updated resource")
 	}
 	changedStatus, err := r.rd.UpdateCRStatus(latest)
 	if err != nil {
@@ -162,11 +169,7 @@ func (r *reconciler) sync(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"patched CR status",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", latest.AccountID(),
-	)
+	r.log.V(2).Info("patched CR status")
 	return err
 }
 
@@ -217,11 +220,7 @@ func (r *reconciler) setResourceManaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"reconciler marked resource as managed",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", res.AccountID(),
-	)
+	r.log.V(2).Info("reconciler marked resource as managed")
 	return nil
 }
 
@@ -245,11 +244,7 @@ func (r *reconciler) setResourceUnmanaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info(
-		"reconciler removed resource from management",
-		"kind", r.rd.GroupKind().String(),
-		"account_id", res.AccountID(),
-	)
+	r.log.V(2).Info("reconciler removed resource from management")
 	return nil
 }
 
@@ -294,6 +289,25 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 	}
 
 	return ctrlrt.Result{}, err
+}
+
+// getOwnerAccountID returns the AWS account that owns the supplied resource.
+// The function looks to the common `Status.ACKResourceState` object, followed
+// by the ACK OwnerAccountAccountID annotation, followed by the default AWS
+// account ID associated with the Kubernetes Namespace in which the CR was
+// created, followed by the AWS Account in which the IAM Role that the service
+// controller is in.
+func (r *reconciler) getOwnerAccountID(
+	res acktypes.AWSResource,
+) ackv1alpha1.AWSAccountID {
+	acctID := res.Identifiers().OwnerAccountID()
+	if acctID != nil {
+		return *acctID
+	}
+	// OK, it's a new resource. Look for an override account ID annotation,
+	// which indicates a cross-account resource request
+	// TODO(jaypipes)
+	return ""
 }
 
 // NewReconciler returns a new reconciler object that

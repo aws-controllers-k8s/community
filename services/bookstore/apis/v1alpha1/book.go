@@ -15,10 +15,9 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
 
-// TODO(jaypipes): Move the identifier and account information into a common
-// acktypes.Metadata struct
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
+)
 
 // BookSpec defines the desired state of Book
 type BookSpec struct {
@@ -34,9 +33,15 @@ type BookSpec struct {
 
 // BookStatus defines the observed state of Book
 type BookStatus struct {
-	// ARN is the Bookstore API Book object's Amazon Resource Name
-	// +optional
-	ARN *string `json:"ARN,omitempty"`
+	// All CRs managed by ACK will have a common `Status.ACKResourceMetadata`
+	// member that is used to contain resource sync state, account ownership,
+	// constructed ARN for the resource
+	ACKResourceMetadata *ackv1alpha1.ResourceMetadata `json:"ackResourceMetadata"`
+	// All CRS managed by ACK have a common `Status.Conditions` member that
+	// contains a collection of `ackv1alpha1.Condition` objects that describe
+	// the various terminal states of the CR and its backend AWS service API
+	// resource
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
 }
 
 // Book implements sigs.k8s.io/apimachinery/pkg/runtime.Object

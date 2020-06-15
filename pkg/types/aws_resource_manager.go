@@ -13,7 +13,11 @@
 
 package types
 
-import "context"
+import (
+	"context"
+
+	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
+)
 
 // AWSResourceManager is responsible for providing a consistent way to perform
 // CRUD+L operations in a backend AWS service API for Kubernetes custom
@@ -59,5 +63,5 @@ type AWSResourceManagerFactory interface {
 	ResourceDescriptor() AWSResourceDescriptor
 	// ManagerFor returns an AWSResourceManager that manages AWS resources on
 	// behalf of a particular AWS account
-	ManagerFor(AWSAccountID) (AWSResourceManager, error)
+	ManagerFor(ackv1alpha1.AWSAccountID) (AWSResourceManager, error)
 }
