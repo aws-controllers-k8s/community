@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package resource
+package book
 
 import (
 	"sync"
@@ -66,6 +66,12 @@ func (f *bookResourceManagerFactory) ManagerFor(
 	return rm, nil
 }
 
+func newBookResourceManagerFactory() *bookResourceManagerFactory {
+	return &bookResourceManagerFactory{
+		rmCache: map[ackv1alpha1.AWSAccountID]*bookResourceManager{},
+	}
+}
+
 func init() {
-	svcresource.RegisterManagerFactory(&bookResourceManagerFactory{})
+	svcresource.RegisterManagerFactory(newBookResourceManagerFactory())
 }
