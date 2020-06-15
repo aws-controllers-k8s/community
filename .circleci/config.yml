@@ -1,0 +1,63 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.19
+  k8s: circleci/kubernetes@0.11.0
+
+references:
+  environment: &env
+    GO111MODULE: "on"
+  filters: &branchfilters
+    branches:
+      only: mvp
+
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.14.1
+    environment:
+      <<: *env
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+      # specify any bash command here prefixed with `run: `
+      - run: make test
+
+  integration_test:
+    docker:
+      - image: circleci/golang:1.14.1
+    environment:
+      <<: *env
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+      - setup_remote_docker
+      - aws-cli/setup:
+          profile-name: awstester
+      - k8s/install-kubectl:
+          kubectl-version: v1.14.9
+      - run:
+          name: Run the integration tests
+          command: ./scripts/run-integration-tests.sh
+      - store_artifacts:
+          path: /tmp/ack-test
+
+workflows:
+  version: 2
+  check:
+    jobs:
+      - build
+      - hold:
+          type: approval
+          requires:
+            - build
+          filters:
+            <<: *branchfilters
+      - integration_test:
+          requires:
+            - hold
+          filters:
+            <<: *branchfilters
