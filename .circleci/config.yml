@@ -15,7 +15,7 @@ references:
       only: mvp
 
 jobs:
-  build:
+  unit_tests:
     docker:
       - image: circleci/golang:1.14.1
     environment:
@@ -26,7 +26,7 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: make test
 
-  integration_test:
+  integration_tests:
     docker:
       - image: circleci/golang:1.14.1
     environment:
@@ -49,14 +49,14 @@ workflows:
   version: 2
   check:
     jobs:
-      - build
+      - unit_tests
       - hold:
           type: approval
           requires:
-            - build
+            - unit_tests
           filters:
             <<: *branchfilters
-      - integration_test:
+      - integration_tests:
           requires:
             - hold
           filters:
