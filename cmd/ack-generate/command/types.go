@@ -72,19 +72,18 @@ func ensureOutputDir() (bool, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, os.MkdirAll(optOutputPath, os.ModePerm)
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 	if !fi.IsDir() {
-		return false, fmt.Errorf("expected %s to be a directory.", optOutputPath)
+		return false, fmt.Errorf("expected %s to be a directory", optOutputPath)
 	}
 	// Make sure the directory is writeable by the calling user
 	testPath := filepath.Join(optOutputPath, "test")
 	f, err := os.Create(testPath)
 	if err != nil {
 		if os.IsPermission(err) {
-			return true, fmt.Errorf("%s is not a writeable directory.", optOutputPath)
+			return true, fmt.Errorf("%s is not a writeable directory", optOutputPath)
 		}
 		return true, err
 	}
@@ -159,10 +158,9 @@ func writeDocGo(sh *schema.Helper) error {
 		fmt.Println("============================= doc.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "doc.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(optOutputPath, "doc.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeGroupVersionInfoGo(sh *schema.Helper) error {
@@ -183,10 +181,9 @@ func writeGroupVersionInfoGo(sh *schema.Helper) error {
 		fmt.Println("============================= groupversion_info.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "groupversion_info.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(optOutputPath, "groupversion_info.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeEnumsGo(
@@ -211,10 +208,9 @@ func writeEnumsGo(
 		fmt.Println("============================= enums.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "enums.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(optOutputPath, "enums.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeTypesGo(
@@ -236,10 +232,9 @@ func writeTypesGo(
 		fmt.Println("============================= types.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "types.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(optOutputPath, "types.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeCRDGo(crd *model.CRD) error {
@@ -260,10 +255,9 @@ func writeCRDGo(crd *model.CRD) error {
 		fmt.Printf("============================= %s ======================================\n", crdFileName)
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, crdFileName)
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(optOutputPath, crdFileName)
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 // getAPI returns a schema.Helper object representing the API from
@@ -275,7 +269,7 @@ func getSchemaHelper(args []string) (*schema.Helper, error) {
 	switch len(args) {
 	case 0:
 		if b, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument.")
+			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
 		}
 	case 1:
 		fp := filepath.Clean(args[0])
@@ -290,14 +284,14 @@ func getSchemaHelper(args []string) (*schema.Helper, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument.")
+		return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
 	}
 
 	if len(b) < 2 {
-		return nil, fmt.Errorf("expected OpenAPI3 descriptor document but got '%s'.", string(b))
+		return nil, fmt.Errorf("expected OpenAPI3 descriptor document but got '%s'", string(b))
 	}
 
-	var jsonb []byte = b
+	var jsonb = b
 
 	// First get our supplied document into JSON format
 	if contentType == ctYAML || (contentType == ctUnknown && b[0] != '{' && b[0] != '[') {
