@@ -1,8 +1,8 @@
 # Build the manager binary
 FROM golang:1.14.1 as builder
 
-ARG workDirName=/github.com/aws/aws-service-operator-k8s
-WORKDIR $workDirName
+ARG work_dir=/github.com/aws/aws-service-operator-k8s
+WORKDIR $work_dir
 # For building Go Module required
 ENV GOPROXY=direct
 ENV GO111MODULE=on
@@ -17,13 +17,13 @@ COPY go.sum go.sum
 RUN  go mod download
 # Copy the go source
 # TODO: for now copy whole repository. Later once autogeneration is ready, need to determine which dependencies to take in
-COPY . $workDirName/
+COPY . $work_dir/
 # Build
-RUN  go build -a -o bin/manager $workDirName/services/bookstore/cmd/controller/main.go
+RUN  go build -a -o $work_dir/bin/manager $work_dir/services/bookstore/cmd/controller/main.go
 
 
-FROM amazonlinux:latest
-ARG workDirName=/github.com/aws/aws-service-operator-k8s
+FROM amazonlinux:2
+ARG work_dir=/github.com/aws/aws-service-operator-k8s
 WORKDIR /
-COPY --from=builder $workDirName/bin/manager bin/.
-ENTRYPOINT ["./bin/manager"]
+COPY --from=builder $work_dir/bin/manager /bin/.
+ENTRYPOINT ["/bin/manager"]
