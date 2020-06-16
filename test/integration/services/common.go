@@ -3,10 +3,11 @@ package services
 import (
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/onsi/ginkgo/config"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"os"
 )
 
 type LocalTestContextType struct {

@@ -3,8 +3,9 @@ package bookstore
 import (
 	"flag"
 	"fmt"
-	"github.com/aws/aws-service-operator-k8s/test/integration/services"
 	"testing"
+
+	"github.com/aws/aws-service-operator-k8s/test/integration/services"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

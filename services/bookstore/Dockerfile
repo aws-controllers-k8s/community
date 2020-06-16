@@ -19,11 +19,11 @@ RUN  go mod download
 # TODO: for now copy whole repository. Later once autogeneration is ready, need to determine which dependencies to take in
 COPY . $work_dir/
 # Build
-RUN  go build -a -o $work_dir/bin/manager $work_dir/services/bookstore/cmd/controller/main.go
+RUN  go build -a -o $work_dir/bin/controller $work_dir/services/bookstore/cmd/controller/main.go
 
 
 FROM amazonlinux:2
 ARG work_dir=/github.com/aws/aws-service-operator-k8s
 WORKDIR /
-COPY --from=builder $work_dir/bin/manager /bin/.
-ENTRYPOINT ["/bin/manager"]
+COPY --from=builder $work_dir/bin/controller /bin/.
+ENTRYPOINT ["/bin/controller"]
