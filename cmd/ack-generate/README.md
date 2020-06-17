@@ -44,7 +44,30 @@ To generate a controller, we go through several generation phases:
 2) Generate the client, deepcopy and CRD infrastructure from the type
    definitions produced in step #1 (TODO)
 
-3) Generate the controller implementation code (TODO)
+3) Generate the controller implementation code. Every ACK service controller's
+   implementation is fully generated. Use the `ack-generate controller` command to
+   generate the controller implementation once you've generated the API type
+   definitions in steps #1 and #2 above.
+
+   ```
+   ack-generate [--dry-run] controller $service_alias < /path/to/schema.yaml
+   ```
+
+   The `--dry-run` flag causes the command to output the controller
+   implementation to `stdout`. This can be useful to check over the generated
+   code before writing files to a target directory.
+
+   When the `--dry-run` flag is false, the command writes generated files into
+   multiple subdirectories under a root service controller directory (defaults
+   to `services/$service_alias`). These subdirectories are `cmd/controller`
+   which houses the code for the main controller binary and `pkg` which
+   contains packages describing the service controller's resource managers and
+   various registries.
+
+   **NOTE**: For some APIs like the EC2 API, there will be a lot of output
+   (thousands of lines). Some developers find it easier to pass the `--output`
+   flag to a temporary directory and check through the generated files in that
+   way instead.
 
 ## Get an OpenAPI3 Schema document for an AWS service API
 
