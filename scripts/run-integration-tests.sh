@@ -16,6 +16,7 @@ source "$DIR"/lib/cluster.sh
 # Variables used in /lib/aws.sh
 OS=$(go env GOOS)
 ARCH=$(go env GOARCH)
+GO111MODULE=on
 
 : "${AWS_DEFAULT_REGION:=us-west-2}"
 : "${K8S_VERSION:=1.14.6}"
@@ -147,12 +148,37 @@ mkdir -p "$TEST_CONFIG_DIR"
 
 if [[ "$PROVISION" == true ]]; then
     START=$SECONDS
-    #Uncomment Later
-    #up-test-cluster
+#    up-test-cluster
     UP_CLUSTER_DURATION=$((SECONDS - START))
     echo "TIMELINE: Upping test cluster took $UP_CLUSTER_DURATION seconds."
     __cluster_created=1
 fi
+
+
+# TODO: 1. We will run this block of code for Base Version, it will CRDs and push Controller Images to ECR
+# Generate All the CRDs for all the service Base Commit/Tag in /tmp/crd/base
+# make install CRD_DIR="directory path"
+# In general fetch services, build Docker Image for each and push it to ECR if Image:BaseVersion already does not exist.#
+#for d in ./services/*; do
+#    if [ -d "$d" ]; then
+#      echo "$d"
+#        for f in "$d"/*; do
+#          if [ "$f" = "$d"/"Dockerfile" ]; then
+#            echo "$f"
+#            `aws ec2 get-login` returns a docker login string, which we eval here to login to the ECR registry
+# shellcheck disable=SC2046
+#            docker build -t ack/"$d":baseversion .
+#            docker tag "ack"/"$d":baseversion "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_DEFAULT_REGION".amazonaws.com/"$d":baseversion
+#            docker push "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_DEFAULT_REGION".amazonaws.com/"$d"
+#          fi
+#        done
+#    fi
+#done
+
+# TODO: 2. We will run TODO:1 code block for latest version (includes pull request)
+#  generate all CRDs for it to /tmp/crd/test
+#  make install CRD_DIR="directory path"
+
 
 #echo "Using $BASE_CONFIG_PATH as a template"
 #cp "$BASE_CONFIG_PATH" "$TEST_CONFIG_PATH"
@@ -170,56 +196,53 @@ echo "**************************************************************************
 echo "Running integration tests"
 #echo "Running integration tests on default CNI version, $ADDONS_CNI_IMAGE"
 echo ""
+# TODO 3: Apply CRDs for base version
+kubectl apply -f /tmp/crd/base
+
+
+# TODO 4: We will use HELM Chart to create controller for each service.
+# Helm chart will take value of tag which will be substituted in Deployment yaml for each service
+# run helm install service-operators ack-chart/service-operators —set imageTagSuffix=base
 START=$SECONDS
 #pushd ./test/integration
-#GO111MODULE=on go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.focus="\[cni-integration\]" --ginkgo.skip="\[Disruptive\]" \
-#    --assets=./assets
+#TODO 5: Run Integration Test following way recursively so all tests suites will execute recursively
+#go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.r --ginkgo.randomizeAllSpecs --ginkgo.randomizeSuites --assets=./assets
 #TEST_PASS=$?
 #popd
 DEFAULT_INTEGRATION_DURATION=$((SECONDS - START))
-echo "TIMELINE: Default CNI integration tests took $DEFAULT_INTEGRATION_DURATION seconds."
+echo "TIMELINE: Default K8s integration tests suites took $DEFAULT_INTEGRATION_DURATION seconds."
 
 echo "*******************************************************************************"
-#echo "Updating CNI to image $IMAGE_NAME:$TEST_IMAGE_VERSION"
-#echo "Using init container $INIT_IMAGE_NAME:$TEST_IMAGE_VERSION"
-START=$SECONDS
-#$KUBECTL_PATH apply -f "$TEST_CONFIG_PATH"
 
-# Delay based on 3 nodes, 30s grace period per CNI pod
-echo "TODO: Poll and wait for updates to complete instead!"
-#echo "Sleeping for 110s"
-#sleep 110
+#echo "Updating Controller to Latest Test Version"
+START=$SECONDS
+
 CNI_IMAGE_UPDATE_DURATION=$((SECONDS - START))
 echo "TIMELINE: Updating CNI image took $CNI_IMAGE_UPDATE_DURATION seconds."
 
 echo "*******************************************************************************"
 echo "Running integration tests on current image:"
 echo ""
+# TODO 6: Apply CRDs for test/latest version
+kubectl apply -f /tmp/crd/test
+
+# TODO 7. We will use HELM Chart to upgrade  version controller for each service.
+# make install
+# run helm upgrade service-operators ack-chart/service-operators —set imageTagSuffix=latest
+
 START=$SECONDS
 #pushd ./test/integration
-#GO111MODULE=on go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.focus="\[cni-integration\]" --ginkgo.skip="\[Disruptive\]" \
-#    --assets=./assets
+#TODO 8: Run Integration Test following way recursively so all tests suites will execute recursively
+#go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.r --ginkgo.randomizeAllSpecs --ginkgo.randomizeSuites --assets=./assets
 #TEST_PASS=$?
 #popd
 CURRENT_IMAGE_INTEGRATION_DURATION=$((SECONDS - START))
 echo "TIMELINE: Current image integration tests took $CURRENT_IMAGE_INTEGRATION_DURATION seconds."
-
-#if [[ $TEST_PASS -eq 0 && "$RUN_CONFORMANCE" == true ]]; then
-#  echo "Running conformance tests against cluster."
-#  START=$SECONDS
-#
-#  wget -qO- https://dl.k8s.io/v$K8S_VERSION/kubernetes-test.tar.gz | tar -zxvf - --strip-components=4 -C /tmp  kubernetes/platforms/linux/amd64/e2e.test
-#  /tmp/e2e.test --ginkgo.focus="Conformance" --kubeconfig=$KUBECONFIG --ginkgo.failFast --ginkgo.flakeAttempts 2 \
-#    --ginkgo.skip="(should support remote command execution over websockets)|(should support retrieving logs from the container over websockets)|\[Slow\]"
-#
-#  CONFORMANCE_DURATION=$((SECONDS - START))
-#  echo "TIMELINE: Conformance tests took $CONFORMANCE_DURATION seconds."
 #fi
 
 if [[ "$DEPROVISION" == true ]]; then
     START=$SECONDS
-    #Uncomment Later
-    #down-test-cluster
+#    down-test-cluster
 
     DOWN_DURATION=$((SECONDS - START))
     echo "TIMELINE: Down processes took $DOWN_DURATION seconds."
