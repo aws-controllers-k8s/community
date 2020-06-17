@@ -11,13 +11,13 @@ To generate a controller, we go through several generation phases:
    easiest thing to do since all AWS service APIs are different in how they
    name API operations and objects.
 
-   To generate type definitions, use the `ack-generate types` command. It
+   To generate type definitions, use the `ack-generate apis` command. It
    accepts (via `stdin` or the `-i|--input` flag) a JSON or YAML file
    containing an OpenAPI3 Schema document for the AWS service API you wish to
    generate type definitions and basic scaffolding for:
 
    ```
-    ack-generate [--dry-run] types [--version=$api_version] $service_alias < /path/to/schema.yaml
+    ack-generate [--dry-run] apis [--version=$api_version] $service_alias < /path/to/schema.yaml
    ```
 
    The `--dry-run` flag causes the command to output the type definitions,
@@ -33,7 +33,7 @@ To generate a controller, we go through several generation phases:
    ensure it exists:
 
    ```
-   ack-generate types sns --version v1beta2 -o /tmp/ack/services/sns/v1beta2 < /tmp/sns.yaml
+   ack-generate apis sns --version v1beta2 -o /tmp/ack/services/sns/v1beta2 < /tmp/sns.yaml
    ```
 
    **NOTE**: For some APIs like the EC2 API, there will be a lot of output

@@ -28,7 +28,7 @@ import (
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
-	"github.com/aws/aws-service-operator-k8s/pkg/template"
+	template "github.com/aws/aws-service-operator-k8s/pkg/template/apis"
 )
 
 type contentType int
@@ -40,44 +40,44 @@ const (
 )
 
 var (
-	optGenVersion      string
-	optTypesInputPath  string
-	optTypesOutputPath string
-	apisVersionPath    string
+	optGenVersion     string
+	optAPIsInputPath  string
+	optAPIsOutputPath string
+	apisVersionPath   string
 )
 
 // apiCmd is the command that generates service API types
-var typesCmd = &cobra.Command{
-	Use:   "types <service>",
+var apisCmd = &cobra.Command{
+	Use:   "apis <service>",
 	Short: "Generate Kubernetes API type definitions for an AWS service API",
-	RunE:  generateTypes,
+	RunE:  generateAPIs,
 }
 
 func init() {
-	typesCmd.PersistentFlags().StringVar(
-		&optGenVersion, "version", "v1alpha1", "the resource API Version to use when generating types",
+	apisCmd.PersistentFlags().StringVar(
+		&optGenVersion, "version", "v1alpha1", "the resource API Version to use when generating API infrastructure and type definitions",
 	)
-	typesCmd.PersistentFlags().StringVarP(
-		&optTypesInputPath, "input", "i", "", "path to OpenAPI3 Schema document (optional, defaults to stdin)",
+	apisCmd.PersistentFlags().StringVarP(
+		&optAPIsInputPath, "input", "i", "", "path to OpenAPI3 Schema document (optional, defaults to stdin)",
 	)
-	typesCmd.PersistentFlags().StringVarP(
-		&optTypesOutputPath, "output", "o", "", "path to directory for service controller to create generated files. Defaults to "+optServicesDir+"/$service",
+	apisCmd.PersistentFlags().StringVarP(
+		&optAPIsOutputPath, "output", "o", "", "path to directory for service controller to create generated files. Defaults to "+optServicesDir+"/$service",
 	)
-	rootCmd.AddCommand(typesCmd)
+	rootCmd.AddCommand(apisCmd)
 }
 
-// generateTypes generates the Go files for each resource in the AWS service
+// generateAPIs generates the Go files for each resource in the AWS service
 // API.
-func generateTypes(cmd *cobra.Command, args []string) error {
+func generateAPIs(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
 	}
 	svcAlias := args[0]
-	if optTypesOutputPath == "" {
-		optTypesOutputPath = filepath.Join(optServicesDir)
+	if optAPIsOutputPath == "" {
+		optAPIsOutputPath = filepath.Join(optServicesDir)
 	}
 	if !optDryRun {
-		apisVersionPath = filepath.Join(optTypesOutputPath, svcAlias, "apis", optGenVersion)
+		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
 		if _, err := ensureDir(apisVersionPath); err != nil {
 			return err
 		}
@@ -250,12 +250,12 @@ func getSchemaHelper() (*schema.Helper, error) {
 	var b []byte
 	var err error
 	contentType := ctUnknown
-	if optTypesInputPath == "" {
+	if optAPIsInputPath == "" {
 		if b, err = ioutil.ReadAll(os.Stdin); err != nil {
 			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
 		}
 	} else {
-		fp := filepath.Clean(optTypesInputPath)
+		fp := filepath.Clean(optAPIsInputPath)
 		ext := filepath.Ext(fp)
 		switch ext {
 		case "json":

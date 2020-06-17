@@ -11,25 +11,38 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package template
+package apis
 
 import (
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
+
+	"github.com/aws/aws-service-operator-k8s/pkg/template"
 )
 
-type DocTemplateVars struct {
+type GroupVersionInfoTemplateVars struct {
 	APIVersion string
 	APIGroup   string
 }
 
-func NewDocTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types", "doc.go.tpl")
+func NewGroupVersionInfoTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "apis", "groupversion_info.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("doc")
-	return t.Parse(string(tplContents))
+	t := ttpl.New("groupversion_info")
+	if t, err = t.Parse(string(tplContents)); err != nil {
+		return nil, err
+	}
+	includes := []string{
+		"boilerplate",
+	}
+	for _, include := range includes {
+		if t, err = template.IncludeTemplate(t, tplDir, include); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
 }

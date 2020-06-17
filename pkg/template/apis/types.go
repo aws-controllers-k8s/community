@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package template
+package apis
 
 import (
 	"io/ioutil"
@@ -19,6 +19,7 @@ import (
 	ttpl "text/template"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-service-operator-k8s/pkg/template"
 )
 
 type TypesTemplateVars struct {
@@ -28,7 +29,7 @@ type TypesTemplateVars struct {
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types", "types.go.tpl")
+	tplPath := filepath.Join(tplDir, "apis", "types.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
@@ -39,10 +40,10 @@ func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	includes := []string{
 		"boilerplate",
-		"types/type_def",
+		"apis/type_def",
 	}
 	for _, include := range includes {
-		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
+		if t, err = template.IncludeTemplate(t, tplDir, include); err != nil {
 			return nil, err
 		}
 	}
