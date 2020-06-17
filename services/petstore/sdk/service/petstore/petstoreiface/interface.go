@@ -16,7 +16,6 @@ package petapiiface
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
-
 	awssdkapi "github.com/aws/aws-service-operator-k8s/services/petstore/sdk/service/petstore"
 )
 

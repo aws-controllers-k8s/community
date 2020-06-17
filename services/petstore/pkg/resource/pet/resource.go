@@ -14,11 +14,10 @@
 package pet
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8srt "k8s.io/apimachinery/pkg/runtime"
-
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srt "k8s.io/apimachinery/pkg/runtime"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/petstore/apis/v1alpha1"

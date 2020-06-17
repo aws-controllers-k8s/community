@@ -16,12 +16,11 @@ package main
 import (
 	"os"
 
+	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrlrt "sigs.k8s.io/controller-runtime"
-
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 
 	svctypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
 	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
