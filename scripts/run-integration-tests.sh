@@ -12,6 +12,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 source "$DIR"/lib/common.sh
 source "$DIR"/lib/aws.sh
 source "$DIR"/lib/cluster.sh
+source "$DIR"/lib/generate-crds.sh
 
 # Variables used in /lib/aws.sh
 OS=$(go env GOOS)
@@ -19,7 +20,7 @@ ARCH=$(go env GOARCH)
 GO111MODULE=on
 
 : "${AWS_DEFAULT_REGION:=us-west-2}"
-: "${K8S_VERSION:=1.14.6}"
+: "${K8S_VERSION:=1.16.8}"
 : "${PROVISION:=true}"
 : "${DEPROVISION:=true}"
 : "${BUILD:=true}"
@@ -157,7 +158,7 @@ fi
 
 # TODO: 1. We will run this block of code for Base Version, it will CRDs and push Controller Images to ECR
 # Generate All the CRDs for all the service Base Commit/Tag in /tmp/crd/base
-# make install CRD_DIR="directory path"
+#ensure_crd_gen "/tmp/crd/base"
 # In general fetch services, build Docker Image for each and push it to ECR if Image:BaseVersion already does not exist.#
 #for d in ./services/*; do
 #    if [ -d "$d" ]; then
@@ -177,7 +178,7 @@ fi
 
 # TODO: 2. We will run TODO:1 code block for latest version (includes pull request)
 #  generate all CRDs for it to /tmp/crd/test
-#  make install CRD_DIR="directory path"
+#ensure_crd_gen "/tmp/crd/test"
 
 
 #echo "Using $BASE_CONFIG_PATH as a template"
@@ -197,7 +198,7 @@ echo "Running integration tests"
 #echo "Running integration tests on default CNI version, $ADDONS_CNI_IMAGE"
 echo ""
 # TODO 3: Apply CRDs for base version
-kubectl apply -f /tmp/crd/base
+#kubectl apply -f /tmp/crd/base
 
 
 # TODO 4: We will use HELM Chart to create controller for each service.
@@ -224,10 +225,9 @@ echo "**************************************************************************
 echo "Running integration tests on current image:"
 echo ""
 # TODO 6: Apply CRDs for test/latest version
-kubectl apply -f /tmp/crd/test
+#kubectl apply -f /tmp/crd/test
 
 # TODO 7. We will use HELM Chart to upgrade  version controller for each service.
-# make install
 # run helm upgrade service-operators ack-chart/service-operators —set imageTagSuffix=latest
 
 START=$SECONDS
