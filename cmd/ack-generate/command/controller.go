@@ -26,11 +26,13 @@ import (
 
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	cmdtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/cmd"
+	pkgtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/pkg"
 )
 
 var (
 	optControllerOutputPath string
 	cmdControllerPath       string
+	pkgResourcePath         string
 	latestAPIVersion        string
 )
 
@@ -62,6 +64,10 @@ func generateController(cmd *cobra.Command, args []string) error {
 		if _, err := ensureDir(cmdControllerPath); err != nil {
 			return err
 		}
+		pkgResourcePath = filepath.Join(optControllerOutputPath, "pkg", "resource")
+		if _, err := ensureDir(pkgResourcePath); err != nil {
+			return err
+		}
 	}
 
 	sh, err := getSchemaHelper()
@@ -74,6 +80,9 @@ func generateController(cmd *cobra.Command, args []string) error {
 	}
 
 	if err = writeControllerMainGo(sh); err != nil {
+		return err
+	}
+	if err = writeResourcePackage(sh); err != nil {
 		return err
 	}
 	return nil
@@ -98,6 +107,32 @@ func writeControllerMainGo(sh *schema.Helper) error {
 		return nil
 	}
 	path := filepath.Join(cmdControllerPath, "main.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeResourcePackage(sh *schema.Helper) error {
+	return writeResourcePackageRegistryGo(sh)
+}
+
+func writeResourcePackageRegistryGo(sh *schema.Helper) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.ResourceRegistryGoTemplateVars{
+		APIVersion:   latestAPIVersion,
+		ServiceAlias: sh.GetServiceAlias(),
+	}
+	tpl, err := pkgtemplate.NewResourceRegistryGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/registry.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, "registry.go")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
