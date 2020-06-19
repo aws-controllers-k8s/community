@@ -13,7 +13,12 @@
 
 package schema
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/getkin/kin-openapi/openapi3"
+)
 
 type opType int
 
@@ -45,4 +50,58 @@ func getOpTypeFromOpID(opID string) opType {
 
 	}
 	return otUnknown
+}
+
+// sdkObjectTypeFromOp returns the string name of the aws-sdk-go struct that is
+// returned for a successful creation of the resource.  This is typically
+// called either "{Resource}" or "{Resource}Data", where "{Resource}" is the
+// name of the resource. For example, the AppMesh API calls this struct
+// MeshData for the Mesh type. It is contained in the CreateMeshOutput
+// payload/wrapper struct. The ECR API calls this struct Repository for the
+// Repository type. It is contained in the CreateRepositoryResponse
+// payload/wrapper struct.
+func (h *Helper) sdkObjectTypeFromOp(op *openapi3.Operation) string {
+	for rc, responseRef := range op.Responses {
+		if !isSuccessResponseCode(rc) {
+			continue
+		}
+		// Look to see if the response body has a content element that refers
+		// to a schema describing the object that was created/patched
+		if responseRef.Ref != "" {
+			continue
+		}
+		resp := responseRef.Value
+		mediaType, found := resp.Content["application/json"]
+		if !found {
+			fmt.Printf("skipping non-JSON operation %s\n", op.OperationID)
+			continue
+		}
+		schemaRef := mediaType.Schema
+		if schemaRef != nil {
+			schema := h.getSchemaFromSchemaRef(schemaRef)
+			if schema != nil && schema.Type == "object" {
+				if len(schema.Properties) == 1 {
+					// This is the payload/wrapper struct. Grab the name of the
+					// single property and look up the referred-to schema, as
+					// that is going to be the struct that represents the CRD's
+					// primary aws-sdk-go struct.
+					//
+					// For example, from ECR API:
+					//
+					// CreateRepositoryResponse:
+					//   properties:
+					//	   repository:
+					//	     $ref: '#/components/schemas/Repository'
+					//
+					// Right now, we're in the CreateRepositoryResponse schema
+					// and we need to grab the #/components/schemes/Repository
+					// object name (which is Repository)
+					for _, propSchemaRef := range schema.Properties {
+						return strings.TrimPrefix(propSchemaRef.Ref, compSchemasRef)
+					}
+				}
+			}
+		}
+	}
+	return ""
 }

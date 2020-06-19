@@ -69,7 +69,8 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 		}
 
 		names := names.New(singularName)
-		crd := model.NewCRD(names, createOp)
+		sdkObjType := h.sdkObjectTypeFromOp(createOp)
+		crd := model.NewCRD(names, createOp, sdkObjType)
 		inAttrs, outAttrs := h.getAttrsFromOp(createOp, crdName)
 		inAttrMap := make(map[string]*model.Attr, len(inAttrs))
 		for _, inAttr := range inAttrs {

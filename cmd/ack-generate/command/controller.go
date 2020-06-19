@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	cmdtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/cmd"
 	pkgtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/pkg"
@@ -111,6 +112,21 @@ func writeControllerMainGo(sh *schema.Helper) error {
 }
 
 func writeResourcePackage(sh *schema.Helper) error {
+	crds, err := sh.GetCRDs()
+	if err != nil {
+		return err
+	}
+	for _, crd := range crds {
+		pkgCRDResourcePath := filepath.Join(pkgResourcePath, crd.Names.Snake)
+		if !optDryRun {
+			if _, err := ensureDir(pkgCRDResourcePath); err != nil {
+				return err
+			}
+		}
+		if err = writeCRDResourceGo(sh, crd); err != nil {
+			return err
+		}
+	}
 	return writeResourcePackageRegistryGo(sh)
 }
 
@@ -133,6 +149,29 @@ func writeResourcePackageRegistryGo(sh *schema.Helper) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, "registry.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeCRDResourceGo(sh *schema.Helper, crd *model.CRD) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.CRDResourceGoTemplateVars{
+		APIVersion:   latestAPIVersion,
+		ServiceAlias: sh.GetServiceAlias(),
+		CRD:          crd,
+	}
+	tpl, err := pkgtemplate.NewCRDResourceGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/resource.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "resource.go")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
