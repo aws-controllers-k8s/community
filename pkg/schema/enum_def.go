@@ -51,7 +51,7 @@ func (h *Helper) GetEnumDefs() ([]*model.EnumDef, error) {
 		edefs = append(edefs, edef)
 	}
 	sort.Slice(edefs, func(i, j int) bool {
-		return edefs[i].Names.GoExported < edefs[j].Names.GoExported
+		return edefs[i].Names.Camel < edefs[j].Names.Camel
 	})
 	return edefs, nil
 }

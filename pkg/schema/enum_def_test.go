@@ -49,8 +49,8 @@ func TestEnumDefs(t *testing.T) {
 	tests := []struct {
 		name              string
 		yaml              string
-		expNameExported   string
-		expNameUnexported string
+		expNameCamel      string
+		expNameCamelLower string
 		expGoType         string
 		expValuesOrig     []string
 		expValuesClean    []string
@@ -141,8 +141,8 @@ components:
 		assert.Equal(1, len(edefs))
 
 		edef := edefs[0]
-		assert.Equal(test.expNameExported, edef.Names.GoExported)
-		assert.Equal(test.expNameUnexported, edef.Names.GoUnexported)
+		assert.Equal(test.expNameCamel, edef.Names.Camel)
+		assert.Equal(test.expNameCamelLower, edef.Names.CamelLower)
 
 		assert.Equal(len(test.expValuesOrig), len(edef.Values))
 		assert.Equal(test.expValuesOrig, sortedOriginalValues(edef.Values))

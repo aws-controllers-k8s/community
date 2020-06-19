@@ -53,6 +53,8 @@ var (
 		// expression and converts it to "DBI" or "dbi" depending on whether
 		// the initialism appears at the start of the name
 		{"Dbi", "DBI", "dbi", regexp.MustCompile("Dbi", regexp.None)},
+		{"Db", "DB", "db", regexp.MustCompile("Db(?!i)", regexp.None)},
+		{"Db", "DB", "db", regexp.MustCompile("DB", regexp.None)},
 		// Prevent "CACertificateIdentifier" from becoming
 		// "cACertificateIdentifier when lower prefix-converted (should be
 		// "caCertificateIdentifier")
@@ -70,7 +72,6 @@ var (
 		{"Az", "AZ", "az", nil},
 		{"Bgp", "BGP", "bgp", nil},
 		{"Cidr", "CIDR", "cidr", nil},
-		{"Db", "DB", "db", nil},
 		{"Dhcp", "DHCP", "dhcp", nil},
 		{"Dns", "DNS", "dns", nil},
 		{"Ebs", "EBS", "ebs", nil},
@@ -79,7 +80,7 @@ var (
 		{"Efs", "EFS", "efs", nil},
 		{"Eks", "EKS", "eks", nil},
 		{"Fpga", "FPGA", "fpga", nil},
-		{"Html", "HTML", "xml", nil},
+		{"Html", "HTML", "html", nil},
 		{"Http", "HTTP", "http", nil},
 		{"Https", "HTTPS", "https", nil},
 		{"Iam", "IAM", "iam", nil},
@@ -110,31 +111,35 @@ var (
 )
 
 type Names struct {
-	Original     string
-	GoUnexported string
-	GoExported   string
-	JSON         string
+	Original   string
+	Camel      string
+	CamelLower string
+	Snake      string
 }
 
 func New(original string) Names {
 	return Names{
-		Original:     original,
-		GoUnexported: goName(original, true),
-		GoExported:   goName(original, false),
+		Original:   original,
+		Camel:      goName(original, false, false),
+		CamelLower: goName(original, true, false),
+		Snake:      goName(original, false, true),
 	}
 }
 
-func goName(original string, lowerFirst bool) (result string) {
+func goName(original string, lowerFirst bool, snake bool) (result string) {
 	result = original
 	if !lowerFirst {
 		result = strcase.ToCamel(result)
 	}
-	result, err := normalizeInitialisms(result, lowerFirst)
+	result, err := normalizeInitialisms(result, lowerFirst, snake)
 	if err != nil {
 		panic(err)
 	}
 	if lowerFirst {
-		result, err = normalizeInitialisms(strcase.ToLowerCamel(result), lowerFirst)
+		result, err = normalizeInitialisms(strcase.ToLowerCamel(result), lowerFirst, snake)
+	}
+	if snake {
+		result = strcase.ToSnake(result)
 	}
 	return
 }
@@ -156,15 +161,26 @@ func goName(original string, lowerFirst bool) (result string) {
 // RoleArn     | false      | RoleARN
 //
 // See: https://github.com/golang/go/wiki/CodeReviewComments#initialisms
-func normalizeInitialisms(original string, lowerFirst bool) (result string, err error) {
+func normalizeInitialisms(original string, lowerFirst bool, snake bool) (result string, err error) {
 	result = original
 	for _, initTrx := range initialisms {
 		if initTrx.re == nil {
-			// if we need to lowercase initialisms, check to see if the
-			// initialism's capitalized form starts the string, and if so,
-			// lowercase it. For example, if we get original == SSEKMSKeyId and
-			// we pass lower == true, we want to return sseKMSKeyID
+			if snake {
+				// If we need to snakecase, we need to look for the uppercase
+				// or lowercase initialism and replace with the lowercase
+				// initialism plus an underscore. For example, if original ==
+				// SSEKMSId and we pass snake == true, we want to return
+				// sse_kms_key_id
+				toReplace := "_" + initTrx.lower + "_"
+				result = strings.Replace(result, initTrx.lower, toReplace, -1)
+				result = strings.Replace(result, initTrx.upper, toReplace, -1)
+				continue
+			}
 			if lowerFirst && strings.Index(result, initTrx.upper) == 0 {
+				// if we need to lowercase initialisms, check to see if the
+				// initialism's capitalized form starts the string, and if so,
+				// lowercase it. For example, if we get original == SSEKMSKeyId
+				// and we pass lower == true, we want to return sseKMSKeyID
 				result = strings.Replace(result, initTrx.upper, initTrx.lower, 1)
 			}
 			// Replace CamelCased initialisms with the uppercase representation
@@ -178,11 +194,20 @@ func normalizeInitialisms(original string, lowerFirst bool) (result string, err 
 				continue
 			case 0:
 				if lowerFirst {
-					result = strings.Replace(result, initTrx.camel, initTrx.lower, 1)
+					toReplace := initTrx.lower
+					result = strings.Replace(result, initTrx.camel, toReplace, 1)
 				}
-				result = strings.Replace(result, initTrx.camel, initTrx.upper, -1)
+				toReplace := initTrx.upper
+				if snake {
+					toReplace = "_" + toReplace + "_"
+				}
+				result = strings.Replace(result, initTrx.camel, toReplace, -1)
 			default:
-				result = strings.Replace(result, initTrx.camel, initTrx.upper, -1)
+				toReplace := initTrx.upper
+				if snake {
+					toReplace = "_" + toReplace + "_"
+				}
+				result = strings.Replace(result, initTrx.camel, toReplace, -1)
 			}
 		} else {
 			match, err := initTrx.re.FindStringMatch(result)
@@ -200,7 +225,8 @@ func normalizeInitialisms(original string, lowerFirst bool) (result string, err 
 					// the output, we need to lower only the first occurrence of
 					// the matched expression, not all of it -- e.g.
 					// idFirstElementID
-					result, err = initTrx.re.Replace(result, initTrx.lower, 0, 1)
+					toReplace := initTrx.lower
+					result, err = initTrx.re.Replace(result, toReplace, 0, 1)
 					if err != nil {
 						return "", err
 					}
@@ -214,11 +240,19 @@ func normalizeInitialisms(original string, lowerFirst bool) (result string, err 
 					startFrom = match.Group.Capture.Index
 				}
 			}
-			result, err = initTrx.re.Replace(result, initTrx.upper, startFrom, -1)
+			toReplace := initTrx.upper
+			if snake {
+				toReplace = "_" + initTrx.lower + "_"
+			}
+			result, err = initTrx.re.Replace(result, toReplace, startFrom, -1)
 			if err != nil {
 				return "", err
 			}
 		}
+	}
+	if snake {
+		result = strings.Replace(result, "__", "_", -1)
+		result = strings.Trim(result, "_")
 	}
 	return result, nil
 }

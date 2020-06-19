@@ -90,7 +90,7 @@ func (h *Helper) getAttrsFromResponseSchemaRef(
 	for propName, propSchemaRef := range schema.Properties {
 		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
 		names := names.New(propName)
-		goType := h.getGoTypeFromSchema(names.GoExported, propSchema)
+		goType := h.getGoTypeFromSchema(names.Camel, propSchema)
 		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
 	}
 	return attrs

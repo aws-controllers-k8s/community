@@ -38,7 +38,7 @@ func NewCRD(
 	createOp *openapi3.Operation,
 ) *CRD {
 	pluralize := pluralize.NewClient()
-	kind := names.GoExported
+	kind := names.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
 		Names:  names,
