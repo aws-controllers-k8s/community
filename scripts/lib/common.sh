@@ -28,3 +28,12 @@ function display_timelines() {
     echo "TIMELINE: Conformance tests took $CONFORMANCE_DURATION seconds."
     echo "TIMELINE: Down processes took $DOWN_DURATION seconds."
 }
+
+should_execute() {
+  if [[ "$TEST_PASS" -ne 0 ]]; then
+    echo "NOTE: Skipping operation '$1'. Test is already marked as failed."
+    return 1
+  else
+    return 0
+  fi
+}
