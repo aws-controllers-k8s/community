@@ -14,13 +14,12 @@
 package pet
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sapirt "k8s.io/apimachinery/pkg/runtime"
-	k8sctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sapirt "k8s.io/apimachinery/pkg/runtime"
+	k8sctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/petstore/apis/v1alpha1"
 )

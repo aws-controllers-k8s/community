@@ -10,6 +10,11 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 )
 
+const (
+	defaultHost            = "http://127.0.0.1:8080"
+	integrationTestAppName = "integration-test-app"
+)
+
 type LocalTestContextType struct {
 	AssetsDir string
 }

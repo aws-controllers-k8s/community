@@ -13,6 +13,7 @@ source "$DIR"/lib/common.sh
 source "$DIR"/lib/aws.sh
 source "$DIR"/lib/cluster.sh
 source "$DIR"/lib/generate-crds.sh
+source  "$DIR"/lib/helm.sh
 
 # Variables used in /lib/aws.sh
 OS=$(go env GOOS)
@@ -25,6 +26,13 @@ GO111MODULE=on
 : "${DEPROVISION:=true}"
 : "${BUILD:=true}"
 : "${RUN_CONFORMANCE:=false}"
+: "${HELM_LOCAL_REPO_NAME:=ack}"
+# TODO: HELM_REPO_SOURCE will change to aws org.
+: "${HELM_REPO_SOURCE:=https://vijtrip2.github.io/aws-service-operator-k8s/helm/charts/}"
+: "${HELM_REPO_CHART_NAME:=start-all-service-controllers}"
+: "${HELM_CONTROLLER_NAME_PREFIX:=aws-k8s}"
+: "${HELM_LOCAL_CHART_NAME:=ack}"
+: "${TEST_PASS:=0}"
 
 __cluster_created=0
 __cluster_deprovisioned=0
@@ -76,9 +84,13 @@ TEST_CLUSTER_DIR=/tmp/ack-test/cluster-$CLUSTER_NAME
 #    exit
 #fi
 
+#Install helm
+install_helm
+
 # double-check all our preconditions and requirements have been met
 check_is_installed docker
 check_is_installed aws
+check_is_installed helm
 check_aws_credentials
 ensure_aws_k8s_tester
 
@@ -149,37 +161,42 @@ mkdir -p "$TEST_CONFIG_DIR"
 
 if [[ "$PROVISION" == true ]]; then
     START=$SECONDS
-#    up-test-cluster
+    up-test-cluster
     UP_CLUSTER_DURATION=$((SECONDS - START))
     echo "TIMELINE: Upping test cluster took $UP_CLUSTER_DURATION seconds."
     __cluster_created=1
 fi
 
+export KUBECONFIG=$KUBECONFIG_PATH
 
-# TODO: 1. We will run this block of code for Base Version, it will CRDs and push Controller Images to ECR
-# Generate All the CRDs for all the service Base Commit/Tag in /tmp/crd/base
-#ensure_crd_gen "/tmp/crd/base"
-# In general fetch services, build Docker Image for each and push it to ECR if Image:BaseVersion already does not exist.#
-#for d in ./services/*; do
-#    if [ -d "$d" ]; then
-#      echo "$d"
-#        for f in "$d"/*; do
-#          if [ "$f" = "$d"/"Dockerfile" ]; then
-#            echo "$f"
-#            `aws ec2 get-login` returns a docker login string, which we eval here to login to the ECR registry
-# shellcheck disable=SC2046
-#            docker build -t ack/"$d":baseversion .
-#            docker tag "ack"/"$d":baseversion "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_DEFAULT_REGION".amazonaws.com/"$d":baseversion
-#            docker push "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_DEFAULT_REGION".amazonaws.com/"$d"
-#          fi
-#        done
-#    fi
-#done
+# Cluster is setup at this point.
+# Make sure not to exit the test-run without cleaning the cluster.
+# Use should_execute in common.sh to short circuit methods if $TEST_PASS -eq 1
 
-# TODO: 2. We will run TODO:1 code block for latest version (includes pull request)
-#  generate all CRDs for it to /tmp/crd/test
-#ensure_crd_gen "/tmp/crd/test"
-
+add_helm_repo
+install_helm_chart base
+ensure_controller_pods
+if [[ "$TEST_PASS" -ne 0 ]]; then
+  echo "NOTE: Skipping base test run because test is marked as failed"
+else
+  echo "Running base integration test"
+  # TODO: RUN BASE TEST HERE
+fi
+upgrade_helm_chart test
+# Wait between two tests for old controllers to be replaced.
+# Using kubectl wait is a little tricky for this terminating condition,
+# as there are race condition if controller is deleted before wait command.
+# Using a sleep here keeps things simple and allows time for old controllers to flush out.
+# if there are any issues, ensuring new controller pods later will catch those problems.
+echo "Waiting for 120 seconds for old controllers to be terminated."
+sleep 120
+ensure_controller_pods
+if [[ "$TEST_PASS" -ne 0 ]]; then
+  echo "NOTE: Skipping latest test run because test is marked as failed"
+else
+  echo "Running integration test on latest commit"
+  # TODO: RUN TEST ON LATEST COMMIT HERE
+fi
 
 #echo "Using $BASE_CONFIG_PATH as a template"
 #cp "$BASE_CONFIG_PATH" "$TEST_CONFIG_PATH"
@@ -190,7 +207,6 @@ fi
 #sed -i'.bak' "s,602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni-init,$INIT_IMAGE_NAME," "$TEST_CONFIG_PATH"
 #sed -i'.bak' "s,:$MANIFEST_IMAGE_VERSION,:$TEST_IMAGE_VERSION," "$TEST_CONFIG_PATH"
 
-#export KUBECONFIG=$KUBECONFIG_PATH
 #ADDONS_CNI_IMAGE=$($KUBECTL_PATH describe daemonset aws-node -n kube-system | grep Image | cut -d ":" -f 2-3 | tr -d '[:space:]')
 
 echo "*******************************************************************************"
@@ -242,13 +258,13 @@ echo "TIMELINE: Current image integration tests took $CURRENT_IMAGE_INTEGRATION_
 
 if [[ "$DEPROVISION" == true ]]; then
     START=$SECONDS
-#    down-test-cluster
+    down-test-cluster
 
     DOWN_DURATION=$((SECONDS - START))
     echo "TIMELINE: Down processes took $DOWN_DURATION seconds."
     #display_timelines
 fi
 
-#if [[ $TEST_PASS -ne 0 ]]; then
-#    exit 1
-#fi
+if [[ $TEST_PASS -ne 0 ]]; then
+    exit 1
+fi

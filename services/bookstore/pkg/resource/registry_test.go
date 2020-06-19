@@ -16,11 +16,9 @@ package resource_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	resource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
-
 	_ "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource/book"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegistry(t *testing.T) {
