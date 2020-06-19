@@ -47,7 +47,8 @@ install_helm_chart() {
   local __image_tag_suffix="$1"
 
   #install the helm chart
-   if ! helm install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set testTag="$__image_tag_suffix" > /dev/null 2>&1; then
+  #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
+   if ! helm install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set registry="$AWS_ECR_REGISTRY",repo="$AWS_ECR_REPO_NAME",tagSuffix="$__image_tag_suffix" > /dev/null 2>&1; then
      echo "Failed to install helm chart '$HELM_LOCAL_CHART_NAME'."
      TEST_PASS=1
   fi
@@ -70,8 +71,9 @@ upgrade_helm_chart() {
   echo "Upgrading helm chart '$HELM_LOCAL_CHART_NAME' with image tag suffix:test"
   local __image_tag_suffix="$1"
 
-  #install the helm chart
-  if ! helm upgrade "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set testTag="$__image_tag_suffix" > /dev/null 2>&1; then
+  #upgrade the helm chart
+  #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
+  if ! helm upgrade "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set registry="$AWS_ECR_REGISTRY",repo="$AWS_ECR_REPO_NAME",tagSuffix="$__image_tag_suffix" > /dev/null 2>&1; then
     echo "Failed to upgrade helm chart '$HELM_LOCAL_CHART_NAME' to test image."
     TEST_PASS=1
   fi
