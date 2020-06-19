@@ -126,6 +126,9 @@ func writeResourcePackage(sh *schema.Helper) error {
 		if err = writeCRDResourceGo(sh, crd); err != nil {
 			return err
 		}
+		if err = writeCRDIdentifiersGo(sh, crd); err != nil {
+			return err
+		}
 	}
 	return writeResourcePackageRegistryGo(sh)
 }
@@ -172,6 +175,29 @@ func writeCRDResourceGo(sh *schema.Helper, crd *model.CRD) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "resource.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeCRDIdentifiersGo(sh *schema.Helper, crd *model.CRD) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.CRDIdentifiersGoTemplateVars{
+		APIVersion:   latestAPIVersion,
+		ServiceAlias: sh.GetServiceAlias(),
+		CRD:          crd,
+	}
+	tpl, err := pkgtemplate.NewCRDIdentifiersGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/identifiers.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "identifiers.go")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
