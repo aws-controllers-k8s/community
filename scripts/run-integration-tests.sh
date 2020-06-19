@@ -12,8 +12,8 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 source "$DIR"/lib/common.sh
 source "$DIR"/lib/aws.sh
 source "$DIR"/lib/cluster.sh
-source "$DIR"/lib/generate-crds.sh
-source  "$DIR"/lib/helm.sh
+source "$DIR"/lib/helm.sh
+source "$DIR"/lib/k8s.sh
 
 # Variables used in /lib/aws.sh
 OS=$(go env GOOS)
@@ -69,20 +69,11 @@ TEST_CLUSTER_DIR=/tmp/ack-test/cluster-$CLUSTER_NAME
 : "${KUBECTL_PATH:=$TESTER_DIR/kubectl}"
 
 ## Uncomment
-#LOCAL_GIT_VERSION=$(git describe --tags --always --dirty)
-## The manifest image version is the image tag we need to replace in the
-## aws-k8s-cni.yaml manifest
-#: "${MANIFEST_IMAGE_VERSION:=latest}"
-#TEST_IMAGE_VERSION=${IMAGE_VERSION:-$LOCAL_GIT_VERSION}
-## We perform an upgrade to this manifest, with image replaced
-#: "${MANIFEST_CNI_VERSION:=master}"
-#BASE_CONFIG_PATH="$DIR/../config/$MANIFEST_CNI_VERSION/aws-k8s-cni.yaml"
-#TEST_CONFIG_PATH="$TEST_CONFIG_DIR/aws-k8s-cni.yaml"
-#
-#if [[ ! -f "$BASE_CONFIG_PATH" ]]; then
-#    echo "$BASE_CONFIG_PATH DOES NOT exist. Set \$MANIFEST_CNI_VERSION to an existing directory in ./config/"
-#    exit
-#fi
+LOCAL_GIT_VERSION=$(git describe --tags --always --dirty)
+TEST_IMAGE_VERSION=${IMAGE_VERSION:-$LOCAL_GIT_VERSION}
+echo "LOCAL_GIT_VERSION: " "$LOCAL_GIT_VERSION"
+echo "TEST_IMAGE_VERSION: " "$TEST_IMAGE_VERSION"
+
 
 #Install helm
 install_helm
@@ -93,13 +84,13 @@ check_is_installed aws
 check_is_installed helm
 check_aws_credentials
 ensure_aws_k8s_tester
+# Install controller-gen
+ensure_controller_gen
 
 : "${AWS_ACCOUNT_ID:=$(aws sts get-caller-identity --query Account --output text)}"
 : "${AWS_ECR_REGISTRY:="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"}"
 : "${AWS_ECR_REPO_NAME:="ack"}"
 : "${IMAGE_NAME:="$AWS_ECR_REGISTRY/$AWS_ECR_REPO_NAME"}"
-: "${AWS_INIT_ECR_REPO_NAME:="ack-init"}"
-: "${INIT_IMAGE_NAME:="$AWS_ECR_REGISTRY/$AWS_INIT_ECR_REPO_NAME"}"
 : "${ROLE_CREATE:=true}"
 : "${ROLE_ARN:=""}"
 
@@ -111,36 +102,6 @@ ensure_aws_k8s_tester
 # shellcheck disable=SC2046
 eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email) >/dev/null 2>&1
 ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_ECR_REPO_NAME"
-ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_INIT_ECR_REPO_NAME"
-
-# Check to see if the image already exists in the Docker repository, and if
-# not, check out the CNI source code for that image tag, build the CNI
-# image and push it to the Docker repository
-# Uncomment
-#if [[ $(docker images -q "$IMAGE_NAME:$TEST_IMAGE_VERSION" 2> /dev/null) ]]; then
-#    echo "CNI image $IMAGE_NAME:$TEST_IMAGE_VERSION already exists in repository. Skipping image build..."
-#else
-#    echo "CNI image $IMAGE_NAME:$TEST_IMAGE_VERSION does not exist in repository."
-#    if [[ $TEST_IMAGE_VERSION != "$LOCAL_GIT_VERSION" ]]; then
-#        __cni_source_tmpdir="/tmp/cni-src-$IMAGE_VERSION"
-#        echo "Checking out CNI source code for $IMAGE_VERSION ..."
-#
-#        git clone --depth=1 --branch "$TEST_IMAGE_VERSION" \
-#            https://github.com/aws/amazon-vpc-cni-k8s "$__cni_source_tmpdir" || exit 1
-#        pushd "$__cni_source_tmpdir"
-#    fi
-#    START=$SECONDS
-#    make docker IMAGE="$IMAGE_NAME" VERSION="$TEST_IMAGE_VERSION"
-#    docker push "$IMAGE_NAME:$TEST_IMAGE_VERSION"
-#    DOCKER_BUILD_DURATION=$((SECONDS - START))
-#    echo "TIMELINE: Docker build took $DOCKER_BUILD_DURATION seconds."
-#    # Build matching init container
-#    make docker-init INIT_IMAGE="$INIT_IMAGE_NAME" VERSION="$TEST_IMAGE_VERSION"
-#    docker push "$INIT_IMAGE_NAME:$TEST_IMAGE_VERSION"
-#    if [[ $TEST_IMAGE_VERSION != "$LOCAL_GIT_VERSION" ]]; then
-#        popd
-#    fi
-#fi
 
 echo "*******************************************************************************"
 echo "Running $TEST_ID on $CLUSTER_NAME in $AWS_DEFAULT_REGION"
@@ -150,9 +111,6 @@ echo "+ Tester:             $TESTER_PATH"
 echo "+ Kubeconfig:         $KUBECONFIG_PATH"
 echo "+ Cluster config:     $CLUSTER_CONFIG"
 echo "+ AWS Account ID:     $AWS_ACCOUNT_ID"
-# Uncomment
-#echo "+ CNI image to test:  $IMAGE_NAME:$TEST_IMAGE_VERSION"
-#echo "+ CNI init container: $INIT_IMAGE_NAME:$TEST_IMAGE_VERSION"
 
 mkdir -p "$TEST_DIR"
 mkdir -p "$REPORT_DIR"
@@ -174,87 +132,72 @@ export KUBECONFIG=$KUBECONFIG_PATH
 # Use should_execute in common.sh to short circuit methods if $TEST_PASS -eq 1
 
 add_helm_repo
-install_helm_chart base
-ensure_controller_pods
+BASE_INTEGRATION_DURATION=0
 if [[ "$TEST_PASS" -ne 0 ]]; then
   echo "NOTE: Skipping base test run because test is marked as failed"
+elif [[ -z "${BASE_GIT_TAG+x}" ]]; then
+  echo "NOTE: Skipping base test run because BASE_GIT_TAG is not given"
 else
-  echo "Running base integration test"
-  # TODO: RUN BASE TEST HERE
+  echo "*******************************************************************************"
+  echo "Running integration test setup on BASE_GIT_TAG, $BASE_GIT_TAG"
+  echo ""
+
+  __ack_source_tmpdir="/tmp/ack-src-$BASE_GIT_TAG"
+  echo "Checking out ack source code for $BASE_GIT_TAG ..."
+  git clone git@github.com:varun1524/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
+
+  pushd "$__ack_source_tmpdir" || exit
+  git checkout -b "$BASE_GIT_TAG" "$BASE_GIT_TAG"
+
+  __test_crd_path="/tmp/crd/base"
+  ensure_service_controller_running "$BASE_GIT_TAG" "$__test_crd_path"
+
+  echo "*******************************************************************************"
+  echo "Running integration test on BASE_GIT_TAG Commit, $BASE_GIT_TAG"
+  echo ""
+
+  START=$SECONDS
+  pushd ./test/integration/services
+  go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets=./assets
+  TEST_PASS=$?
+  popd
+  BASE_INTEGRATION_DURATION=$((SECONDS - START))
+
+  echo "TIMELINE: Latest K8s integration tests suites took $BASE_INTEGRATION_DURATION seconds."
+  popd
+  echo "*******************************************************************************"
 fi
-upgrade_helm_chart test
-# Wait between two tests for old controllers to be replaced.
-# Using kubectl wait is a little tricky for this terminating condition,
-# as there are race condition if controller is deleted before wait command.
-# Using a sleep here keeps things simple and allows time for old controllers to flush out.
-# if there are any issues, ensuring new controller pods later will catch those problems.
-echo "Waiting for 120 seconds for old controllers to be terminated."
-sleep 120
-ensure_controller_pods
+
 if [[ "$TEST_PASS" -ne 0 ]]; then
   echo "NOTE: Skipping latest test run because test is marked as failed"
 else
-  echo "Running integration test on latest commit"
-  # TODO: RUN TEST ON LATEST COMMIT HERE
+  echo "*******************************************************************************"
+  echo "Running integration test setup on Latest Commit, $TEST_IMAGE_VERSION"
+  echo ""
+
+  __ack_source_tmpdir="/tmp/ack-src-$TEST_IMAGE_VERSION"
+  echo "Checking out ack source code for $TEST_IMAGE_VERSION ..."
+  git clone --depth=1 --branch e2etest git@github.com:varun1524/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
+
+  pushd "$__ack_source_tmpdir" || exit
+  __test_crd_path="/tmp/crd/test"
+  ensure_service_controller_running "$TEST_IMAGE_VERSION" "$__test_crd_path"
+
+  echo "*******************************************************************************"
+  echo "Running integration test on Latest Commit, $TEST_IMAGE_VERSION"
+  echo ""
+
+  START=$SECONDS
+  pushd ./test/integration/services
+  go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets=./assets
+  TEST_PASS=$?
+  popd
+  LATEST_INTEGRATION_DURATION=$((SECONDS - START))
+  echo "TIMELINE: Latest K8s integration tests suites took $LATEST_INTEGRATION_DURATION seconds."
+  popd
+  echo "*******************************************************************************"
 fi
 
-#echo "Using $BASE_CONFIG_PATH as a template"
-#cp "$BASE_CONFIG_PATH" "$TEST_CONFIG_PATH"
-
-# Daemonset template
-#sed -i'.bak' "s,602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni,$IMAGE_NAME," "$TEST_CONFIG_PATH"
-#sed -i'.bak' "s,:$MANIFEST_IMAGE_VERSION,:$TEST_IMAGE_VERSION," "$TEST_CONFIG_PATH"
-#sed -i'.bak' "s,602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni-init,$INIT_IMAGE_NAME," "$TEST_CONFIG_PATH"
-#sed -i'.bak' "s,:$MANIFEST_IMAGE_VERSION,:$TEST_IMAGE_VERSION," "$TEST_CONFIG_PATH"
-
-#ADDONS_CNI_IMAGE=$($KUBECTL_PATH describe daemonset aws-node -n kube-system | grep Image | cut -d ":" -f 2-3 | tr -d '[:space:]')
-
-echo "*******************************************************************************"
-echo "Running integration tests"
-#echo "Running integration tests on default CNI version, $ADDONS_CNI_IMAGE"
-echo ""
-# TODO 3: Apply CRDs for base version
-#kubectl apply -f /tmp/crd/base
-
-
-# TODO 4: We will use HELM Chart to create controller for each service.
-# Helm chart will take value of tag which will be substituted in Deployment yaml for each service
-# run helm install service-operators ack-chart/service-operators —set imageTagSuffix=base
-START=$SECONDS
-#pushd ./test/integration
-#TODO 5: Run Integration Test following way recursively so all tests suites will execute recursively
-#go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.r --ginkgo.randomizeAllSpecs --ginkgo.randomizeSuites --assets=./assets
-#TEST_PASS=$?
-#popd
-DEFAULT_INTEGRATION_DURATION=$((SECONDS - START))
-echo "TIMELINE: Default K8s integration tests suites took $DEFAULT_INTEGRATION_DURATION seconds."
-
-echo "*******************************************************************************"
-
-#echo "Updating Controller to Latest Test Version"
-START=$SECONDS
-
-CNI_IMAGE_UPDATE_DURATION=$((SECONDS - START))
-echo "TIMELINE: Updating CNI image took $CNI_IMAGE_UPDATE_DURATION seconds."
-
-echo "*******************************************************************************"
-echo "Running integration tests on current image:"
-echo ""
-# TODO 6: Apply CRDs for test/latest version
-#kubectl apply -f /tmp/crd/test
-
-# TODO 7. We will use HELM Chart to upgrade  version controller for each service.
-# run helm upgrade service-operators ack-chart/service-operators —set imageTagSuffix=latest
-
-START=$SECONDS
-#pushd ./test/integration
-#TODO 8: Run Integration Test following way recursively so all tests suites will execute recursively
-#go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.r --ginkgo.randomizeAllSpecs --ginkgo.randomizeSuites --assets=./assets
-#TEST_PASS=$?
-#popd
-CURRENT_IMAGE_INTEGRATION_DURATION=$((SECONDS - START))
-echo "TIMELINE: Current image integration tests took $CURRENT_IMAGE_INTEGRATION_DURATION seconds."
-#fi
 
 if [[ "$DEPROVISION" == true ]]; then
     START=$SECONDS
@@ -262,7 +205,7 @@ if [[ "$DEPROVISION" == true ]]; then
 
     DOWN_DURATION=$((SECONDS - START))
     echo "TIMELINE: Down processes took $DOWN_DURATION seconds."
-    #display_timelines
+    display_timelines
 fi
 
 if [[ $TEST_PASS -ne 0 ]]; then
