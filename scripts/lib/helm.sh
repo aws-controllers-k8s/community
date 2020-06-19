@@ -28,8 +28,11 @@ install_helm() {
   pushd /tmp
   # clone the source
   git clone https://github.com/helm/helm.git
-  # build the source and move to bin
-  cd helm; make
+  # checkout stable release and build the source
+  cd helm
+  git fetch --tags
+  git checkout $(git tag -l | tail -1)
+  make
   #Update the path
   export PATH=/tmp/helm/bin/:$PATH
   popd
@@ -74,26 +77,17 @@ upgrade_helm_chart() {
   fi
 }
 
-wait_for_controllers() {
-  if ! should_execute wait_for_controllers; then
-     return 1
-  fi
-  echo "Sleeping 10 seconds for controller pods to come in Running state"
-  sleep 10
-}
-
 ensure_controller_pods() {
   if ! should_execute ensure_controller_pods; then
      return 1
   fi
 
   echo "Checking status of controller pods"
-  #TODO: make this function more fault tolerant with additional wait time of status is not Running.
-  service_controller_output_lines=$($KUBECTL_PATH get pods | grep "bookstore" | grep "Running" | wc -l)
-  if [[ "$service_controller_output_lines" -gt 0 ]]; then
+  local all_aws_controller_pods=$($KUBECTL_PATH get pods | grep $HELM_CONTROLLER_NAME_PREFIX | sed 's/^/pods\//' |cut -d" " -f1 | tr '\n' ' ');
+  if $KUBECTL_PATH wait --for=condition=Ready $(echo $all_aws_controller_pods) --timeout=300s; then
     echo "Controller pods have successfully started."
   else
     echo "Failed to start controller pods. Exiting... "
-    return 1
+    TEST_PASS=1
   fi
 }

@@ -28,6 +28,7 @@ ARCH=$(go env GOARCH)
 # TODO: HELM_REPO_SOURCE will change to aws org.
 : "${HELM_REPO_SOURCE:=https://vijtrip2.github.io/aws-service-operator-k8s/helm/charts/}"
 : "${HELM_REPO_CHART_NAME:=start-all-service-controllers}"
+: "${HELM_CONTROLLER_NAME_PREFIX:=aws-k8s}"
 : "${HELM_LOCAL_CHART_NAME:=ack}"
 : "${TEST_PASS:=0}"
 
@@ -173,7 +174,6 @@ export KUBECONFIG=$KUBECONFIG_PATH
 
 add_helm_repo
 install_helm_chart base
-wait_for_controllers
 ensure_controller_pods
 if [[ "$TEST_PASS" -ne 0 ]]; then
   echo "NOTE: Skipping base test run because test is marked as failed"
@@ -182,7 +182,13 @@ else
   # TODO: RUN BASE TEST HERE
 fi
 upgrade_helm_chart test
-wait_for_controllers
+# Wait between two tests for old controllers to be replaced.
+# Using kubectl wait is a little tricky for this terminating condition,
+# as there are race condition if controller is deleted before wait command.
+# Using a sleep here keeps things simple and allows time for old controllers to flush out.
+# if there are any issues, ensuring new controller pods later will catch those problems.
+echo "Waiting for 120 seconds for old controllers to be terminated."
+sleep 120
 ensure_controller_pods
 if [[ "$TEST_PASS" -ne 0 ]]; then
   echo "NOTE: Skipping latest test run because test is marked as failed"
