@@ -132,6 +132,9 @@ func writeResourcePackage(sh *schema.Helper) error {
 		if err = writeCRDDescriptorGo(sh, crd); err != nil {
 			return err
 		}
+		if err = writeCRDManagerFactoryGo(sh, crd); err != nil {
+			return err
+		}
 	}
 	return writeResourcePackageRegistryGo(sh)
 }
@@ -225,6 +228,30 @@ func writeCRDDescriptorGo(sh *schema.Helper, crd *model.CRD) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "descriptor.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeCRDManagerFactoryGo(sh *schema.Helper, crd *model.CRD) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.CRDManagerFactoryGoTemplateVars{
+		APIVersion:   latestAPIVersion,
+		APIGroup:     sh.GetAPIGroup(),
+		ServiceAlias: sh.GetServiceAlias(),
+		CRD:          crd,
+	}
+	tpl, err := pkgtemplate.NewCRDManagerFactoryGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/manager_factory.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "manager_factory.go")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
