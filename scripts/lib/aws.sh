@@ -35,7 +35,7 @@ ensure_ecr_image() {
      echo "ACK image $IMAGE_NAME:$__image_tag already exists in repository. Skipping image build..."
   else
     START=$SECONDS
-    echo "__service_name" "$__image_tag"
+    echo "Building Docker image for $__image_tag"
     docker build -t "$AWS_ECR_REPO_NAME":"$__image_tag" -f "$__dockerfile_path" .
     docker tag "$AWS_ECR_REPO_NAME":"$__image_tag" "$IMAGE_NAME":"$__image_tag"
     docker push "$IMAGE_NAME":"$__image_tag"

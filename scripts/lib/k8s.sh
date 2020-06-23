@@ -1,35 +1,32 @@
 #!/usr/bin/env bash
 
 ensure_controller_gen() {
-  go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0
+  if ! is_installed controller-gen; then
+    go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0
+  fi
 }
 
 ensure_service_controller_running() {
-  echo "Ensure that service controllers are running for given version"
-  # Give executable permission
-  chmod +x ./scripts/generate-crds.sh
 
-  __image_version=$1
-  __crd_path=$2
+  __service_path=$1
+  __service=$2
+  __image_version=$3
+  __crd_path=$4
 
-  for d in ./services/*; do
-    if [ -d "$d" ]; then
-      echo "service: $d"
-      ./scripts/generate-crds.sh "$d" "$__crd_path"
-        for f in "$d"/*; do
-          if [ "$f" = "$d"/"Dockerfile" ]; then
-            echo "$f"
-            __service_name=$(basename "$d")
-            __ack_image_tag="$__service_name"-"$__image_version"
-            ensure_ecr_image "$__ack_image_tag" "$f"
-          fi
-        done
+  echo "Ensuring that service controller $__service are running for given version"
+
+  ./scripts/generate-crds.sh "$__service_path" "$__crd_path"
+  for f in "$__service_path"/*; do
+    if [ "$f" = "$__service_path/Dockerfile" ]; then
+      __ack_image_tag="$__service"-"$__image_version"
+      ensure_ecr_image "$__ack_image_tag" "$f"
     fi
   done
 
   kubectl apply -f "$__crd_path"
 
   echo "Installing/Upgrading helm chart"
+  #TODO: Update it to deploy for one service
   ensure_helm_chart_installed "$__image_version"
   # Wait between two tests for old controllers to be replaced.
   # Using kubectl wait is a little tricky for this terminating condition,

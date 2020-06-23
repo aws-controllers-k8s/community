@@ -71,8 +71,6 @@ TEST_CLUSTER_DIR=/tmp/ack-test/cluster-$CLUSTER_NAME
 ## Uncomment
 LOCAL_GIT_VERSION=$(git describe --tags --always --dirty)
 TEST_IMAGE_VERSION=${IMAGE_VERSION:-$LOCAL_GIT_VERSION}
-echo "LOCAL_GIT_VERSION: " "$LOCAL_GIT_VERSION"
-echo "TEST_IMAGE_VERSION: " "$TEST_IMAGE_VERSION"
 
 
 #Install helm
@@ -139,7 +137,7 @@ elif [[ -z "${BASE_GIT_TAG+x}" ]]; then
   echo "NOTE: Skipping base test run because BASE_GIT_TAG is not given"
 else
   echo "*******************************************************************************"
-  echo "Running integration test setup on BASE_GIT_TAG, $BASE_GIT_TAG"
+  echo "Running integration tests on BASE_GIT_TAG, $BASE_GIT_TAG"
   echo ""
 
   __ack_source_tmpdir="/tmp/ack-src-$BASE_GIT_TAG"
@@ -149,30 +147,46 @@ else
   pushd "$__ack_source_tmpdir" || exit
   git checkout -b "$BASE_GIT_TAG" "$BASE_GIT_TAG"
 
-  __test_crd_path="/tmp/crd/base"
-  ensure_service_controller_running "$BASE_GIT_TAG" "$__test_crd_path"
+
+  for d in ./services/*; do
+    if [ -d "$d" ]; then
+      __service_name=$(basename "$d")
+      __test_crd_path="/tmp/crd/base/__service_name"
+
+      echo "***************************************"
+      echo "Running integration test on BASE_GIT_TAG $BASE_GIT_TAG for Service $__service_name"
+      echo ""
+
+      ensure_service_controller_running "$d" "$__service_name" "$BASE_GIT_TAG" "$__test_crd_path"
+
+      START=$SECONDS
+      pushd ./test/integration/services
+      go test -v -timeout 0 "./$__service_name/..." --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets="./$__service_name/assets"
+      TEST_PASS=$?
+      popd
+      BASE_INTEGRATION_DURATION=$((SECONDS - START))
+
+      echo "TIMELINE: Integration Test took $BASE_INTEGRATION_DURATION seconds for service $__service_name on BASE_GIT_TAG $BASE_GIT_TAG."
+      echo "***************************************"
+
+      if [[ $TEST_PASS -ne 0 ]]; then
+        break
+      fi
+    fi
+  done
 
   echo "*******************************************************************************"
-  echo "Running integration test on BASE_GIT_TAG Commit, $BASE_GIT_TAG"
+  echo "Integration Testing on BASE_GIT_TAG $BASE_GIT_TAG Finished"
   echo ""
 
-  START=$SECONDS
-  pushd ./test/integration/services
-  go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets=./assets
-  TEST_PASS=$?
   popd
-  BASE_INTEGRATION_DURATION=$((SECONDS - START))
-
-  echo "TIMELINE: Latest K8s integration tests suites took $BASE_INTEGRATION_DURATION seconds."
-  popd
-  echo "*******************************************************************************"
 fi
 
 if [[ "$TEST_PASS" -ne 0 ]]; then
   echo "NOTE: Skipping latest test run because test is marked as failed"
 else
   echo "*******************************************************************************"
-  echo "Running integration test setup on Latest Commit, $TEST_IMAGE_VERSION"
+  echo "Running integration tests on Latest Commit, $TEST_IMAGE_VERSION"
   echo ""
 
   __ack_source_tmpdir="/tmp/ack-src-$TEST_IMAGE_VERSION"
@@ -180,22 +194,39 @@ else
   git clone --depth=1 --branch e2etest git@github.com:varun1524/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
 
   pushd "$__ack_source_tmpdir" || exit
-  __test_crd_path="/tmp/crd/test"
-  ensure_service_controller_running "$TEST_IMAGE_VERSION" "$__test_crd_path"
+
+  for d in ./services/*; do
+    if [ -d "$d" ]; then
+      __service_name=$(basename "$d")
+      __test_crd_path="/tmp/crd/test/__service_name"
+
+      echo "***************************************"
+      echo "Running integration test on Latest Commit $TEST_IMAGE_VERSION for Service $__service_name."
+      echo ""
+
+      ensure_service_controller_running "$d" "$__service_name" "$TEST_IMAGE_VERSION" "$__test_crd_path"
+
+      START=$SECONDS
+      pushd ./test/integration/services
+      go test -v -timeout 0 "./$__service_name/..." --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets="./$__service_name/assets"
+      TEST_PASS=$?
+      popd
+      LATEST_INTEGRATION_DURATION=$((SECONDS - START))
+      echo "TIMELINE: Integration tests on latest took $LATEST_INTEGRATION_DURATION seconds for service $__service_name."
+      echo "***************************************"
+
+      if [[ $TEST_PASS -ne 0 ]]; then
+        break
+      fi
+    fi
+  done
 
   echo "*******************************************************************************"
-  echo "Running integration test on Latest Commit, $TEST_IMAGE_VERSION"
+  echo "Integration Testing on Commit $TEST_IMAGE_VERSION Finished"
   echo ""
 
-  START=$SECONDS
-  pushd ./test/integration/services
-  go test -v -timeout 0 ./... --kubeconfig=$KUBECONFIG --ginkgo.skip="\[Disruptive\]" --ginkgo.randomizeAllSpecs --assets=./assets
-  TEST_PASS=$?
   popd
-  LATEST_INTEGRATION_DURATION=$((SECONDS - START))
-  echo "TIMELINE: Latest K8s integration tests suites took $LATEST_INTEGRATION_DURATION seconds."
-  popd
-  echo "*******************************************************************************"
+
 fi
 
 
