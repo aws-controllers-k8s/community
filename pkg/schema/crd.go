@@ -69,7 +69,8 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 		}
 
 		names := names.New(singularName)
-		crd := model.NewCRD(names, createOp)
+		sdkObjType := h.sdkObjectTypeFromOp(createOp)
+		crd := model.NewCRD(names, createOp, sdkObjType)
 		inAttrs, outAttrs := h.getAttrsFromOp(createOp, crdName)
 		inAttrMap := make(map[string]*model.Attr, len(inAttrs))
 		for _, inAttr := range inAttrs {
@@ -84,7 +85,7 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 		crds = append(crds, crd)
 	}
 	sort.Slice(crds, func(i, j int) bool {
-		return crds[i].Names.GoExported < crds[j].Names.GoExported
+		return crds[i].Names.Camel < crds[j].Names.Camel
 	})
 	h.crds = crds
 	return crds, nil

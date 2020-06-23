@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package template
+package pkg
 
 import (
 	"io/ioutil"
@@ -19,20 +19,22 @@ import (
 	ttpl "text/template"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-service-operator-k8s/pkg/template"
 )
 
-type CRDTemplateVars struct {
-	APIVersion string
-	CRD        *model.CRD
+type CRDResourceGoTemplateVars struct {
+	APIVersion   string
+	ServiceAlias string
+	CRD          *model.CRD
 }
 
-func NewCRDTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "crd.go.tpl")
+func NewCRDResourceGoTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "pkg", "crd_resource.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("crd")
+	t := ttpl.New("crd_resource")
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err
 	}
@@ -40,7 +42,7 @@ func NewCRDTemplate(tplDir string) (*ttpl.Template, error) {
 		"boilerplate",
 	}
 	for _, include := range includes {
-		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
+		if t, err = template.IncludeTemplate(t, tplDir, include); err != nil {
 			return nil, err
 		}
 	}

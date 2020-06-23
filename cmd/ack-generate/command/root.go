@@ -34,9 +34,10 @@ var (
 	buildHash           string
 	buildDate           string
 	defaultTemplatesDir string
-	templatesDir        string
+	optTemplatesDir     string
 	defaultServicesDir  string
-	servicesDir         string
+	optServicesDir      string
+	optDryRun           bool
 )
 
 var rootCmd = &cobra.Command{
@@ -79,11 +80,14 @@ func init() {
 			}
 		}
 	}
-	rootCmd.PersistentFlags().StringVar(
-		&templatesDir, "templates-dir", defaultTemplatesDir, "Path to directory with templates to use in code generation",
+	rootCmd.PersistentFlags().BoolVar(
+		&optDryRun, "dry-run", false, "If true, outputs all files to stdout",
 	)
 	rootCmd.PersistentFlags().StringVar(
-		&servicesDir, "services-dir", defaultServicesDir, "Path to directory to output service-specific code",
+		&optTemplatesDir, "templates-dir", defaultTemplatesDir, "Path to directory with templates to use in code generation",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&optServicesDir, "services-dir", defaultServicesDir, "Path to directory to output service-specific code",
 	)
 }
 

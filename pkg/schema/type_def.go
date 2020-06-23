@@ -56,7 +56,7 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 		for propName, propSchemaRef := range schema.Properties {
 			propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
 			propNames := names.New(propName)
-			goType := h.getGoTypeFromSchema(propNames.GoExported, propSchema)
+			goType := h.getGoTypeFromSchema(propNames.Camel, propSchema)
 			attrs[propName] = model.NewAttr(propNames, goType, propSchema)
 		}
 		if len(attrs) == 0 {
@@ -69,7 +69,7 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 		})
 	}
 	sort.Slice(tdefs, func(i, j int) bool {
-		return tdefs[i].Names.GoExported < tdefs[j].Names.GoExported
+		return tdefs[i].Names.Camel < tdefs[j].Names.Camel
 	})
 	return tdefs, nil
 }

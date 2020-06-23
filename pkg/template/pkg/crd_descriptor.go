@@ -11,25 +11,41 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package template
+package pkg
 
 import (
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
+
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-service-operator-k8s/pkg/template"
 )
 
-type DocTemplateVars struct {
-	APIVersion string
-	APIGroup   string
+type CRDDescriptorGoTemplateVars struct {
+	APIVersion   string
+	APIGroup     string
+	ServiceAlias string
+	CRD          *model.CRD
 }
 
-func NewDocTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types", "doc.go.tpl")
+func NewCRDDescriptorGoTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "pkg", "crd_descriptor.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("doc")
-	return t.Parse(string(tplContents))
+	t := ttpl.New("crd_descriptor")
+	if t, err = t.Parse(string(tplContents)); err != nil {
+		return nil, err
+	}
+	includes := []string{
+		"boilerplate",
+	}
+	for _, include := range includes {
+		if t, err = template.IncludeTemplate(t, tplDir, include); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
 }

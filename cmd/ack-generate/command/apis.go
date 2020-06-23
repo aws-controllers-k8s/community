@@ -28,7 +28,7 @@ import (
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
-	"github.com/aws/aws-service-operator-k8s/pkg/template"
+	template "github.com/aws/aws-service-operator-k8s/pkg/template/apis"
 )
 
 type contentType int
@@ -40,63 +40,50 @@ const (
 )
 
 var (
-	optGenVersion string
-	optOutputPath string
+	optGenVersion     string
+	optAPIsInputPath  string
+	optAPIsOutputPath string
+	apisVersionPath   string
 )
 
 // apiCmd is the command that generates service API types
-var typesCmd = &cobra.Command{
-	Use:   "types <file>",
-	Short: "Generates Go files containing type definitions and API machinery base initialization",
-	RunE:  generateTypes,
+var apisCmd = &cobra.Command{
+	Use:   "apis <service>",
+	Short: "Generate Kubernetes API type definitions for an AWS service API",
+	RunE:  generateAPIs,
 }
 
 func init() {
-	typesCmd.PersistentFlags().StringVarP(
-		&optGenVersion, "version", "v", "v1alpha1", "the resource API Version to use when generating types",
+	apisCmd.PersistentFlags().StringVar(
+		&optGenVersion, "version", "v1alpha1", "the resource API Version to use when generating API infrastructure and type definitions",
 	)
-	typesCmd.PersistentFlags().StringVarP(
-		&optOutputPath, "output", "o", "", "path to output directory to send generated files. If empty, outputs all files to stdout",
+	apisCmd.PersistentFlags().StringVarP(
+		&optAPIsInputPath, "input", "i", "", "path to OpenAPI3 Schema document (optional, defaults to stdin)",
 	)
-	rootCmd.AddCommand(typesCmd)
+	apisCmd.PersistentFlags().StringVarP(
+		&optAPIsOutputPath, "output", "o", "", "path to directory for service controller to create generated files. Defaults to "+optServicesDir+"/$service",
+	)
+	rootCmd.AddCommand(apisCmd)
 }
 
-// ensureOutputDir makes sure that the target output directory exists and
-// returns whether the directory already existed. If the output path has been
-// set to stdout, this is a noop and returns false.
-func ensureOutputDir() (bool, error) {
-	if optOutputPath == "" {
-		return false, nil
-	}
-	fi, err := os.Stat(optOutputPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, os.MkdirAll(optOutputPath, os.ModePerm)
-		} else {
-			return false, err
-		}
-	}
-	if !fi.IsDir() {
-		return false, fmt.Errorf("expected %s to be a directory.", optOutputPath)
-	}
-	// Make sure the directory is writeable by the calling user
-	testPath := filepath.Join(optOutputPath, "test")
-	f, err := os.Create(testPath)
-	if err != nil {
-		if os.IsPermission(err) {
-			return true, fmt.Errorf("%s is not a writeable directory.", optOutputPath)
-		}
-		return true, err
-	}
-	f.Close()
-	os.Remove(testPath)
-	return true, nil
-}
-
-// generateTypes generates the Go files for each resource in the AWS service
+// generateAPIs generates the Go files for each resource in the AWS service
 // API.
-func generateTypes(cmd *cobra.Command, args []string) error {
-	sh, err := getSchemaHelper(args)
+func generateAPIs(cmd *cobra.Command, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
+	}
+	svcAlias := args[0]
+	if optAPIsOutputPath == "" {
+		optAPIsOutputPath = filepath.Join(optServicesDir)
+	}
+	if !optDryRun {
+		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
+		if _, err := ensureDir(apisVersionPath); err != nil {
+			return err
+		}
+	}
+
+	sh, err := getSchemaHelper()
 	if err != nil {
 		return err
 	}
@@ -110,10 +97,6 @@ func generateTypes(cmd *cobra.Command, args []string) error {
 	}
 	enumDefs, err := sh.GetEnumDefs()
 	if err != nil {
-		return err
-	}
-
-	if _, err := ensureOutputDir(); err != nil {
 		return err
 	}
 
@@ -148,21 +131,20 @@ func writeDocGo(sh *schema.Helper) error {
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,
 	}
-	tpl, err := template.NewDocTemplate(templatesDir)
+	tpl, err := template.NewDocTemplate(optTemplatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	if optOutputPath == "" {
+	if optDryRun {
 		fmt.Println("============================= doc.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "doc.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(apisVersionPath, "doc.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeGroupVersionInfoGo(sh *schema.Helper) error {
@@ -172,21 +154,20 @@ func writeGroupVersionInfoGo(sh *schema.Helper) error {
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,
 	}
-	tpl, err := template.NewGroupVersionInfoTemplate(templatesDir)
+	tpl, err := template.NewGroupVersionInfoTemplate(optTemplatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	if optOutputPath == "" {
+	if optDryRun {
 		fmt.Println("============================= groupversion_info.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "groupversion_info.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(apisVersionPath, "groupversion_info.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeEnumsGo(
@@ -200,21 +181,20 @@ func writeEnumsGo(
 		EnumDefs:   enumDefs,
 	}
 	var b bytes.Buffer
-	tpl, err := template.NewEnumsTemplate(templatesDir)
+	tpl, err := template.NewEnumsTemplate(optTemplatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	if optOutputPath == "" {
+	if optDryRun {
 		fmt.Println("============================= enums.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "enums.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(apisVersionPath, "enums.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeTypesGo(
@@ -225,21 +205,20 @@ func writeTypesGo(
 		TypeDefs:   typeDefs,
 	}
 	var b bytes.Buffer
-	tpl, err := template.NewTypesTemplate(templatesDir)
+	tpl, err := template.NewTypesTemplate(optTemplatesDir)
 	if err != nil {
 		return err
 	}
 	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
-	if optOutputPath == "" {
+	if optDryRun {
 		fmt.Println("============================= types.go ======================================")
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, "types.go")
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(apisVersionPath, "types.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func writeCRDGo(crd *model.CRD) error {
@@ -248,7 +227,7 @@ func writeCRDGo(crd *model.CRD) error {
 		CRD:        crd,
 	}
 	var b bytes.Buffer
-	tpl, err := template.NewCRDTemplate(templatesDir)
+	tpl, err := template.NewCRDTemplate(optTemplatesDir)
 	if err != nil {
 		return err
 	}
@@ -256,29 +235,27 @@ func writeCRDGo(crd *model.CRD) error {
 		return err
 	}
 	crdFileName := strcase.ToSnake(crd.Kind) + ".go"
-	if optOutputPath == "" {
+	if optDryRun {
 		fmt.Printf("============================= %s ======================================\n", crdFileName)
 		fmt.Println(strings.TrimSpace(b.String()))
 		return nil
-	} else {
-		path := filepath.Join(optOutputPath, crdFileName)
-		return ioutil.WriteFile(path, b.Bytes(), 0666)
 	}
+	path := filepath.Join(apisVersionPath, crdFileName)
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 // getAPI returns a schema.Helper object representing the API from
 // either STDIN or an input file
-func getSchemaHelper(args []string) (*schema.Helper, error) {
+func getSchemaHelper() (*schema.Helper, error) {
 	var b []byte
 	var err error
 	contentType := ctUnknown
-	switch len(args) {
-	case 0:
+	if optAPIsInputPath == "" {
 		if b, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument.")
+			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
 		}
-	case 1:
-		fp := filepath.Clean(args[0])
+	} else {
+		fp := filepath.Clean(optAPIsInputPath)
 		ext := filepath.Ext(fp)
 		switch ext {
 		case "json":
@@ -289,15 +266,9 @@ func getSchemaHelper(args []string) (*schema.Helper, error) {
 		if b, err = ioutil.ReadFile(fp); err != nil {
 			return nil, err
 		}
-	default:
-		return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument.")
 	}
 
-	if len(b) < 2 {
-		return nil, fmt.Errorf("expected OpenAPI3 descriptor document but got '%s'.", string(b))
-	}
-
-	var jsonb []byte = b
+	var jsonb = b
 
 	// First get our supplied document into JSON format
 	if contentType == ctYAML || (contentType == ctUnknown && b[0] != '{' && b[0] != '[') {

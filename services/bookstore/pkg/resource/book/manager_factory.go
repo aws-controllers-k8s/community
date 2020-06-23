@@ -36,12 +36,6 @@ func (f *bookResourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDe
 	return &bookResourceDescriptor{}
 }
 
-// GroupKind returns a string representation of the CRs handled by this
-// resource manager
-func (f *bookResourceManagerFactory) GroupKind() string {
-	return "example.services.k8s.aws:Book"
-}
-
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
 func (f *bookResourceManagerFactory) ManagerFor(

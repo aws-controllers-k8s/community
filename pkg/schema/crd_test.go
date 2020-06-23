@@ -24,10 +24,10 @@ import (
 	"github.com/aws/aws-service-operator-k8s/pkg/testutil"
 )
 
-func attrExportedNames(attrs map[string]*model.Attr) []string {
+func attrCamelNames(attrs map[string]*model.Attr) []string {
 	res := []string{}
 	for _, attr := range attrs {
-		res = append(res, attr.Names.GoExported)
+		res = append(res, attr.Names.Camel)
 	}
 	sort.Strings(res)
 	return res
@@ -46,22 +46,23 @@ func TestGetCRDs(t *testing.T) {
 
 	topicCRD := crds[0]
 
-	assert.Equal("Topic", topicCRD.Names.GoExported)
-	assert.Equal("topic", topicCRD.Names.GoUnexported)
+	assert.Equal("Topic", topicCRD.Names.Camel)
+	assert.Equal("topic", topicCRD.Names.CamelLower)
+	assert.Equal("topic", topicCRD.Names.Snake)
 
 	specAttrs := topicCRD.SpecAttrs
 	statusAttrs := topicCRD.StatusAttrs
 
 	assert.Equal(3, len(specAttrs))
-	expSpecAttrExported := []string{
+	expSpecAttrCamel := []string{
 		"Attributes",
 		"Name",
 		"Tags",
 	}
-	assert.Equal(expSpecAttrExported, attrExportedNames(specAttrs))
+	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
 	assert.Equal(1, len(statusAttrs))
-	expStatusAttrExported := []string{
+	expStatusAttrCamel := []string{
 		"TopicARN",
 	}
-	assert.Equal(expStatusAttrExported, attrExportedNames(statusAttrs))
+	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
 }

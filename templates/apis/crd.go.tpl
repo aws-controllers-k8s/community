@@ -4,15 +4,14 @@
 package {{ .APIVersion }}
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Spec struct {
 	{{- range $attrName, $attr := .CRD.SpecAttrs }}
-	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
+	{{ $attr.Names.Camel }} {{ $attr.GoType }} `json:"{{ $attr.Names.CamelLower }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 
@@ -28,7 +27,7 @@ type {{ .CRD.Kind }}Status struct {
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
 	{{- range $attrName, $attr := .CRD.StatusAttrs }}
-	{{ $attr.Names.GoExported }} {{ $attr.GoType }} `json:"{{ $attr.Names.GoUnexported }},omitempty" aws:"{{ $attr.Names.Original }}"`
+	{{ $attr.Names.Camel }} {{ $attr.GoType }} `json:"{{ $attr.Names.CamelLower }},omitempty" aws:"{{ $attr.Names.Original }}"`
 {{- end }}
 }
 

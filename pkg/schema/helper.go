@@ -14,9 +14,9 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -24,20 +24,33 @@ import (
 )
 
 type Helper struct {
-	api  *openapi3.Swagger
-	crds []*model.CRD
+	api          *openapi3.Swagger
+	serviceAlias string
+	crds         []*model.CRD
 }
 
-func (h *Helper) GetAPIGroup() string {
+func (h *Helper) GetServiceAlias() string {
+	if h.serviceAlias != "" {
+		return h.serviceAlias
+	}
+	if h.api == nil || h.api.Info == nil {
+		return "Unknown service alias"
+	}
 	apiAlias, found := h.api.Info.Extensions["x-aws-api-alias"]
 	apiAliasStr := []byte("unknown")
 	if found {
 		apiAliasStr, _ = apiAlias.(json.RawMessage).MarshalJSON()
 	}
-	apiGroup := fmt.Sprintf("%s.services.k8s.aws", apiAliasStr)
-	return strings.Replace(apiGroup, "\"", "", -1)
+	apiAliasStr = bytes.Replace(apiAliasStr, []byte("\""), []byte(""), -1)
+	h.serviceAlias = string(apiAliasStr)
+	return h.serviceAlias
+}
+
+func (h *Helper) GetAPIGroup() string {
+	serviceAlias := h.GetServiceAlias()
+	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
 func NewHelper(api *openapi3.Swagger) *Helper {
-	return &Helper{api, nil}
+	return &Helper{api, "", nil}
 }

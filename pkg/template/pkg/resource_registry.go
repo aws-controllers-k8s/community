@@ -11,40 +11,25 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package template
+package pkg
 
 import (
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
-
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
-type TypesTemplateVars struct {
-	APIVersion string
-	TypeDefs   []*model.TypeDef
-	EnumDefs   []*model.EnumDef
+type ResourceRegistryGoTemplateVars struct {
+	APIVersion   string
+	ServiceAlias string
 }
 
-func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "types", "types.go.tpl")
+func NewResourceRegistryGoTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "pkg", "resource_registry.go.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("types")
-	if t, err = t.Parse(string(tplContents)); err != nil {
-		return nil, err
-	}
-	includes := []string{
-		"boilerplate",
-		"types/type_def",
-	}
-	for _, include := range includes {
-		if t, err = IncludeTemplate(t, tplDir, include); err != nil {
-			return nil, err
-		}
-	}
-	return t, nil
+	t := ttpl.New("resource_registry")
+	return t.Parse(string(tplContents))
 }

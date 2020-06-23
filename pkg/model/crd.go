@@ -25,25 +25,32 @@ type CRDOps struct {
 }
 
 type CRD struct {
-	Names       names.Names
-	Kind        string
-	Plural      string
-	Ops         CRDOps
-	SpecAttrs   map[string]*Attr
-	StatusAttrs map[string]*Attr
+	Names  names.Names
+	Kind   string
+	Plural string
+	// SDKObjectType is the string name of the struct type used to return a
+	// Describe operation for this resource from the aws-sdk-go. This is
+	// typically called "{Resource}Data", where "{Resource}" is the name of the
+	// resource. For example, the AppMesh API calls this struct MeshData.
+	SDKObjectType string
+	Ops           CRDOps
+	SpecAttrs     map[string]*Attr
+	StatusAttrs   map[string]*Attr
 }
 
 func NewCRD(
 	names names.Names,
 	createOp *openapi3.Operation,
+	sdkObjType string,
 ) *CRD {
 	pluralize := pluralize.NewClient()
-	kind := names.GoExported
+	kind := names.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
-		Names:  names,
-		Kind:   kind,
-		Plural: plural,
-		Ops:    CRDOps{createOp},
+		Names:         names,
+		Kind:          kind,
+		Plural:        plural,
+		SDKObjectType: sdkObjType,
+		Ops:           CRDOps{createOp},
 	}
 }

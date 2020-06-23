@@ -27,27 +27,30 @@ func TestNames(t *testing.T) {
 
 	testCases := []struct {
 		original         string
-		expectExported   string
-		expectUnexported string
+		expectCamel      string
+		expectCamelLower string
+		expectSnake      string
 	}{
-		{"Identifier", "Identifier", "identifier"},
-		{"Id", "ID", "id"},
-		{"ID", "ID", "id"},
-		{"KeyIdentifier", "KeyIdentifier", "keyIdentifier"},
-		{"KeyId", "KeyID", "keyID"},
-		{"KeyID", "KeyID", "keyID"},
-		{"SSEKMSKeyID", "SSEKMSKeyID", "sseKMSKeyID"},
-		{"DbiResourceId", "DBIResourceID", "dbiResourceID"},
-		{"DbInstanceId", "DBInstanceID", "dbInstanceID"},
-		{"DBInstanceId", "DBInstanceID", "dbInstanceID"},
-		{"DBInstanceID", "DBInstanceID", "dbInstanceID"},
-		{"DBInstanceIdentifier", "DBInstanceIdentifier", "dbInstanceIdentifier"},
+		{"Identifier", "Identifier", "identifier", "identifier"},
+		{"Id", "ID", "id", "id"},
+		{"ID", "ID", "id", "id"},
+		{"KeyIdentifier", "KeyIdentifier", "keyIdentifier", "key_identifier"},
+		{"KeyId", "KeyID", "keyID", "key_id"},
+		{"KeyID", "KeyID", "keyID", "key_id"},
+		{"SSEKMSKeyID", "SSEKMSKeyID", "sseKMSKeyID", "sse_kms_key_id"},
+		{"DbiResourceId", "DBIResourceID", "dbiResourceID", "dbi_resource_id"},
+		{"DbInstanceId", "DBInstanceID", "dbInstanceID", "db_instance_id"},
+		{"DBInstanceId", "DBInstanceID", "dbInstanceID", "db_instance_id"},
+		{"DBInstanceID", "DBInstanceID", "dbInstanceID", "db_instance_id"},
+		{"DBInstanceIdentifier", "DBInstanceIdentifier", "dbInstanceIdentifier", "db_instance_identifier"},
 	}
 	for _, tc := range testCases {
 		n := names.New(tc.original)
-		msg := fmt.Sprintf("for original %s expected exported name of %s but got %s", tc.original, tc.expectExported, n.GoExported)
-		assert.Equal(tc.expectExported, n.GoExported, msg)
-		msg = fmt.Sprintf("for original %s expected unexported name of %s but got %s", tc.original, tc.expectUnexported, n.GoUnexported)
-		assert.Equal(tc.expectUnexported, n.GoUnexported, msg)
+		msg := fmt.Sprintf("for original %s expected camel name of %s but got %s", tc.original, tc.expectCamel, n.Camel)
+		assert.Equal(tc.expectCamel, n.Camel, msg)
+		msg = fmt.Sprintf("for original %s expected lowercase camel name of %s but got %s", tc.original, tc.expectCamelLower, n.CamelLower)
+		assert.Equal(tc.expectCamelLower, n.CamelLower, msg)
+		msg = fmt.Sprintf("for original %s expected snake name of %s but got %s", tc.original, tc.expectSnake, n.Snake)
+		assert.Equal(tc.expectSnake, n.Snake, msg)
 	}
 }
