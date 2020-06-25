@@ -26,6 +26,7 @@ import (
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
+	dockertemplate "github.com/aws/aws-service-operator-k8s/pkg/template"
 	cmdtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/cmd"
 	pkgtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/pkg"
 )
@@ -84,6 +85,9 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if err = writeResourcePackage(sh); err != nil {
+		return err
+	}
+	if err = writeDockerfile(sh); err != nil {
 		return err
 	}
 	return nil
@@ -252,6 +256,28 @@ func writeCRDManagerFactoryGo(sh *schema.Helper, crd *model.CRD) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "manager_factory.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+
+func writeDockerfile(sh *schema.Helper) error {
+	var b bytes.Buffer
+	vars := &dockertemplate.DockerTemplateVars{
+		ServiceAlias: sh.GetServiceAlias(),
+	}
+	tpl, err := dockertemplate.NewDockerfileTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= Dockerfile ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "Dockerfile")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
