@@ -42,6 +42,7 @@ func main() {
 	var ackCfg ackrt.Config
 	ackCfg.BindFlags()
 	flag.Parse()
+	ackCfg.SetupLogger()
 
 	mgr, err := ctrlrt.NewManager(ctrlrt.GetConfigOrDie(), ctrlrt.Options{
 		Scheme:             scheme,

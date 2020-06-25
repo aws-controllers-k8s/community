@@ -259,7 +259,6 @@ func writeCRDManagerFactoryGo(sh *schema.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-
 func writeDockerfile(sh *schema.Helper) error {
 	var b bytes.Buffer
 	vars := &dockertemplate.DockerTemplateVars{

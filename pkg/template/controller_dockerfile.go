@@ -30,4 +30,3 @@ func NewDockerfileTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	return t, nil
 }
-
