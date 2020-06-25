@@ -28,8 +28,8 @@ GO111MODULE=on
 : "${RUN_CONFORMANCE:=false}"
 : "${HELM_LOCAL_REPO_NAME:=ack}"
 # TODO: HELM_REPO_SOURCE will change to aws org.
-: "${HELM_REPO_SOURCE:=https://vijtrip2.github.io/aws-service-operator-k8s/helm/charts/}"
-: "${HELM_REPO_CHART_NAME:=start-all-service-controllers}"
+: "${HELM_REPO_SOURCE:=https://varun1524.github.io/aws-service-operator-k8s/helm/charts/}"
+: "${HELM_REPO_CHART_NAME:=start-service-controller}"
 : "${HELM_CONTROLLER_NAME_PREFIX:=aws-k8s}"
 : "${HELM_LOCAL_CHART_NAME:=ack}"
 : "${TEST_PASS:=0}"
@@ -142,7 +142,7 @@ else
 
   __ack_source_tmpdir="/tmp/ack-src-$BASE_GIT_TAG"
   echo "Checking out ack source code for $BASE_GIT_TAG ..."
-  git clone git@github.com:varun1524/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
+  git clone git@github.com:aws/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
 
   pushd "$__ack_source_tmpdir" || exit
   git checkout -b "$BASE_GIT_TAG" "$BASE_GIT_TAG"
@@ -189,12 +189,6 @@ else
   echo "Running integration tests on Latest Commit, $TEST_IMAGE_VERSION"
   echo ""
 
-  __ack_source_tmpdir="/tmp/ack-src-$TEST_IMAGE_VERSION"
-  echo "Checking out ack source code for $TEST_IMAGE_VERSION ..."
-  git clone --depth=1 --branch e2etest git@github.com:varun1524/aws-service-operator-k8s.git "$__ack_source_tmpdir" || exit 1
-
-  pushd "$__ack_source_tmpdir" || exit
-
   for d in ./services/*; do
     if [ -d "$d" ]; then
       __service_name=$(basename "$d")
@@ -224,8 +218,6 @@ else
   echo "*******************************************************************************"
   echo "Integration Testing on Commit $TEST_IMAGE_VERSION Finished"
   echo ""
-
-  popd
 
 fi
 

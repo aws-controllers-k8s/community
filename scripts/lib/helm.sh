@@ -66,13 +66,13 @@ ensure_helm_chart_installed() {
      return 1
   fi
 
-  local __image_tag_suffix="$1"
-  echo "Installing helm chart '$HELM_LOCAL_CHART_NAME' with image $AWS_ECR_REPO_NAME:$__image_tag_suffix"
+  local __service_name="$1"
+  local __ack_service_image_tag="$2" #consist of ack-service_name-commit_sha
+  echo "Installing helm chart '$HELM_LOCAL_CHART_NAME' with image $IMAGE_NAME:$__ack_service_image_tag"
 
   #install/upgrade the helm chart
   #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
-  #TODO: initially keeping --debug enabled because that can guide us if there are any issues. Later should be removed
-  if ! helm upgrade --force --recreate-pods --install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set registry="$AWS_ECR_REGISTRY",repo="$AWS_ECR_REPO_NAME",tagSuffix="$__image_tag_suffix" --debug> /dev/null 2>&1; then
+  if ! helm upgrade --force --install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set ackServiceControllerImage="$IMAGE_NAME:$__ack_service_image_tag",ackServiceAlias="$__service_name"> /dev/null 2>&1; then
     echo "Failed to install helm chart '$HELM_LOCAL_CHART_NAME' to test image."
     TEST_PASS=1
   fi
