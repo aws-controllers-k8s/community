@@ -28,28 +28,29 @@ import (
 // application/json semantics.
 func (h *Helper) getAttrsFromRequestSchemaRef(
 	schemaRef *openapi3.SchemaRef,
-) []*model.Attr {
+) ([]*model.Attr, error) {
 	attrs := []*model.Attr{}
 	if schemaRef == nil {
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from request schema ref: schemaRef was nil")
 	}
 	schema := h.getSchemaFromSchemaRef(schemaRef)
 	if schema == nil {
-		fmt.Printf("failed to find object schema for ref %s\n", schemaRef.Ref)
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from request schema ref: no schema for ref %s", schemaRef.Ref)
 	}
 	if schema.Type != "object" {
-		fmt.Printf("expected to find object schema but found %s\n", schema.Type)
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from request schema ref: expected to find schema of type 'object' but found %s", schema.Type)
 	}
 
 	for propName, propSchemaRef := range schema.Properties {
+		propNames := names.New(propName)
+		goType, err := h.GetGoTypeFromSchemaRef(propNames, propSchemaRef)
+		if err != nil {
+			return nil, err
+		}
 		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
-		names := names.New(propName)
-		goType := h.getGoTypeFromSchema(propName, propSchema)
-		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
+		attrs = append(attrs, model.NewAttr(propNames, goType, propSchema))
 	}
-	return attrs
+	return attrs, nil
 }
 
 // getAttrsFromResponseSchemaRef returns a slice of Attr representing the fields
@@ -61,20 +62,18 @@ func (h *Helper) getAttrsFromRequestSchemaRef(
 func (h *Helper) getAttrsFromResponseSchemaRef(
 	schemaRef *openapi3.SchemaRef,
 	crdName string,
-) []*model.Attr {
+) ([]*model.Attr, error) {
 	attrs := []*model.Attr{}
 	if schemaRef == nil {
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from response schema ref: schemaRef was nil")
 	}
 	var schema *openapi3.Schema
 	schema = h.getSchemaFromSchemaRef(schemaRef)
 	if schema == nil {
-		fmt.Printf("failed to find object schema for ref %s\n", schemaRef.Ref)
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from response schema ref: no schema for ref %s", schemaRef.Ref)
 	}
 	if schema.Type != "object" {
-		fmt.Printf("expected to find object schema but found %s\n", schema.Type)
-		return attrs
+		return nil, fmt.Errorf("failed to find schema properties from response schema ref: expected to find schema of type 'object' but found %s", schema.Type)
 	}
 
 	if len(schema.Properties) == 1 {
@@ -89,11 +88,14 @@ func (h *Helper) getAttrsFromResponseSchemaRef(
 
 	for propName, propSchemaRef := range schema.Properties {
 		propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
-		names := names.New(propName)
-		goType := h.getGoTypeFromSchema(names.Camel, propSchema)
-		attrs = append(attrs, model.NewAttr(names, goType, propSchema))
+		propNames := names.New(propName)
+		goType, err := h.GetGoTypeFromSchemaRef(propNames, propSchemaRef)
+		if err != nil {
+			return nil, err
+		}
+		attrs = append(attrs, model.NewAttr(propNames, goType, propSchema))
 	}
-	return attrs
+	return attrs, nil
 }
 
 // getAttrsFromOp returns two slices of Attr representing the input fields for
@@ -101,7 +103,7 @@ func (h *Helper) getAttrsFromResponseSchemaRef(
 func (h *Helper) getAttrsFromOp(
 	op *openapi3.Operation,
 	crdName string,
-) ([]*model.Attr, []*model.Attr) {
+) ([]*model.Attr, []*model.Attr, error) {
 	inAttrs := []*model.Attr{}
 	outAttrs := []*model.Attr{}
 	if op.RequestBody != nil {
@@ -114,13 +116,14 @@ func (h *Helper) getAttrsFromOp(
 			mediaType, found := rb.Content["application/json"]
 			if !found {
 				fmt.Printf("skipping non-JSON operation %s\n", op.OperationID)
-				return inAttrs, outAttrs
+				return inAttrs, outAttrs, nil
 			}
 			if mediaType.Schema != nil {
-				inAttrs = append(
-					inAttrs,
-					h.getAttrsFromRequestSchemaRef(mediaType.Schema)...,
-				)
+				reqAttrs, err := h.getAttrsFromRequestSchemaRef(mediaType.Schema)
+				if err != nil {
+					return nil, nil, err
+				}
+				inAttrs = append(inAttrs, reqAttrs...)
 			}
 		}
 	}
@@ -135,16 +138,17 @@ func (h *Helper) getAttrsFromOp(
 				mediaType, found := resp.Content["application/json"]
 				if !found {
 					fmt.Printf("skipping non-JSON operation %s\n", op.OperationID)
-					return inAttrs, outAttrs
+					return inAttrs, outAttrs, nil
 				}
 				if mediaType.Schema != nil {
-					outAttrs = append(
-						outAttrs,
-						h.getAttrsFromResponseSchemaRef(mediaType.Schema, crdName)...,
-					)
+					respAttrs, err := h.getAttrsFromResponseSchemaRef(mediaType.Schema, crdName)
+					if err != nil {
+						return nil, nil, err
+					}
+					outAttrs = append(outAttrs, respAttrs...)
 				}
 			}
 		}
 	}
-	return inAttrs, outAttrs
+	return inAttrs, outAttrs, nil
 }

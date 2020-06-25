@@ -51,6 +51,17 @@ func (h *Helper) GetAPIGroup() string {
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
+func (h *Helper) GetSchema(schemaName string) *openapi3.Schema {
+	if h.api == nil {
+		return nil
+	}
+	schemaRef := h.api.Components.Schemas[schemaName]
+	if schemaRef == nil {
+		return nil
+	}
+	return schemaRef.Value
+}
+
 func NewHelper(api *openapi3.Swagger) *Helper {
 	return &Helper{api, "", nil}
 }
