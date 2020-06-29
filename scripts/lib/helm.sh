@@ -38,44 +38,11 @@ install_helm() {
   popd
 }
 
-install_helm_chart() {
-  if ! should_execute install_helm_chart; then
-     return 1
-  fi
-
-  echo "Installing helm chart '$HELM_LOCAL_CHART_NAME' with image tag suffix:base"
-  local __image_tag_suffix="$1"
-
-  #install the helm chart
-  #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
-   if ! helm install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set registry="$AWS_ECR_REGISTRY",repo="$AWS_ECR_REPO_NAME",tagSuffix="$__image_tag_suffix" > /dev/null 2>&1; then
-     echo "Failed to install helm chart '$HELM_LOCAL_CHART_NAME'."
-     TEST_PASS=1
-  fi
-}
-
 uninstall_helm_chart() {
   #uninstall the helm chart
  if ! helm uninstall "$HELM_LOCAL_CHART_NAME" > /dev/null 2>&1 ; then
     echo "Failed to uninstall helm chart '$HELM_LOCAL_CHART_NAME'"
     # No need to mark the test as failed if controllers cannot be uninstalled due to some reason.
-  fi
-}
-
-
-upgrade_helm_chart() {
-  if ! should_execute upgrade_helm_chart; then
-     return 1
-  fi
-
-  echo "Upgrading helm chart '$HELM_LOCAL_CHART_NAME' with image tag suffix:test"
-  local __image_tag_suffix="$1"
-
-  #upgrade the helm chart
-  #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
-  if ! helm upgrade "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set registry="$AWS_ECR_REGISTRY",repo="$AWS_ECR_REPO_NAME",tagSuffix="$__image_tag_suffix" > /dev/null 2>&1; then
-    echo "Failed to upgrade helm chart '$HELM_LOCAL_CHART_NAME' to test image."
-    TEST_PASS=1
   fi
 }
 
@@ -90,6 +57,23 @@ ensure_controller_pods() {
     echo "Controller pods have successfully started."
   else
     echo "Failed to start controller pods. Exiting... "
+    TEST_PASS=1
+  fi
+}
+
+ensure_helm_chart_installed() {
+  if ! should_execute ensure_helm_chart_installed; then
+     return 1
+  fi
+
+  local __service_name="$1"
+  local __ack_service_image_tag="$2" #consist of ack-service_name-commit_sha
+  echo "Installing helm chart '$HELM_LOCAL_CHART_NAME' with image $IMAGE_NAME:$__ack_service_image_tag"
+
+  #install/upgrade the helm chart
+  #The image name used will be "$AWS_ECR_REGISTRY"/"$AWS_ECR_REPO_NAME":<awsServiceName>-"$__image_tag_suffix"
+  if ! helm upgrade --force --install "$HELM_LOCAL_CHART_NAME" "$HELM_LOCAL_REPO_NAME"/"$HELM_REPO_CHART_NAME" --set ackServiceControllerImage="$IMAGE_NAME:$__ack_service_image_tag",ackServiceAlias="$__service_name"> /dev/null 2>&1; then
+    echo "Failed to install helm chart '$HELM_LOCAL_CHART_NAME' to test image."
     TEST_PASS=1
   fi
 }

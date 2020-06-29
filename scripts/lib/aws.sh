@@ -26,3 +26,22 @@ ensure_aws_k8s_tester() {
         chmod +x $TESTER_PATH
     fi
 }
+
+ensure_ecr_image() {
+  local __ack_service_image_tag="$1" #consist of ack-service_name-commit_sha
+  local __dockerfile_path="$2"
+
+  if `aws ecr describe-images --repository-name "$AWS_ECR_REPO_NAME" --image-ids imageTag="$__ack_service_image_tag" >/dev/null 2>&1`; then
+     echo "ACK image $IMAGE_NAME:$__ack_service_image_tag already exists in repository. Skipping image build..."
+  else
+    START=$SECONDS
+    echo "Building Docker image for $__ack_service_image_tag"
+    docker build -t "$AWS_ECR_REPO_NAME":"$__ack_service_image_tag" -f "$__dockerfile_path" .
+    docker tag "$AWS_ECR_REPO_NAME":"$__ack_service_image_tag" "$IMAGE_NAME":"$__ack_service_image_tag"
+    docker push "$IMAGE_NAME":"$__ack_service_image_tag"
+    echo "pushed successfully to ECR"
+
+    DOCKER_BUILD_DURATION=$((SECONDS - START))
+    echo "TIMELINE: Docker build took $DOCKER_BUILD_DURATION seconds."
+  fi
+}
