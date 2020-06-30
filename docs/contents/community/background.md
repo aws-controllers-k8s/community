@@ -1,16 +1,17 @@
 # Background
 
-The AWS Service Operator (ASO) project was introduced by [Chris Hein in 10/2018](https://aws.amazon.com/blogs/opensource/aws-service-operator-kubernetes-available/).
-We reviewed the feedback from the wider community and stakeholders and [decided in 08/2019](https://github.com/aws/containers-roadmap/issues/456) to turn ASO into a first-tier OSS project with concrete commitments from the service team side, based on the following tenets:
+In 10/2018 Chris Hein [introduced](https://aws.amazon.com/blogs/opensource/aws-service-operator-kubernetes-available/) the AWS Service Operator (ASO) project. We reviewed the feedback from the community and stakeholders and in 08/2019 [decided](https://github.com/aws/containers-roadmap/issues/456) to relaunch ASO as a first-tier open source project with concrete commitments from the container service team. In this process, we renamed the project to AWS Controllers for Kubernetes (ACK).
 
-1. It is a community-driven project, based on a governance model defining roles and responsibilities.
-2. It is optimized for production usage with full test coverage including performance and scalability test suites.
-3. It strives to be the only codebase exposing AWS services via a Kubernetes operator. 
+The tenets for the relaunch were:
+
+1. ACK is a community-driven project, based on a governance model defining roles and responsibilities.
+2. ACK is optimized for production usage with full test coverage including performance and scalability test suites.
+3. ACK strives to be the only codebase exposing AWS services via a Kubernetes operator. 
 
 Since then, we worked on [design issues](https://github.com/aws/aws-service-operator-k8s/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Adesign) and gathering feedback around which services to prioritize.
 
 
-## Custom controllers and operators in AWS
+## Existing custom controllers
 
 AWS service teams use custom controllers, webhooks, and operators for different use cases and based on different approaches. Examples include:
 
