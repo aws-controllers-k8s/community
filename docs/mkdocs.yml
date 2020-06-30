@@ -7,16 +7,20 @@ copyright: 'Copyright &copy; 2020 Amazon'
 docs_dir: contents
 nav:
     - Home: index.md
-    - User docs: user-docs.md
+    - End-user docs: 
+      - Install: user-docs/install.md
+      - Permissions: user-docs/permissions.md
+      - Usage: user-docs/usage.md
     - Developer docs: 
-      - Setup: dev-docs/index.md
+      - Overview: dev-docs/overview.md
+      - Setup: dev-docs/setup.md
       - Code generation: dev-docs/code-generation.md
       - Testing: dev-docs/testing.md
     - Community:
       - Background: community/background.md
       - FAQ: community/faq.md
       - Discussions: community/discussions.md
-      - Contributing: https://github.com/mhausenblas/aws-service-operator-k8s/blob/master/CONTRIBUTING.md
+      - Contributing: https://github.com/aws/aws-service-operator-k8s/blob/master/CONTRIBUTING.md
       - Governance: https://github.com/aws/aws-service-operator-k8s/blob/master/GOVERNANCE.md
 extra:
     social:
