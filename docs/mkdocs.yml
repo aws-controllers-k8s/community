@@ -1,0 +1,45 @@
+site_name: ACK
+site_description: 'AWS Controllers for Kubernetes'
+site_author: 'The ACK contributors'
+repo_name: 'aws/aws-service-operator-k8s'
+repo_url: 'https://github.com/aws/aws-service-operator-k8s'
+copyright: 'Copyright &copy; 2020 Amazon'
+docs_dir: contents
+nav:
+    - Home: index.md
+    - User docs: user-docs.md
+    - Developer docs: 
+      - Setup: dev-docs/index.md
+      - Code generation: dev-docs/code-generation.md
+      - Testing: dev-docs/testing.md
+    - Community:
+      - Background: community/background.md
+      - FAQ: community/faq.md
+      - Discussions: community/discussions.md
+      - Contributing: https://github.com/mhausenblas/aws-service-operator-k8s/blob/master/CONTRIBUTING.md
+      - Governance: https://github.com/aws/aws-service-operator-k8s/blob/master/GOVERNANCE.md
+extra:
+    social:
+    - type: 'twitter'
+      link: 'https://twitter.com/awscloud'
+theme:
+    name: 'material'
+    custom_dir: theme
+    favicon: 'assets/images/favicon.png'
+    logo: 'assets/images/logo.png'
+    font:
+        text: 'Oxygen'
+        code: 'Oxygen Mono'
+    palette:
+      primary: 'orange'
+    highlightjs: true
+    hljs_languages:
+        - yaml
+        - json
+        - bash
+markdown_extensions:
+    - toc:
+        permalink: true
+    - admonition
+    - codehilite:
+        linenums: true

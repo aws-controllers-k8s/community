@@ -4,13 +4,15 @@ In order to keep the code for all the service controllers consistent, we will
 use a strategy of generating the custom resource definitions and controller
 code stubs for new AWS services.
 
+## Options
+
 To generate the CRDs and controller stub code, we investigated a number of
 options:
 
-* home-grown custom code generator
-* [kudo](https://kudo.dev)
-* [kubebuilder](github.com/kubernetes-sigs/kubebuilder)
-* a hybrid custom code generator + sigs.kubernetes.io/controller-tools (CR)
+- home-grown custom code generator
+- [kudo](https://kudo.dev)
+- [kubebuilder](github.com/kubernetes-sigs/kubebuilder)
+- a hybrid custom code generator + `sigs.kubernetes.io/controller-tools` (CR)
 
 The original AWS Service Operator used a [custom-built generator][1] that
 processed [YAML manifests][2] describing the AWS service and used
@@ -21,14 +23,8 @@ tightly coupled to CloudFormation. In fact, the CRDs for individual AWS
 services like S3 or RDS were thin wrappers around CloudFormation stacks that
 described the object being operated upon.
 
-[1]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation
-[2]: https://github.com/amazon-archives/aws-service-operator/tree/master/models
-[3]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation/pkg/codegen/assets
-[4]: https://github.com/amazon-archives/aws-service-operator/blob/b4befd62322a57ac78aa39ea08771fc32912592a/code-generation/pkg/codegen/assets/aws-service-operator.yaml.templ#L13-L31
-[5]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/operator.go.templ
-[6]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/types.go.templ
 
-kudo is a platform for building Kubernetes Operators. It stores state in its
+`kudo` is a platform for building Kubernetes Operators. It stores state in its
 own kudo.dev CRDs and allows users to define "plans" for a deployed application
 to deploy itself. We determined that kudo was not a particularly good fit for
 ASO for a couple reasons. First, we needed a way to generate CRDs in several
@@ -37,7 +33,7 @@ isn't deploying an "application" that needs to have a controlled deployment
 plan. Instead, ASO is a controller that facilitates creation and management of
 various AWS service objects using Kubernetes CRD instances.
 
-`kubebuilder` is the recommended upstream tool for generating CRDs and controller
+`kubebuilder` is the recommended upstream tool for generating CRDs and controller 
 stub code. It is a Go binary that creates the scaffolding for CRDs and
 controller Go code. It has support for multiple API groups (e.g. `s3.amazonaws.com`
 and `dynamodb.amazonaws.com`) in a single code repository, so allows for sensible
@@ -50,11 +46,10 @@ represented Go best practices. This option gives us the flexibility to generate
 the files and content for multiple API groups but still stay within the
 recommended guardrails of the upstream Kubernetes community.
 
-[7]: https://github.com/kubernetes-sigs/kubebuilder/issues/1268
 
-## Hybrid custom+controller-runtime proposal
+## Hybrid custom+controller-runtime
 
-![Multi-phase approach to code generation for ASO](images/multi-phase-code-generation.png)
+![Multi-phase approach to code generation for ASO](../images/multi-phase-code-generation.png)
 
 This approach uses multiple phases of code generation.
 
@@ -71,15 +66,12 @@ generators for this scaffolding. We should be able to make a modified version
 of the upstream [`generate-groups.sh`][8] script to generate all the defaults,
 deepcopy, informers, listers and clientset code.
 
-[8]: https://github.com/kubernetes/code-generator/blob/6b257a9d6f461b5e15dc2f0d13e29731a5b5255a/generate-groups.sh
-
 Next, we will need to generate some skeleton code for the reconciling
 controller handling the new API along with the YAML files representing the CRDs
-that will get loaded into kube-apiserver and the YAML files for RBAC and
+that will get loaded into `kube-apiserver` and the YAML files for RBAC and
 OpenAPI v3 schemas for the CRDs. This is where the [`controller-gen`][9] tool
-from the sigs.kubernetes.io/controller-tools project will come in handy.
+from the `sigs.kubernetes.io/controller-tools` project will come in handy.
 
-[9]: https://github.com/kubernetes-sigs/controller-tools/blob/a5fa7b956b85a6e792bc7086fedf7107d62452b1/cmd/controller-gen/main.go
 
 We also want to generate some stub code for a new reconciling controller into
 the primary aws-service-operator binary.
@@ -129,3 +121,13 @@ structure like this:
     /$VERSION
      ...
 ```
+
+[1]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation
+[2]: https://github.com/amazon-archives/aws-service-operator/tree/master/models
+[3]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation/pkg/codegen/assets
+[4]: https://github.com/amazon-archives/aws-service-operator/blob/b4befd62322a57ac78aa39ea08771fc32912592a/code-generation/pkg/codegen/assets/aws-service-operator.yaml.templ#L13-L31
+[5]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/operator.go.templ
+[6]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/types.go.templ
+[7]: https://github.com/kubernetes-sigs/kubebuilder/issues/1268
+[8]: https://github.com/kubernetes/code-generator/blob/6b257a9d6f461b5e15dc2f0d13e29731a5b5255a/generate-groups.sh
+[9]: https://github.com/kubernetes-sigs/controller-tools/blob/a5fa7b956b85a6e792bc7086fedf7107d62452b1/cmd/controller-gen/main.go
