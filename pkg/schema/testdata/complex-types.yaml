@@ -1,0 +1,428 @@
+components:
+  schemas:
+    AnyTag:
+      type: object
+      properties:
+        tags:
+          type: object
+          additionalProperties: true
+    Arn:
+      type: string
+    Attribute:
+      properties:
+        key:
+          $ref: '#/components/schemas/AttributeKey'
+        value:
+          $ref: '#/components/schemas/AttributeValue'
+      required:
+      - key
+      type: object
+    AttributeKey:
+      maxLength: 128
+      minLength: 1
+      type: string
+    AttributeList:
+      items:
+        properties:
+          key:
+            $ref: '#/components/schemas/AttributeKey'
+          value:
+            $ref: '#/components/schemas/AttributeValue'
+        required:
+        - key
+        type: object
+      maxItems: 50
+      type: array
+    AttributeValue:
+      maxLength: 256
+      minLength: 1
+      type: string
+    AuthorizationData:
+      properties:
+        authorizationToken:
+          $ref: '#/components/schemas/Base64'
+        expiresAt:
+          $ref: '#/components/schemas/ExpirationTimestamp'
+        proxyEndpoint:
+          $ref: '#/components/schemas/ProxyEndpoint'
+      type: object
+    AuthorizationDataList:
+      items:
+        properties:
+          authorizationToken:
+            $ref: '#/components/schemas/Base64'
+          expiresAt:
+            $ref: '#/components/schemas/ExpirationTimestamp'
+          proxyEndpoint:
+            $ref: '#/components/schemas/ProxyEndpoint'
+        type: object
+      type: array
+    Base64:
+      pattern: ^\S+$
+      type: string
+    CreationTimestamp:
+      format: date-time
+      type: string
+    DescribeImagesFilter:
+      properties:
+        tagStatus:
+          $ref: '#/components/schemas/TagStatus'
+      type: object
+    EvaluationTimestamp:
+      format: date-time
+      type: string
+    ExceptionMessage:
+      type: string
+    ExpirationTimestamp:
+      format: date-time
+      type: string
+    FindingDescription:
+      type: string
+    FindingName:
+      type: string
+    FindingSeverity:
+      enum:
+      - INFORMATIONAL
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+      - UNDEFINED
+      type: string
+    FindingSeverityCounts:
+      additionalProperties: true
+      type: object
+    ForceFlag:
+      type: boolean
+    Image:
+      properties:
+        imageId:
+          $ref: '#/components/schemas/ImageIdentifier'
+        imageManifest:
+          $ref: '#/components/schemas/ImageManifest'
+        registryId:
+          $ref: '#/components/schemas/RegistryId'
+        repositoryName:
+          $ref: '#/components/schemas/RepositoryName'
+      type: object
+    ImageActionType:
+      enum:
+      - EXPIRE
+      type: string
+    ImageDetail:
+      properties:
+        imageDigest:
+          $ref: '#/components/schemas/ImageDigest'
+        imagePushedAt:
+          $ref: '#/components/schemas/PushTimestamp'
+        imageScanStatus:
+          $ref: '#/components/schemas/ImageScanStatus'
+        imageSizeInBytes:
+          $ref: '#/components/schemas/ImageSizeInBytes'
+        imageTags:
+          $ref: '#/components/schemas/ImageTagList'
+        registryId:
+          $ref: '#/components/schemas/RegistryId'
+        repositoryName:
+          $ref: '#/components/schemas/RepositoryName'
+      type: object
+    ImageDetailList:
+      items:
+        properties:
+          imageDigest:
+            $ref: '#/components/schemas/ImageDigest'
+          imagePushedAt:
+            $ref: '#/components/schemas/PushTimestamp'
+          imageScanStatus:
+            $ref: '#/components/schemas/ImageScanStatus'
+          imageSizeInBytes:
+            $ref: '#/components/schemas/ImageSizeInBytes'
+          imageTags:
+            $ref: '#/components/schemas/ImageTagList'
+          registryId:
+            $ref: '#/components/schemas/RegistryId'
+          repositoryName:
+            $ref: '#/components/schemas/RepositoryName'
+        type: object
+      type: array
+    ImageDigest:
+      type: string
+    ImageFailure:
+      properties:
+        failureCode:
+          $ref: '#/components/schemas/ImageFailureCode'
+        failureReason:
+          $ref: '#/components/schemas/ImageFailureReason'
+        imageId:
+          $ref: '#/components/schemas/ImageIdentifier'
+      type: object
+    ImageFailureCode:
+      enum:
+      - InvalidImageDigest
+      - InvalidImageTag
+      - ImageTagDoesNotMatchDigest
+      - ImageNotFound
+      - MissingDigestAndTag
+      type: string
+    ImageFailureList:
+      items:
+        properties:
+          failureCode:
+            $ref: '#/components/schemas/ImageFailureCode'
+          failureReason:
+            $ref: '#/components/schemas/ImageFailureReason'
+          imageId:
+            $ref: '#/components/schemas/ImageIdentifier'
+        type: object
+      type: array
+    ImageFailureReason:
+      type: string
+    ImageIdentifier:
+      properties:
+        imageDigest:
+          $ref: '#/components/schemas/ImageDigest'
+        imageTag:
+          $ref: '#/components/schemas/ImageTag'
+      type: object
+    ImageIdentifierList:
+      items:
+        properties:
+          imageDigest:
+            $ref: '#/components/schemas/ImageDigest'
+          imageTag:
+            $ref: '#/components/schemas/ImageTag'
+        type: object
+      maxItems: 100
+      type: array
+    ImageList:
+      items:
+        properties:
+          imageId:
+            $ref: '#/components/schemas/ImageIdentifier'
+          imageManifest:
+            $ref: '#/components/schemas/ImageManifest'
+          registryId:
+            $ref: '#/components/schemas/RegistryId'
+          repositoryName:
+            $ref: '#/components/schemas/RepositoryName'
+        type: object
+      type: array
+    ImageManifest:
+      maxLength: 4194304
+      minLength: 1
+      type: string
+    ImageScanFinding:
+      properties:
+        attributes:
+          $ref: '#/components/schemas/AttributeList'
+        description:
+          $ref: '#/components/schemas/FindingDescription'
+        name:
+          $ref: '#/components/schemas/FindingName'
+        severity:
+          $ref: '#/components/schemas/FindingSeverity'
+        uri:
+          $ref: '#/components/schemas/Url'
+      type: object
+    ImageScanFindingList:
+      items:
+        properties:
+          attributes:
+            $ref: '#/components/schemas/AttributeList'
+          description:
+            $ref: '#/components/schemas/FindingDescription'
+          name:
+            $ref: '#/components/schemas/FindingName'
+          severity:
+            $ref: '#/components/schemas/FindingSeverity'
+          uri:
+            $ref: '#/components/schemas/Url'
+        type: object
+      type: array
+    ImageScanFindings:
+      properties:
+        findingSeverityCounts:
+          $ref: '#/components/schemas/FindingSeverityCounts'
+        findings:
+          $ref: '#/components/schemas/ImageScanFindingList'
+        imageScanCompletedAt:
+          $ref: '#/components/schemas/ScanTimestamp'
+        vulnerabilitySourceUpdatedAt:
+          $ref: '#/components/schemas/VulnerabilitySourceUpdateTimestamp'
+      type: object
+    ImageScanStatus:
+      properties:
+        description:
+          $ref: '#/components/schemas/ScanStatusDescription'
+        status:
+          $ref: '#/components/schemas/ScanStatus'
+      type: object
+    ImageScanningConfiguration:
+      properties:
+        scanOnPush:
+          $ref: '#/components/schemas/ScanOnPushFlag'
+      type: object
+    ImageSizeInBytes:
+      format: int64
+      type: integer
+    ImageTag:
+      maxLength: 300
+      minLength: 1
+      type: string
+    ImageTagAlreadyExistsException:
+      properties:
+        message:
+          $ref: '#/components/schemas/ExceptionMessage'
+      type: object
+      x-aws-api-exception: true
+    ImageTagList:
+      items:
+        maxLength: 300
+        minLength: 1
+        type: string
+      type: array
+    ImageTagMutability:
+      enum:
+      - MUTABLE
+      - IMMUTABLE
+      type: string
+    MediaType:
+      type: string
+    NextToken:
+      type: string
+    PartSize:
+      format: int64
+      minimum: 0
+      type: integer
+    ProxyEndpoint:
+      type: string
+    PushTimestamp:
+      format: date-time
+      type: string
+    RegistryId:
+      pattern: '[0-9]{12}'
+      type: string
+    Repository:
+      properties:
+        createdAt:
+          $ref: '#/components/schemas/CreationTimestamp'
+        imageScanningConfiguration:
+          $ref: '#/components/schemas/ImageScanningConfiguration'
+        imageTagMutability:
+          $ref: '#/components/schemas/ImageTagMutability'
+        registryId:
+          $ref: '#/components/schemas/RegistryId'
+        repositoryArn:
+          $ref: '#/components/schemas/Arn'
+        repositoryName:
+          $ref: '#/components/schemas/RepositoryName'
+        repositoryUri:
+          $ref: '#/components/schemas/Url'
+      type: object
+    RepositoryList:
+      items:
+        properties:
+          createdAt:
+            $ref: '#/components/schemas/CreationTimestamp'
+          imageScanningConfiguration:
+            $ref: '#/components/schemas/ImageScanningConfiguration'
+          imageTagMutability:
+            $ref: '#/components/schemas/ImageTagMutability'
+          registryId:
+            $ref: '#/components/schemas/RegistryId'
+          repositoryArn:
+            $ref: '#/components/schemas/Arn'
+          repositoryName:
+            $ref: '#/components/schemas/RepositoryName'
+          repositoryUri:
+            $ref: '#/components/schemas/Url'
+        type: object
+      type: array
+    RepositoryName:
+      maxLength: 256
+      minLength: 2
+      pattern: (?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*
+      type: string
+    RepositoryNameList:
+      items:
+        maxLength: 256
+        minLength: 2
+        pattern: (?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*
+        type: string
+      maxItems: 100
+      type: array
+    RepositoryPolicyText:
+      maxLength: 10240
+      type: string
+    ScanOnPushFlag:
+      type: boolean
+    ScanStatus:
+      enum:
+      - IN_PROGRESS
+      - COMPLETE
+      - FAILED
+      type: string
+    ScanStatusDescription:
+      type: string
+    ScanTimestamp:
+      format: date-time
+      type: string
+    SeverityCount:
+      format: int64
+      minimum: 0
+      type: integer
+    Tag:
+      properties:
+        Key:
+          $ref: '#/components/schemas/TagKey'
+        Value:
+          $ref: '#/components/schemas/TagValue'
+      type: object
+    TagKey:
+      type: string
+    TagKeyList:
+      items:
+        type: string
+      type: array
+    TagList:
+      items:
+        properties:
+          Key:
+            $ref: '#/components/schemas/TagKey'
+          Value:
+            $ref: '#/components/schemas/TagValue'
+        type: object
+      type: array
+    TagStatus:
+      enum:
+      - TAGGED
+      - UNTAGGED
+      - ANY
+      type: string
+    TagValue:
+      type: string
+    UnknownType:
+      properties:
+        field:
+          type: unknown
+      type: object
+    UnknownImageScanFindingList:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+    UnknownImageScanFindings:
+      properties:
+        findings:
+          $ref: '#/components/schemas/UnknownImageScanFindingList'
+      type: object
+    UploadId:
+      pattern: '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+      type: string
+    Url:
+      type: string
+    VulnerabilitySourceUpdateTimestamp:
+      format: date-time
+      type: string

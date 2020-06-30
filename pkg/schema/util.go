@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-service-operator-k8s/pkg/names"
 	"github.com/gertd/go-pluralize"
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -48,45 +49,112 @@ func isSuccessResponseCode(rc string) bool {
 	return false
 }
 
-// getGoTypeFromSchema returns a string of the Go type given an openapi3.Schema
-func (h *Helper) getGoTypeFromSchema(
-	schemaName string,
-	schema *openapi3.Schema,
-) string {
+// GetGoTypeFromSchemaRef returns a string of the Go type given an
+// openapi3.SchemaRef
+func (h *Helper) GetGoTypeFromSchemaRef(
+	propNames names.Names, // This is the name of the field/attribute
+	schemaRef *openapi3.SchemaRef,
+) (string, error) {
+	schema := h.getSchemaFromSchemaRef(schemaRef)
 	switch schema.Type {
 	case "boolean":
-		return "bool"
+		return "bool", nil
 	case "string":
 		if schema.Format == "byte" {
-			return "[]byte"
+			return "[]byte", nil
 		}
-		return "string"
+		return "string", nil
 	case "number":
 		if schema.Format == "float64" {
-			return "float64"
+			return "float64", nil
 		}
-		return "int64"
+		return "int64", nil
 	case "integer":
-		return "int64"
+		return "int64", nil
 	case "array":
-		itemsSchema := h.getSchemaFromSchemaRef(schema.Items)
-		var itemType string
-		if itemsSchema.Type == "object" {
-			itemType = h.deduceArrayOfObjectsType(schemaName, itemsSchema)
-			if itemType == "" {
-				itemType = "!!! UNKNOWN ARRAY OBJECT TYPE !!!"
+		itemsSchemaRefName := schema.Items.Ref
+		if itemsSchemaRefName == "" {
+			if schemaRef.Ref != "" {
+				// Here, we deal with a situation like we find in the ECR API
+				// with ImageScanFinding. There is an ImageScanFindings schema
+				// of type "object" which has a "findings" property that is a
+				// reference to an ImageScanFindingsList schema that is of type
+				// "array" of "object" with a set of properties that is
+				// identical to the ImageScanFinding schema:
+				//
+				//     ImageScanFinding:
+				//       properties:
+				//         attributes:
+				//           $ref: '#/components/schemas/AttributeList'
+				//         description:
+				//           $ref: '#/components/schemas/FindingDescription'
+				//         name:
+				//           $ref: '#/components/schemas/FindingName'
+				//         severity:
+				//           $ref: '#/components/schemas/FindingSeverity'
+				//         uri:
+				//           $ref: '#/components/schemas/Url'
+				//       type: object
+				//     ImageScanFindingList:
+				//       items:
+				//         properties:
+				//           attributes:
+				//             $ref: '#/components/schemas/AttributeList'
+				//           description:
+				//             $ref: '#/components/schemas/FindingDescription'
+				//           name:
+				//             $ref: '#/components/schemas/FindingName'
+				//           severity:
+				//             $ref: '#/components/schemas/FindingSeverity'
+				//           uri:
+				//             $ref: '#/components/schemas/Url'
+				//         type: object
+				//       type: array
+				//     ImageScanFindings:
+				//       properties:
+				//         findingSeverityCounts:
+				//           $ref: '#/components/schemas/FindingSeverityCounts'
+				//         findings:
+				//           $ref: '#/components/schemas/ImageScanFindingList'
+				//         imageScanCompletedAt:
+				//           $ref: '#/components/schemas/ScanTimestamp'
+				//         vulnerabilitySourceUpdatedAt:
+				//           $ref: '#/components/schemas/VulnerabilitySourceUpdateTimestamp'
+				//       type: object
+				//
+				// In order to come up with a Go type for the
+				// `ImageScanFindings.Findings` struct field, we need to search
+				// for a schema called ImageScanFindingList, not a schema
+				// called "findings".
+				itemsSchemaRefName = strings.TrimPrefix(schemaRef.Ref, compSchemasRef)
+			} else {
+				itemsSchemaRefName = propNames.Original
 			}
 		} else {
-			itemType = h.getGoTypeFromSchema(schemaName, itemsSchema)
+			itemsSchemaRefName = strings.TrimPrefix(itemsSchemaRefName, compSchemasRef)
 		}
-		return "[]" + itemType
+		itemsSchema := h.getSchemaFromSchemaRef(schema.Items)
+		var itemType string
+		var err error
+		if itemsSchema.Type == "object" {
+			itemType, err = h.deduceArrayOfObjectsType(itemsSchemaRefName, itemsSchema)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			itemType, err = h.GetGoTypeFromSchemaRef(propNames, schema.Items)
+			if err != nil {
+				return "", err
+			}
+		}
+		return "[]" + itemType, nil
 	case "object":
 		if schema.AdditionalPropertiesAllowed != nil && *schema.AdditionalPropertiesAllowed {
-			return "map[string]string"
+			return "map[string]string", nil
 		}
-		return "*" + schemaName
+		return "*" + propNames.Camel, nil
 	}
-	return "!!! UNKNOWN !!!"
+	return "", fmt.Errorf("failed to determine Go type. schema.Type was %s", schema.Type)
 }
 
 // Some shapes in AWS service APIs are arrays of unnamed objects. A good
@@ -129,8 +197,8 @@ func (h *Helper) getGoTypeFromSchema(
 func (h *Helper) deduceArrayOfObjectsType(
 	arrayTypeName string,
 	objectTypeSchema *openapi3.Schema,
-) string {
-	guessObjectTypeName := ""
+) (string, error) {
+	guessObjectTypeName := arrayTypeName
 	if strings.HasSuffix(arrayTypeName, "List") {
 		guessObjectTypeName = strings.TrimSuffix(arrayTypeName, "List")
 	} else if strings.HasSuffix(arrayTypeName, "Set") {
@@ -147,13 +215,13 @@ func (h *Helper) deduceArrayOfObjectsType(
 		// name and if so, return that schema name as the target object type
 		_, found := h.api.Components.Schemas[guessObjectTypeName]
 		if found {
-			return "*" + guessObjectTypeName
+			return "*" + guessObjectTypeName, nil
 		}
-		fmt.Printf("Failed to find %s when looking up arrayTypeName %s\n", guessObjectTypeName, arrayTypeName)
+		return "", fmt.Errorf("failed to find %s when looking up arrayTypeName %s", guessObjectTypeName, arrayTypeName)
 		// TODO(jaypipes): Look through all schemas and try to match on known
 		// properties?
 	}
-	return ""
+	return "", fmt.Errorf("failed to guess an object type name when looking up arrayTypeName %s", arrayTypeName)
 }
 
 // getSchemaFromSchemaRef returns an openapi3.Schema given a SchemaRef
