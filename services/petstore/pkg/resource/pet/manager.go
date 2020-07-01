@@ -31,9 +31,9 @@ import (
 	svcsdk "github.com/aws/aws-service-operator-k8s/services/petstore/sdk/service/petstore"
 )
 
-// petResourceManager is responsible for providing a consistent way to perform
+// resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Pet custom resources.
-type petResourceManager struct {
+type resourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
@@ -45,19 +45,19 @@ type petResourceManager struct {
 	sdkapi svcsdkapi.PetstoreAPI
 }
 
-// concreteResource returns a pointer to a petResource from the supplied
+// concreteResource returns a pointer to a resource from the supplied
 // generic AWSResource interface
-func (rm *petResourceManager) concreteResource(
+func (rm *resourceManager) concreteResource(
 	res acktypes.AWSResource,
-) *petResource {
+) *resource {
 	// cast the generic interface into a pointer type specific to the concrete
 	// implementing resource type managed by this resource manager
-	return res.(*petResource)
+	return res.(*resource)
 }
 
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
-func (rm *petResourceManager) ReadOne(
+func (rm *resourceManager) ReadOne(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -66,16 +66,16 @@ func (rm *petResourceManager) ReadOne(
 	if err != nil {
 		return nil, err
 	}
-	return &petResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: sdko,
 	}, nil
 }
 
-// findSDKPet returns SDK-specific information about a supplied petResource
-func (rm *petResourceManager) findSDKPet(
+// findSDKPet returns SDK-specific information about a supplied resource
+func (rm *resourceManager) findSDKPet(
 	ctx context.Context,
-	r *petResource,
+	r *resource,
 ) (*svcsdk.PetData, error) {
 	input := svcsdk.DescribePetInput{
 		PetName:  r.ko.Spec.Name,
@@ -94,7 +94,7 @@ func (rm *petResourceManager) findSDKPet(
 // Create attempts to create the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-created
 // resource
-func (rm *petResourceManager) Create(
+func (rm *resourceManager) Create(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -106,7 +106,7 @@ func (rm *petResourceManager) Create(
 	if err != nil {
 		return nil, err
 	}
-	return &petResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Pet,
 	}, nil
@@ -118,7 +118,7 @@ func (rm *petResourceManager) Create(
 // observed resource differs from the supplied desired state. The higher-level
 // reonciler determines whether or not the desired differs from the latest
 // observed and decides whether to call the resource manager's Update method
-func (rm *petResourceManager) Update(
+func (rm *resourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -138,14 +138,14 @@ func (rm *petResourceManager) Update(
 	if err != nil {
 		return nil, err
 	}
-	return &petResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Pet,
 	}, nil
 }
 
 // sdkoFromKO constructs a PetData object from a Pet CR
-func (rm *petResourceManager) sdkoFromKO(
+func (rm *resourceManager) sdkoFromKO(
 	ko *svcapitypes.Pet,
 ) (*svcsdk.PetData, error) {
 	// TODO(jaypipes): isolate conversion/translation logic here. I'm not a
@@ -162,7 +162,7 @@ func (rm *petResourceManager) sdkoFromKO(
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
-func (rm *petResourceManager) Delete(
+func (rm *resourceManager) Delete(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
@@ -178,14 +178,14 @@ func (rm *petResourceManager) Delete(
 	return err
 }
 
-func newPetResourceManager(
+func newResourceManager(
 	id ackv1alpha1.AWSAccountID,
-) (*petResourceManager, error) {
+) (*resourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
 		return nil, err
 	}
-	return &petResourceManager{
+	return &resourceManager{
 		awsAccountID: id,
 		sess:         sess,
 	}, nil

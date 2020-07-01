@@ -32,9 +32,9 @@ import (
 	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
-// bookResourceManager is responsible for providing a consistent way to perform
+// resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
-type bookResourceManager struct {
+type resourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
@@ -46,19 +46,19 @@ type bookResourceManager struct {
 	sdkapi svcsdkapi.BookstoreAPI
 }
 
-// concreteResource returns a pointer to a bookResource from the supplied
+// concreteResource returns a pointer to a resource from the supplied
 // generic AWSResource interface
-func (rm *bookResourceManager) concreteResource(
+func (rm *resourceManager) concreteResource(
 	res acktypes.AWSResource,
-) *bookResource {
+) *resource {
 	// cast the generic interface into a pointer type specific to the concrete
 	// implementing resource type managed by this resource manager
-	return res.(*bookResource)
+	return res.(*resource)
 }
 
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
-func (rm *bookResourceManager) ReadOne(
+func (rm *resourceManager) ReadOne(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -67,16 +67,16 @@ func (rm *bookResourceManager) ReadOne(
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: sdko,
 	}, nil
 }
 
-// findSDKBook returns SDK-specific information about a supplied bookResource
-func (rm *bookResourceManager) findSDKBook(
+// findSDKBook returns SDK-specific information about a supplied resource
+func (rm *resourceManager) findSDKBook(
 	ctx context.Context,
-	r *bookResource,
+	r *resource,
 ) (*svcsdk.BookData, error) {
 	input := svcsdk.DescribeBookInput{
 		BookName:  r.ko.Spec.Name,
@@ -95,7 +95,7 @@ func (rm *bookResourceManager) findSDKBook(
 // Create attempts to create the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-created
 // resource
-func (rm *bookResourceManager) Create(
+func (rm *resourceManager) Create(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -107,7 +107,7 @@ func (rm *bookResourceManager) Create(
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Book,
 	}, nil
@@ -119,7 +119,7 @@ func (rm *bookResourceManager) Create(
 // observed resource differs from the supplied desired state. The higher-level
 // reonciler determines whether or not the desired differs from the latest
 // observed and decides whether to call the resource manager's Update method
-func (rm *bookResourceManager) Update(
+func (rm *resourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -139,14 +139,14 @@ func (rm *bookResourceManager) Update(
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Book,
 	}, nil
 }
 
 // sdkoFromKO constructs a BookData object from a Book CR
-func (rm *bookResourceManager) sdkoFromKO(
+func (rm *resourceManager) sdkoFromKO(
 	ko *svcapitypes.Book,
 ) (*svcsdk.BookData, error) {
 	// TODO(jaypipes): isolate conversion/translation logic here. I'm not a
@@ -163,7 +163,7 @@ func (rm *bookResourceManager) sdkoFromKO(
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
-func (rm *bookResourceManager) Delete(
+func (rm *resourceManager) Delete(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
@@ -179,14 +179,14 @@ func (rm *bookResourceManager) Delete(
 	return err
 }
 
-func newBookResourceManager(
+func newResourceManager(
 	id ackv1alpha1.AWSAccountID,
-) (*bookResourceManager, error) {
+) (*resourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
 		return nil, err
 	}
-	return &bookResourceManager{
+	return &resourceManager{
 		awsAccountID: id,
 		sess:         sess,
 	}, nil

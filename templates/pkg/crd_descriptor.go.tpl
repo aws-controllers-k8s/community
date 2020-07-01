@@ -14,39 +14,39 @@ import (
 )
 
 const (
-	{{ .CRD.Names.CamelLower }}FinalizerString = "finalizers.{{ .APIGroup }}/{{ .CRD.Kind }}"
+	finalizerString = "finalizers.{{ .APIGroup }}/{{ .CRD.Kind }}"
 )
 
 var (
-	{{ .CRD.Names.CamelLower }}ResourceGK = metav1.GroupKind{
+	resourceGK = metav1.GroupKind{
 		Group: "{{ .APIGroup }}",
 		Kind:  "{{ .CRD.Kind }}",
 	}
 )
 
-// {{ .CRD.Names.CamelLower }}ResourceDescriptor implements the
+// resourceDescriptor implements the
 // `aws-service-operator-k8s/pkg/types.AWSResourceDescriptor` interface
-type {{ .CRD.Names.CamelLower }}ResourceDescriptor struct {
+type resourceDescriptor struct {
 }
 
 // GroupKind returns a Kubernetes metav1.GroupKind struct that describes the
 // API Group and Kind of CRs described by the descriptor
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) GroupKind() *metav1.GroupKind {
-	return &{{ .CRD.Names.CamelLower }}ResourceGK
+func (d *resourceDescriptor) GroupKind() *metav1.GroupKind {
+	return &resourceGK
 }
 
 // EmptyRuntimeObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
+func (d *resourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
 	return &svcapitypes.{{ .CRD.Kind }}{}
 }
 
 // ResourceFromRuntimeObject returns an AWSResource that has been initialized
 // with the supplied runtime.Object
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) ResourceFromRuntimeObject(
+func (d *resourceDescriptor) ResourceFromRuntimeObject(
 	obj k8sapirt.Object,
 ) acktypes.AWSResource {
-	return &{{ .CRD.Names.CamelLower }}Resource{
+	return &resource{
 		ko: obj.(*svcapitypes.{{ .CRD.Kind }}),
 	}
 }
@@ -55,12 +55,12 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) ResourceFromRuntimeObjec
 // The underlying types of the two supplied AWSResources should be the same. In
 // other words, the Equal() method should be called with the same concrete
 // implementing AWSResource type
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) Equal(
+func (d *resourceDescriptor) Equal(
 	a acktypes.AWSResource,
 	b acktypes.AWSResource,
 ) bool {
-	ac := a.(*{{ .CRD.Names.CamelLower }}Resource)
-	bc := b.(*{{ .CRD.Names.CamelLower }}Resource)
+	ac := a.(*resource)
+	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
 	return cmp.Equal(ac.sdko, bc.sdko, opts)
 }
@@ -69,12 +69,12 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) Equal(
 // AWSResources/ The underlying types of the two supplied AWSResources should
 // be the same. In other words, the Diff() method should be called with the
 // same concrete implementing AWSResource type
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) Diff(
+func (d *resourceDescriptor) Diff(
 	a acktypes.AWSResource,
 	b acktypes.AWSResource,
 ) string {
-	ac := a.(*{{ .CRD.Names.CamelLower }}Resource)
-	bc := b.(*{{ .CRD.Names.CamelLower }}Resource)
+	ac := a.(*resource)
+	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
 	return cmp.Diff(ac.sdko, bc.sdko, opts)
 }
@@ -82,7 +82,7 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) Diff(
 // UpdateCRStatus accepts an AWSResource object and changes the Status
 // sub-object of the AWSResource's Kubernetes custom resource (CR) and
 // returns whether any changes were made
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) UpdateCRStatus(
+func (d *resourceDescriptor) UpdateCRStatus(
 	res acktypes.AWSResource,
 ) (bool, error) {
 	updated := false
@@ -93,7 +93,7 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) UpdateCRStatus(
 // of an ACK service controller. What this means in practice is that the
 // underlying custom resource (CR) in the AWSResource has had a
 // resource-specific finalizer associated with it.
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) IsManaged(
+func (d *resourceDescriptor) IsManaged(
 	res acktypes.AWSResource,
 ) bool {
 	obj := res.RuntimeMetaObject()
@@ -105,8 +105,8 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) IsManaged(
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/994 is
 	// fixed. This should be able to be:
 	//
-	// return k8sctrlutil.ContainsFinalizer(obj, {{ .CRD.Names.CamelLower }}FinalizerString)
-	return containsFinalizer(obj, {{ .CRD.Names.CamelLower }}FinalizerString)
+	// return k8sctrlutil.ContainsFinalizer(obj, finalizerString)
+	return containsFinalizer(obj, finalizerString)
 }
 
 // Remove once https://github.com/kubernetes-sigs/controller-runtime/issues/994
@@ -127,7 +127,7 @@ func containsFinalizer(obj acktypes.RuntimeMetaObject, finalizer string) bool {
 // managing the resource and the underlying CR may not be deleted until ACK is
 // finished cleaning up any backend AWS service resources associated with the
 // CR.
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) MarkManaged(
+func (d *resourceDescriptor) MarkManaged(
 	res acktypes.AWSResource,
 ) {
 	obj := res.RuntimeMetaObject()
@@ -135,14 +135,14 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) MarkManaged(
 		// Should not happen. If it does, there is a bug in the code
 		panic("nil RuntimeMetaObject in AWSResource")
 	}
-	k8sctrlutil.AddFinalizer(obj, {{ .CRD.Names.CamelLower }}FinalizerString)
+	k8sctrlutil.AddFinalizer(obj, finalizerString)
 }
 
 // MarkUnmanaged removes the supplied resource from management by ACK.  What
 // this typically means is that the resource manager will remove a finalizer
 // underlying custom resource (CR) that indicates ACK is managing the resource.
 // This will allow the Kubernetes API server to delete the underlying CR.
-func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) MarkUnmanaged(
+func (d *resourceDescriptor) MarkUnmanaged(
 	res acktypes.AWSResource,
 ) {
 	obj := res.RuntimeMetaObject()
@@ -150,6 +150,5 @@ func (d *{{ .CRD.Names.CamelLower }}ResourceDescriptor) MarkUnmanaged(
 		// Should not happen. If it does, there is a bug in the code
 		panic("nil RuntimeMetaObject in AWSResource")
 	}
-	k8sctrlutil.RemoveFinalizer(obj, {{ .CRD.Names.CamelLower }}FinalizerString)
+	k8sctrlutil.RemoveFinalizer(obj, finalizerString)
 }
-
