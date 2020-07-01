@@ -27,6 +27,8 @@ type Helper struct {
 	api          *openapi3.Swagger
 	serviceAlias string
 	crds         []*model.CRD
+	// A map of operation type and resource name to openapi3.Operation
+	opMap *OperationMap
 }
 
 func (h *Helper) GetServiceAlias() string {
@@ -63,5 +65,5 @@ func (h *Helper) GetSchema(schemaName string) *openapi3.Schema {
 }
 
 func NewHelper(api *openapi3.Swagger) *Helper {
-	return &Helper{api, "", nil}
+	return &Helper{api, "", nil, nil}
 }

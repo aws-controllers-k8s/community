@@ -65,4 +65,16 @@ func TestGetCRDs(t *testing.T) {
 		"TopicARN",
 	}
 	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
+
+	// The Topic API is a little weird. There are Create and Delete operations
+	// ("CreateTopic", "DeleteTopic") but there is no ReadOne operation (there
+	// is a "GetTopicAttributes" call though) or Update operation (there is a
+	// "SetTopicAttributes" call though)
+	require.NotNil(topicCRD.Ops)
+
+	assert.NotNil(topicCRD.Ops.Create)
+	assert.NotNil(topicCRD.Ops.Delete)
+
+	assert.Nil(topicCRD.Ops.ReadOne)
+	assert.Nil(topicCRD.Ops.Update)
 }
