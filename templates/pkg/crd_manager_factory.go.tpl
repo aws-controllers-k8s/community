@@ -11,23 +11,23 @@ import (
 	svcresource "github.com/aws/aws-service-operator-k8s/services/{{ .ServiceAlias }}/pkg/resource"
 )
 
-// {{ .CRD.Names.CamelLower }}ResourceManagerFactory produces {{ .CRD.Names.CamelLower }}ResourceManager objects. It
-// implements the `types.AWSResourceManagerFactory` interface.
-type {{ .CRD.Names.CamelLower }}ResourceManagerFactory struct {
+// resourceManagerFactory produces resourceManager objects. It implements the
+// `types.AWSResourceManagerFactory` interface.
+type resourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[ackv1alpha1.AWSAccountID]*{{ .CRD.Names.CamelLower }}ResourceManager
+	rmCache map[ackv1alpha1.AWSAccountID]*resourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
 // this factory will handle
-func (f *{{ .CRD.Names.CamelLower }}ResourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
-	return &{{ .CRD.Names.CamelLower }}ResourceDescriptor{}
+func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
+	return &resourceDescriptor{}
 }
 
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
-func (f *{{ .CRD.Names.CamelLower }}ResourceManagerFactory) ManagerFor(
+func (f *resourceManagerFactory) ManagerFor(
 	id ackv1alpha1.AWSAccountID,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
@@ -41,7 +41,7 @@ func (f *{{ .CRD.Names.CamelLower }}ResourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := new{{ .CRD.Kind }}ResourceManager(id)
+	rm, err := newResourceManager(id)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (f *{{ .CRD.Names.CamelLower }}ResourceManagerFactory) ManagerFor(
 	return rm, nil
 }
 
-func new{{ .CRD.Kind }}ResourceManagerFactory() *{{ .CRD.Names.CamelLower }}ResourceManagerFactory {
-	return &{{ .CRD.Names.CamelLower }}ResourceManagerFactory{
-		rmCache: map[ackv1alpha1.AWSAccountID]*{{ .CRD.Names.CamelLower }}ResourceManager{},
+func newResourceManagerFactory() *resourceManagerFactory {
+	return &resourceManagerFactory{
+		rmCache: map[ackv1alpha1.AWSAccountID]*resourceManager{},
 	}
 }
 
 func init() {
-	svcresource.RegisterManagerFactory(new{{ .CRD.Kind }}ResourceManagerFactory())
+	svcresource.RegisterManagerFactory(newResourceManagerFactory())
 }

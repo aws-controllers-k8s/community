@@ -29,35 +29,35 @@ const (
 )
 
 var (
-	bookResourceGK = metav1.GroupKind{
+	resourceGK = metav1.GroupKind{
 		Group: "bookstore.services.k8s.aws",
 		Kind:  "Book",
 	}
 )
 
-// bookResourceDescriptor implements the
+// resourceDescriptor implements the
 // `aws-service-operator-k8s/pkg/types.AWSResourceDescriptor` interface
-type bookResourceDescriptor struct {
+type resourceDescriptor struct {
 }
 
 // GroupKind returns a Kubernetes metav1.GroupKind struct that describes the
 // API Group and Kind of CRs described by the descriptor
-func (d *bookResourceDescriptor) GroupKind() *metav1.GroupKind {
-	return &bookResourceGK
+func (d *resourceDescriptor) GroupKind() *metav1.GroupKind {
+	return &resourceGK
 }
 
 // EmptyRuntimeObject returns an empty object prototype that may be used in
 // apimachinery and k8s client operations
-func (d *bookResourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
+func (d *resourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
 	return &svcapitypes.Book{}
 }
 
 // ResourceFromRuntimeObject returns an AWSResource that has been initialized
 // with the supplied runtime.Object
-func (d *bookResourceDescriptor) ResourceFromRuntimeObject(
+func (d *resourceDescriptor) ResourceFromRuntimeObject(
 	obj k8sapirt.Object,
 ) acktypes.AWSResource {
-	return &bookResource{
+	return &resource{
 		ko: obj.(*svcapitypes.Book),
 	}
 }
@@ -66,12 +66,12 @@ func (d *bookResourceDescriptor) ResourceFromRuntimeObject(
 // The underlying types of the two supplied AWSResources should be the same. In
 // other words, the Equal() method should be called with the same concrete
 // implementing AWSResource type
-func (d *bookResourceDescriptor) Equal(
+func (d *resourceDescriptor) Equal(
 	a acktypes.AWSResource,
 	b acktypes.AWSResource,
 ) bool {
-	ac := a.(*bookResource)
-	bc := b.(*bookResource)
+	ac := a.(*resource)
+	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
 	return cmp.Equal(ac.sdko, bc.sdko, opts)
 }
@@ -80,12 +80,12 @@ func (d *bookResourceDescriptor) Equal(
 // AWSResources/ The underlying types of the two supplied AWSResources should
 // be the same. In other words, the Diff() method should be called with the
 // same concrete implementing AWSResource type
-func (d *bookResourceDescriptor) Diff(
+func (d *resourceDescriptor) Diff(
 	a acktypes.AWSResource,
 	b acktypes.AWSResource,
 ) string {
-	ac := a.(*bookResource)
-	bc := b.(*bookResource)
+	ac := a.(*resource)
+	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
 	return cmp.Diff(ac.sdko, bc.sdko, opts)
 }
@@ -93,7 +93,7 @@ func (d *bookResourceDescriptor) Diff(
 // UpdateCRStatus accepts an AWSResource object and changes the Status
 // sub-object of the AWSResource's Kubernetes custom resource (CR) and
 // returns whether any changes were made
-func (d *bookResourceDescriptor) UpdateCRStatus(
+func (d *resourceDescriptor) UpdateCRStatus(
 	res acktypes.AWSResource,
 ) (bool, error) {
 	updated := false
@@ -104,7 +104,7 @@ func (d *bookResourceDescriptor) UpdateCRStatus(
 // of an ACK service controller. What this means in practice is that the
 // underlying custom resource (CR) in the AWSResource has had a
 // resource-specific finalizer associated with it.
-func (d *bookResourceDescriptor) IsManaged(
+func (d *resourceDescriptor) IsManaged(
 	res acktypes.AWSResource,
 ) bool {
 	obj := res.RuntimeMetaObject()
@@ -138,7 +138,7 @@ func containsFinalizer(obj acktypes.RuntimeMetaObject, finalizer string) bool {
 // managing the resource and the underlying CR may not be deleted until ACK is
 // finished cleaning up any backend AWS service resources associated with the
 // CR.
-func (d *bookResourceDescriptor) MarkManaged(
+func (d *resourceDescriptor) MarkManaged(
 	res acktypes.AWSResource,
 ) {
 	obj := res.RuntimeMetaObject()
@@ -153,7 +153,7 @@ func (d *bookResourceDescriptor) MarkManaged(
 // this typically means is that the resource manager will remove a finalizer
 // underlying custom resource (CR) that indicates ACK is managing the resource.
 // This will allow the Kubernetes API server to delete the underlying CR.
-func (d *bookResourceDescriptor) MarkUnmanaged(
+func (d *resourceDescriptor) MarkUnmanaged(
 	res acktypes.AWSResource,
 ) {
 	obj := res.RuntimeMetaObject()

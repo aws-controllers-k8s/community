@@ -21,29 +21,29 @@ import (
 	svcresource "github.com/aws/aws-service-operator-k8s/services/petstore/pkg/resource"
 )
 
-// petResourceManagerFactory produces petResourceManager objects. It
+// resourceManagerFactory produces resourceManager objects. It
 // implements the `types.AWSResourceManagerFactory` interface.
-type petResourceManagerFactory struct {
+type resourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[ackv1alpha1.AWSAccountID]*petResourceManager
+	rmCache map[ackv1alpha1.AWSAccountID]*resourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
 // this factory will handle
-func (f *petResourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
-	return &petResourceDescriptor{}
+func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
+	return &resourceDescriptor{}
 }
 
 // GroupKind returns a string representation of the CRs handled by this
 // resource manager
-func (f *petResourceManagerFactory) GroupKind() string {
+func (f *resourceManagerFactory) GroupKind() string {
 	return "example.services.k8s.aws:Pet"
 }
 
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
-func (f *petResourceManagerFactory) ManagerFor(
+func (f *resourceManagerFactory) ManagerFor(
 	id ackv1alpha1.AWSAccountID,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
@@ -57,7 +57,7 @@ func (f *petResourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newPetResourceManager(id)
+	rm, err := newResourceManager(id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,12 @@ func (f *petResourceManagerFactory) ManagerFor(
 	return rm, nil
 }
 
-func newPetResourceManagerFactory() *petResourceManagerFactory {
-	return &petResourceManagerFactory{
-		rmCache: map[ackv1alpha1.AWSAccountID]*petResourceManager{},
+func newResourceManagerFactory() *resourceManagerFactory {
+	return &resourceManagerFactory{
+		rmCache: map[ackv1alpha1.AWSAccountID]*resourceManager{},
 	}
 }
 
 func init() {
-	svcresource.RegisterManagerFactory(newPetResourceManagerFactory())
+	svcresource.RegisterManagerFactory(newResourceManagerFactory())
 }
