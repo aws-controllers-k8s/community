@@ -56,15 +56,6 @@ func (rm *bookResourceManager) concreteResource(
 	return res.(*bookResource)
 }
 
-// Exists returns true if the supplied AWSResource exists in the backend AWS
-// service API.
-func (rm *bookResourceManager) Exists(
-	ctx context.Context,
-	res acktypes.AWSResource,
-) bool {
-	return false
-}
-
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
 func (rm *bookResourceManager) ReadOne(
