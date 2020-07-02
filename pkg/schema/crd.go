@@ -14,11 +14,8 @@
 package schema
 
 import (
-	"fmt"
 	"sort"
-	"strings"
 
-	"github.com/gertd/go-pluralize"
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
@@ -29,49 +26,29 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 	if h.crds != nil {
 		return h.crds, nil
 	}
-	api := h.api
-	pluralize := pluralize.NewClient()
 	crds := []*model.CRD{}
 
-	// create an index of Operations by operation types
-	opTypeIndex := map[opType]map[string]*openapi3.Operation{}
-	for _, pathItem := range api.Paths {
-		if pathItem.Post != nil {
-			op := pathItem.Post
-			opID := op.OperationID
-			opType := getOpTypeFromOpID(opID)
-			if _, found := opTypeIndex[opType]; !found {
-				opTypeIndex[opType] = map[string]*openapi3.Operation{}
-			}
-			opTypeIndex[opType][opID] = op
-		}
-		if pathItem.Put != nil {
-			op := pathItem.Put
-			opID := op.OperationID
-			opType := getOpTypeFromOpID(opID)
-			if _, found := opTypeIndex[opType]; !found {
-				opTypeIndex[opType] = map[string]*openapi3.Operation{}
-			}
-			opTypeIndex[opType][opID] = op
-		}
-	}
+	opMap := h.GetOperationMap()
 
-	createOps := opTypeIndex[otCreate]
-	for opID, createOp := range createOps {
-		crdName := strings.TrimPrefix(opID, "Create")
-		singularName := pluralize.Singular(crdName)
-		pluralName := pluralize.Plural(crdName)
-		if pluralName == crdName {
-			// For now, ignore batch create operations since we're just trying
-			// to determine top-level singular crds
-			fmt.Printf("operation %s looks to be a batch create operation.\n", opID)
-			continue
-		}
+	createOps := (*opMap)[OpTypeCreate]
+	readOneOps := (*opMap)[OpTypeGet]
+	updateOps := (*opMap)[OpTypeUpdate]
+	deleteOps := (*opMap)[OpTypeDelete]
 
-		names := names.New(singularName)
+	for resName, createOp := range createOps {
+		names := names.New(resName)
 		sdkObjType := h.sdkObjectTypeFromOp(createOp)
-		crd := model.NewCRD(names, createOp, sdkObjType)
-		inAttrs, outAttrs := h.getAttrsFromOp(createOp, crdName)
+		crdOps := model.CRDOps{
+			Create:  createOps[resName],
+			ReadOne: readOneOps[resName],
+			Update:  updateOps[resName],
+			Delete:  deleteOps[resName],
+		}
+		crd := model.NewCRD(names, sdkObjType, crdOps)
+		inAttrs, outAttrs, err := h.getAttrsFromOp(createOp, resName)
+		if err != nil {
+			return nil, err
+		}
 		inAttrMap := make(map[string]*model.Attr, len(inAttrs))
 		for _, inAttr := range inAttrs {
 			inAttrMap[inAttr.Names.Original] = inAttr
@@ -89,4 +66,25 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 	})
 	h.crds = crds
 	return crds, nil
+}
+
+func (h *Helper) GetOperationMap() *OperationMap {
+	if h.opMap != nil {
+		return h.opMap
+	}
+	api := h.api
+	// create an index of Operations by operation types and resource name
+	opMap := OperationMap{}
+	for _, pathItem := range api.Paths {
+		for _, op := range pathItem.Operations() {
+			opID := op.OperationID
+			opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+			if _, found := opMap[opType]; !found {
+				opMap[opType] = map[string]*openapi3.Operation{}
+			}
+			opMap[opType][resName] = op
+		}
+	}
+	h.opMap = &opMap
+	return &opMap
 }

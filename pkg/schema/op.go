@@ -17,39 +17,65 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gertd/go-pluralize"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type opType int
+type OpType int
 
 const (
-	otUnknown opType = iota
-	otCreate
-	otCreateBatch
-	otDelete
-	otReplace
-	otPatch
-	otUpdateAttr
-	otAddChild
-	otAddChildren
-	otRemoveChild
-	otRemoveChildren
-	otGet
-	otList
+	OpTypeUnknown OpType = iota
+	OpTypeCreate
+	OpTypeCreateBatch
+	OpTypeDelete
+	OpTypeReplace
+	OpTypeUpdate
+	OpTypeUpdateAttr
+	OpTypeAddChild
+	OpTypeAddChildren
+	OpTypeRemoveChild
+	OpTypeRemoveChildren
+	OpTypeGet
+	OpTypeList
 )
 
-// Guess the type of operation from the OperationID...
-func getOpTypeFromOpID(opID string) opType {
-	if strings.HasPrefix(opID, "CreateOrUpdate") {
-		return otReplace
-	} else if strings.HasPrefix(opID, "Create") {
-		return otCreate
-	} else if strings.HasPrefix(opID, "Delete") {
-		return otDelete
-	} else if strings.HasPrefix(opID, "Describe") {
+type OperationMap map[OpType]map[string]*openapi3.Operation
 
+// Guess the resource name and type of operation from the OperationID
+func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
+	pluralize := pluralize.NewClient()
+	if strings.HasPrefix(opID, "CreateOrUpdate") {
+		return OpTypeReplace, strings.TrimPrefix(opID, "CreateOrUpdate")
+	} else if strings.HasPrefix(opID, "BatchCreate") {
+		resName := strings.TrimPrefix(opID, "BatchCreate")
+		if pluralize.IsPlural(resName) {
+			return OpTypeCreateBatch, pluralize.Singular(resName)
+		}
+		return OpTypeCreateBatch, resName
+	} else if strings.HasPrefix(opID, "CreateBatch") {
+		resName := strings.TrimPrefix(opID, "CreateBatch")
+		if pluralize.IsPlural(resName) {
+			return OpTypeCreateBatch, pluralize.Singular(resName)
+		}
+		return OpTypeCreateBatch, resName
+	} else if strings.HasPrefix(opID, "Create") {
+		resName := strings.TrimPrefix(opID, "Create")
+		if pluralize.IsPlural(resName) {
+			return OpTypeCreateBatch, pluralize.Singular(resName)
+		}
+		return OpTypeCreate, resName
+	} else if strings.HasPrefix(opID, "Update") {
+		return OpTypeUpdate, strings.TrimPrefix(opID, "Update")
+	} else if strings.HasPrefix(opID, "Delete") {
+		return OpTypeDelete, strings.TrimPrefix(opID, "Delete")
+	} else if strings.HasPrefix(opID, "Describe") {
+		resName := strings.TrimPrefix(opID, "Describe")
+		if pluralize.IsPlural(resName) {
+			return OpTypeList, pluralize.Singular(resName)
+		}
+		return OpTypeGet, resName
 	}
-	return otUnknown
+	return OpTypeUnknown, ""
 }
 
 // sdkObjectTypeFromOp returns the string name of the aws-sdk-go struct that is

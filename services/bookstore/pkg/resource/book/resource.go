@@ -25,9 +25,9 @@ import (
 	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
-// bookResource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
+// resource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
 // interface
-type bookResource struct {
+type resource struct {
 	// The Kubernetes-native CR representing the resource
 	ko *svcapitypes.Book
 	// The aws-sdk-go-native representation of the resource
@@ -37,36 +37,36 @@ type bookResource struct {
 // Identifiers returns an AWSResourceIdentifiers object containing various
 // identifying information, including the AWS account ID that owns the
 // resource, the resource's AWS Resource Name (ARN)
-func (r *bookResource) Identifiers() acktypes.AWSResourceIdentifiers {
-	return &bookResourceIdentifiers{r.ko.Status.ACKResourceMetadata}
+func (r *resource) Identifiers() acktypes.AWSResourceIdentifiers {
+	return &resourceIdentifiers{r.ko.Status.ACKResourceMetadata}
 }
 
 // IsBeingDeleted returns true if the Kubernetes resource has a non-zero
 // deletion timestemp
-func (r *bookResource) IsBeingDeleted() bool {
+func (r *resource) IsBeingDeleted() bool {
 	return !r.ko.DeletionTimestamp.IsZero()
 }
 
 // RuntimeObject returns the Kubernetes apimachinery/runtime representation of
 // the AWSResource
-func (r *bookResource) RuntimeObject() k8srt.Object {
+func (r *resource) RuntimeObject() k8srt.Object {
 	return r.ko
 }
 
 // MetaObject returns the Kubernetes apimachinery/apis/meta/v1.Object
 // representation of the AWSResource
-func (r *bookResource) MetaObject() metav1.Object {
+func (r *resource) MetaObject() metav1.Object {
 	return r.ko
 }
 
 // RuntimeMetaObject returns an object that implements both the Kubernetes
 // apimachinery/runtime.Object and the Kubernetes
 // apimachinery/apis/meta/v1.Object interfaces
-func (r *bookResource) RuntimeMetaObject() acktypes.RuntimeMetaObject {
+func (r *resource) RuntimeMetaObject() acktypes.RuntimeMetaObject {
 	return r.ko
 }
 
 // Conditions returns the ACK Conditions collection for the AWSResource
-func (r *bookResource) Conditions() []*ackv1alpha1.Condition {
+func (r *resource) Conditions() []*ackv1alpha1.Condition {
 	return r.ko.Status.Conditions
 }

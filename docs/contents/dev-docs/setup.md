@@ -1,9 +1,12 @@
-# Developing on AWS Controller for Kubernetes
+# Setup 
 
-## Setup git repository
+In the following, we walk you through the setup to start developing on AWS Controller for Kubernetes (ACK) in the `mvp` phase.
 
-1. Fork the [upstream source repository](github.com/aws/aws-service-operator-k8s) to your private Github account
-2. On your local workstation and run:
+## Fork the repository
+
+First, fork the [upstream source repository](github.com/aws/aws-service-operator-k8s) to your private GitHub account.
+
+Then, on your workstation, run:
 
 ```bash
 cd go/src/github.com/aws
@@ -18,14 +21,17 @@ git remote add upstream git@github.com:aws/aws-service-operator-k8s
 git fetch --all && git checkout -b $BRANCH_NAME upstream/mvp
 ```
 
-## Make your changes, commit and push
+## Commit changes
+
+Make your changes locally, commit and push using:
 
 ```bash
 git add . && git commit
 git push origin $BRANCH_NAME
 ```
 
-example output:
+With an example output:
+
 ```bash
 Enumerating objects: 6, done.
 Counting objects: 100% (6/6), done.
@@ -44,8 +50,10 @@ To github.com:a-hilaly/aws-service-operator-k8s
  * [new branch]      docs -> docs
 ```
 
-## Submit a pull request against [upstream source repository](github.com/aws/aws-service-operator-k8s)
+## Create pull request
 
-Either the link that show up as in the example above orgo to the upstream source repository and open the Pull Request. You'll see a link like the image below:
+Finally, submit a pull request against the upstream source repository.
 
-![image](./images/github-pr.png)
+Use either the link that show up as in the example above or to the upstream source repository and open the Pull Request. You'll see a link like the image below:
+
+![images](../images/github-pr.png)

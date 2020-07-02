@@ -56,7 +56,10 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 		for propName, propSchemaRef := range schema.Properties {
 			propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
 			propNames := names.New(propName)
-			goType := h.getGoTypeFromSchema(propNames.Camel, propSchema)
+			goType, err := h.GetGoTypeFromSchemaRef(propNames, propSchemaRef)
+			if err != nil {
+				return nil, err
+			}
 			attrs[propName] = model.NewAttr(propNames, goType, propSchema)
 		}
 		if len(attrs) == 0 {

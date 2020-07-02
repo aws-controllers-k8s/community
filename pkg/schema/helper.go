@@ -27,6 +27,8 @@ type Helper struct {
 	api          *openapi3.Swagger
 	serviceAlias string
 	crds         []*model.CRD
+	// A map of operation type and resource name to openapi3.Operation
+	opMap *OperationMap
 }
 
 func (h *Helper) GetServiceAlias() string {
@@ -51,6 +53,17 @@ func (h *Helper) GetAPIGroup() string {
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
+func (h *Helper) GetSchema(schemaName string) *openapi3.Schema {
+	if h.api == nil {
+		return nil
+	}
+	schemaRef := h.api.Components.Schemas[schemaName]
+	if schemaRef == nil {
+		return nil
+	}
+	return schemaRef.Value
+}
+
 func NewHelper(api *openapi3.Swagger) *Helper {
-	return &Helper{api, "", nil}
+	return &Helper{api, "", nil, nil}
 }

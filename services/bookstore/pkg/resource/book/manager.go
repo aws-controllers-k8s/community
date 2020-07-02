@@ -25,16 +25,16 @@ import (
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
+
 	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
 	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore/bookstoreiface"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
 	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
-// bookResourceManager is responsible for providing a consistent way to perform
+// resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
-type bookResourceManager struct {
+type resourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
@@ -46,52 +46,43 @@ type bookResourceManager struct {
 	sdkapi svcsdkapi.BookstoreAPI
 }
 
-// concreteResource returns a pointer to a bookResource from the supplied
+// concreteResource returns a pointer to a resource from the supplied
 // generic AWSResource interface
-func (rm *bookResourceManager) concreteResource(
+func (rm *resourceManager) concreteResource(
 	res acktypes.AWSResource,
-) *bookResource {
+) *resource {
 	// cast the generic interface into a pointer type specific to the concrete
 	// implementing resource type managed by this resource manager
-	return res.(*bookResource)
-}
-
-// Exists returns true if the supplied AWSResource exists in the backend AWS
-// service API.
-func (rm *bookResourceManager) Exists(
-	ctx context.Context,
-	res acktypes.AWSResource,
-) bool {
-	return false
+	return res.(*resource)
 }
 
 // ReadOne returns the currently-observed state of the supplied AWSResource in
 // the backend AWS service API.
-func (rm *bookResourceManager) ReadOne(
+func (rm *resourceManager) ReadOne(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
 	r := rm.concreteResource(res)
-	sdko, err := rm.findSDKBook(ctx, r)
+	sdko, err := rm.findSDKResource(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: sdko,
 	}, nil
 }
 
-// findSDKBook returns SDK-specific information about a supplied bookResource
-func (rm *bookResourceManager) findSDKBook(
+// findSDKResource returns SDK-specific information about a supplied resource
+func (rm *resourceManager) findSDKResource(
 	ctx context.Context,
-	r *bookResource,
+	r *resource,
 ) (*svcsdk.BookData, error) {
-	input := svcsdk.DescribeBookInput{
-		BookName:  r.ko.Spec.Name,
-		BookOwner: r.ko.Spec.Owner,
+	input, err := rm.newDescribeRequestPayload(r)
+	if err != nil {
+		return nil, err
 	}
-	resp, err := rm.sdkapi.DescribeBookWithContext(ctx, &input)
+	resp, err := rm.sdkapi.DescribeBookWithContext(ctx, input)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -101,24 +92,46 @@ func (rm *bookResourceManager) findSDKBook(
 	return resp.Book, nil
 }
 
+// newDescribeRequestPayload returns SDK-specific struct for the HTTP request
+// payload of the Describe API call for the resource
+func (rm *resourceManager) newDescribeRequestPayload(
+	r *resource,
+) (*svcsdk.DescribeBookInput, error) {
+	return &svcsdk.DescribeBookInput{
+		BookName:  r.ko.Spec.Name,
+		BookOwner: r.ko.Spec.Owner,
+	}, nil
+}
+
 // Create attempts to create the supplied AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-created
 // resource
-func (rm *bookResourceManager) Create(
+func (rm *resourceManager) Create(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
 	r := rm.concreteResource(res)
-	input := svcsdk.CreateBookInput{
-		BookName: r.ko.Spec.Name,
-	}
-	resp, err := rm.sdkapi.CreateBookWithContext(ctx, &input)
+	input, err := rm.newCreateRequestPayload(r)
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	resp, err := rm.sdkapi.CreateBookWithContext(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Book,
+	}, nil
+}
+
+// newCreateRequestPayload returns an SDK-specific struct for the HTTP request
+// payload of the Create API call for the resource
+func (rm *resourceManager) newCreateRequestPayload(
+	r *resource,
+) (*svcsdk.CreateBookInput, error) {
+	return &svcsdk.CreateBookInput{
+		BookName: r.ko.Spec.Name,
 	}, nil
 }
 
@@ -128,7 +141,7 @@ func (rm *bookResourceManager) Create(
 // observed resource differs from the supplied desired state. The higher-level
 // reonciler determines whether or not the desired differs from the latest
 // observed and decides whether to call the resource manager's Update method
-func (rm *bookResourceManager) Update(
+func (rm *resourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) (acktypes.AWSResource, error) {
@@ -137,42 +150,33 @@ func (rm *bookResourceManager) Update(
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil SDK object")
 	}
-	desired, err := rm.sdkoFromKO(r.ko)
+	input, err := rm.newUpdateRequestPayload(r)
 	if err != nil {
 		return nil, err
 	}
-	input := svcsdk.UpdateBookInput{
-		BookName: desired.BookName,
-	}
-	resp, err := rm.sdkapi.UpdateBookWithContext(ctx, &input)
+	resp, err := rm.sdkapi.UpdateBookWithContext(ctx, input)
 	if err != nil {
 		return nil, err
 	}
-	return &bookResource{
+	return &resource{
 		ko:   r.ko,
 		sdko: resp.Book,
 	}, nil
 }
 
-// sdkoFromKO constructs a BookData object from a Book CR
-func (rm *bookResourceManager) sdkoFromKO(
-	ko *svcapitypes.Book,
-) (*svcsdk.BookData, error) {
-	// TODO(jaypipes): isolate conversion/translation logic here. I'm not a
-	// huge fan of the sigs.k8s.io/apimachinery/pkg/conversion package and
-	// would prefer long-term to use something a bit more readable and less
-	// verbose, and since we have type information for both the k8s side and
-	// the SDK side, it should be possible to make non-generic conversion
-	// functions.
-	sdko := svcsdk.BookData{
-		BookName: ko.Spec.Name,
-	}
-	return &sdko, nil
+// newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
+// payload of the Update API call for the resource
+func (rm *resourceManager) newUpdateRequestPayload(
+	r *resource,
+) (*svcsdk.UpdateBookInput, error) {
+	return &svcsdk.UpdateBookInput{
+		BookName: r.ko.Spec.Name,
+	}, nil
 }
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
 // service API.
-func (rm *bookResourceManager) Delete(
+func (rm *resourceManager) Delete(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
@@ -181,21 +185,32 @@ func (rm *bookResourceManager) Delete(
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil SDK object")
 	}
-	input := svcsdk.DeleteBookInput{
-		BookName: r.sdko.BookName,
+	input, err := rm.newDeleteRequestPayload(r)
+	if err != nil {
+		return err
 	}
-	_, err := rm.sdkapi.DeleteBookWithContext(ctx, &input)
+	_, err = rm.sdkapi.DeleteBookWithContext(ctx, input)
 	return err
 }
 
-func newBookResourceManager(
+// newDeleteRequestPayload returns an SDK-specific struct for the HTTP request
+// payload of the Delete API call for the resource
+func (rm *resourceManager) newDeleteRequestPayload(
+	r *resource,
+) (*svcsdk.DeleteBookInput, error) {
+	return &svcsdk.DeleteBookInput{
+		BookName: r.sdko.BookName,
+	}, nil
+}
+
+func newResourceManager(
 	id ackv1alpha1.AWSAccountID,
-) (*bookResourceManager, error) {
+) (*resourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
 		return nil, err
 	}
-	return &bookResourceManager{
+	return &resourceManager{
 		awsAccountID: id,
 		sess:         sess,
 	}, nil

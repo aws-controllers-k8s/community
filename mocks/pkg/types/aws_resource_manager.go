@@ -51,20 +51,6 @@ func (_m *AWSResourceManager) Delete(_a0 context.Context, _a1 types.AWSResource)
 	return r0
 }
 
-// Exists provides a mock function with given fields: _a0, _a1
-func (_m *AWSResourceManager) Exists(_a0 context.Context, _a1 types.AWSResource) bool {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource) bool); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
 // ReadOne provides a mock function with given fields: _a0, _a1
 func (_m *AWSResourceManager) ReadOne(_a0 context.Context, _a1 types.AWSResource) (types.AWSResource, error) {
 	ret := _m.Called(_a0, _a1)

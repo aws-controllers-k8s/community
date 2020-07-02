@@ -22,23 +22,23 @@ import (
 	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
 )
 
-// bookResourceManagerFactory produces bookResourceManager objects. It
+// resourceManagerFactory produces resourceManager objects. It
 // implements the `types.AWSResourceManagerFactory` interface.
-type bookResourceManagerFactory struct {
+type resourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[ackv1alpha1.AWSAccountID]*bookResourceManager
+	rmCache map[ackv1alpha1.AWSAccountID]*resourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
 // this factory will handle
-func (f *bookResourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
-	return &bookResourceDescriptor{}
+func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescriptor {
+	return &resourceDescriptor{}
 }
 
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
-func (f *bookResourceManagerFactory) ManagerFor(
+func (f *resourceManagerFactory) ManagerFor(
 	id ackv1alpha1.AWSAccountID,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
@@ -52,7 +52,7 @@ func (f *bookResourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newBookResourceManager(id)
+	rm, err := newResourceManager(id)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +60,12 @@ func (f *bookResourceManagerFactory) ManagerFor(
 	return rm, nil
 }
 
-func newBookResourceManagerFactory() *bookResourceManagerFactory {
-	return &bookResourceManagerFactory{
-		rmCache: map[ackv1alpha1.AWSAccountID]*bookResourceManager{},
+func newResourceManagerFactory() *resourceManagerFactory {
+	return &resourceManagerFactory{
+		rmCache: map[ackv1alpha1.AWSAccountID]*resourceManager{},
 	}
 }
 
 func init() {
-	svcresource.RegisterManagerFactory(newBookResourceManagerFactory())
+	svcresource.RegisterManagerFactory(newResourceManagerFactory())
 }
