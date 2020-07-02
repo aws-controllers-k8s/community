@@ -21,7 +21,10 @@ import (
 )
 
 type CRDOps struct {
-	CreateOp *openapi3.Operation
+	Create  *openapi3.Operation
+	ReadOne *openapi3.Operation
+	Update  *openapi3.Operation
+	Delete  *openapi3.Operation
 }
 
 type CRD struct {
@@ -40,8 +43,8 @@ type CRD struct {
 
 func NewCRD(
 	names names.Names,
-	createOp *openapi3.Operation,
 	sdkObjType string,
+	crdOps CRDOps,
 ) *CRD {
 	pluralize := pluralize.NewClient()
 	kind := names.Camel
@@ -51,6 +54,6 @@ func NewCRD(
 		Kind:          kind,
 		Plural:        plural,
 		SDKObjectType: sdkObjType,
-		Ops:           CRDOps{createOp},
+		Ops:           crdOps,
 	}
 }
