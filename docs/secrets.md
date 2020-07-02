@@ -2,10 +2,13 @@
 
 ## Problem Description
 Alice is a frequent Kubernetes user excited to create a database instance using Amazon RDS. She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use ACK, AWS Controllers for Kubernetes, to easily create a MySQL database. Before ACK, Alice needed to manually call the createDBInstance method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. With the method call to create and the method call to describe the DB instance, her password was in plain text for the API request and response. That didn't seem very secure to Alice. 
-The command to run the script currently looks like this:
-![Command Line](command_line.png)
+The Custom Resource Definition currently shows that the MasterUserPassword is a string:
+
+<img src="merged_swagger_file.png" width="500"/>
 
 Now with secrets integration in ACK, Alice creates a new Kubernetes secret and refers to the secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the secret reference that she created before. 
+
+<img src="new_crd.png" width="500">
 
 
 ### In Scope
@@ -23,15 +26,27 @@ Now with secrets integration in ACK, Alice creates a new Kubernetes secret and r
 
 
 ## Solution Implementation 
-The proposed solution will first solve the problem of how to identify which fields must be replaced using YAML files within target directories. The fields with sensitive information will first be manually identified and marked to be changed in a YAML file such as the one below. 
-![YAML](yaml_file2.png)
+The proposed solution will first solve the problem of how to identify which fields must be replaced using YAML files within target directories. The fields with sensitive information will first be manually identified and marked to be changed in a YAML file such as the one below.
 
-Next, the code generator must be informed about the fields to replace with Kubernetes Secret references. 
-As an example, if the method createDBInstance is called, the controller will check if there is a valid YAML file in the target directory. If so, the controller will read the file and detect first if createDBInstance matches any of the actions specified in the YAML file. If it does, the controller will request a Secret reference for the MasterUserPassword field specified. When a valid Secret reference is given, the controller stores the name of the specified field, in this case MasterUserPassword, with its unique DB identifier and Secret reference. The controller then retrieves the Secret value and passes it to the Amazon RDS API. 
+<img src="yaml_file2.png" width="300"/>
 
-Upon calling to describe the DB instance, after obtaining the relevant data from the RDS API, the ACK controller will look up the existing stored field names, DB identifiers, and Secret references to match and replace any potential Secret values with their references. 
+These API specific YAML files will be available for users to download and save into their directories of choice.
+Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must create a Kubernetes Secret in the desired namespace and save the RDS YAML file in the directory she would like the DBInstance to reside in. Then, she simply calls the kubectl apply command and waits for a response from the Kubernetes API server.
+The user's process is shown below.
 
-![Flowchart](secret-diagram.png)
+<img src="user-flowchart.png" width="500"/>
+
+Upon Alice calling the command, the Kubernetes API server writes the new CR to storage. 
+The ACK RDS controller detects the change, reads the CR, and calls the Kubernetes API to retrieve the Secret information. The controller then reads the output, decodes the Secret value, and calls the createDBInstance method from the RDS API, passing in the decoded Secret for the field MasterUserPassword. The controller will store the DB instance identifier with the Secret reference and field name for future use, and write the CR for the new DB instance. Lastly, the Kubernetes API server receives an updated status and sends back a response to the user.
+These processes are shown below.
+
+<img src="others-flowchart.png" width="500"/>
+
+The solution process is shown in the diagram below.
+
+<img src="sequence diagram.png" width="700"/>
+
+Later, if the user wants to describe the DB instance, the ACK controller will search for the DB identifier within the existing store of field names, DB identifiers, and Secret references to match and replace any potential Secret values with their references. 
 
 ## Alternative Solutions Considered
 - Programmatically determine which fields contain sensitive information. 

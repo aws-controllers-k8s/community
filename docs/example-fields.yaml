@@ -1,8 +1,7 @@
 secretRefs:
   api: rds
-    action: CreateDBInstance
+    - action: CreateDBInstance
       fields:
         MasterUserPassword
-    action: CreateDBCluster
+    - action: CreateDBCluster
 
-    
