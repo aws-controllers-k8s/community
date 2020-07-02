@@ -34,17 +34,17 @@ These API specific YAML files will be available for users to download and save i
 Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must create a Kubernetes Secret in the desired namespace and save the RDS YAML file in the directory she would like the DBInstance to reside in. Then, she simply calls the kubectl apply command and waits for a response from the Kubernetes API server.
 The user's process is shown below.
 
-<img src="user-flowchart.png" width="500"/>
+<img src="user-flowchart.png" width="700"/>
 
 Upon Alice calling the command, the Kubernetes API server writes the new CR to storage. 
 The ACK RDS controller detects the change, reads the CR, and calls the Kubernetes API to retrieve the Secret information. The controller then reads the output, decodes the Secret value, and calls the createDBInstance method from the RDS API, passing in the decoded Secret for the field MasterUserPassword. The controller will store the DB instance identifier with the Secret reference and field name for future use, and write the CR for the new DB instance. Lastly, the Kubernetes API server receives an updated status and sends back a response to the user.
 These processes are shown below.
 
-<img src="others-flowchart.png" width="500"/>
+<img src="others-flowchart.png" width="1500"/>
 
 The solution process is shown in the diagram below.
 
-<img src="sequence diagram.png" width="700"/>
+<img src="sequence-diagram.png" width="700"/>
 
 Later, if the user wants to describe the DB instance, the ACK controller will search for the DB identifier within the existing store of field names, DB identifiers, and Secret references to match and replace any potential Secret values with their references. 
 
