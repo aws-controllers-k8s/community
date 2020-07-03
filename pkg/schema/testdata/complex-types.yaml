@@ -60,9 +60,24 @@ components:
     Base64:
       pattern: ^\S+$
       type: string
+    Boolean:
+      type: bool
     CreationTimestamp:
       format: date-time
       type: string
+    DBCluster:
+      properties:
+        DBClusterOptionGroupMemberships:
+          $ref: '#/components/schemas/DBClusterOptionGroupMemberships'
+    DBClusterOptionGroupMemberships:
+      items:
+        properties:
+          DBClusterOptionGroupName:
+            $ref: '#/components/schemas/String'
+          Status:
+            $ref: '#/components/schemas/String'
+        type: object
+      type: array
     DescribeImagesFilter:
       properties:
         tagStatus:
@@ -290,6 +305,46 @@ components:
       type: string
     NextToken:
       type: string
+    Option:
+      properties:
+        OptionName:
+          $ref: '#/components/schemas/String'
+      type: object
+    OptionGroup:
+      properties:
+        OptionGroupName:
+          $ref: '#/components/schemas/String'
+        Options:
+          $ref: '#/components/schemas/OptionsList'
+      type: object
+    OptionGroupOption:
+      properties:
+        OptionGroupOptionVersions:
+          $ref: '#/components/schemas/OptionGroupOptionVersionsList'
+      type: object
+    OptionGroupOptionVersionsList:
+      items:
+        properties:
+          IsDefault:
+            $ref: '#/components/schemas/Boolean'
+          Version:
+            $ref: '#/components/schemas/String'
+        type: object
+      type: array
+    OptionGroupsList:
+      items:
+        properties:
+          Options:
+            $ref: '#/components/schemas/OptionsList'
+        type: object
+      type: array
+    OptionsList:
+      items:
+        properties:
+          OptionName:
+            $ref: '#/components/schemas/String'
+        type: object
+      type: array
     PartSize:
       format: int64
       minimum: 0
@@ -371,6 +426,8 @@ components:
       format: int64
       minimum: 0
       type: integer
+    String:
+      type: string
     Tag:
       properties:
         Key:
@@ -405,18 +462,6 @@ components:
       properties:
         field:
           type: unknown
-      type: object
-    UnknownImageScanFindingList:
-      type: array
-      items:
-        type: object
-        properties:
-          field:
-            type: string
-    UnknownImageScanFindings:
-      properties:
-        findings:
-          $ref: '#/components/schemas/UnknownImageScanFindingList'
       type: object
     UploadId:
       pattern: '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'

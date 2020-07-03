@@ -78,6 +78,27 @@ func TestGoTypeFromSchemaRef(t *testing.T) {
 			nil,
 		},
 		{
+			"object array type for only-pluralized type name",
+			"DBCluster",
+			names.New("DBClusterOptionGroupMemberships"),
+			"[]*DBClusterOptionGroupMemberships",
+			nil,
+		},
+		{
+			"object array type for List-suffixed wrapper struct name with pluralized referred-to object type",
+			"OptionGroup",
+			names.New("Options"),
+			"[]*Option",
+			nil,
+		},
+		{
+			"object array type for List-suffixed wrapper struct name where there is no referred-to object type, pluralized or singular",
+			"OptionGroupOption",
+			names.New("OptionGroupOptionVersions"),
+			"AnonymousArrayObjectType",
+			nil,
+		},
+		{
 			"map[string]string type",
 			"AnyTag",
 			names.New("tags"),
@@ -91,19 +112,12 @@ func TestGoTypeFromSchemaRef(t *testing.T) {
 			"",
 			fmt.Errorf("failed to determine Go type. schema.Type was %s", "unknown"),
 		},
-		{
-			"unknown array items referred-to type",
-			"UnknownImageScanFindings",
-			names.New("findings"),
-			"",
-			fmt.Errorf("failed to find %s when looking up arrayTypeName %s", "UnknownImageScanFinding", "UnknownImageScanFindingList"),
-		},
 	}
 	for _, test := range tests {
 		sh := testutil.NewSchemaHelperFromFile(t, "complex-types.yaml")
 
 		schema := sh.GetSchema(test.schemaName)
-		require.NotNil(schema)
+		require.NotNil(schema, test.name)
 
 		propSchemaRef := schema.Properties[test.propNames.Original]
 		require.NotNil(propSchemaRef, test.name)
@@ -111,10 +125,10 @@ func TestGoTypeFromSchemaRef(t *testing.T) {
 		gt, err := sh.GetGoTypeFromSchemaRef(test.propNames, propSchemaRef)
 		if test.expErr != nil {
 			assert.Error(err)
-			assert.Equal(test.expErr, err)
+			assert.Equal(test.expErr, err, test.name)
 		} else {
 			assert.Nil(err, "expected err to be nil but got %s", err)
 		}
-		assert.Equal(test.expGoType, gt)
+		assert.Equal(test.expGoType, gt, test.name)
 	}
 }
