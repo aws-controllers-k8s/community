@@ -4,11 +4,11 @@
 Alice is a frequent Kubernetes user excited to create a database instance using Amazon RDS. She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use ACK, AWS Controllers for Kubernetes, to easily create a MySQL database. Before ACK, Alice needed to manually call the createDBInstance method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. With the method call to create and the method call to describe the DB instance, her password was in plain text for the API request and response. That didn't seem very secure to Alice. 
 The Custom Resource Definition currently shows that the MasterUserPassword is a string:
 
-![Initial CRD for DB Instance](images/rds-db-instance-crd-before.png)
+![Initial CRD for Desired State of DB Instance](images/rds-db-instance-crd-before.png)
 
 Now with secrets integration in ACK, Alice creates a new Kubernetes secret and refers to the secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the secret reference that she created before. 
 
-![Projected CRD for DB Instance](images/rds-db-instance-crd-after.png)
+![Projected CRD for Desired State of DB Instance](images/rds-db-instance-crd-after.png)
 
 
 ### In Scope
