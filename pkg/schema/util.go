@@ -14,6 +14,7 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -25,6 +26,10 @@ import (
 
 const (
 	compSchemasRef = "#/components/schemas/"
+)
+
+var (
+	ErrAnonymousArrayElementObjectType = errors.New("found an array type with an unnamed element object definition")
 )
 
 func inStrings(subject string, collection []string) bool {
@@ -139,6 +144,10 @@ func (h *Helper) GetGoTypeFromSchemaRef(
 		if itemsSchema.Type == "object" {
 			itemType, err = h.deduceArrayOfObjectsType(itemsSchemaRefName, itemsSchema)
 			if err != nil {
+				if err == ErrAnonymousArrayElementObjectType {
+					// TODO(jaypipes) Figure this out...
+					return "AnonymousArrayObjectType", nil
+				}
 				return "", err
 			}
 		} else {
@@ -198,28 +207,79 @@ func (h *Helper) deduceArrayOfObjectsType(
 	arrayTypeName string,
 	objectTypeSchema *openapi3.Schema,
 ) (string, error) {
+	pluralize := pluralize.NewClient()
 	guessObjectTypeName := arrayTypeName
 	if strings.HasSuffix(arrayTypeName, "List") {
 		guessObjectTypeName = strings.TrimSuffix(arrayTypeName, "List")
 	} else if strings.HasSuffix(arrayTypeName, "Set") {
 		guessObjectTypeName = strings.TrimSuffix(arrayTypeName, "Set")
-	} else {
-		// Fall back to determining if the array type name is a plural
-		pluralize := pluralize.NewClient()
-		if pluralize.IsPlural(arrayTypeName) {
-			guessObjectTypeName = pluralize.Singular(arrayTypeName)
-		}
 	}
 	if guessObjectTypeName != "" {
+		singularName := guessObjectTypeName
+		pluralName := guessObjectTypeName
+		// First check to see if there is an object schema named the same as
+		// the singular version of the guessed object type
+		if pluralize.IsPlural(guessObjectTypeName) {
+			singularName = pluralize.Singular(guessObjectTypeName)
+		} else {
+			pluralName = pluralize.Plural(guessObjectTypeName)
+		}
 		// Check to see if there is a schema matching the guessed object type
 		// name and if so, return that schema name as the target object type
-		_, found := h.api.Components.Schemas[guessObjectTypeName]
+		_, found := h.api.Components.Schemas[singularName]
 		if found {
-			return "*" + guessObjectTypeName, nil
+			return "*" + singularName, nil
 		}
-		return "", fmt.Errorf("failed to find %s when looking up arrayTypeName %s", guessObjectTypeName, arrayTypeName)
+		// The referred-to object type may be a "naturally pluralized" thing.
+		// For instance, in the RDS API, the DBCluster Shape has a
+		// DBClusterOptionGroupMemberships field that is a reference to a Shape
+		// called DBClusterOptionGroupMemberships that is an array of objects
+		// with some properties. There is no corresponding
+		// "DBClusterOptionGroupMembership" shape that we can use to further
+		// reduce the deduced referred-to object type
+		_, found = h.api.Components.Schemas[pluralName]
+		if found {
+			return "*" + pluralName, nil
+		}
+		// Finally, if neither the singular OR plural names of the guessed
+		// object type exist, then let's just try the original array type name
+		// (without the stripped List/Set, etc) and fall back to that
+		//
+		// This is the case for the RDS API where there is something called an
+		// OptionGroupOption that has a field called OptionGroupOptionVersions:
+		//
+		// OptionGroupOption:
+		//   properties:
+		//    ... lots of fields ...
+		// 	  OptionGroupOptionVersions:
+		// 	   $ref: '#/components/schemas/OptionGroupOptionVersionsList'
+		//   type: object
+		// OptionGroupOptionVersionsList:
+		//   items:
+		// 	  properties:
+		// 	   IsDefault:
+		// 		$ref: '#/components/schemas/Boolean'
+		// 	   Version:
+		// 		$ref: '#/components/schemas/String'
+		// 	  type: object
+		//   type: array
+		//
+		// There is no schema for either "OptionGroupOptionVersion" or
+		// "OptionGroupOptionVersions". The only schema is the
+		// "OptionGroupOptionVersionsList" shown above. :(
+		//
+		// We need to signal to that a struct type to represent the array's
+		// elements is needed, since there is no named struct...
+		arrayTypeSchemaRef, found := h.api.Components.Schemas[arrayTypeName]
+		if found {
+			arrayTypeSchema := h.getSchemaFromSchemaRef(arrayTypeSchemaRef)
+			if arrayTypeSchema != nil && arrayTypeSchema.Type == "array" {
+				return "", ErrAnonymousArrayElementObjectType
+			}
+		}
 		// TODO(jaypipes): Look through all schemas and try to match on known
 		// properties?
+		return "", fmt.Errorf("failed to find %s when looking up arrayTypeName %s", guessObjectTypeName, arrayTypeName)
 	}
 	return "", fmt.Errorf("failed to guess an object type name when looking up arrayTypeName %s", arrayTypeName)
 }
