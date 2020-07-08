@@ -3,7 +3,10 @@
 ## Problem Description
 
 #### Before ACK
-Alice is a frequent Kubernetes user excited to create a database instance using [Amazon RDS](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/Welcome.html). She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use [ACK, AWS Controllers for Kubernetes](https://github.com/aws/aws-service-operator-k8s), to easily create a MySQL database. Before ACK, Alice needed to manually call the [createDBInstance](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html) method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. With the method call to create and the method call to describe the DB instance, her password was in plain text for the API request and response. That didn't seem very secure to Alice. 
+Alice is a frequent Kubernetes user excited to create a database instance using [Amazon RDS](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/Welcome.html). She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use [ACK, AWS Controllers for Kubernetes](https://github.com/aws/aws-service-operator-k8s), to easily create a MySQL database. Before ACK, Alice needed to manually call the [createDBInstance](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html) method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. 
+![Plain Text in Terminal](rds-db-instance-creation-command-line-screenshot.png)
+
+With the method call to create and the method call to describe the DB instance, [her password was in plain text for the API request and response](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html#API_CreateDBInstance_Examples). That didn't seem very secure to Alice. 
 The [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) currently shows that the MasterUserPassword is a string:
 
 ```go
@@ -59,7 +62,7 @@ type DBInstanceSpec struct {
 ```
 
 #### After ACK
-Now with [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) integration in ACK, Alice creates a new Kubernetes Secret and refers to the Secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the Secret reference that she created before. Alice now sees the name of her Secret reference because the Custom Resource Definition for the RDS DB instance now has MasterUserPassword stored as a pointer to a [SecretKeyRef](https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-environment-variables) struct. The projected change in the DB Instance struct is shown below.
+Now with Secrets integration in ACK, Alice creates a new [Kubernetes Secret]((https://kubernetes.io/docs/concepts/configuration/secret/)) and refers to the Secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the Secret reference that she created before. Alice now sees the name of her Secret reference because the Custom Resource Definition for the RDS DB instance now has MasterUserPassword stored as a pointer to a [SecretKeyRef](https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-environment-variables) struct. The projected change in the DB Instance struct is shown below.
 
 ```go
 	MasterUserPassword *secretKeyRef `json:"masterUserPassword,omitempty" aws:"MasterUserPassword"`
