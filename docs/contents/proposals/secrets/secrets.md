@@ -100,7 +100,7 @@ secretRefs:
 ```
 
 ### How will the user interact with the proposed solution?
-Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specified a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
+Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specify a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
 The user's process is shown below.
 
 #### User Flowchart
