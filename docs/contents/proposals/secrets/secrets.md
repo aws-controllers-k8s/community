@@ -81,15 +81,10 @@ Now with [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) in
 
 ## Solution Implementation 
 
-### Overview
-The sequence diagram below illustrates the big picture of the solution.
-
-#### Sequence Diagram
+#### Overview
 ![Sequence Diagram for RDS DB Instance Creation](images/rds-db-instance-creation-sequence-diagram.png)
 
-### The Breakdown
-
-#### How do we identify the necessary fields to replace?
+### How do we identify the necessary fields to replace?
 The proposed solution will first solve the problem of how to identify which fields must be replaced using YAML files within target directories. The fields with sensitive information will first be manually identified and marked to be changed in a YAML file such as the one below. These YAML files serve as instructions for the ACK code generator to know which fields to replace. 
 
 ```yaml
@@ -101,19 +96,19 @@ secretRefs:
     - action: CreateDBCluster
 ```
 
-#### How will the user interact with the proposed solution?
+### How will the user interact with the proposed solution?
 Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specified a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
 The user's process is shown below.
 
-##### User Flowchart
+#### User Flowchart
 ![User Flowchart](images/rds-db-instance-creation-user-flowchart.png)
 
-#### How will the Kubernetes API server and ACK RDS controller replace specified fields?
+### How will the Kubernetes API server and ACK RDS controller replace specified fields?
 Upon Alice calling the command, the Kubernetes API server writes the new CR to storage. 
 The ACK RDS controller detects the change, reads the CR, and calls the Kubernetes API to retrieve the Secret information. The controller then reads the output, decodes the Secret value, and calls the createDBInstance method from the RDS API, passing in the decoded Secret for the field MasterUserPassword. Lastly, the Kubernetes API server receives an updated status.
 These processes are shown below.
 
-##### Kubernetes API and ACK RDS Controller Flowcharts
+#### Kubernetes API and ACK RDS Controller Flowcharts
 ![Kubernetes API and ACK RDS Controller Flowcharts](images/rds-db-instance-creation-backend-flowchart.png)
 
 ## Alternative Solutions Considered
