@@ -1,6 +1,8 @@
 # Secrets Integration Design Doc
 
 ## Problem Description
+
+#### Before ACK
 Alice is a frequent Kubernetes user excited to create a database instance using [Amazon RDS](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/Welcome.html). She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use [ACK, AWS Controllers for Kubernetes](https://github.com/aws/aws-service-operator-k8s), to easily create a MySQL database. Before ACK, Alice needed to manually call the [createDBInstance](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html) method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. With the method call to create and the method call to describe the DB instance, her password was in plain text for the API request and response. That didn't seem very secure to Alice. 
 The [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) currently shows that the MasterUserPassword is a string:
 
@@ -56,6 +58,7 @@ type DBInstanceSpec struct {
 }
 ```
 
+#### After ACK
 Now with [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) integration in ACK, Alice creates a new Kubernetes Secret and refers to the Secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the Secret reference that she created before. Alice now sees the name of her Secret reference because the Custom Resource Definition for the RDS DB instance now has MasterUserPassword stored as a pointer to a [SecretKeyRef](https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-environment-variables) struct. The projected change in the DB Instance struct is shown below.
 
 ```go
@@ -78,7 +81,15 @@ Now with [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) in
 
 ## Solution Implementation 
 
-#### Identifying Sensitive Fields
+### Overview
+The sequence diagram below illustrates the big picture of the solution.
+
+#### Sequence Diagram
+![Sequence Diagram for RDS DB Instance Creation](images/rds-db-instance-creation-sequence-diagram.png)
+
+### The Breakdown
+
+#### How do we identify the necessary fields to replace?
 The proposed solution will first solve the problem of how to identify which fields must be replaced using YAML files within target directories. The fields with sensitive information will first be manually identified and marked to be changed in a YAML file such as the one below. These YAML files serve as instructions for the ACK code generator to know which fields to replace. 
 
 ```yaml
@@ -90,42 +101,45 @@ secretRefs:
     - action: CreateDBCluster
 ```
 
-#### User Experience
+#### How will the user interact with the proposed solution?
 Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specified a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
 The user's process is shown below.
 
+##### User Flowchart
 ![User Flowchart](images/rds-db-instance-creation-user-flowchart.png)
 
-#### 
+#### How will the Kubernetes API server and ACK RDS controller replace specified fields?
 Upon Alice calling the command, the Kubernetes API server writes the new CR to storage. 
 The ACK RDS controller detects the change, reads the CR, and calls the Kubernetes API to retrieve the Secret information. The controller then reads the output, decodes the Secret value, and calls the createDBInstance method from the RDS API, passing in the decoded Secret for the field MasterUserPassword. Lastly, the Kubernetes API server receives an updated status.
 These processes are shown below.
 
+##### Kubernetes API and ACK RDS Controller Flowcharts
 ![Kubernetes API and ACK RDS Controller Flowcharts](images/rds-db-instance-creation-backend-flowchart.png)
-
-The solution process is shown in the diagram below.
-
-![Sequence Diagram for RDS DB Instance Creation](images/rds-db-instance-creation-sequence-diagram.png)
-
 
 ## Alternative Solutions Considered
 - Programmatically determine which fields contain sensitive information. 
 
 ## Test Plan
 
-#### Unit Tests
-We'll need an AWS client mock and K8s client mock to:
+### Unit Tests
+
+#### Resources Required
+- AWS client mock
+- K8s client mock
+
+#### Test Cases
 - Assert that sensitive fields in YAML are being properly identified and replaced with Secret Refs
 - Assert Secret values are unpacked and passed to RDS API
 - Assert every important event is logged
 
-#### End to End Tests
-We will need:
+### End to End Tests
+
+#### Resources Required
 - 1 Kubernetes cluster
 - 1 Kubernetes user
 - 1 RDS ACK Controller
 
-Test cases:
+#### Test Cases
 - Assert Secret values are hidden properly behind their reference for creation and calling
 - Verify that RDS objects are created as expected
 - Verify that RDS objects' status will update accordingly when Secrets are deleted, changed, or otherwise invalid
