@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -33,11 +34,14 @@ var (
 	version             string
 	buildHash           string
 	buildDate           string
+	defaultCacheDir     string
+	optCacheDir         string
 	defaultTemplatesDir string
 	optTemplatesDir     string
 	defaultServicesDir  string
 	optServicesDir      string
 	optDryRun           bool
+	sdkDir              string
 )
 
 var rootCmd = &cobra.Command{
@@ -52,6 +56,14 @@ func init() {
 		fmt.Printf("unable to determine current working directory: %s\n", err)
 		os.Exit(1)
 	}
+
+	hd, err := homedir.Dir()
+	if err != nil {
+		fmt.Printf("unable to determine $HOME: %s\n", err)
+		os.Exit(1)
+	}
+	defaultCacheDir = filepath.Join(hd, ".cache", appName)
+
 	// try to determine a default template and services directory. If the call
 	// is executing `ack-generate` via a checked-out ACK source repository,
 	// then the templates and services directory in the source repo can serve
@@ -88,6 +100,9 @@ func init() {
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&optServicesDir, "services-dir", defaultServicesDir, "Path to directory to output service-specific code",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&optCacheDir, "cache-dir", defaultCacheDir, "Path to directory to store cached files (including clone'd aws-sdk-go repo)",
 	)
 }
 

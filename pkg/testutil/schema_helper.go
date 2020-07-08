@@ -42,5 +42,5 @@ func NewSchemaHelperFromYAML(t *testing.T, yamlContents string) *schema.Helper {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return schema.NewHelper(api)
+	return schema.NewHelper(api, nil)
 }

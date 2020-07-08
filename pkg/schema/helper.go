@@ -14,38 +14,27 @@
 package schema
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
 type Helper struct {
-	api          *openapi3.Swagger
-	serviceAlias string
-	crds         []*model.CRD
+	api    *openapi3.Swagger
+	sdkAPI *awssdkmodel.API
+	crds   []*model.CRD
 	// A map of operation type and resource name to openapi3.Operation
 	opMap *OperationMap
 }
 
 func (h *Helper) GetServiceAlias() string {
-	if h.serviceAlias != "" {
-		return h.serviceAlias
+	if h.sdkAPI == nil {
+		return ""
 	}
-	if h.api == nil || h.api.Info == nil {
-		return "Unknown service alias"
-	}
-	apiAlias, found := h.api.Info.Extensions["x-aws-api-alias"]
-	apiAliasStr := []byte("unknown")
-	if found {
-		apiAliasStr, _ = apiAlias.(json.RawMessage).MarshalJSON()
-	}
-	apiAliasStr = bytes.Replace(apiAliasStr, []byte("\""), []byte(""), -1)
-	h.serviceAlias = string(apiAliasStr)
-	return h.serviceAlias
+	return awssdkmodel.ServiceID(h.sdkAPI)
 }
 
 func (h *Helper) GetAPIGroup() string {
@@ -64,6 +53,6 @@ func (h *Helper) GetSchema(schemaName string) *openapi3.Schema {
 	return schemaRef.Value
 }
 
-func NewHelper(api *openapi3.Swagger) *Helper {
-	return &Helper{api, "", nil, nil}
+func NewHelper(api *openapi3.Swagger, sdkAPI *awssdkmodel.API) *Helper {
+	return &Helper{api, sdkAPI, nil, nil}
 }

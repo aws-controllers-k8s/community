@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/ghodss/yaml"
 	"github.com/iancoleman/strcase"
@@ -72,7 +73,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
 	}
-	svcAlias := args[0]
+	svcAlias := strings.ToLower(args[0])
 	if optAPIsOutputPath == "" {
 		optAPIsOutputPath = filepath.Join(optServicesDir)
 	}
@@ -82,11 +83,17 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-
-	sh, err := getSchemaHelper()
+	ensureSDKRepo(optCacheDir)
+	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
 		return err
 	}
+	sh, err := getSchemaHelper(sdkAPI)
+	if err != nil {
+		return err
+	}
+
 	crds, err := sh.GetCRDs()
 	if err != nil {
 		return err
@@ -246,7 +253,7 @@ func writeCRDGo(crd *model.CRD) error {
 
 // getAPI returns a schema.Helper object representing the API from
 // either STDIN or an input file
-func getSchemaHelper() (*schema.Helper, error) {
+func getSchemaHelper(sdkAPI *awssdkmodel.API) (*schema.Helper, error) {
 	var b []byte
 	var err error
 	contentType := ctUnknown
@@ -279,9 +286,9 @@ func getSchemaHelper() (*schema.Helper, error) {
 		}
 	}
 
-	api, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
+	a, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
 	if err != nil {
 		return nil, err
 	}
-	return schema.NewHelper(api), nil
+	return schema.NewHelper(a, sdkAPI), nil
 }

@@ -72,7 +72,13 @@ func generateController(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	sh, err := getSchemaHelper()
+	ensureSDKRepo(optCacheDir)
+	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkAPI, err := sdkHelper.API(svcAlias)
+	if err != nil {
+		return err
+	}
+	sh, err := getSchemaHelper(sdkAPI)
 	if err != nil {
 		return err
 	}
