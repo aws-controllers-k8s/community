@@ -77,6 +77,8 @@ Now with [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) in
 
 
 ## Solution Implementation 
+
+#### Identifying Sensitive Fields
 The proposed solution will first solve the problem of how to identify which fields must be replaced using YAML files within target directories. The fields with sensitive information will first be manually identified and marked to be changed in a YAML file such as the one below. These YAML files serve as instructions for the ACK code generator to know which fields to replace. 
 
 ```yaml
@@ -88,11 +90,13 @@ secretRefs:
     - action: CreateDBCluster
 ```
 
+#### User Experience
 Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specified a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
 The user's process is shown below.
 
 ![User Flowchart](images/rds-db-instance-creation-user-flowchart.png)
 
+#### 
 Upon Alice calling the command, the Kubernetes API server writes the new CR to storage. 
 The ACK RDS controller detects the change, reads the CR, and calls the Kubernetes API to retrieve the Secret information. The controller then reads the output, decodes the Secret value, and calls the createDBInstance method from the RDS API, passing in the decoded Secret for the field MasterUserPassword. Lastly, the Kubernetes API server receives an updated status.
 These processes are shown below.
@@ -107,3 +111,22 @@ The solution process is shown in the diagram below.
 ## Alternative Solutions Considered
 - Programmatically determine which fields contain sensitive information. 
 
+## Test Plan
+
+#### Unit Tests
+We'll need an AWS client mock and K8s client mock to:
+- Assert that sensitive fields in YAML are being properly identified and replaced with Secret Refs
+- Assert Secret values are unpacked and passed to RDS API
+- Assert every important event is logged
+
+#### End to End Tests
+We will need:
+- 1 Kubernetes cluster
+- 1 Kubernetes user
+- 1 RDS ACK Controller
+
+Test cases:
+- Assert Secret values are hidden properly behind their reference for creation and calling
+- Verify that RDS objects are created as expected
+- Verify that RDS objects' status will update accordingly when Secrets are deleted, changed, or otherwise invalid
+- Ensure events are properly logged
