@@ -115,8 +115,8 @@ These processes are shown below.
 ![Kubernetes API and ACK RDS Controller Flowcharts](images/rds-db-instance-creation-backend-flowchart.png)
 
 ## Alternative Solutions Considered
-- Programmatically determine which fields contain sensitive information
-- 
+The alternative to manually identifying these fields to replace is to programmatically determine which fields contain sensitive information. This option may be explored further on if there is a pattern between sensitive fields across the AWS APIs.
+
 
 ## Test Plan
 
