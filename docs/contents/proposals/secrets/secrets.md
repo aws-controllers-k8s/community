@@ -62,7 +62,23 @@ type DBInstanceSpec struct {
 ```
 
 #### After ACK
-Now with Secrets integration in ACK, Alice creates a new [Kubernetes Secret]((https://kubernetes.io/docs/concepts/configuration/secret/)) and refers to the Secret when creating a manifest of the DB Instance. When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the Secret reference that she created before. Alice now sees the name of her Secret reference because the Custom Resource Definition for the RDS DB instance now has MasterUserPassword stored as a pointer to a [SecretKeyRef](https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-environment-variables) struct. The projected change in the DB Instance struct is shown below.
+Now with Secrets integration in ACK, Alice creates a new [Kubernetes Secret]((https://kubernetes.io/docs/concepts/configuration/secret/)) and refers to the Secret when creating a manifest of the DB Instance. Alice's input will look as follows:
+
+```yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: mydb
+spec:
+  dbInstanceClass: db.m1.large
+  dbInstanceIdentifier: mydb
+  engine: PostgreSQL
+  masterUserPasswordSecretRef:
+    name: dbsecrets
+    key: masterUserPassword
+```
+
+When calling to describe the manifest, instead of her password printing explicitly in terminal, she sees the name of the Secret reference that she created before. Alice now sees the name of her Secret reference because the Custom Resource Definition for the RDS DB instance now has MasterUserPassword stored as a pointer to a [SecretKeyRef](https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets-as-environment-variables) struct. The projected change in the DB Instance struct is shown below.
 
 ```go
 	MasterUserPassword *secretKeyRef `json:"masterUserPassword,omitempty" aws:"MasterUserPassword"`
@@ -100,7 +116,7 @@ secretRefs:
 ```
 
 ### How will the user interact with the proposed solution?
-Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specify a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server.
+Let us assume the user Alice wants to use the Amazon RDS API to create a new DB Instance. Alice must first create a Kubernetes Secret object and specify a key within the Secret that will store her RDS DB Instance master user password. Alice will reference that Secret and key within her RDS DB Instance custom resource manifest. Alice then simply calls the [kubectl apply command](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/#kubectl-apply), passes in her specification, and waits for a response from the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) server. 
 The user's process is shown below.
 
 #### User Flowchart
