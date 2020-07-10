@@ -15,12 +15,16 @@ package runtime
 
 import (
 	flag "github.com/spf13/pflag"
+	ctrlrt "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
 )
 
 type Config struct {
 	BindPort             int
 	MetricsAddr          string
 	EnableLeaderElection bool
+	EnableDevelopmentLogging bool
 }
 
 func (c *Config) BindFlags() {
@@ -40,4 +44,17 @@ func (c *Config) BindFlags() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
+	flag.BoolVar(
+		&c.EnableDevelopmentLogging, "enable-development-logging",
+		false,
+		"Configures the logger to use a Zap development config (encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn, no sampling), " +
+			"otherwise a Zap production config will be used (encoder=jsonEncoder,logLevel=Info,stackTraceLevel=Error), sampling).",
+	)
+}
+
+func (c *Config) SetupLogger()() {
+	zapOptions := zap.Options{
+		Development:    c.EnableDevelopmentLogging,
+	}
+	ctrlrt.SetLogger(zap.New(zap.UseFlagOptions(&zapOptions)))
 }
