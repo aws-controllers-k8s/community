@@ -78,10 +78,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sh, err := getSchemaHelper(sdkAPI)
-	if err != nil {
-		return err
-	}
+	sh := schema.NewHelper(sdkAPI)
 	latestAPIVersion, err = getLatestAPIVersion()
 	if err != nil {
 		return err

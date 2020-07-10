@@ -16,8 +16,7 @@ package schema
 import (
 	"sort"
 
-	"github.com/getkin/kin-openapi/openapi3"
-
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -37,14 +36,13 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 
 	for resName, createOp := range createOps {
 		names := names.New(resName)
-		sdkObjType := h.sdkObjectTypeFromOp(createOp)
 		crdOps := model.CRDOps{
 			Create:  createOps[resName],
 			ReadOne: readOneOps[resName],
 			Update:  updateOps[resName],
 			Delete:  deleteOps[resName],
 		}
-		crd := model.NewCRD(names, sdkObjType, crdOps)
+		crd := model.NewCRD(names, crdOps)
 		inAttrs, outAttrs, err := h.getAttrsFromOp(createOp, resName)
 		if err != nil {
 			return nil, err
@@ -68,22 +66,20 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 	return crds, nil
 }
 
+// GetOperationMap returns a map, keyed by the operation type and operation
+// ID/name, of aws-sdk-go private/model/api.Operation struct pointers
 func (h *Helper) GetOperationMap() *OperationMap {
 	if h.opMap != nil {
 		return h.opMap
 	}
-	api := h.api
 	// create an index of Operations by operation types and resource name
 	opMap := OperationMap{}
-	for _, pathItem := range api.Paths {
-		for _, op := range pathItem.Operations() {
-			opID := op.OperationID
-			opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
-			if _, found := opMap[opType]; !found {
-				opMap[opType] = map[string]*openapi3.Operation{}
-			}
-			opMap[opType][resName] = op
+	for opID, op := range h.sdkAPI.Operations {
+		opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+		if _, found := opMap[opType]; !found {
+			opMap[opType] = map[string]*awssdkmodel.Operation{}
 		}
+		opMap[opType][resName] = op
 	}
 	h.opMap = &opMap
 	return &opMap

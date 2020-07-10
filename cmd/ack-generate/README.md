@@ -11,13 +11,10 @@ To generate a controller, we go through several generation phases:
    easiest thing to do since all AWS service APIs are different in how they
    name API operations and objects.
 
-   To generate type definitions, use the `ack-generate apis` command. It
-   accepts (via `stdin` or the `-i|--input` flag) a JSON or YAML file
-   containing an OpenAPI3 Schema document for the AWS service API you wish to
-   generate type definitions and basic scaffolding for:
+   To generate type definitions, use the `ack-generate apis` command.
 
    ```
-    ack-generate [--dry-run] apis [--version=$api_version] $service_alias < /path/to/schema.yaml
+    ack-generate [--dry-run] apis [--version=$api_version] $service_alias
    ```
 
    The `--dry-run` flag causes the command to output the type definitions,
@@ -33,7 +30,7 @@ To generate a controller, we go through several generation phases:
    ensure it exists:
 
    ```
-   ack-generate apis sns --version v1beta2 -o /tmp/ack/services/sns/v1beta2 < /tmp/sns.yaml
+   ack-generate apis sns --version v1beta2 -o /tmp/ack/services/sns/v1beta2
    ```
 
    **NOTE**: For some APIs like the EC2 API, there will be a lot of output
@@ -50,7 +47,7 @@ To generate a controller, we go through several generation phases:
    definitions in steps #1 and #2 above.
 
    ```
-   ack-generate [--dry-run] controller $service_alias < /path/to/schema.yaml
+   ack-generate [--dry-run] controller $service_alias
    ```
 
    The `--dry-run` flag causes the command to output the controller
@@ -68,18 +65,3 @@ To generate a controller, we go through several generation phases:
    (thousands of lines). Some developers find it easier to pass the `--output`
    flag to a temporary directory and check through the generated files in that
    way instead.
-
-## Get an OpenAPI3 Schema document for an AWS service API
-
-Don't have an OpenAPI3 Schema document for a particular AWS service API? Not to
-worry. An easy way to get one is to use the
-[`aws-api-tool schema <api>` command](https://github.com/jaypipes/aws-api-tools#show-openapi3-schema-swagger-for-api):
-
-For example, to generate the OpenAPI3 Schema document for the Amazon Elastic
-Kubernetes Service (EKS) API, do:
-
-```
-aws-api-tool schema eks > /tmp/eks.yaml
-```
-
-Read more about how to install and use `aws-api-tool` [here](https://github.com/jaypipes/aws-api-tools).

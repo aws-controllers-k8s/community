@@ -17,13 +17,9 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
-	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
@@ -89,10 +85,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sh, err := getSchemaHelper(sdkAPI)
-	if err != nil {
-		return err
-	}
+	sh := schema.NewHelper(sdkAPI)
 
 	crds, err := sh.GetCRDs()
 	if err != nil {
@@ -249,46 +242,4 @@ func writeCRDGo(crd *model.CRD) error {
 	}
 	path := filepath.Join(apisVersionPath, crdFileName)
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-// getAPI returns a schema.Helper object representing the API from
-// either STDIN or an input file
-func getSchemaHelper(sdkAPI *awssdkmodel.API) (*schema.Helper, error) {
-	var b []byte
-	var err error
-	contentType := ctUnknown
-	if optAPIsInputPath == "" {
-		if b, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
-		}
-	} else {
-		fp := filepath.Clean(optAPIsInputPath)
-		ext := filepath.Ext(fp)
-		switch ext {
-		case "json":
-			contentType = ctJSON
-		case "yaml", "yml":
-			contentType = ctYAML
-		}
-		if b, err = ioutil.ReadFile(fp); err != nil {
-			return nil, err
-		}
-	}
-
-	var jsonb = b
-
-	// First get our supplied document into JSON format
-	if contentType == ctYAML || (contentType == ctUnknown && b[0] != '{' && b[0] != '[') {
-		// It's probably YAML, so try decoding to YAML first and fall back to
-		// JSON below
-		if jsonb, err = yaml.YAMLToJSON(b); err != nil {
-			jsonb = b
-		}
-	}
-
-	a, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
-	if err != nil {
-		return nil, err
-	}
-	return schema.NewHelper(a, sdkAPI), nil
 }

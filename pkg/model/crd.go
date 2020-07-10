@@ -14,46 +14,39 @@
 package model
 
 import (
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/gertd/go-pluralize"
-	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
 
 type CRDOps struct {
-	Create  *openapi3.Operation
-	ReadOne *openapi3.Operation
-	Update  *openapi3.Operation
-	Delete  *openapi3.Operation
+	Create  *awssdkmodel.Operation
+	ReadOne *awssdkmodel.Operation
+	Update  *awssdkmodel.Operation
+	Delete  *awssdkmodel.Operation
 }
 
 type CRD struct {
-	Names  names.Names
-	Kind   string
-	Plural string
-	// SDKObjectType is the string name of the struct type used to return a
-	// Describe operation for this resource from the aws-sdk-go. This is
-	// typically called "{Resource}Data", where "{Resource}" is the name of the
-	// resource. For example, the AppMesh API calls this struct MeshData.
-	SDKObjectType string
-	Ops           CRDOps
-	SpecAttrs     map[string]*Attr
-	StatusAttrs   map[string]*Attr
+	Names       names.Names
+	Kind        string
+	Plural      string
+	Ops         CRDOps
+	SpecAttrs   map[string]*Attr
+	StatusAttrs map[string]*Attr
 }
 
 func NewCRD(
 	names names.Names,
-	sdkObjType string,
 	crdOps CRDOps,
 ) *CRD {
 	pluralize := pluralize.NewClient()
 	kind := names.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
-		Names:         names,
-		Kind:          kind,
-		Plural:        plural,
-		SDKObjectType: sdkObjType,
-		Ops:           crdOps,
+		Names:  names,
+		Kind:   kind,
+		Plural: plural,
+		Ops:    crdOps,
 	}
 }

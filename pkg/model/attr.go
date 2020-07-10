@@ -14,7 +14,7 @@
 package model
 
 import (
-	"github.com/getkin/kin-openapi/openapi3"
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -22,17 +22,17 @@ import (
 type Attr struct {
 	Names  names.Names
 	GoType string
-	Schema *openapi3.Schema
+	Shape  *awssdkmodel.Shape
 }
 
 func NewAttr(
 	names names.Names,
 	goType string,
-	schema *openapi3.Schema,
+	shape *awssdkmodel.Shape,
 ) *Attr {
 	return &Attr{
 		Names:  names,
 		GoType: goType,
-		Schema: schema,
+		Shape:  shape,
 	}
 }

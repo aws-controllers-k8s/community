@@ -15,8 +15,6 @@ package model
 
 import (
 	"bytes"
-	"fmt"
-	"strconv"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -30,29 +28,15 @@ type EnumValue struct {
 // either a CRD or a TypeDef
 type EnumDef struct {
 	Names  names.Names
-	GoType string
 	Values []EnumValue
 }
 
-func NewEnumDef(names names.Names, goType string, values []interface{}) (*EnumDef, error) {
+func NewEnumDef(names names.Names, values []string) (*EnumDef, error) {
 	enumVals := make([]EnumValue, len(values))
 	for x, item := range values {
-		if goType == "string" {
-			strVal, ok := item.(string)
-			if !ok {
-				return nil, fmt.Errorf("cannot convert %v to string", item)
-			}
-			enumVals[x] = newEnumVal(strVal)
-		} else {
-			floatVal, ok := item.(float64)
-			if !ok {
-				return nil, fmt.Errorf("cannot convert %v to float64", item)
-			}
-			strVal := strconv.Itoa(int(floatVal))
-			enumVals[x] = newEnumVal(strVal)
-		}
+		enumVals[x] = newEnumVal(item)
 	}
-	return &EnumDef{names, goType, enumVals}, nil
+	return &EnumDef{names, enumVals}, nil
 }
 
 func newEnumVal(orig string) EnumValue {

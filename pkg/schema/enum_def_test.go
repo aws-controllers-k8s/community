@@ -42,34 +42,32 @@ func sortedCleanValues(vals []model.EnumValue) []string {
 	return res
 }
 
+func getEnumDefByName(name string, enumDefs []*model.EnumDef) *model.EnumDef {
+	for _, e := range enumDefs {
+		if e.Names.Original == name {
+			return e
+		}
+	}
+	return nil
+}
+
 func TestEnumDefs(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
 	tests := []struct {
 		name              string
-		yaml              string
+		service           string
 		expNameCamel      string
 		expNameCamelLower string
-		expGoType         string
 		expValuesOrig     []string
 		expValuesClean    []string
 	}{
 		{
 			"original same as clean value",
-			`
-components:
-  schemas:
-    ScanStatus:
-      enum:
-      - IN_PROGRESS
-      - COMPLETE
-      - FAILED
-      type: string
-`,
+			"ecr",
 			"ScanStatus",
 			"scanStatus",
-			"string",
 			[]string{
 				"COMPLETE",
 				"FAILED",
@@ -83,18 +81,9 @@ components:
 		},
 		{
 			"value strings need cleaning for Go output",
-			`
-components:
-  schemas:
-    InstanceLifecycle:
-      enum:
-      - spot
-      - on-demand
-      type: string
-`,
+			"ec2",
 			"InstanceLifecycle",
 			"instanceLifecycle",
-			"string",
 			[]string{
 				"on-demand",
 				"spot",
@@ -104,44 +93,16 @@ components:
 				"spot",
 			},
 		},
-		{
-			"int32 enum",
-			`
-components:
-  schemas:
-    PowersOfTwo:
-      enum:
-      - 1
-      - 2
-      - 4
-      type: integer
-      format: int32
-`,
-			"PowersOfTwo",
-			"powersOfTwo",
-			"int32",
-			[]string{
-				"1",
-				"2",
-				"4",
-			},
-			[]string{
-				"1",
-				"2",
-				"4",
-			},
-		},
 	}
 	for _, test := range tests {
-		sh := testutil.NewSchemaHelperFromYAML(t, test.yaml)
+		sh := testutil.NewSchemaHelperForService(t, test.service)
 
 		edefs, err := sh.GetEnumDefs()
 		require.Nil(err)
 
-		assert.Equal(1, len(edefs))
+		edef := getEnumDefByName(test.expNameCamel, edefs)
+		require.NotNil(edef)
 
-		edef := edefs[0]
-		assert.Equal(test.expNameCamel, edef.Names.Camel)
 		assert.Equal(test.expNameCamelLower, edef.Names.CamelLower)
 
 		assert.Equal(len(test.expValuesOrig), len(edef.Values))

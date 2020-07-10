@@ -15,18 +15,18 @@ package schema
 
 import (
 	"fmt"
+	"strings"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
-	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
 type Helper struct {
-	api    *openapi3.Swagger
 	sdkAPI *awssdkmodel.API
 	crds   []*model.CRD
-	// A map of operation type and resource name to openapi3.Operation
+	// A map of operation type and resource name to
+	// aws-sdk-go/private/model/api.Operation structs
 	opMap *OperationMap
 }
 
@@ -38,21 +38,18 @@ func (h *Helper) GetServiceAlias() string {
 }
 
 func (h *Helper) GetAPIGroup() string {
-	serviceAlias := h.GetServiceAlias()
+	serviceAlias := strings.ToLower(h.GetServiceAlias())
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
-func (h *Helper) GetSchema(schemaName string) *openapi3.Schema {
-	if h.api == nil {
-		return nil
-	}
-	schemaRef := h.api.Components.Schemas[schemaName]
-	if schemaRef == nil {
-		return nil
-	}
-	return schemaRef.Value
-}
+func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
+	// If we don't do this, we can end up with panic()'s like this:
+	// panic: assignment to entry in nil map
+	// when trying to execute Shape.GoType().
+	//
+	// Calling API.ServicePackageDoc() ends up resetting the API.imports
+	// unexported map variable...
+	_ = sdkAPI.ServicePackageDoc()
 
-func NewHelper(api *openapi3.Swagger, sdkAPI *awssdkmodel.API) *Helper {
-	return &Helper{api, sdkAPI, nil, nil}
+	return &Helper{sdkAPI, nil, nil}
 }

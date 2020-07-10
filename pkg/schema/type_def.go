@@ -25,7 +25,6 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 	if err != nil {
 		return nil, err
 	}
-	api := h.api
 	tdefs := []*model.TypeDef{}
 
 	payloads := h.getPayloads()
@@ -35,39 +34,34 @@ func (h *Helper) GetTypeDefs() ([]*model.TypeDef, error) {
 		crdNames = append(crdNames, crd.Kind)
 	}
 
-	for schemaName, schemaRef := range api.Components.Schemas {
-		if inStrings(schemaName, crdNames) {
+	for shapeName, shape := range h.sdkAPI.Shapes {
+		if inStrings(shapeName, crdNames) {
 			// CRDs are already top-level structs
 			continue
 		}
-		if inStrings(schemaName, payloads) {
+		if inStrings(shapeName, payloads) {
 			// Payloads are not type defs
 			continue
 		}
-		schema := h.getSchemaFromSchemaRef(schemaRef)
-		if schema.Type != "object" {
+		if shape.Type != "structure" {
 			continue
 		}
-		if isException(schema) {
+		if shape.Exception {
 			// Neither are exceptions
 			continue
 		}
 		attrs := map[string]*model.Attr{}
-		for propName, propSchemaRef := range schema.Properties {
-			propSchema := h.getSchemaFromSchemaRef(propSchemaRef)
+		for propName, memberRef := range shape.MemberRefs {
 			propNames := names.New(propName)
-			goType, err := h.GetGoTypeFromSchemaRef(propNames, propSchemaRef)
-			if err != nil {
-				return nil, err
-			}
-			attrs[propName] = model.NewAttr(propNames, goType, propSchema)
+			propShape := memberRef.Shape
+			attrs[propName] = model.NewAttr(propNames, propShape.GoType(), propShape)
 		}
 		if len(attrs) == 0 {
 			// Just ignore these...
 			continue
 		}
 		tdefs = append(tdefs, &model.TypeDef{
-			Names: names.New(schemaName),
+			Names: names.New(shapeName),
 			Attrs: attrs,
 		})
 	}

@@ -33,48 +33,102 @@ func attrCamelNames(attrs map[string]*model.Attr) []string {
 	return res
 }
 
-func TestGetCRDs(t *testing.T) {
+func getCRDByName(name string, crds []*model.CRD) *model.CRD {
+	for _, c := range crds {
+		if c.Names.Original == name {
+			return c
+		}
+	}
+	return nil
+}
+
+func TestSNSTopic(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	sh := testutil.NewSchemaHelperFromFile(t, "topic-api.yaml")
+	sh := testutil.NewSchemaHelperForService(t, "sns")
 
 	crds, err := sh.GetCRDs()
 	require.Nil(err)
 
-	assert.Equal(1, len(crds))
+	crd := getCRDByName("Topic", crds)
+	require.NotNil(crd)
 
-	topicCRD := crds[0]
+	assert.Equal("Topic", crd.Names.Camel)
+	assert.Equal("topic", crd.Names.CamelLower)
+	assert.Equal("topic", crd.Names.Snake)
 
-	assert.Equal("Topic", topicCRD.Names.Camel)
-	assert.Equal("topic", topicCRD.Names.CamelLower)
-	assert.Equal("topic", topicCRD.Names.Snake)
+	specAttrs := crd.SpecAttrs
+	statusAttrs := crd.StatusAttrs
 
-	specAttrs := topicCRD.SpecAttrs
-	statusAttrs := topicCRD.StatusAttrs
-
-	assert.Equal(3, len(specAttrs))
 	expSpecAttrCamel := []string{
 		"Attributes",
 		"Name",
 		"Tags",
 	}
 	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
-	assert.Equal(1, len(statusAttrs))
 	expStatusAttrCamel := []string{
 		"TopicARN",
 	}
 	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
 
-	// The Topic API is a little weird. There are Create and Delete operations
-	// ("CreateTopic", "DeleteTopic") but there is no ReadOne operation (there
-	// is a "GetTopicAttributes" call though) or Update operation (there is a
-	// "SetTopicAttributes" call though)
-	require.NotNil(topicCRD.Ops)
+	// The SNS Topic API is a little weird. There are Create and Delete
+	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
+	// operation (there is a "GetTopicAttributes" call though) or Update
+	// operation (there is a "SetTopicAttributes" call though)
+	require.NotNil(crd.Ops)
 
-	assert.NotNil(topicCRD.Ops.Create)
-	assert.NotNil(topicCRD.Ops.Delete)
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
 
-	assert.Nil(topicCRD.Ops.ReadOne)
-	assert.Nil(topicCRD.Ops.Update)
+	assert.Nil(crd.Ops.ReadOne)
+	assert.Nil(crd.Ops.Update)
+}
+
+func TestECRRepository(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "ecr")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Repository", crds)
+	require.NotNil(crd)
+
+	specAttrs := crd.SpecAttrs
+	statusAttrs := crd.StatusAttrs
+
+	// The ECR API uses a REST-like API that uses "wrapper" single-member
+	// objects in the JSON response for the create/describe calls. In other
+	// words, the returned result from the CreateRepository API looks like
+	// this:
+	//
+	// {
+	//   "repository": {
+	//     .. bunch of fields for the repository ..
+	//   }
+	// }
+	//
+	// This test is verifying that we're properly "unwrapping" the structs and
+	// putting the repository object's fields into the Spec and Status for the
+	// Repository CRD.
+	expSpecAttrCamel := []string{
+		"ImageScanningConfiguration",
+		"ImageTagMutability",
+		"RepositoryName",
+		"Tags",
+	}
+	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
+	expStatusAttrCamel := []string{
+		"CreatedAt",
+		"ImageScanningConfiguration",
+		"ImageTagMutability",
+		"RegistryID",
+		"RepositoryARN",
+		"RepositoryName",
+		"RepositoryURI",
+	}
+	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
 }

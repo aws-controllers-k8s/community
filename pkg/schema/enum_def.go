@@ -14,7 +14,6 @@
 package schema
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
@@ -22,29 +21,14 @@ import (
 )
 
 func (h *Helper) GetEnumDefs() ([]*model.EnumDef, error) {
-	api := h.api
 	edefs := []*model.EnumDef{}
 
-	for schemaName, schemaRef := range api.Components.Schemas {
-		schema := h.getSchemaFromSchemaRef(schemaRef)
-		if len(schema.Enum) == 0 {
+	for shapeName, shape := range h.sdkAPI.Shapes {
+		if !shape.IsEnum() {
 			continue
 		}
 
-		goType := "unknown"
-		switch schema.Type {
-		case "string":
-			goType = "string"
-		case "integer":
-			if schema.Format == "int32" {
-				goType = "int32"
-			} else {
-				goType = "int64"
-			}
-		default:
-			return nil, fmt.Errorf("cannot determine go type from enum schema type %s", schema.Type)
-		}
-		edef, err := model.NewEnumDef(names.New(schemaName), goType, schema.Enum)
+		edef, err := model.NewEnumDef(names.New(shapeName), shape.Enum)
 		if err != nil {
 			return nil, err
 		}

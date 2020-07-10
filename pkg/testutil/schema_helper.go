@@ -14,33 +14,19 @@
 package testutil
 
 import (
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
-
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 )
 
-func NewSchemaHelperFromFile(t *testing.T, yamlFile string) *schema.Helper {
-	path := filepath.Join("testdata", yamlFile)
-	b, err := ioutil.ReadFile(path)
+func NewSchemaHelperForService(t *testing.T, serviceAlias string) *schema.Helper {
+	path := filepath.Clean("testdata")
+	sdkHelper := model.NewSDKHelper(path)
+	sdkAPI, err := sdkHelper.API(serviceAlias)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewSchemaHelperFromYAML(t, string(b))
-}
-
-func NewSchemaHelperFromYAML(t *testing.T, yamlContents string) *schema.Helper {
-	jsonb, err := yaml.YAMLToJSON([]byte(yamlContents))
-	if err != nil {
-		t.Fatal(err)
-	}
-	api, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return schema.NewHelper(api, nil)
+	return schema.NewHelper(sdkAPI)
 }
