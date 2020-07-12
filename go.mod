@@ -7,20 +7,15 @@ require (
 	github.com/dlclark/regexp2 v1.2.0
 	// pin to v0.1.1 due to release problem with v0.1.2
 	github.com/gertd/go-pluralize v0.1.1
-	github.com/getkin/kin-openapi v0.3.1
-	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/google/go-cmp v0.3.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
-	github.com/jaypipes/aws-api-tools v0.0.0-20200708151341-64402aa8031a // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
-	github.com/vektra/mockery v1.1.2 // indirect
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
-	golang.org/x/tools v0.0.0-20200617042924-7f3f4b10a808 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
