@@ -63,6 +63,8 @@ func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 			return OpTypeCreateBatch, pluralize.Singular(resName)
 		}
 		return OpTypeCreate, resName
+	} else if strings.HasPrefix(opID, "Modify") {
+		return OpTypeUpdate, strings.TrimPrefix(opID, "Modify")
 	} else if strings.HasPrefix(opID, "Update") {
 		return OpTypeUpdate, strings.TrimPrefix(opID, "Update")
 	} else if strings.HasPrefix(opID, "Delete") {

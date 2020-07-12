@@ -15,6 +15,7 @@ package schema
 
 import (
 	"sort"
+	"strings"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
@@ -43,6 +44,8 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 			Delete:  deleteOps[resName],
 		}
 		crd := model.NewCRD(names, crdOps)
+		sdkMapper := model.NewSDKMapper(crd)
+		crd.SDKMapper = sdkMapper
 		inAttrs, outAttrs, err := h.getAttrsFromOp(createOp, resName)
 		if err != nil {
 			return nil, err
@@ -54,6 +57,40 @@ func (h *Helper) GetCRDs() ([]*model.CRD, error) {
 		outAttrMap := make(map[string]*model.Attr, len(outAttrs))
 		for _, outAttr := range outAttrs {
 			outAttrMap[outAttr.Names.Original] = outAttr
+		}
+
+		// At this point, we have two maps of attributes, one for the
+		// attributes passed to the Create request's input shape, the other
+		// returned from the API response's output shape.
+		//
+		// We need to determine fields in the output shape that:
+		//
+		// * Are not the same as the fields in the input shape
+		// * Are not ARN fields for the primary object (since that is always in
+		//   `Status.ACKResourceMetadata.ARN`)
+		//
+		// For example, assume the following input attributes for "Book"
+		// resource:
+		//
+		// "name", "title", "author"
+		//
+		// And the following output attributes:
+		//
+		// "bookARN", "name", "title", "author", "createdOn"
+		//
+		// We want to reduce the output attributes to just "createdOn", since
+		// all the other attributes are either the primary object's ARN or are
+		// in the input attributes (and would be in the CRD's Spec field)
+		for outAttrName := range outAttrMap {
+			_, found := inAttrMap[outAttrName]
+			if found {
+				delete(outAttrMap, outAttrName)
+			}
+			if strings.EqualFold(outAttrName, "arn") ||
+				strings.EqualFold(outAttrName, resName+"arn") {
+				sdkMapper.SetPrimaryResourceARNField(createOp, outAttrName)
+				delete(outAttrMap, outAttrName)
+			}
 		}
 		crd.SpecAttrs = inAttrMap
 		crd.StatusAttrs = outAttrMap

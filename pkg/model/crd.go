@@ -34,6 +34,7 @@ type CRD struct {
 	Ops         CRDOps
 	SpecAttrs   map[string]*Attr
 	StatusAttrs map[string]*Attr
+	SDKMapper   *SDKMapper
 }
 
 func NewCRD(

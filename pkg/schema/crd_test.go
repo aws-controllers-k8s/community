@@ -68,7 +68,10 @@ func TestSNSTopic(t *testing.T) {
 	}
 	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
 	expStatusAttrCamel := []string{
-		"TopicARN",
+		// "TopicARN" is the only field in the output shape for CreateTopic,
+		// but it is removed because it is the primary resource object's ARN
+		// field and the SDKMapper has identified it as the source for the
+		// standard Status.ACKResourceMetadata.ARN field
 	}
 	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
 
@@ -83,6 +86,78 @@ func TestSNSTopic(t *testing.T) {
 
 	assert.Nil(crd.Ops.ReadOne)
 	assert.Nil(crd.Ops.Update)
+}
+
+func TestEC2LaunchTemplate(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "ec2")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("LaunchTemplate", crds)
+	require.NotNil(crd)
+
+	assert.Equal("LaunchTemplate", crd.Names.Camel)
+	assert.Equal("launchTemplate", crd.Names.CamelLower)
+	assert.Equal("launch_template", crd.Names.Snake)
+
+	specAttrs := crd.SpecAttrs
+	statusAttrs := crd.StatusAttrs
+
+	expSpecAttrCamel := []string{
+		// TODO(jaypipes): DryRun and ClientToken are examples of two fields in
+		// the resource input shape that need to be stripped out of the CRD. We
+		// need to instruct the code generator that these types of fields are
+		// not germane to the resource itself...
+		"ClientToken",
+		"DryRun",
+		"LaunchTemplateData",
+		"LaunchTemplateName",
+		// TODO(jaypipes): Here's an example of where we need to instruct the
+		// code generator to rename the "TagSpecifications" field to simply
+		// "Tags" and place it into the common Spec.Tags field.
+		"TagSpecifications",
+		"VersionDescription",
+	}
+	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
+	expStatusAttrCamel := []string{
+		"CreateTime",
+		"CreatedBy",
+		"DefaultVersionNumber",
+		"LatestVersionNumber",
+		// TODO(jaypipes): Handle "Id" Fields like "LaunchTemplateId" in the
+		// same way as we handle ARN-ified modern service APIs and use the
+		// SDKMapper to instruct the code generator that this field represents
+		// the primary resource object's identifier field.
+		"LaunchTemplateID",
+		// LaunchTemplateName excluded because it matches input shape.,
+		// TODO(jaypipes): Tags field should be excluded because it is the same
+		// as the input shape's "TagSpecifications" field...
+		"Tags",
+	}
+	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
+
+	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
+	//
+	// * CreateLaunchTemplate
+	// * ModifyLaunchTemplate
+	// * DeleteLaunchTemplate
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
+	assert.NotNil(crd.Ops.Update)
+
+	// However, oddly, there is no ReadOne operation. There is only a
+	// ReadMany/List operation "DescribeLaunchTemplates" :(
+	//
+	// TODO(jaypipes): Develop strategy for informing the code generator via
+	// the SDKMapper that certain APIs don't have ReadOne but only ReadMany
+	// APIs...
+	assert.Nil(crd.Ops.ReadOne)
 }
 
 func TestECRRepository(t *testing.T) {
@@ -123,11 +198,16 @@ func TestECRRepository(t *testing.T) {
 	assert.Equal(expSpecAttrCamel, attrCamelNames(specAttrs))
 	expStatusAttrCamel := []string{
 		"CreatedAt",
-		"ImageScanningConfiguration",
-		"ImageTagMutability",
+		// "ImageScanningConfiguration" removed because it is contained in the
+		// input shape and therefore exists in the Spec
+		// "ImageTagMutability" removed because it is contained in the input
+		// shape and therefore exists in the Spec
 		"RegistryID",
-		"RepositoryARN",
-		"RepositoryName",
+		// "RepositoryARN" removed because it refers to the primary object's
+		// ARN and the SDKMapper identified it for mapping to the standard
+		// Status.ACKResourceMetadata.ARN field
+		// "RepositoryName" removed because it is contained in the input shape
+		// and therefore exists in the Spec
 		"RepositoryURI",
 	}
 	assert.Equal(expStatusAttrCamel, attrCamelNames(statusAttrs))
