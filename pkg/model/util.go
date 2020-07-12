@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package schema
+package model
 
 func inStrings(subject string, collection []string) bool {
 	for _, item := range collection {

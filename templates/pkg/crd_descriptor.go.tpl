@@ -62,11 +62,11 @@ func (d *resourceDescriptor) Equal(
 	ac := a.(*resource)
 	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
-	return cmp.Equal(ac.sdko, bc.sdko, opts)
+	return cmp.Equal(ac.ko, bc.ko, opts)
 }
 
 // Diff returns a string representing the difference between two supplied
-// AWSResources/ The underlying types of the two supplied AWSResources should
+// AWSResources. The underlying types of the two supplied AWSResources should
 // be the same. In other words, the Diff() method should be called with the
 // same concrete implementing AWSResource type
 func (d *resourceDescriptor) Diff(
@@ -76,7 +76,7 @@ func (d *resourceDescriptor) Diff(
 	ac := a.(*resource)
 	bc := b.(*resource)
 	opts := cmpopts.EquateEmpty()
-	return cmp.Diff(ac.sdko, bc.sdko, opts)
+	return cmp.Diff(ac.ko, bc.ko, opts)
 }
 
 // UpdateCRStatus accepts an AWSResource object and changes the Status

@@ -11,20 +11,18 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package schema
+package model
 
 import (
 	"fmt"
 	"strings"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
-
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
 )
 
 type Helper struct {
 	sdkAPI *awssdkmodel.API
-	crds   []*model.CRD
+	crds   []*CRD
 	// A map of operation type and resource name to
 	// aws-sdk-go/private/model/api.Operation structs
 	opMap *OperationMap
@@ -35,6 +33,13 @@ func (h *Helper) GetServiceAlias() string {
 		return ""
 	}
 	return awssdkmodel.ServiceID(h.sdkAPI)
+}
+
+func (h *Helper) GetServiceFullName() string {
+	if h.sdkAPI == nil {
+		return ""
+	}
+	return h.sdkAPI.Metadata.ServiceFullName
 }
 
 func (h *Helper) GetAPIGroup() string {
@@ -52,4 +57,13 @@ func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
 	_ = sdkAPI.ServicePackageDoc()
 
 	return &Helper{sdkAPI, nil, nil}
+}
+
+// GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
+// interface type name.
+func (h *Helper) GetSDKAPIInterfaceTypeName() string {
+	if h.sdkAPI == nil {
+		return ""
+	}
+	return h.sdkAPI.StructName()
 }

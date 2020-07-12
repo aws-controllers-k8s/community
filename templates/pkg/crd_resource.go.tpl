@@ -9,7 +9,6 @@ import (
 	k8srt "k8s.io/apimachinery/pkg/runtime"
 
 	svcapitypes "github.com/aws/aws-service-operator-k8s/service/{{ .ServiceAlias }}/apis/{{ .APIVersion}}
-	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
 
 // resource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
@@ -17,8 +16,6 @@ import (
 type resource struct {
 	// The Kubernetes-native CR representing the resource
 	ko *svcapitypes.{{ .CRD.Names.Camel }}
-	// The aws-sdk-go-native representation of the resource
-	sdko *svcsdk.{{ .CRD.SDKObjectType }}
 }
 
 // Identifiers returns an AWSResourceIdentifiers object containing various

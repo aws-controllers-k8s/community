@@ -14,6 +14,8 @@
 package model
 
 import (
+	"sort"
+
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
 
@@ -22,4 +24,55 @@ import (
 type TypeDef struct {
 	Names names.Names
 	Attrs map[string]*Attr
+}
+
+func (h *Helper) GetTypeDefs() ([]*TypeDef, error) {
+	crds, err := h.GetCRDs()
+	if err != nil {
+		return nil, err
+	}
+	tdefs := []*TypeDef{}
+
+	payloads := h.getPayloads()
+
+	crdNames := []string{}
+	for _, crd := range crds {
+		crdNames = append(crdNames, crd.Kind)
+	}
+
+	for shapeName, shape := range h.sdkAPI.Shapes {
+		if inStrings(shapeName, crdNames) {
+			// CRDs are already top-level structs
+			continue
+		}
+		if inStrings(shapeName, payloads) {
+			// Payloads are not type defs
+			continue
+		}
+		if shape.Type != "structure" {
+			continue
+		}
+		if shape.Exception {
+			// Neither are exceptions
+			continue
+		}
+		attrs := map[string]*Attr{}
+		for propName, memberRef := range shape.MemberRefs {
+			propNames := names.New(propName)
+			propShape := memberRef.Shape
+			attrs[propName] = NewAttr(propNames, propShape.GoType(), propShape)
+		}
+		if len(attrs) == 0 {
+			// Just ignore these...
+			continue
+		}
+		tdefs = append(tdefs, &TypeDef{
+			Names: names.New(shapeName),
+			Attrs: attrs,
+		})
+	}
+	sort.Slice(tdefs, func(i, j int) bool {
+		return tdefs[i].Names.Camel < tdefs[j].Names.Camel
+	})
+	return tdefs, nil
 }

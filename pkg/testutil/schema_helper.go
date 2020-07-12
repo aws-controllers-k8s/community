@@ -18,15 +18,14 @@ import (
 	"testing"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 )
 
-func NewSchemaHelperForService(t *testing.T, serviceAlias string) *schema.Helper {
+func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper {
 	path := filepath.Clean("testdata")
 	sdkHelper := model.NewSDKHelper(path)
 	sdkAPI, err := sdkHelper.API(serviceAlias)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return schema.NewHelper(sdkAPI)
+	return model.NewHelper(sdkAPI)
 }

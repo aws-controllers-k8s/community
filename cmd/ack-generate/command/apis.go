@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	template "github.com/aws/aws-service-operator-k8s/pkg/template/apis"
 )
 
@@ -55,9 +54,6 @@ func init() {
 		&optGenVersion, "version", "v1alpha1", "the resource API Version to use when generating API infrastructure and type definitions",
 	)
 	apisCmd.PersistentFlags().StringVarP(
-		&optAPIsInputPath, "input", "i", "", "path to OpenAPI3 Schema document (optional, defaults to stdin)",
-	)
-	apisCmd.PersistentFlags().StringVarP(
 		&optAPIsOutputPath, "output", "o", "", "path to directory for service controller to create generated files. Defaults to "+optServicesDir+"/$service",
 	)
 	rootCmd.AddCommand(apisCmd)
@@ -79,13 +75,15 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	ensureSDKRepo(optCacheDir)
+	if err := ensureSDKRepo(optCacheDir); err != nil {
+		return err
+	}
 	sdkHelper := model.NewSDKHelper(sdkDir)
 	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
 		return err
 	}
-	sh := schema.NewHelper(sdkAPI)
+	sh := model.NewHelper(sdkAPI)
 
 	crds, err := sh.GetCRDs()
 	if err != nil {
@@ -124,7 +122,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeDocGo(sh *schema.Helper) error {
+func writeDocGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	apiGroup := sh.GetAPIGroup()
 	vars := &template.DocTemplateVars{
@@ -147,7 +145,7 @@ func writeDocGo(sh *schema.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeGroupVersionInfoGo(sh *schema.Helper) error {
+func writeGroupVersionInfoGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	apiGroup := sh.GetAPIGroup()
 	vars := &template.GroupVersionInfoTemplateVars{

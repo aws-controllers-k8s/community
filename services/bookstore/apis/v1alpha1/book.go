@@ -14,6 +14,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -24,10 +26,10 @@ type BookSpec struct {
 	// If unspecified or empty, it defaults to be "${name}" of k8s Book
 	// +optional
 	Name *string `json:"name,omitempty"`
-	// The AWS IAM account ID of the book owner.
-	// Required if the account ID is not your own.
-	// +optional
-	Owner *string `json:"owner,omitempty"`
+	// Title is the Bookstore API Book's title.
+	Title *string `json:"title"`
+	// Title is the Bookstore API Book's author.
+	Author *string `json:"author"`
 }
 
 // BookStatus defines the observed state of Book
@@ -41,6 +43,8 @@ type BookStatus struct {
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+	// CreateTime is the datetime the book was created
+	CreateTime *time.Time `json:"createTime"`
 }
 
 // Book implements sigs.k8s.io/apimachinery/pkg/runtime.Object

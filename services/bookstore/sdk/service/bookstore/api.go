@@ -5,6 +5,7 @@ package bookstore
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
@@ -17,6 +18,12 @@ type BookData struct {
 
 	// BookName is a required field
 	BookName *string `locationName:"bookName" min:"1" type:"string" required:"true"`
+
+	// Title is a required field
+	Title *string `locationName:"title" min:"1" type:"string" required:"true"`
+
+	// Author is a required field
+	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -45,8 +52,14 @@ type BookRef struct {
 	// BookName is a required field
 	BookName *string `locationName:"bookName" min:"1" type:"string" required:"true"`
 
-	// BookOwner is a required field
-	BookOwner *string `locationName:"bookOwner" min:"12" type:"string" required:"true"`
+	// Title is a required field
+	Title *string `locationName:"title" min:"1" type:"string" required:"true"`
+
+	// Author is a required field
+	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
+
+	// CreateTime is a required field
+	CreateTime *time.Time `locationName:"createTime" type:"timestamp" required:"true"`
 }
 
 // String returns the string representation
@@ -71,9 +84,15 @@ func (s *BookRef) SetBookName(v string) *BookRef {
 	return s
 }
 
-// SetBookOwner sets the BookOwner field's value.
-func (s *BookRef) SetBookOwner(v string) *BookRef {
-	s.BookOwner = &v
+// SetTitle sets the Title field's value.
+func (s *BookRef) SetTitle(v string) *BookRef {
+	s.Title = &v
+	return s
+}
+
+// SetAuthor sets the Author field's value.
+func (s *BookRef) SetAuthor(v string) *BookRef {
+	s.Author = &v
 	return s
 }
 
@@ -136,6 +155,12 @@ type CreateBookInput struct {
 	// BookName is a required field
 	BookName *string `locationName:"bookName" min:"1" type:"string" required:"true"`
 
+	// Title is a required field
+	Title *string `locationName:"title" min:"1" type:"string" required:"true"`
+
+	// Author is a required field
+	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
+
 	Tags []*TagRef `locationName:"tags" type:"list"`
 }
 
@@ -157,6 +182,12 @@ func (s *CreateBookInput) Validate() error {
 	}
 	if s.BookName != nil && len(*s.BookName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("BookName", 1))
+	}
+	if s.Title != nil && len(*s.Title) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Title", 1))
+	}
+	if s.Author != nil && len(*s.Author) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Author", 1))
 	}
 	if s.Tags != nil {
 		for i, v := range s.Tags {
@@ -181,6 +212,18 @@ func (s *CreateBookInput) SetBookName(v string) *CreateBookInput {
 	return s
 }
 
+// SetTitle sets the Title field's value.
+func (s *CreateBookInput) SetTitle(v string) *CreateBookInput {
+	s.Title = &v
+	return s
+}
+
+// SetAuthor sets the Author field's value.
+func (s *CreateBookInput) SetAuthor(v string) *CreateBookInput {
+	s.Author = &v
+	return s
+}
+
 // SetTags sets the Tags field's value.
 func (s *CreateBookInput) SetTags(v []*TagRef) *CreateBookInput {
 	s.Tags = v
@@ -194,6 +237,11 @@ type CreateBookOutput struct {
 	//
 	// Book is a required field
 	Book *BookData `locationName:"book" type:"structure" required:"true"`
+
+	// the timestamp the book was created
+	//
+	// CreateTime is a required field
+	CreateTime *time.Time `locationName:"createTime" type:"timestamp" required:"true"`
 }
 
 // String returns the string representation
@@ -209,6 +257,12 @@ func (s CreateBookOutput) GoString() string {
 // SetBook sets the Book field's value.
 func (s *CreateBookOutput) SetBook(v *BookData) *CreateBookOutput {
 	s.Book = v
+	return s
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *CreateBookOutput) SetCreateTime(v *time.Time) *CreateBookOutput {
+	s.CreateTime = v
 	return s
 }
 
@@ -716,8 +770,6 @@ type DescribeBookInput struct {
 
 	// BookName is a required field
 	BookName *string `location:"uri" locationName:"bookName" min:"1" type:"string" required:"true"`
-
-	BookOwner *string `location:"querystring" locationName:"bookOwner" min:"12" type:"string"`
 }
 
 // String returns the string representation
@@ -739,9 +791,6 @@ func (s *DescribeBookInput) Validate() error {
 	if s.BookName != nil && len(*s.BookName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("BookName", 1))
 	}
-	if s.BookOwner != nil && len(*s.BookOwner) < 12 {
-		invalidParams.Add(request.NewErrParamMinLen("BookOwner", 12))
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -755,12 +804,6 @@ func (s *DescribeBookInput) SetBookName(v string) *DescribeBookInput {
 	return s
 }
 
-// SetBookOwner sets the BookOwner field's value.
-func (s *DescribeBookInput) SetBookOwner(v string) *DescribeBookInput {
-	s.BookOwner = &v
-	return s
-}
-
 type DescribeBookOutput struct {
 	_ struct{} `type:"structure" payload:"Book"`
 
@@ -768,6 +811,11 @@ type DescribeBookOutput struct {
 	//
 	// Book is a required field
 	Book *BookData `locationName:"book" type:"structure" required:"true"`
+
+	// the timestamp the book was created
+	//
+	// CreateTime is a required field
+	CreateTime *time.Time `locationName:"createTime" type:"timestamp" required:"true"`
 }
 
 // String returns the string representation
@@ -783,6 +831,12 @@ func (s DescribeBookOutput) GoString() string {
 // SetBook sets the Book field's value.
 func (s *DescribeBookOutput) SetBook(v *BookData) *DescribeBookOutput {
 	s.Book = v
+	return s
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *DescribeBookOutput) SetCreateTime(v *time.Time) *DescribeBookOutput {
+	s.CreateTime = v
 	return s
 }
 
@@ -888,6 +942,12 @@ type UpdateBookInput struct {
 
 	// BookName is a required field
 	BookName *string `location:"uri" locationName:"bookName" min:"1" type:"string" required:"true"`
+
+	// Title is a required field
+	Title *string `location:"uri" locationName:"title" min:"1" type:"string" required:"true"`
+
+	// Author is a required field
+	Author *string `location:"uri" locationName:"author" min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -909,6 +969,12 @@ func (s *UpdateBookInput) Validate() error {
 	if s.BookName != nil && len(*s.BookName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("BookName", 1))
 	}
+	if s.Title != nil && len(*s.Title) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Title", 1))
+	}
+	if s.Author != nil && len(*s.Author) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Author", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -919,6 +985,18 @@ func (s *UpdateBookInput) Validate() error {
 // SetBookName sets the BookName field's value.
 func (s *UpdateBookInput) SetBookName(v string) *UpdateBookInput {
 	s.BookName = &v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *UpdateBookInput) SetTitle(v string) *UpdateBookInput {
+	s.Title = &v
+	return s
+}
+
+// SetAuthor sets the Author field's value.
+func (s *UpdateBookInput) SetAuthor(v string) *UpdateBookInput {
+	s.Author = &v
 	return s
 }
 

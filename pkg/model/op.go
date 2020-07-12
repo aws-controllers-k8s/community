@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package schema
+package model
 
 import (
 	"strings"
@@ -75,6 +75,15 @@ func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 			return OpTypeList, pluralize.Singular(resName)
 		}
 		return OpTypeGet, resName
+	} else if strings.HasPrefix(opID, "Get") {
+		resName := strings.TrimPrefix(opID, "Get")
+		if pluralize.IsPlural(resName) {
+			return OpTypeList, pluralize.Singular(resName)
+		}
+		return OpTypeGet, resName
+	} else if strings.HasPrefix(opID, "List") {
+		resName := strings.TrimPrefix(opID, "List")
+		return OpTypeList, pluralize.Singular(resName)
 	}
 	return OpTypeUnknown, ""
 }

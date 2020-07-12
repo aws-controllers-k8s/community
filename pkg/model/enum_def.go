@@ -15,6 +15,7 @@ package model
 
 import (
 	"bytes"
+	"sort"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/names"
 )
@@ -53,4 +54,24 @@ func newEnumVal(orig string) EnumValue {
 		Original: orig,
 		Clean:    string(clean),
 	}
+}
+
+func (h *Helper) GetEnumDefs() ([]*EnumDef, error) {
+	edefs := []*EnumDef{}
+
+	for shapeName, shape := range h.sdkAPI.Shapes {
+		if !shape.IsEnum() {
+			continue
+		}
+
+		edef, err := NewEnumDef(names.New(shapeName), shape.Enum)
+		if err != nil {
+			return nil, err
+		}
+		edefs = append(edefs, edef)
+	}
+	sort.Slice(edefs, func(i, j int) bool {
+		return edefs[i].Names.Camel < edefs[j].Names.Camel
+	})
+	return edefs, nil
 }
