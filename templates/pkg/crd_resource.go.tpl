@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srt "k8s.io/apimachinery/pkg/runtime"
 
-	svcapitypes "github.com/aws/aws-controllers-k8s/service/{{ .ServiceAlias }}/apis/{{ .APIVersion}}
+	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion}}"
 )
 
 // resource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
