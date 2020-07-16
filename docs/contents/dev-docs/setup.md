@@ -4,7 +4,7 @@ In the following, we walk you through the setup to start developing on AWS Contr
 
 ## Fork the repository
 
-First, fork the [upstream source repository](github.com/aws/aws-service-operator-k8s) to your private GitHub account.
+First, fork the [upstream source repository](github.com/aws/aws-controllers-k8s) to your private GitHub account.
 
 Then, on your workstation, run:
 

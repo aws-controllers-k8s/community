@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	types "github.com/aws/aws-service-operator-k8s/pkg/types"
+	types "github.com/aws/aws-controllers-k8s/pkg/types"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -8,7 +8,7 @@ The tenets for the relaunch were:
 2. ACK is optimized for production usage with full test coverage including performance and scalability test suites.
 3. ACK strives to be the only codebase exposing AWS services via a Kubernetes operator. 
 
-Since then, we worked on [design issues](https://github.com/aws/aws-service-operator-k8s/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Adesign) and gathering feedback around which services to prioritize.
+Since then, we worked on [design issues](https://github.com/aws/aws-controllers-k8s/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Adesign) and gathering feedback around which services to prioritize.
 
 
 ## Existing custom controllers

@@ -14,7 +14,7 @@
 package main
 
 import (
-	"github.com/aws/aws-service-operator-k8s/cmd/ack-generate/command"
+	"github.com/aws/aws-controllers-k8s/cmd/ack-generate/command"
 )
 
 var (

@@ -16,7 +16,7 @@ package model
 import (
 	"sort"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
 // TypeDef is a Go type definition for a struct that is present in the

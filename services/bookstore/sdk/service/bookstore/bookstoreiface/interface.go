@@ -16,7 +16,7 @@ package bookapiiface
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
-	awssdkapi "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
+	awssdkapi "github.com/aws/aws-controllers-k8s/services/bookstore/sdk/service/bookstore"
 )
 
 type BookstoreAPI interface {

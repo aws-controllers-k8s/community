@@ -2,7 +2,7 @@ site_name: ACK
 site_description: 'AWS Controllers for Kubernetes'
 site_author: 'The ACK contributors'
 repo_name: 'aws/aws-service-operator-k8s'
-repo_url: 'https://github.com/aws/aws-service-operator-k8s'
+repo_url: 'https://github.com/aws/aws-controllers-k8s'
 copyright: 'Copyright &copy; 2020 Amazon'
 docs_dir: contents
 nav:
@@ -20,8 +20,8 @@ nav:
       - Background: community/background.md
       - FAQ: community/faq.md
       - Discussions: community/discussions.md
-      - Contributing: https://github.com/aws/aws-service-operator-k8s/blob/master/CONTRIBUTING.md
-      - Governance: https://github.com/aws/aws-service-operator-k8s/blob/master/GOVERNANCE.md
+      - Contributing: https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md
+      - Governance: https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md
 extra:
     social:
     - type: 'twitter'

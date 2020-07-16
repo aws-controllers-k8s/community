@@ -1,4 +1,4 @@
-module github.com/aws/aws-service-operator-k8s/test/integration/services
+module github.com/aws/aws-controllers-k8s/test/integration/services
 
 go 1.14
 

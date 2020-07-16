@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 
-	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )

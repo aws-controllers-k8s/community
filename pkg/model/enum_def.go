@@ -17,7 +17,7 @@ import (
 	"bytes"
 	"sort"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
 type EnumValue struct {

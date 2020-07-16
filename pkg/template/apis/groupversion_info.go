@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	ttpl "text/template"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/template"
+	"github.com/aws/aws-controllers-k8s/pkg/template"
 )
 
 type GroupVersionInfoTemplateVars struct {

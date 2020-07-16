@@ -1,4 +1,4 @@
-module github.com/aws/aws-service-operator-k8s
+module github.com/aws/aws-controllers-k8s
 
 go 1.14
 

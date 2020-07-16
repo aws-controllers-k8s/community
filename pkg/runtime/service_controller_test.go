@@ -30,10 +30,10 @@ import (
 	ctrlmanager "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 
-	mocks "github.com/aws/aws-service-operator-k8s/mocks/pkg/types"
-	bookstoretypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
+	mocks "github.com/aws/aws-controllers-k8s/mocks/pkg/types"
+	bookstoretypes "github.com/aws/aws-controllers-k8s/services/bookstore/apis/v1alpha1"
 )
 
 var (

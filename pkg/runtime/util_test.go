@@ -18,11 +18,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
-	"github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
-	_ "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource/book"
+	"github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource"
+	_ "github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource/book"
 )
 
 func newBookResource() acktypes.AWSResource {

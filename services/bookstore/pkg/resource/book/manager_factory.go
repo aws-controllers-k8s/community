@@ -16,10 +16,10 @@ package book
 import (
 	"sync"
 
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
-	svcresource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
+	svcresource "github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource"
 )
 
 // resourceManagerFactory produces resourceManager objects. It

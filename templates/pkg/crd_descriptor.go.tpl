@@ -3,14 +3,14 @@
 package {{ .CRD.Names.Snake }}
 
 import (
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sapirt "k8s.io/apimachinery/pkg/runtime"
 	k8sctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	svcapitypes "github.com/aws/aws-service-operator-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
+	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
 )
 
 const (

@@ -1,13 +1,13 @@
 # Project governance
 
-This document lays out the guidelines under which the AWS Service Operator for Kubernetes (ASO) project will be governed. 
+This document lays out the guidelines under which the AWS Controllers for Kubernetes (ACK) project will be governed. 
 The goal is to make sure that the roles and responsibilities are well defined and clarify on how decisions are made.
 
 ## Roles
 
-In the context of ASO, we consider the following roles:
+In the context of ACK, we consider the following roles:
 
-* __Users__ ... everyone using ASO, typically willing to provide feedback on ASO by proposing features and/or filing issues.
+* __Users__ ... everyone using ACK, typically willing to provide feedback on ACK by proposing features and/or filing issues.
 * __Contributors__ ... everyone contributing code, documentation, examples, testing infra, and participating in feature proposals as well as design discussions. Code contributions will require a Developer Certificate of Origin (DCO).
 *	__Maintainers__ ... are responsible for engaging with and assisting contributors to iterate on the contributions until it reaches acceptable quality. Maintainers can decide whether the contributions can be accepeted into the project or rejected. Any active contributor meeting the project quality can be made a Maintainer by the Advisory Board.
 *	__Advisory Board__ ... is responsible for defining the guidelines and processes that the project operates under. 
@@ -32,5 +32,5 @@ The Advisory Board will propose a release management proposal via a GitHub issue
 
 ## Other relevant governance resources
 
-* The ASO [Contributing Guidelines](CONTRIBUTING.md)
+* The ACK [Contributing Guidelines](CONTRIBUTING.md)
 * Our [Code of Conduct](CODE_OF_CONDUCT.md)

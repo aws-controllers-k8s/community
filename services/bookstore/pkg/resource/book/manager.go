@@ -17,14 +17,14 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
 	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
-	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore/bookstoreiface"
+	svcsdkapi "github.com/aws/aws-controllers-k8s/services/bookstore/sdk/service/bookstore/bookstoreiface"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
+	svcsdk "github.com/aws/aws-controllers-k8s/services/bookstore/sdk/service/bookstore"
 )
 
 // resourceManager is responsible for providing a consistent way to perform

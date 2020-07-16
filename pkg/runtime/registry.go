@@ -16,7 +16,7 @@ package runtime
 import (
 	"sync"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
+	"github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
 type Registry struct {

@@ -3,7 +3,7 @@
 # Build the manager binary
 FROM golang:1.14.1 as builder
 
-ARG work_dir=/github.com/aws/aws-service-operator-k8s
+ARG work_dir=/github.com/aws/aws-controllers-k8s
 WORKDIR $work_dir
 # For building Go Module required
 ENV GOPROXY=direct
@@ -25,7 +25,7 @@ RUN  go build -a -o $work_dir/bin/controller $work_dir/services/{{ .ServiceAlias
 
 
 FROM amazonlinux:2
-ARG work_dir=/github.com/aws/aws-service-operator-k8s
+ARG work_dir=/github.com/aws/aws-controllers-k8s
 WORKDIR /
 COPY --from=builder $work_dir/bin/controller /bin/.
 ENTRYPOINT ["/bin/controller"]

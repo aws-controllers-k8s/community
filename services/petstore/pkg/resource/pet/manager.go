@@ -19,17 +19,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
-	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
 
 	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
-	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/petstore/sdk/service/petstore/petstoreiface"
+	svcsdkapi "github.com/aws/aws-controllers-k8s/services/petstore/sdk/service/petstore/petstoreiface"
 	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/petstore/sdk/service/petstore"
+	svcsdk "github.com/aws/aws-controllers-k8s/services/petstore/sdk/service/petstore"
 )
 
 // resourceManager is responsible for providing a consistent way to perform

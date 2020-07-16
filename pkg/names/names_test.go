@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
 func TestNames(t *testing.T) {

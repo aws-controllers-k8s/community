@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
 func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper {

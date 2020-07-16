@@ -3,7 +3,7 @@
 ## Problem Description
 
 #### Before ACK
-Alice is a frequent Kubernetes user excited to create a database instance using [Amazon RDS](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/Welcome.html). She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use [ACK, AWS Controllers for Kubernetes](https://github.com/aws/aws-service-operator-k8s), to easily create a MySQL database. Before ACK, Alice needed to manually call the [createDBInstance](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html) method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. 
+Alice is a frequent Kubernetes user excited to create a database instance using [Amazon RDS](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/Welcome.html). She is very familiar with Kubernetes, but doesn't want to dive into learning about the Amazon API space. She is thrilled to use [ACK, AWS Controllers for Kubernetes](https://github.com/aws/aws-controllers-k8s), to easily create a MySQL database. Before ACK, Alice needed to manually call the [createDBInstance](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html) method from the RDS API in the AWS console, and type in a MasterUserPassword in plain text. 
 ![Plain Text in Terminal](images/rds-db-instance-creation-command-line-screenshot.png)
 
 With the method call to create and the method call to describe the DB instance, [her password was in plain text for the API request and response](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html#API_CreateDBInstance_Examples). That didn't seem very secure to Alice. 
