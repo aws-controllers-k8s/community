@@ -1,10 +1,15 @@
 {{ template "boilerplate" }}
 
 package {{ .APIVersion }}
-
+{{- if .Imports }}
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+{{- end -}}
+{{- range $packagePath, $alias := .Imports }}
+    {{ if $alias -}}{{ $alias }} {{ end -}}"{{ $packagePath }}"
+{{ end -}}
+{{- if .Imports }}
 )
+{{- end -}}
 {{- range $typeDef := .TypeDefs }}
 
 {{ template "type_def" $typeDef }}

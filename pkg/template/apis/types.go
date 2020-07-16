@@ -25,7 +25,7 @@ import (
 type TypesTemplateVars struct {
 	APIVersion string
 	TypeDefs   []*model.TypeDef
-	EnumDefs   []*model.EnumDef
+	Imports    map[string]string
 }
 
 func NewTypesTemplate(tplDir string) (*ttpl.Template, error) {

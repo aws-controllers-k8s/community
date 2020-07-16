@@ -4,6 +4,12 @@
 package {{ .APIVersion }}
 
 import (
+{{- range $packagePath, $alias := .CRD.TypeImports }}
+    {{ if $alias -}}{{ $alias }} {{ end -}}"{{ $packagePath }}"
+{{ end -}}
+{{- if .CRD.TypeImports }}
+
+{{- end -}}
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

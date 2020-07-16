@@ -15,6 +15,7 @@ package model
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
@@ -26,12 +27,17 @@ type TypeDef struct {
 	Attrs map[string]*Attr
 }
 
-func (h *Helper) GetTypeDefs() ([]*TypeDef, error) {
+// GetTypeDefs returns a slice of TypeDef pointers and a map of package import
+// information
+func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	crds, err := h.GetCRDs()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	tdefs := []*TypeDef{}
+	// Map, keyed by package import path, with the values being an alias to use
+	// for the package
+	timports := map[string]string{}
 
 	payloads := h.getPayloads()
 
@@ -60,6 +66,26 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, error) {
 		for propName, memberRef := range shape.MemberRefs {
 			propNames := names.New(propName)
 			propShape := memberRef.Shape
+			goPkgType := memberRef.Shape.GoTypeWithPkgNameElem()
+			if strings.Contains(goPkgType, ".") {
+				if strings.HasPrefix(goPkgType, "[]") {
+					// For slice types, we just want the element type...
+					goPkgType = goPkgType[2:]
+				}
+				if strings.HasPrefix(goPkgType, "*") {
+					// For slice types, the element type might be a pointer to
+					// a struct...
+					goPkgType = goPkgType[1:]
+				}
+				pkg := strings.Split(goPkgType, ".")[0]
+				if pkg != h.sdkAPI.PackageName() {
+					// Shape.GoPTypeWithPkgNameElem() always returns the type
+					// as a full package dot-notation name. We only want to add
+					// imports for "normal" package types like "time.Time", not
+					// "ecr.ImageScanningConfiguration"
+					timports[pkg] = ""
+				}
+			}
 			attrs[propName] = NewAttr(propNames, propShape.GoType(), propShape)
 		}
 		if len(attrs) == 0 {
@@ -74,5 +100,5 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, error) {
 	sort.Slice(tdefs, func(i, j int) bool {
 		return tdefs[i].Names.Camel < tdefs[j].Names.Camel
 	})
-	return tdefs, nil
+	return tdefs, timports, nil
 }

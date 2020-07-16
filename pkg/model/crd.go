@@ -176,6 +176,7 @@ func newCRDField(
 }
 
 type CRD struct {
+	helper *Helper
 	Names  names.Names
 	Kind   string
 	Plural string
@@ -190,6 +191,9 @@ type CRD struct {
 	// SpecFields.
 	StatusFields map[string]*CRDField
 	SDKMapper    *SDKMapper
+	// TypeImports is a map, keyed by an import string, with the map value
+	// being the import alias
+	TypeImports map[string]string
 }
 
 // AddSpecField adds a new CRDField of a given name and shape into the Spec
@@ -209,12 +213,45 @@ func (r *CRD) AddStatusField(
 	memberNames names.Names,
 	shape *awssdkmodel.Shape,
 ) {
+	goPkgType := shape.GoTypeWithPkgNameElem()
+	if strings.Contains(goPkgType, ".") {
+		if strings.HasPrefix(goPkgType, "[]") {
+			// For slice types, we just want the element type...
+			goPkgType = goPkgType[2:]
+		}
+		if strings.HasPrefix(goPkgType, "*") {
+			// For slice types, the element type might be a pointer to
+			// a struct...
+			goPkgType = goPkgType[1:]
+		}
+		pkg := strings.Split(goPkgType, ".")[0]
+		if pkg != r.helper.sdkAPI.PackageName() {
+			// Shape.GoPTypeWithPkgNameElem() always returns the type
+			// as a full package dot-notation name. We only want to add
+			// imports for "normal" package types like "time.Time", not
+			// "ecr.ImageScanningConfiguration"
+			r.AddTypeImport(pkg, "")
+		}
+	}
 	crdPath := ".Status." + memberNames.Camel
 	crdField := newCRDField(r, crdPath, memberNames, shape)
 	r.StatusFields[memberNames.Original] = crdField
 }
 
-func NewCRD(
+// AddTypeImport adds an entry in the CRD's TypeImports map for an import line
+// and optional alias
+func (r *CRD) AddTypeImport(
+	packagePath string,
+	alias string,
+) {
+	if r.TypeImports == nil {
+		r.TypeImports = map[string]string{}
+	}
+	r.TypeImports[packagePath] = alias
+}
+
+func newCRD(
+	helper *Helper,
 	crdNames names.Names,
 	crdOps CRDOps,
 ) *CRD {
@@ -222,6 +259,7 @@ func NewCRD(
 	kind := crdNames.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
+		helper:       helper,
 		Names:        crdNames,
 		Kind:         kind,
 		Plural:       plural,
@@ -258,7 +296,7 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			Update:   updateOps[crdName],
 			Delete:   deleteOps[crdName],
 		}
-		crd := NewCRD(crdNames, crdOps)
+		crd := newCRD(h, crdNames, crdOps)
 		sdkMapper := NewSDKMapper(crd)
 		crd.SDKMapper = sdkMapper
 
