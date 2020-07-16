@@ -14,8 +14,8 @@
 package resource
 
 import (
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	"github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
 var (

@@ -16,7 +16,7 @@ package model
 import (
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
 type Attr struct {

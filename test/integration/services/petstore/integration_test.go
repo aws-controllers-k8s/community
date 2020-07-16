@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aws/aws-service-operator-k8s/test/integration/services"
+	"github.com/aws/aws-controllers-k8s/test/integration/services"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -20,7 +20,7 @@ func TestIntegration(t *testing.T) {
 	flag.Parse()
 	framework.AfterReadingAllFlags(&framework.TestContext)
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Amazon Service Operator K8s Petstore")
+	RunSpecs(t, "ACK Petstore")
 }
 
 var _ = BeforeSuite(func() {

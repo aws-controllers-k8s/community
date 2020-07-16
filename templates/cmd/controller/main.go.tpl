@@ -5,14 +5,14 @@ package main
 import (
 	"os"
 
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	svcresource "github.com/aws/aws-service-operator-k8s/services/{{ .ServiceAlias }}/pkg/resource"
-	svctypes "github.com/aws/aws-service-operator-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
+	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/pkg/resource"
+	svctypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
 )
 
 var (

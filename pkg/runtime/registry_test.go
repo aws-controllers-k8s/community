@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
+	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 
-	mocks "github.com/aws/aws-service-operator-k8s/mocks/pkg/types"
+	mocks "github.com/aws/aws-controllers-k8s/mocks/pkg/types"
 )
 
 func TestRegistry(t *testing.T) {

@@ -1,22 +1,28 @@
-## AWS Service Operator for Kubernetes
+## AWS Controllers for Kubernetes (ACK)
 
-This repo contains the next generation AWS Service Operator for Kubernetes
-(ASO).
+This repo contains a set of Kubernetes
+[controllers](https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller)
+that manage resources in AWS service APIs.
 
-An operator in Kubernetes is the combination of one or more [custom resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and [controllers](https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller) managing said custom resources.
-
-The ASO will allow containerized applications and Kubernetes users to create, update, delete and retrieve the status of objects in AWS services such as S3 buckets, DynamoDB, RDS databases, SNS, etc. using the Kubernetes API, for example using 
+ACK allows containerized applications and Kubernetes users to create, update,
+delete and retrieve the status of objects in AWS services such as S3 buckets,
+DynamoDB, RDS databases, SNS, etc. using the Kubernetes API, for example using
 Kubernetes manifests or `kubectl` plugins.
 
-## Status
+Documentation, including installation and usage instructions, are
+available online.
 
-As of end of 2019 we are in the early stages of planning the redesign of ASO. Check the [issues list](https://github.com/aws/aws-service-operator-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
+[TODO]: # (link to generated documentation)
 
-For discussions, please use the `#provider-aws` channel on the [Kubernetes Slack](https://kubernetes.slack.com) community or the [mailing list](https://groups.google.com/forum/#!forum/aws-service-operator-user/).
+Check the [issues list](https://github.com/aws/aws-controllers-k8s/issues) for
+descriptions of work items. We invite any and all feedback and contributions,
+so please don't hesitate to submit an issue, a pull request or comment on an
+existing issue.
 
-## Background
+For discussions, please use the `#provider-aws` channel on the [Kubernetes
+Slack](https://kubernetes.slack.com) community.
 
-Read about the [motivation for and background on](docs/background.md) the ASO.
+Read about the [motivation for and background on](docs/background.md) ACK.
 
 ## License
 

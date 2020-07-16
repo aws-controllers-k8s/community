@@ -114,7 +114,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 ## In scope
 
 - Ability to have the service controller assume the same IAM role in a different account.
-- Tracebility and audibility of IAM Role related events (On the controller side), by adding/updating zap logger values (see this [example](https://github.com/aws/aws-service-operator-k8s/blob/mvp/pkg/runtime/reconciler.go#L84-L87))
+- Tracebility and audibility of IAM Role related events (On the controller side), by adding/updating zap logger values (see this [example](https://github.com/aws/aws-controllers-k8s/blob/mvp/pkg/runtime/reconciler.go#L84-L87))
 - Unit and e2e tests with a specific ACK Controller (e.g. s3 bucket controller)
 - User has ability to specify the AWS account in CR Annotations
 
@@ -162,7 +162,7 @@ Testing will be similar to unit testing:
 
 ## Discussions
 
-Questions quoted from [Justin G. comment](https://github.com/aws/aws-service-operator-k8s/pull/62#issuecomment-655670245)
+Questions quoted from [Justin G. comment](https://github.com/aws/aws-controllers-k8s/pull/62#issuecomment-655670245)
 
 > Is there an option to automatically create namespaces for each account specified
 

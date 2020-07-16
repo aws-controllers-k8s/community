@@ -19,4 +19,4 @@
 
 !!! quote "Answer"
     Excellent question and we're super excited that you're interested in ACK.
-    For now, if you're a developer, you can check out the [mvp](https://github.com/aws/aws-service-operator-k8s/tree/mvp) branch and try out the code generation.
+    For now, if you're a developer, you can check out the [mvp](https://github.com/aws/aws-controllers-k8s/tree/mvp) branch and try out the code generation.

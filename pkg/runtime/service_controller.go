@@ -19,7 +19,7 @@ import (
 	"github.com/go-logr/logr"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/types"
+	"github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
 // ServiceController wraps a number of `controller-runtime.Reconciler` that are

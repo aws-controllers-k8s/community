@@ -23,8 +23,8 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	template "github.com/aws/aws-service-operator-k8s/pkg/template/apis"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	template "github.com/aws/aws-controllers-k8s/pkg/template/apis"
 )
 
 type contentType int

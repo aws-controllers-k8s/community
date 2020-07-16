@@ -20,8 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/testutil"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
 func attrCamelNames(fields map[string]*model.CRDField) []string {

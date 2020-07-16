@@ -24,10 +24,10 @@ import (
 	"github.com/spf13/cobra"
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	dockertemplate "github.com/aws/aws-service-operator-k8s/pkg/template"
-	cmdtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/cmd"
-	pkgtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/pkg"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	dockertemplate "github.com/aws/aws-controllers-k8s/pkg/template"
+	cmdtemplate "github.com/aws/aws-controllers-k8s/pkg/template/cmd"
+	pkgtemplate "github.com/aws/aws-controllers-k8s/pkg/template/pkg"
 )
 
 var (

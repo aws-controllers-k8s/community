@@ -22,7 +22,7 @@ import (
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/gertd/go-pluralize"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
 type CRDOps struct {

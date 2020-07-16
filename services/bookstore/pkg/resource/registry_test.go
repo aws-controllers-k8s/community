@@ -16,8 +16,8 @@ package resource_test
 import (
 	"testing"
 
-	resource "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource"
-	_ "github.com/aws/aws-service-operator-k8s/services/bookstore/pkg/resource/book"
+	resource "github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource"
+	_ "github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource/book"
 	"github.com/stretchr/testify/require"
 )
 

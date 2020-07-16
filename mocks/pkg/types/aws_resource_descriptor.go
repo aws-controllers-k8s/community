@@ -6,7 +6,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
-	types "github.com/aws/aws-service-operator-k8s/pkg/types"
+	types "github.com/aws/aws-controllers-k8s/pkg/types"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

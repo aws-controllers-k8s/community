@@ -42,7 +42,7 @@ static Kubernetes manifests.
 Static Kubernetes manifests that install individual service controllers are
 attached as artifacts to releases of AWS Controllers for Kubernetes. Select a
 release from the [list of
-releases](https://github.com/aws/aws-service-operator-k8s/releases) for AWS
+releases](https://github.com/aws/aws-controllers-k8s/releases) for AWS
 Controllers for Kubernetes.
 
 You will see a list of Assets for the release. One of those Assets will be
@@ -56,7 +56,7 @@ necessary Kubernetes RBAC manifests.
 For example:
 
 ```sh
-kubectl apply -f https://github.com/aws/aws-service-operator-k8s/releases/download/v0.0.1/services/s3/all-resources.yaml
+kubectl apply -f https://github.com/aws/aws-controllers-k8s/releases/download/v0.0.1/services/s3/all-resources.yaml
 ```
 
 

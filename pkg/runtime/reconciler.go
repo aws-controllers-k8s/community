@@ -22,10 +22,10 @@ import (
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
-	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
-	"github.com/aws/aws-service-operator-k8s/pkg/requeue"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	"github.com/aws/aws-controllers-k8s/pkg/requeue"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
 // reconciler is responsible for reconciling the state of a SINGLE KIND of

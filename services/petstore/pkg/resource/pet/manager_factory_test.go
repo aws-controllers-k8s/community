@@ -18,13 +18,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
-	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
-	resource "github.com/aws/aws-service-operator-k8s/services/petstore/pkg/resource"
+	resource "github.com/aws/aws-controllers-k8s/services/petstore/pkg/resource"
 	// The pet package's init() registers the pet resource manager factory
 	// with the resource package's registry
-	_ "github.com/aws/aws-service-operator-k8s/services/petstore/pkg/resource/pet"
+	_ "github.com/aws/aws-controllers-k8s/services/petstore/pkg/resource/pet"
 )
 
 func TestManagerFor(t *testing.T) {

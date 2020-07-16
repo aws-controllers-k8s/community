@@ -16,7 +16,7 @@ package model_test
 import (
 	"testing"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/stretchr/testify/assert"
 )
 
