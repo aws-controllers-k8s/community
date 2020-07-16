@@ -21,8 +21,6 @@ import (
 
 	// svcapitypes "github.com/aws/aws-sdk-go/service/apis/{{ .AWSServiceVersion}}
 	svcapitypes "github.com/aws/aws-service-operator-k8s/services/bookstore/apis/v1alpha1"
-	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
 )
 
 // resource implements the `aws-service-operator-k8s/pkg/types.AWSResource`
@@ -30,8 +28,6 @@ import (
 type resource struct {
 	// The Kubernetes-native CR representing the resource
 	ko *svcapitypes.Book
-	// The aws-sdk-go-native representation of the resource
-	sdko *svcsdk.BookData
 }
 
 // Identifiers returns an AWSResourceIdentifiers object containing various

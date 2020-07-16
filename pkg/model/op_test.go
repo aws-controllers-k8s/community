@@ -11,12 +11,12 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package schema_test
+package model_test
 
 import (
 	"testing"
 
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
+	"github.com/aws/aws-service-operator-k8s/pkg/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,72 +25,87 @@ func TestGetOpTypeAndResourceNameFromOpID(t *testing.T) {
 
 	tests := []struct {
 		opID       string
-		expOpType  schema.OpType
+		expOpType  model.OpType
 		expResName string
 	}{
 		{
 			"CreateTopic",
-			schema.OpTypeCreate,
+			model.OpTypeCreate,
 			"Topic",
 		},
 		{
 			"CreateOrUpdateTopic",
-			schema.OpTypeReplace,
+			model.OpTypeReplace,
 			"Topic",
 		},
 		{
 			"CreateBatchTopics",
-			schema.OpTypeCreateBatch,
+			model.OpTypeCreateBatch,
 			"Topic",
 		},
 		{
 			"CreateBatchTopic",
-			schema.OpTypeCreateBatch,
+			model.OpTypeCreateBatch,
 			"Topic",
 		},
 		{
 			"BatchCreateTopics",
-			schema.OpTypeCreateBatch,
+			model.OpTypeCreateBatch,
 			"Topic",
 		},
 		{
 			"BatchCreateTopic",
-			schema.OpTypeCreateBatch,
+			model.OpTypeCreateBatch,
 			"Topic",
 		},
 		{
 			"CreateTopics",
-			schema.OpTypeCreateBatch,
+			model.OpTypeCreateBatch,
 			"Topic",
 		},
 		{
 			"DescribeEC2Instances",
-			schema.OpTypeList,
+			model.OpTypeList,
 			"EC2Instance",
 		},
 		{
 			"DescribeEC2Instance",
-			schema.OpTypeGet,
+			model.OpTypeGet,
 			"EC2Instance",
 		},
 		{
 			"UpdateTopic",
-			schema.OpTypeUpdate,
+			model.OpTypeUpdate,
 			"Topic",
 		},
 		{
 			"DeleteTopic",
-			schema.OpTypeDelete,
+			model.OpTypeDelete,
 			"Topic",
 		},
 		{
+			"DescribeInstances",
+			model.OpTypeList,
+			"Instance",
+		},
+		{
+			"ListDeploymentGroups",
+			model.OpTypeList,
+			"DeploymentGroup",
+		},
+		{
+			"GetDeployment",
+			model.OpTypeGet,
+			"Deployment",
+		},
+		{
 			"PauseEC2Instance",
-			schema.OpTypeUnknown,
+			model.OpTypeUnknown,
 			"",
 		},
 	}
 	for _, test := range tests {
-		ot, resName := schema.GetOpTypeAndResourceNameFromOpID(test.opID)
+		ot, resName := model.GetOpTypeAndResourceNameFromOpID(test.opID)
 		assert.Equal(test.expOpType, ot, test.opID)
 		assert.Equal(test.expResName, resName, test.opID)
 	}

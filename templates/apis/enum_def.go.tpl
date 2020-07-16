@@ -1,9 +1,9 @@
 {{- define "enum_def" -}}
-type {{ .Names.Camel }} {{ .GoType }}
+type {{ .Names.Camel }} string
 
 const (
 {{- range $val := .Values }}
-	{{ $.Names.Camel }}_{{ $val.Clean }} {{ $.Names.Camel }} = {{ if eq $.GoType "string" }}"{{ end }}{{ $val.Original }}{{ if eq $.GoType "string" }}"{{ end }}
+	{{ $.Names.Camel }}_{{ $val.Clean }} {{ $.Names.Camel }} = "{{ $val.Original }}"
 {{- end }}
 )
 {{- end -}}

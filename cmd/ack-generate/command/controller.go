@@ -25,7 +25,6 @@ import (
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	dockertemplate "github.com/aws/aws-service-operator-k8s/pkg/template"
 	cmdtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/cmd"
 	pkgtemplate "github.com/aws/aws-service-operator-k8s/pkg/template/pkg"
@@ -56,7 +55,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
 	}
-	svcAlias := args[0]
+	svcAlias := strings.ToLower(args[0])
 	if optControllerOutputPath == "" {
 		optControllerOutputPath = filepath.Join(optServicesDir, svcAlias)
 	}
@@ -72,10 +71,15 @@ func generateController(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	sh, err := getSchemaHelper()
+	if err := ensureSDKRepo(optCacheDir); err != nil {
+		return err
+	}
+	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
 		return err
 	}
+	sh := model.NewHelper(sdkAPI)
 	latestAPIVersion, err = getLatestAPIVersion()
 	if err != nil {
 		return err
@@ -93,7 +97,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeControllerMainGo(sh *schema.Helper) error {
+func writeControllerMainGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &cmdtemplate.ControllerMainTemplateVars{
 		APIVersion:   latestAPIVersion,
@@ -115,7 +119,7 @@ func writeControllerMainGo(sh *schema.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeResourcePackage(sh *schema.Helper) error {
+func writeResourcePackage(sh *model.Helper) error {
 	crds, err := sh.GetCRDs()
 	if err != nil {
 		return err
@@ -139,15 +143,21 @@ func writeResourcePackage(sh *schema.Helper) error {
 		if err = writeCRDManagerFactoryGo(sh, crd); err != nil {
 			return err
 		}
+		if err = writeCRDManagerGo(sh, crd); err != nil {
+			return err
+		}
+		if err = writeCRDSDKGo(sh, crd); err != nil {
+			return err
+		}
 	}
 	return writeResourcePackageRegistryGo(sh)
 }
 
-func writeResourcePackageRegistryGo(sh *schema.Helper) error {
+func writeResourcePackageRegistryGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.ResourceRegistryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 	}
 	tpl, err := pkgtemplate.NewResourceRegistryGoTemplate(optTemplatesDir)
 	if err != nil {
@@ -165,11 +175,11 @@ func writeResourcePackageRegistryGo(sh *schema.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDResourceGo(sh *schema.Helper, crd *model.CRD) error {
+func writeCRDResourceGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDResourceGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDResourceGoTemplate(optTemplatesDir)
@@ -188,11 +198,11 @@ func writeCRDResourceGo(sh *schema.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDIdentifiersGo(sh *schema.Helper, crd *model.CRD) error {
+func writeCRDIdentifiersGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDIdentifiersGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDIdentifiersGoTemplate(optTemplatesDir)
@@ -211,12 +221,12 @@ func writeCRDIdentifiersGo(sh *schema.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDDescriptorGo(sh *schema.Helper, crd *model.CRD) error {
+func writeCRDDescriptorGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDDescriptorGoTemplateVars{
 		APIVersion:   latestAPIVersion,
 		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDDescriptorGoTemplate(optTemplatesDir)
@@ -235,12 +245,12 @@ func writeCRDDescriptorGo(sh *schema.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDManagerFactoryGo(sh *schema.Helper, crd *model.CRD) error {
+func writeCRDManagerFactoryGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDManagerFactoryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
 		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDManagerFactoryGoTemplate(optTemplatesDir)
@@ -259,10 +269,59 @@ func writeCRDManagerFactoryGo(sh *schema.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeDockerfile(sh *schema.Helper) error {
+func writeCRDManagerGo(sh *model.Helper, crd *model.CRD) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.CRDManagerGoTemplateVars{
+		APIVersion:              latestAPIVersion,
+		APIGroup:                sh.GetAPIGroup(),
+		ServiceAlias:            strings.ToLower(sh.GetServiceAlias()),
+		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
+		CRD:                     crd,
+	}
+	tpl, err := pkgtemplate.NewCRDManagerGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/manager.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "manager.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
+	var b bytes.Buffer
+	vars := &pkgtemplate.CRDSDKGoTemplateVars{
+		APIVersion:   latestAPIVersion,
+		APIGroup:     sh.GetAPIGroup(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		CRD:          crd,
+	}
+	tpl, err := pkgtemplate.NewCRDSDKGoTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/sdk.go ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "sdk.go")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeDockerfile(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &dockertemplate.DockerTemplateVars{
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 	}
 	tpl, err := dockertemplate.NewDockerfileTemplate(optTemplatesDir)
 	if err != nil {

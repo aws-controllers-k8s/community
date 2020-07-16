@@ -16,7 +16,12 @@ package command
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+)
+
+const (
+	sdkRepoURL = "https://github.com/aws/aws-sdk-go"
 )
 
 // ensureDir makes sure that a supplied directory exists and
@@ -50,4 +55,31 @@ func isDirWriteable(fp string) bool {
 	f.Close()
 	os.Remove(testPath)
 	return true
+}
+
+// ensureSDKRepo ensures that we have a git clone'd copy of the aws-sdk-go
+// repository, which we use model JSON files from. Upon successful return of
+// this function, the sdkDir global variable will be set to the directory where
+// the aws-sdk-go is found
+func ensureSDKRepo(cacheDir string) error {
+	var err error
+	srcPath := filepath.Join(cacheDir, "src")
+	if err = os.MkdirAll(srcPath, os.ModePerm); err != nil {
+		return err
+	}
+	// clone the aws-sdk-go repository locally so we can query for API
+	// information in the models/apis/ directories
+	sdkDir, err = cloneSDKRepo(srcPath)
+	return err
+}
+
+// cloneSDKRepo git clone's the aws-sdk-go source repo into the cache and
+// returns the filepath to the clone'd repo
+func cloneSDKRepo(srcPath string) (string, error) {
+	clonePath := filepath.Join(srcPath, "aws-sdk-go")
+	if _, err := os.Stat(clonePath); os.IsNotExist(err) {
+		cmd := exec.Command("git", "clone", "--depth", "1", sdkRepoURL, clonePath)
+		return clonePath, cmd.Run()
+	}
+	return clonePath, nil
 }

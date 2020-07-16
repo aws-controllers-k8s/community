@@ -17,17 +17,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/ghodss/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-service-operator-k8s/pkg/model"
-	"github.com/aws/aws-service-operator-k8s/pkg/schema"
 	template "github.com/aws/aws-service-operator-k8s/pkg/template/apis"
 )
 
@@ -58,9 +54,6 @@ func init() {
 		&optGenVersion, "version", "v1alpha1", "the resource API Version to use when generating API infrastructure and type definitions",
 	)
 	apisCmd.PersistentFlags().StringVarP(
-		&optAPIsInputPath, "input", "i", "", "path to OpenAPI3 Schema document (optional, defaults to stdin)",
-	)
-	apisCmd.PersistentFlags().StringVarP(
 		&optAPIsOutputPath, "output", "o", "", "path to directory for service controller to create generated files. Defaults to "+optServicesDir+"/$service",
 	)
 	rootCmd.AddCommand(apisCmd)
@@ -72,7 +65,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
 	}
-	svcAlias := args[0]
+	svcAlias := strings.ToLower(args[0])
 	if optAPIsOutputPath == "" {
 		optAPIsOutputPath = filepath.Join(optServicesDir)
 	}
@@ -82,11 +75,16 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-
-	sh, err := getSchemaHelper()
+	if err := ensureSDKRepo(optCacheDir); err != nil {
+		return err
+	}
+	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
 		return err
 	}
+	sh := model.NewHelper(sdkAPI)
+
 	crds, err := sh.GetCRDs()
 	if err != nil {
 		return err
@@ -124,7 +122,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeDocGo(sh *schema.Helper) error {
+func writeDocGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	apiGroup := sh.GetAPIGroup()
 	vars := &template.DocTemplateVars{
@@ -147,7 +145,7 @@ func writeDocGo(sh *schema.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeGroupVersionInfoGo(sh *schema.Helper) error {
+func writeGroupVersionInfoGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	apiGroup := sh.GetAPIGroup()
 	vars := &template.GroupVersionInfoTemplateVars{
@@ -242,46 +240,4 @@ func writeCRDGo(crd *model.CRD) error {
 	}
 	path := filepath.Join(apisVersionPath, crdFileName)
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-// getAPI returns a schema.Helper object representing the API from
-// either STDIN or an input file
-func getSchemaHelper() (*schema.Helper, error) {
-	var b []byte
-	var err error
-	contentType := ctUnknown
-	if optAPIsInputPath == "" {
-		if b, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, fmt.Errorf("expected OpenAPI3 descriptor document either via STDIN or path argument")
-		}
-	} else {
-		fp := filepath.Clean(optAPIsInputPath)
-		ext := filepath.Ext(fp)
-		switch ext {
-		case "json":
-			contentType = ctJSON
-		case "yaml", "yml":
-			contentType = ctYAML
-		}
-		if b, err = ioutil.ReadFile(fp); err != nil {
-			return nil, err
-		}
-	}
-
-	var jsonb = b
-
-	// First get our supplied document into JSON format
-	if contentType == ctYAML || (contentType == ctUnknown && b[0] != '{' && b[0] != '[') {
-		// It's probably YAML, so try decoding to YAML first and fall back to
-		// JSON below
-		if jsonb, err = yaml.YAMLToJSON(b); err != nil {
-			jsonb = b
-		}
-	}
-
-	api, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(jsonb)
-	if err != nil {
-		return nil, err
-	}
-	return schema.NewHelper(api), nil
 }

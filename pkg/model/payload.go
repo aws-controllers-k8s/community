@@ -11,21 +11,13 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package testutil
+package model
 
-import (
-	"path/filepath"
-	"testing"
-
-	"github.com/aws/aws-service-operator-k8s/pkg/model"
-)
-
-func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper {
-	path := filepath.Clean("testdata")
-	sdkHelper := model.NewSDKHelper(path)
-	sdkAPI, err := sdkHelper.API(serviceAlias)
-	if err != nil {
-		t.Fatal(err)
+func (h *Helper) getPayloads() []string {
+	res := []string{}
+	for _, op := range h.sdkAPI.Operations {
+		res = append(res, op.InputRef.ShapeName)
+		res = append(res, op.OutputRef.ShapeName)
 	}
-	return model.NewHelper(sdkAPI)
+	return res
 }

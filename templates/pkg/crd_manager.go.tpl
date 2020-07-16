@@ -1,30 +1,19 @@
-// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License"). You may
-// not use this file except in compliance with the License. A copy of the
-// License is located at
-//
-//     http://aws.amazon.com/apache2.0/
-//
-// or in the "license" file accompanying this file. This file is distributed
-// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-// express or implied. See the License for the specific language governing
-// permissions and limitations under the License.
+{{ template "boilerplate" }}
 
-package book
+package {{ .CRD.Names.Snake }}
 
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ackv1alpha1 "github.com/aws/aws-service-operator-k8s/apis/core/v1alpha1"
+	ackerr "github.com/aws/aws-service-operator-k8s/pkg/errors"
 	ackrt "github.com/aws/aws-service-operator-k8s/pkg/runtime"
 	acktypes "github.com/aws/aws-service-operator-k8s/pkg/types"
 
-	// svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}/{{ .AWSServiceAlias }}iface"
-	svcsdkapi "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore/bookstoreiface"
-	// svcsdk "github.com/aws/aws-sdk-go/service/{{ .AWSServiceAlias }}"
-	svcsdk "github.com/aws/aws-service-operator-k8s/services/bookstore/sdk/service/bookstore"
+	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}/{{ .ServiceAlias }}iface"
+	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
 
 // resourceManager is responsible for providing a consistent way to perform
@@ -38,7 +27,7 @@ type resourceManager struct {
 	sess *session.Session
 	// sdk is a pointer to the AWS service API interface exposed by the
 	// aws-sdk-go/services/{alias}/{alias}iface package.
-	sdkapi svcsdkapi.BookstoreAPI
+	sdkapi svcsdkapi.{{ .SDKAPIInterfaceTypeName }}API
 }
 
 // concreteResource returns a pointer to a resource from the supplied
