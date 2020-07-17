@@ -5,9 +5,12 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 
+
+{{- if .CRD.Ops.ReadOne }}
 	"github.com/aws/aws-sdk-go/aws/awserr"
 
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+{{- end }}
 
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
@@ -61,7 +64,7 @@ func (rm *resourceManager) sdkFind(
 func (rm *resourceManager) newDescribeRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
-	res = &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
+	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
 {{ range $_, $field := .CRD.SpecFields -}}
 {{- $goCode := GoCodeSetReadOneInputFromField $field -}}
 {{- if $goCode }}
@@ -84,9 +87,9 @@ func (rm *resourceManager) sdkCreate(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
-	if err != nil {
-		return nil, err
+	{{ if .CRD.StatusFields }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
+	if respErr != nil {
+		return nil, respErr
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
@@ -105,7 +108,7 @@ func (rm *resourceManager) sdkCreate(
 func (rm *resourceManager) newCreateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}, error) {
-	res = &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
+	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
 {{ range $_, $field := .CRD.SpecFields -}}
 {{- $goCode := GoCodeSetCreateInputFromField $field -}}
 {{- if $goCode }}
@@ -126,9 +129,9 @@ func (rm *resourceManager) sdkUpdate(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := rm.sdkapi.UpdateBookWithContext(ctx, input)
-	if err != nil {
-		return nil, err
+	{{ if .CRD.StatusFields}}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+	if respErr != nil {
+		return nil, respErr
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
@@ -152,7 +155,7 @@ func (rm *resourceManager) sdkUpdate(
 func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
 ) (*svcsdk.UpdateBookInput, error) {
-	res = &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
+	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
 {{ range $_, $field := .CRD.SpecFields -}}
 {{- $goCode := GoCodeSetUpdateInputFromField $field -}}
 {{- if $goCode }}
@@ -173,8 +176,8 @@ func (rm *resourceManager) sdkDelete(
 	if err != nil {
 		return err
 	}
-	_, err = rm.sdkapi.DeleteBookWithContext(ctx, input)
-	return err
+	_, respErr := rm.sdkapi.{{ .CRD.Ops.Delete.Name }}WithContext(ctx, input)
+	return respErr
 {{- else }}
 	// TODO(jaypipes): Figure this out...
 	return nil
@@ -187,7 +190,7 @@ func (rm *resourceManager) sdkDelete(
 func (rm *resourceManager) newDeleteRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}, error) {
-	res = &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
+	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
 {{ range $_, $field := .CRD.SpecFields -}}
 {{- $goCode := GoCodeSetDeleteInputFromField $field -}}
 {{- if $goCode }}
