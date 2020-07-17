@@ -1,15 +1,15 @@
 {{- define "crd" -}}
-{{ template "boilerplate" }}
+{{- template "boilerplate" }}
 
 package {{ .APIVersion }}
 
 import (
 {{- range $packagePath, $alias := .CRD.TypeImports }}
-    {{ if $alias -}}{{ $alias }} {{ end -}}"{{ $packagePath }}"
+    {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
 {{ end -}}
 {{- if .CRD.TypeImports }}
 
-{{- end -}}
+{{- end }}
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,6 +38,7 @@ type {{ .CRD.Kind }}Status struct {
 }
 
 // {{ .CRD.Kind }} is the Schema for the {{ .CRD.Plural }} API
+// +kubebuilder:object:root=true
 type {{ .CRD.Kind }} struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -46,6 +47,7 @@ type {{ .CRD.Kind }} struct {
 }
 
 // {{ .CRD.Kind }}List contains a list of {{ .CRD.Kind }}
+// +kubebuilder:object:root=true
 type {{ .CRD.Kind }}List struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

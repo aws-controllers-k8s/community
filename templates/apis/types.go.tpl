@@ -1,4 +1,4 @@
-{{ template "boilerplate" }}
+{{- template "boilerplate" }}
 
 package {{ .APIVersion }}
 {{- if .Imports }}
