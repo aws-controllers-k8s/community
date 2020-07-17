@@ -101,7 +101,7 @@ func writeControllerMainGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &cmdtemplate.ControllerMainTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetServiceAlias(),
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
 	}
 	tpl, err := cmdtemplate.NewControllerMainTemplate(optTemplatesDir)
 	if err != nil {

@@ -89,7 +89,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	typeDefs, err := sh.GetTypeDefs()
+	typeDefs, typeImports, err := sh.GetTypeDefs()
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeTypesGo(typeDefs); err != nil {
+	if err = writeTypesGo(typeImports, typeDefs); err != nil {
 		return err
 	}
 
@@ -196,11 +196,13 @@ func writeEnumsGo(
 }
 
 func writeTypesGo(
+	typeImports map[string]string,
 	typeDefs []*model.TypeDef,
 ) error {
 	vars := &template.TypesTemplateVars{
 		APIVersion: optGenVersion,
 		TypeDefs:   typeDefs,
+		Imports:    typeImports,
 	}
 	var b bytes.Buffer
 	tpl, err := template.NewTypesTemplate(optTemplatesDir)
