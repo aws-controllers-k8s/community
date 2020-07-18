@@ -1,5 +1,18 @@
 # `ack-generate` - Generate files for AWS Controllers for Kubernetes
 
+## tl;dr
+
+If you want to just build a service controller, there's a
+[script](../scripts/build-controller.sh) for that:
+
+For example, to generate the SNS service controller for ACK:
+
+```
+./scripts/build-controller.sh sns
+```
+
+## Details
+
 The `ack-generate` tool generates files that are used in constructing
 Kubernetes controllers for an individual AWS service API.
 
@@ -39,7 +52,12 @@ To generate a controller, we go through several generation phases:
    way instead.
 
 2) Generate the client, deepcopy and CRD infrastructure from the type
-   definitions produced in step #1 (TODO)
+   definitions produced in step #1:
+
+   ```
+   controller-gen object:headerFile=templates/boilerplate.txt \
+     paths=./services/sns/apis/v1alpha1/...
+   ```
 
 3) Generate the controller implementation code. Every ACK service controller's
    implementation is fully generated. Use the `ack-generate controller` command to
