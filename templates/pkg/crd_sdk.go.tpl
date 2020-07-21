@@ -40,18 +40,7 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ if .CRD.Ops.ReadOne }}
-{{- range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetFieldFromReadOneOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
-{{- range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromReadOneOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
+{{ GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
 {{- end }}
@@ -89,12 +78,7 @@ func (rm *resourceManager) sdkCreate(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromCreateOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
 	return &resource{ko}, nil
 }
 
@@ -126,12 +110,7 @@ func (rm *resourceManager) sdkUpdate(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromCreateOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
 	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Figure this out...

@@ -68,14 +68,6 @@ func TestSNSTopic(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// None of the fields in the Topic resource's CreateTopicInput shape are
-	// returned in the CreateTopicOutput shape, so none of them return any Go
-	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member
-	nameField := specFields["Name"]
-	nameFieldGoCode := nameField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("", nameFieldGoCode)
-
 	expStatusFieldCamel := []string{
 		// "TopicARN" is the only field in the output shape for CreateTopic,
 		// but it is removed because it is the primary resource object's ARN
@@ -93,6 +85,14 @@ func TestSNSTopic(t *testing.T) {
 	res.Tags = tmp0
 `
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
+	// None of the fields in the Topic resource's CreateTopicInput shape are
+	// returned in the CreateTopicOutput shape, so none of them return any Go
+	// code for setting a Status struct field to a corresponding Create Output
+	// Shape member
+	expCreateOutput := `
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The SNS Topic API is a little weird. There are Create and Delete
 	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
@@ -181,9 +181,16 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	// Check that we properly determined how to find the CreatedBy attribute
 	// within the CreateLaunchTemplateResult shape, which has a single field called
 	// "LaunchTemplate" that contains the CreatedBy field.
-	createdByField := statusFields["CreatedBy"]
-	createdByFieldOutputCode := createdByField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy", createdByFieldOutputCode)
+	expCreateOutput := `
+	ko.Status.CreateTime = resp.LaunchTemplate.CreateTime
+	ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
+	ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
+	ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
+	ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
+	tmp0 := []*svcapitypes.Tag{}
+	ko.Status.Tags = tmp0
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
 	//
@@ -276,9 +283,12 @@ func TestECRRepository(t *testing.T) {
 	// Check that we properly determined how to find the RegistryID attribute
 	// within the CreateRepositoryOutput shape, which has a single field called
 	// "Repository" that contains the RegistryId field.
-	regIDField := statusFields["RegistryId"]
-	regIDFieldOutputCode := regIDField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("ko.Status.RegistryID = resp.Repository.RegistryId", regIDFieldOutputCode)
+	expCreateOutput := `
+	ko.Status.CreatedAt = resp.Repository.CreatedAt
+	ko.Status.RegistryID = resp.Repository.RegistryId
+	ko.Status.RepositoryURI = resp.Repository.RepositoryUri
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The ECR Repository API has just the C and R of the normal CRUD
 	// operations:
@@ -333,20 +343,14 @@ func TestCodeDeployDeployment(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// None of the fields in the Topic resource's CreateTopicInput shape are
-	// returned in the CreateTopicOutput shape, so none of them return any Go
-	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member
-	nameField := specFields["ApplicationName"]
-	nameFieldGoCodeCreate := nameField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("", nameFieldGoCodeCreate)
-
 	// However, all of the fields in the Deployment resource's
 	// CreateDeploymentInput shape are returned in the GetDeploymentOutput
 	// shape, and there is a DeploymentInfo wrapper struct for the output
 	// shape, so the readOne accessor contains the wrapper struct's name.
-	nameFieldGoCodeReadOne := nameField.GoCodeSetFieldFromOutput(model.OpTypeGet)
-	assert.Equal("ko.Spec.ApplicationName = resp.DeploymentInfo.ApplicationName", nameFieldGoCodeReadOne)
+	expCreateOutput := `
+	ko.Status.DeploymentID = resp.DeploymentId
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	expStatusFieldCamel := []string{
 		// All of the fields in the Deployment resource's CreateDeploymentInput

@@ -51,60 +51,6 @@ func (f *CRDField) IsSpecField() bool {
 	return strings.HasPrefix(f.CRDPath, ".Spec")
 }
 
-// GoCodeSetFieldFromOutput returns the Go code that sets a CRDField's value
-// from a particular operation's output shape.
-func (f *CRDField) GoCodeSetFieldFromOutput(opType OpType) string {
-	var op *awssdkmodel.Operation
-	switch opType {
-	case OpTypeCreate:
-		op = f.CRD.Ops.Create
-	case OpTypeGet:
-		op = f.CRD.Ops.ReadOne
-	case OpTypeList:
-		op = f.CRD.Ops.ReadMany
-	case OpTypeUpdate:
-		op = f.CRD.Ops.Update
-	case OpTypeDelete:
-		op = f.CRD.Ops.Delete
-	default:
-		return ""
-	}
-	if op == nil {
-		return ""
-	}
-	outputShape := op.OutputRef.Shape
-	if outputShape == nil {
-		return ""
-	}
-
-	outShapeAccessor := ""
-	// We might be in a "wrapper" shape. Unwrap it to find the real object
-	// representation for the CRD's createOp. If there is a single member
-	// shape and that member shape is a structure, unwrap it.
-	if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
-		for _, memberRef := range outputShape.MemberRefs {
-			if memberRef.Shape.Type == "structure" {
-				outShapeAccessor = "." + memberRef.Shape.ShapeName
-				outputShape = memberRef.Shape
-			}
-		}
-	}
-	// Check to see if this field is even in the output shape
-	if _, found := outputShape.MemberRefs[f.Names.Original]; !found {
-		return ""
-	}
-
-	outShapeAccessor = outShapeAccessor + "." + f.Names.Original
-
-	// TODO(jaypipes): Currently this only handles scalar types. Need to figure
-	// out nested and array types here, probably need a transform function
-	// pointer that can be called to produce a setter string for a given nested
-	// type
-	goCodeTpl := "ko%s = resp%s"
-
-	return fmt.Sprintf(goCodeTpl, f.CRDPath, outShapeAccessor)
-}
-
 // newCRDField returns a pointer to a new CRDField object
 func newCRDField(
 	crd *CRD,
@@ -294,6 +240,115 @@ func (r *CRD) GoCodeSetInput(
 				setTo = "*" + setTo
 			}
 			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, inVarName, specField.Names.Original, setTo)
+		}
+	}
+	return out
+}
+
+// GoCodeSetOutput returns the Go code that sets a CRD's Status field value to
+// the value of an output shape's member fields
+//
+// We loop through the output shape's fields, outputting code that looks something like
+// this:
+//
+//   tmp0 := &ImageData{}
+//   tmp0.Location = resp.ImageData.Location
+//   tmp0.Tag = resp.ImageData.Tag
+//   r.ko.Status.ImageData = tmp0
+//   r.ko.Status.Name = resp.Name
+//
+func (r *CRD) GoCodeSetOutput(
+	opType OpType,
+	outVarAccessor string,
+	koVarName string,
+	indentLevel int,
+) string {
+	var op *awssdkmodel.Operation
+	switch opType {
+	case OpTypeCreate:
+		op = r.Ops.Create
+	case OpTypeGet:
+		op = r.Ops.ReadOne
+	case OpTypeList:
+		op = r.Ops.ReadMany
+	case OpTypeUpdate:
+		op = r.Ops.Update
+	case OpTypeDelete:
+		op = r.Ops.Delete
+	default:
+		return ""
+	}
+	if op == nil {
+		return ""
+	}
+	outputShape := op.OutputRef.Shape
+	if outputShape == nil {
+		return ""
+	}
+
+	// We might be in a "wrapper" shape. Unwrap it to find the real object
+	// representation for the CRD's createOp. If there is a single member
+	// shape and that member shape is a structure, unwrap it.
+	if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
+		for _, memberRef := range outputShape.MemberRefs {
+			if memberRef.Shape.Type == "structure" {
+				outVarAccessor += "." + memberRef.Shape.ShapeName
+				outputShape = memberRef.Shape
+			}
+		}
+	}
+	out := "\n"
+	tmpVarCount := 0
+	tmpVarName := ""
+	indent := strings.Repeat("\t", indentLevel)
+
+	for _, fieldName := range outputShape.MemberNames() {
+		statusField, found := r.StatusFields[fieldName]
+		if !found {
+			// TODO(jaypipes): Handle the special case of ARN for primary
+			// resource identifier
+			continue
+		}
+		memberShapeRef := outputShape.MemberRefs[fieldName]
+		if memberShapeRef.Shape == nil {
+			continue
+		}
+
+		memberShape := memberShapeRef.Shape
+		outAccessor := koVarName + "." + statusField.Names.Original
+		switch memberShape.Type {
+		case "structure":
+			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
+			tmpVarCount++
+			out += fmt.Sprintf("%s%s := &%s{}\n", indent, tmpVarName, statusField.GoType)
+			// TODO(jaypipes): Populate the struct's subfields recursively
+			out += fmt.Sprintf("%s%s = %s\n", indent, outAccessor, tmpVarName)
+		case "list":
+			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
+			tmpVarCount++
+			// Trim off the [] prefix...
+			memberType := memberShape.GoTypeWithPkgName()[2:]
+
+			// We need to convert any package name that the aws-sdk-private
+			// model uses "such as 'ecr.' to just 'svcapitypes' since we always
+			// alias the Kubernetes API types for the service API with that
+			if strings.Contains(memberType, ".") {
+				pkgName := strings.Split(memberType, ".")[0]
+				typeName := strings.Split(memberType, ".")[1]
+				memberType = "svcapitypes." + typeName
+				if strings.HasPrefix(pkgName, "*") {
+					// Make sure to preserve pointer types...
+					memberType = "*" + memberType
+				}
+			}
+			out += fmt.Sprintf("%s%s := []%s{}\n", indent, tmpVarName, memberType)
+			// TODO(jaypipes): For each element in the source slice, append an
+			// element to the target slice
+			out += fmt.Sprintf("%s%s = %s\n", indent, outAccessor, tmpVarName)
+		default:
+			setAccessor := koVarName + "." + statusField.Names.Camel
+			setTo := outVarAccessor + "." + fieldName
+			out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, setTo)
 		}
 	}
 	return out
