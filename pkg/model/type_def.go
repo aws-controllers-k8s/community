@@ -71,6 +71,8 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 				if strings.HasPrefix(goPkgType, "[]") {
 					// For slice types, we just want the element type...
 					goPkgType = goPkgType[2:]
+				} else if strings.HasPrefix(goPkgType, "map[") {
+					goPkgType = strings.Split(goPkgType, "]")[1]
 				}
 				if strings.HasPrefix(goPkgType, "*") {
 					// For slice types, the element type might be a pointer to

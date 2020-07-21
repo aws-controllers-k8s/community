@@ -68,14 +68,6 @@ func TestSNSTopic(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// None of the fields in the Topic resource's CreateTopicInput shape are
-	// returned in the CreateTopicOutput shape, so none of them return any Go
-	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member
-	nameField := specFields["Name"]
-	nameFieldGoCode := nameField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("", nameFieldGoCode)
-
 	expStatusFieldCamel := []string{
 		// "TopicARN" is the only field in the output shape for CreateTopic,
 		// but it is removed because it is the primary resource object's ARN
@@ -83,6 +75,24 @@ func TestSNSTopic(t *testing.T) {
 		// standard Status.ACKResourceMetadata.ARN field
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	// The input shape for the Create operation is set from a variety of scalar
+	// and non-scalar types...
+	expCreateInput := `
+	res.SetAttributes(r.ko.Spec.Attributes)
+	res.SetName(*r.ko.Spec.Name)
+	tmp0 := []*svcsdk.Tag{}
+	res.Tags = tmp0
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
+	// None of the fields in the Topic resource's CreateTopicInput shape are
+	// returned in the CreateTopicOutput shape, so none of them return any Go
+	// code for setting a Status struct field to a corresponding Create Output
+	// Shape member
+	expCreateOutput := `
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The SNS Topic API is a little weird. There are Create and Delete
 	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
@@ -135,14 +145,6 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// LaunchTemplateName is in the LaunchTemplate resource's CreateTopicInput shape and also
-	// returned in the CreateLaunchTemplateResult shape, so it should have
-	// Go code to set the Input Shape member from the Spec field but not set a
-	// Status field from the Create Output Shape member
-	nameField := specFields["LaunchTemplateName"]
-	nameFieldGoCodeInputShape := nameField.GoCodeSetInputFromField(model.OpTypeCreate)
-	assert.Equal("res.LaunchTemplateName = r.ko.Spec.LaunchTemplateName", nameFieldGoCodeInputShape)
-
 	expStatusFieldCamel := []string{
 		"CreateTime",
 		"CreatedBy",
@@ -160,12 +162,35 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
+	// LaunchTemplateName is in the LaunchTemplate resource's CreateTopicInput shape and also
+	// returned in the CreateLaunchTemplateResult shape, so it should have
+	// Go code to set the Input Shape member from the Spec field but not set a
+	// Status field from the Create Output Shape member
+	expCreateInput := `
+	res.SetClientToken(*r.ko.Spec.ClientToken)
+	res.SetDryRun(*r.ko.Spec.DryRun)
+	tmp0 := &svcsdk.RequestLaunchTemplateData{}
+	res.LaunchTemplateData = tmp0
+	res.SetLaunchTemplateName(*r.ko.Spec.LaunchTemplateName)
+	tmp1 := []*svcsdk.TagSpecification{}
+	res.TagSpecifications = tmp1
+	res.SetVersionDescription(*r.ko.Spec.VersionDescription)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
 	// Check that we properly determined how to find the CreatedBy attribute
 	// within the CreateLaunchTemplateResult shape, which has a single field called
 	// "LaunchTemplate" that contains the CreatedBy field.
-	createdByField := statusFields["CreatedBy"]
-	createdByFieldOutputCode := createdByField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy", createdByFieldOutputCode)
+	expCreateOutput := `
+	ko.Status.CreateTime = resp.LaunchTemplate.CreateTime
+	ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
+	ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
+	ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
+	ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
+	tmp0 := []*svcapitypes.Tag{}
+	ko.Status.Tags = tmp0
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
 	//
@@ -229,9 +254,15 @@ func TestECRRepository(t *testing.T) {
 	// CreateRepositoryInput shape and also returned in the
 	// CreateRepositoryOutput shape, so it should produce Go code to set the
 	// appropriate input shape member.
-	iscField := specFields["ImageScanningConfiguration"]
-	iscFieldGoCodeInputShape := iscField.GoCodeSetInputFromField(model.OpTypeCreate)
-	assert.Equal("res.ImageScanningConfiguration = r.ko.Spec.ImageScanningConfiguration", iscFieldGoCodeInputShape)
+	expCreateInput := `
+	tmp0 := &svcsdk.ImageScanningConfiguration{}
+	res.ImageScanningConfiguration = tmp0
+	res.SetImageTagMutability(*r.ko.Spec.ImageTagMutability)
+	res.SetRepositoryName(*r.ko.Spec.RepositoryName)
+	tmp1 := []*svcsdk.Tag{}
+	res.Tags = tmp1
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
 
 	expStatusFieldCamel := []string{
 		"CreatedAt",
@@ -252,9 +283,12 @@ func TestECRRepository(t *testing.T) {
 	// Check that we properly determined how to find the RegistryID attribute
 	// within the CreateRepositoryOutput shape, which has a single field called
 	// "Repository" that contains the RegistryId field.
-	regIDField := statusFields["RegistryId"]
-	regIDFieldOutputCode := regIDField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("ko.Status.RegistryID = resp.Repository.RegistryId", regIDFieldOutputCode)
+	expCreateOutput := `
+	ko.Status.CreatedAt = resp.Repository.CreatedAt
+	ko.Status.RegistryID = resp.Repository.RegistryId
+	ko.Status.RepositoryURI = resp.Repository.RepositoryUri
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	// The ECR Repository API has just the C and R of the normal CRUD
 	// operations:
@@ -309,20 +343,14 @@ func TestCodeDeployDeployment(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// None of the fields in the Topic resource's CreateTopicInput shape are
-	// returned in the CreateTopicOutput shape, so none of them return any Go
-	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member
-	nameField := specFields["ApplicationName"]
-	nameFieldGoCodeCreate := nameField.GoCodeSetFieldFromOutput(model.OpTypeCreate)
-	assert.Equal("", nameFieldGoCodeCreate)
-
 	// However, all of the fields in the Deployment resource's
 	// CreateDeploymentInput shape are returned in the GetDeploymentOutput
 	// shape, and there is a DeploymentInfo wrapper struct for the output
 	// shape, so the readOne accessor contains the wrapper struct's name.
-	nameFieldGoCodeReadOne := nameField.GoCodeSetFieldFromOutput(model.OpTypeGet)
-	assert.Equal("ko.Spec.ApplicationName = resp.DeploymentInfo.ApplicationName", nameFieldGoCodeReadOne)
+	expCreateOutput := `
+	ko.Status.DeploymentID = resp.DeploymentId
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
 	expStatusFieldCamel := []string{
 		// All of the fields in the Deployment resource's CreateDeploymentInput
@@ -348,4 +376,67 @@ func TestCodeDeployDeployment(t *testing.T) {
 	// But sadly, has no Update or Delete operation :(
 	assert.Nil(crd.Ops.Update)
 	assert.Nil(crd.Ops.Delete)
+}
+
+func TestSQSQueue(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "sqs")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Queue", crds)
+	require.NotNil(crd)
+
+	assert.Equal("Queue", crd.Names.Camel)
+	assert.Equal("queue", crd.Names.CamelLower)
+	assert.Equal("queue", crd.Names.Snake)
+
+	specFields := crd.SpecFields
+	statusFields := crd.StatusFields
+
+	expSpecFieldCamel := []string{
+		"Attributes",
+		"QueueName",
+		"Tags",
+	}
+	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
+
+	expStatusFieldCamel := []string{
+		// There is only a QueueURL field returned from CreateQueueResult shape
+		"QueueURL",
+	}
+	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	expCreateInput := `
+	res.SetAttributes(r.ko.Spec.Attributes)
+	res.SetQueueName(*r.ko.Spec.QueueName)
+	res.SetTags(r.ko.Spec.Tags)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
+	// There are no fields other than QueueID in the returned CreateQueueResult
+	// shape
+	expCreateOutput := `
+	ko.Status.QueueURL = resp.QueueUrl
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+
+	// The SQS Queue API has CD+L operations:
+	//
+	// * CreateQueue
+	// * DeleteQueue
+	// * ListQueues
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.ReadMany)
+	assert.NotNil(crd.Ops.Delete)
+
+	// But sadly, has no Update or ReadOne operation :(
+	// There is, however, GetQueueUrl and GetQueueAttributes calls...
+	assert.Nil(crd.Ops.ReadOne)
+	assert.Nil(crd.Ops.Update)
 }

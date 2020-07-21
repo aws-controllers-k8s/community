@@ -40,18 +40,7 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ if .CRD.Ops.ReadOne }}
-{{- range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetFieldFromReadOneOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
-{{- range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromReadOneOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
+{{ GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
 {{- end }}
@@ -65,12 +54,7 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetReadOneInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetReadOneInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{- else }}
@@ -94,12 +78,7 @@ func (rm *resourceManager) sdkCreate(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromCreateOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
 	return &resource{ko}, nil
 }
 
@@ -109,12 +88,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetCreateInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetCreateInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 
@@ -136,12 +110,7 @@ func (rm *resourceManager) sdkUpdate(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ range $_, $field := .CRD.StatusFields -}}
-{{- $goCode := GoCodeSetFieldFromCreateOutput $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
 	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Figure this out...
@@ -156,12 +125,7 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
 ) (*svcsdk.UpdateBookInput, error) {
 	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetUpdateInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetUpdateInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{ end }}
@@ -191,12 +155,7 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetDeleteInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
+{{ GoCodeSetDeleteInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{- end -}}
