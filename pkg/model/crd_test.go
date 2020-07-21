@@ -377,3 +377,66 @@ func TestCodeDeployDeployment(t *testing.T) {
 	assert.Nil(crd.Ops.Update)
 	assert.Nil(crd.Ops.Delete)
 }
+
+func TestSQSQueue(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "sqs")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Queue", crds)
+	require.NotNil(crd)
+
+	assert.Equal("Queue", crd.Names.Camel)
+	assert.Equal("queue", crd.Names.CamelLower)
+	assert.Equal("queue", crd.Names.Snake)
+
+	specFields := crd.SpecFields
+	statusFields := crd.StatusFields
+
+	expSpecFieldCamel := []string{
+		"Attributes",
+		"QueueName",
+		"Tags",
+	}
+	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
+
+	expStatusFieldCamel := []string{
+		// There is only a QueueURL field returned from CreateQueueResult shape
+		"QueueURL",
+	}
+	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	expCreateInput := `
+	res.SetAttributes(r.ko.Spec.Attributes)
+	res.SetQueueName(*r.ko.Spec.QueueName)
+	res.SetTags(r.ko.Spec.Tags)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
+	// There are no fields other than QueueID in the returned CreateQueueResult
+	// shape
+	expCreateOutput := `
+	ko.Status.QueueURL = resp.QueueUrl
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+
+	// The SQS Queue API has CD+L operations:
+	//
+	// * CreateQueue
+	// * DeleteQueue
+	// * ListQueues
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.ReadMany)
+	assert.NotNil(crd.Ops.Delete)
+
+	// But sadly, has no Update or ReadOne operation :(
+	// There is, however, GetQueueUrl and GetQueueAttributes calls...
+	assert.Nil(crd.Ops.ReadOne)
+	assert.Nil(crd.Ops.Update)
+}
