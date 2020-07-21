@@ -84,6 +84,16 @@ func TestSNSTopic(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
+	// The input shape for the Create operation is set from a variety of scalar
+	// and non-scalar types...
+	expCreateInput := `
+	res.SetAttributes(r.ko.Spec.Attributes)
+	res.SetName(*r.ko.Spec.Name)
+	tmp0 := []*svcsdk.Tag{}
+	res.Tags = tmp0
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+
 	// The SNS Topic API is a little weird. There are Create and Delete
 	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
 	// operation (there is a "GetTopicAttributes" call though) or Update
@@ -135,14 +145,6 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// LaunchTemplateName is in the LaunchTemplate resource's CreateTopicInput shape and also
-	// returned in the CreateLaunchTemplateResult shape, so it should have
-	// Go code to set the Input Shape member from the Spec field but not set a
-	// Status field from the Create Output Shape member
-	nameField := specFields["LaunchTemplateName"]
-	nameFieldGoCodeInputShape := nameField.GoCodeSetInputFromField(model.OpTypeCreate)
-	assert.Equal("res.LaunchTemplateName = r.ko.Spec.LaunchTemplateName", nameFieldGoCodeInputShape)
-
 	expStatusFieldCamel := []string{
 		"CreateTime",
 		"CreatedBy",
@@ -159,6 +161,22 @@ func TestEC2LaunchTemplate(t *testing.T) {
 		"Tags",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	// LaunchTemplateName is in the LaunchTemplate resource's CreateTopicInput shape and also
+	// returned in the CreateLaunchTemplateResult shape, so it should have
+	// Go code to set the Input Shape member from the Spec field but not set a
+	// Status field from the Create Output Shape member
+	expCreateInput := `
+	res.SetClientToken(*r.ko.Spec.ClientToken)
+	res.SetDryRun(*r.ko.Spec.DryRun)
+	tmp0 := &svcsdk.RequestLaunchTemplateData{}
+	res.LaunchTemplateData = tmp0
+	res.SetLaunchTemplateName(*r.ko.Spec.LaunchTemplateName)
+	tmp1 := []*svcsdk.TagSpecification{}
+	res.TagSpecifications = tmp1
+	res.SetVersionDescription(*r.ko.Spec.VersionDescription)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
 
 	// Check that we properly determined how to find the CreatedBy attribute
 	// within the CreateLaunchTemplateResult shape, which has a single field called
@@ -229,9 +247,15 @@ func TestECRRepository(t *testing.T) {
 	// CreateRepositoryInput shape and also returned in the
 	// CreateRepositoryOutput shape, so it should produce Go code to set the
 	// appropriate input shape member.
-	iscField := specFields["ImageScanningConfiguration"]
-	iscFieldGoCodeInputShape := iscField.GoCodeSetInputFromField(model.OpTypeCreate)
-	assert.Equal("res.ImageScanningConfiguration = r.ko.Spec.ImageScanningConfiguration", iscFieldGoCodeInputShape)
+	expCreateInput := `
+	tmp0 := &svcsdk.ImageScanningConfiguration{}
+	res.ImageScanningConfiguration = tmp0
+	res.SetImageTagMutability(*r.ko.Spec.ImageTagMutability)
+	res.SetRepositoryName(*r.ko.Spec.RepositoryName)
+	tmp1 := []*svcsdk.Tag{}
+	res.Tags = tmp1
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
 
 	expStatusFieldCamel := []string{
 		"CreatedAt",

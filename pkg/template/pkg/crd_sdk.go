@@ -40,23 +40,23 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 		"GoCodeSetFieldFromReadOneOutput": func(f *model.CRDField) string {
 			return f.GoCodeSetFieldFromOutput(model.OpTypeGet)
 		},
-		"GoCodeSetReadOneInputFromField": func(f *model.CRDField) string {
-			return f.GoCodeSetInputFromField(model.OpTypeGet)
+		"GoCodeSetReadOneInput": func(r *model.CRD, inVarName string, koVarAccessor string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeGet, inVarName, koVarAccessor, indentLevel)
 		},
 		"GoCodeSetFieldFromCreateOutput": func(f *model.CRDField) string {
 			return f.GoCodeSetFieldFromOutput(model.OpTypeCreate)
 		},
-		"GoCodeSetCreateInputFromField": func(f *model.CRDField) string {
-			return f.GoCodeSetInputFromField(model.OpTypeCreate)
+		"GoCodeSetCreateInput": func(r *model.CRD, inVarName string, koVarAccessor string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeCreate, inVarName, koVarAccessor, indentLevel)
 		},
 		"GoCodeSetFieldFromUpdateOutput": func(f *model.CRDField) string {
 			return f.GoCodeSetFieldFromOutput(model.OpTypeUpdate)
 		},
-		"GoCodeSetUpdateInputFromField": func(f *model.CRDField) string {
-			return f.GoCodeSetInputFromField(model.OpTypeUpdate)
+		"GoCodeSetUpdateInput": func(r *model.CRD, inVarName string, koVarAccessor string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeUpdate, inVarName, koVarAccessor, indentLevel)
 		},
-		"GoCodeSetDeleteInputFromField": func(f *model.CRDField) string {
-			return f.GoCodeSetInputFromField(model.OpTypeDelete)
+		"GoCodeSetDeleteInput": func(r *model.CRD, inVarName string, koVarAccessor string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeDelete, inVarName, koVarAccessor, indentLevel)
 		},
 	})
 	if t, err = t.Parse(string(tplContents)); err != nil {

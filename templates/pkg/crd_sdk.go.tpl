@@ -65,12 +65,7 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetReadOneInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetReadOneInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{- else }}
@@ -109,12 +104,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetCreateInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetCreateInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 
@@ -156,12 +146,7 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
 ) (*svcsdk.UpdateBookInput, error) {
 	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetUpdateInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end }}
+{{ GoCodeSetUpdateInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{ end }}
@@ -191,12 +176,7 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
-{{ range $_, $field := .CRD.SpecFields -}}
-{{- $goCode := GoCodeSetDeleteInputFromField $field -}}
-{{- if $goCode }}
-	{{ $goCode }}
-{{- end -}}
-{{- end -}}
+{{ GoCodeSetDeleteInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil
 }
 {{- end -}}

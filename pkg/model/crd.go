@@ -105,60 +105,6 @@ func (f *CRDField) GoCodeSetFieldFromOutput(opType OpType) string {
 	return fmt.Sprintf(goCodeTpl, f.CRDPath, outShapeAccessor)
 }
 
-// GoCodeSetInputFromField returns the Go code that sets an input shape
-// member to a CRDField's value
-func (f *CRDField) GoCodeSetInputFromField(opType OpType) string {
-	var op *awssdkmodel.Operation
-	switch opType {
-	case OpTypeCreate:
-		op = f.CRD.Ops.Create
-	case OpTypeGet:
-		op = f.CRD.Ops.ReadOne
-	case OpTypeList:
-		op = f.CRD.Ops.ReadMany
-	case OpTypeUpdate:
-		op = f.CRD.Ops.Update
-	case OpTypeDelete:
-		op = f.CRD.Ops.Delete
-	default:
-		return ""
-	}
-	if op == nil {
-		return ""
-	}
-	inputShape := op.InputRef.Shape
-	if inputShape == nil {
-		return ""
-	}
-
-	inShapeSetter := ""
-	// We might be in a "wrapper" shape. Unwrap it to find the real object
-	// representation for the CRD's createOp. If there is a single member
-	// shape and that member shape is a structure, unwrap it.
-	if inputShape.UsedAsOutput && len(inputShape.MemberRefs) == 1 {
-		for _, memberRef := range inputShape.MemberRefs {
-			if memberRef.Shape.Type == "structure" {
-				inShapeSetter = "." + memberRef.Shape.ShapeName
-				inputShape = memberRef.Shape
-			}
-		}
-	}
-
-	// Check to see if this field is even in the input shape
-	if _, found := inputShape.MemberRefs[f.Names.Original]; !found {
-		return ""
-	}
-	inShapeSetter = inShapeSetter + "." + f.Names.Original
-
-	// TODO(jaypipes): Currently this only handles scalar types. Need to figure
-	// out nested and array types here, probably need a transform function
-	// pointer that can be called to produce a setter string for a given nested
-	// type
-	goCodeTpl := "res%s = r.ko%s"
-
-	return fmt.Sprintf(goCodeTpl, inShapeSetter, f.CRDPath)
-}
-
 // newCRDField returns a pointer to a new CRDField object
 func newCRDField(
 	crd *CRD,
@@ -248,6 +194,109 @@ func (r *CRD) AddTypeImport(
 		r.TypeImports = map[string]string{}
 	}
 	r.TypeImports[packagePath] = alias
+}
+
+// SpecFieldNames returns a sorted slice of field names for the Spec fields
+func (r *CRD) SpecFieldNames() []string {
+	res := make([]string, 0, len(r.SpecFields))
+	for fieldName := range r.SpecFields {
+		res = append(res, fieldName)
+	}
+	sort.Strings(res)
+	return res
+}
+
+// GoCodeSetInput returns the Go code that sets an input shape's member fields
+// from a CRD's Spec fields.
+//
+// We loop through the Spec fields, outputting code that looks something like
+// this:
+//
+//   res.SetAttributes(r.ko.Spec.Attributes)
+//   res.SetName(*r.ko.Spec.Name)
+//   tmp0 := []*svcsdk.Tag{}
+//   res.Tags = tmp0
+func (r *CRD) GoCodeSetInput(
+	opType OpType,
+	inVarName string,
+	koVarAccessor string,
+	indentLevel int,
+) string {
+	var op *awssdkmodel.Operation
+	switch opType {
+	case OpTypeCreate:
+		op = r.Ops.Create
+	case OpTypeGet:
+		op = r.Ops.ReadOne
+	case OpTypeList:
+		op = r.Ops.ReadMany
+	case OpTypeUpdate:
+		op = r.Ops.Update
+	case OpTypeDelete:
+		op = r.Ops.Delete
+	default:
+		return ""
+	}
+	if op == nil {
+		return ""
+	}
+	inputShape := op.InputRef.Shape
+	if inputShape == nil {
+		return ""
+	}
+
+	out := "\n"
+	tmpVarCount := 0
+	tmpVarName := ""
+	indent := strings.Repeat("\t", indentLevel)
+
+	for _, fieldName := range r.SpecFieldNames() {
+		specField := r.SpecFields[fieldName]
+		memberShapeRef, found := inputShape.MemberRefs[specField.Names.Original]
+		if !found || memberShapeRef.Shape == nil {
+			continue
+		}
+
+		memberShape := memberShapeRef.Shape
+		inAccessor := inVarName + "." + specField.Names.Original
+		switch memberShape.Type {
+		case "structure":
+			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
+			tmpVarCount++
+			out += fmt.Sprintf("%s%s := &svcsdk.%s{}\n", indent, tmpVarName, memberShape.ShapeName)
+			// TODO(jaypipes): Populate the struct's subfields recursively
+			out += fmt.Sprintf("%s%s = %s\n", indent, inAccessor, tmpVarName)
+		case "list":
+			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
+			tmpVarCount++
+			// Trim off the [] prefix...
+			memberType := memberShape.GoTypeWithPkgName()[2:]
+
+			// We need to convert any package name that the aws-sdk-private
+			// model uses "such as 'ecr.' to just 'svcsdk' since we always
+			// alias the aws-sdk-go API with that.
+			if strings.Contains(memberType, ".") {
+				pkgName := strings.Split(memberType, ".")[0]
+				typeName := strings.Split(memberType, ".")[1]
+				memberType = "svcsdk." + typeName
+				if strings.HasPrefix(pkgName, "*") {
+					// Make sure to preserve pointer types...
+					memberType = "*" + memberType
+				}
+			}
+			out += fmt.Sprintf("%s%s := []%s{}\n", indent, tmpVarName, memberType)
+			// TODO(jaypipes): For each element in the source slice, append an
+			// element to the target slice
+			out += fmt.Sprintf("%s%s = %s\n", indent, inAccessor, tmpVarName)
+		default:
+			setTo := koVarAccessor + "." + specField.Names.Camel
+			if memberShapeRef.UseIndirection() {
+				setTo = "*" + setTo
+			}
+			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, inVarName, specField.Names.Original, setTo)
+		}
+	}
+	return out
 }
 
 func newCRD(
