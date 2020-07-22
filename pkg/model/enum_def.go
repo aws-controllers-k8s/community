@@ -57,14 +57,32 @@ func newEnumVal(orig string) EnumValue {
 }
 
 func (h *Helper) GetEnumDefs() ([]*EnumDef, error) {
+	crds, err := h.GetCRDs()
+	if err != nil {
+		return nil, err
+	}
 	edefs := []*EnumDef{}
+
+	crdNames := []string{}
+	crdSpecNames := []string{}
+	crdStatusNames := []string{}
+	for _, crd := range crds {
+		crdNames = append(crdNames, crd.Kind)
+		crdSpecNames = append(crdSpecNames, crd.Kind+"Spec")
+		crdStatusNames = append(crdStatusNames, crd.Kind+"Status")
+	}
 
 	for shapeName, shape := range h.sdkAPI.Shapes {
 		if !shape.IsEnum() {
 			continue
 		}
-
-		edef, err := NewEnumDef(names.New(shapeName), shape.Enum)
+		enumNames := names.New(shapeName)
+		// Handle name conflicts with top-level CRD.Spec or CRD.Status
+		// types
+		if inStrings(enumNames.Camel, crdSpecNames) || inStrings(enumNames.Camel, crdStatusNames) {
+			enumNames.Camel = enumNames.Camel + "_SDK"
+		}
+		edef, err := NewEnumDef(enumNames, shape.Enum)
 		if err != nil {
 			return nil, err
 		}
