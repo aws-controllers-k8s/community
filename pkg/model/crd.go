@@ -35,35 +35,23 @@ type CRDOps struct {
 
 // CRDField represents a single field in the CRD's Spec or Status objects
 type CRDField struct {
-	CRD *CRD
-	// CRDPath is the dotted-notation path to the field within the CRD. For
-	// instance, if the field is the "Name" field within the "Author" field
-	// inside the Book CRD's "Spec" struct, the CRDPath would be
-	// ".Spec.Author.Name
-	CRDPath string
-	Names   names.Names
-	Shape   *awssdkmodel.Shape
-	GoType  string
-}
-
-// IsSpecField returns whether the CRDField is in the CRD's Spec struct
-func (f *CRDField) IsSpecField() bool {
-	return strings.HasPrefix(f.CRDPath, ".Spec")
+	CRD    *CRD
+	Names  names.Names
+	GoType string
+	Shape  *awssdkmodel.Shape
 }
 
 // newCRDField returns a pointer to a new CRDField object
 func newCRDField(
 	crd *CRD,
-	crdPath string,
 	crdNames names.Names,
 	shape *awssdkmodel.Shape,
 ) *CRDField {
 	return &CRDField{
-		CRD:     crd,
-		CRDPath: crdPath,
-		Names:   crdNames,
-		Shape:   shape,
-		GoType:  shape.GoType(),
+		CRD:    crd,
+		Names:  crdNames,
+		Shape:  shape,
+		GoType: shape.GoType(),
 	}
 }
 
@@ -94,8 +82,7 @@ func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shape *awssdkmodel.Shape,
 ) {
-	crdPath := ".Spec." + memberNames.Camel
-	crdField := newCRDField(r, crdPath, memberNames, shape)
+	crdField := newCRDField(r, memberNames, shape)
 	r.SpecFields[memberNames.Original] = crdField
 }
 
@@ -125,8 +112,7 @@ func (r *CRD) AddStatusField(
 			r.AddTypeImport(pkg, "")
 		}
 	}
-	crdPath := ".Status." + memberNames.Camel
-	crdField := newCRDField(r, crdPath, memberNames, shape)
+	crdField := newCRDField(r, memberNames, shape)
 	r.StatusFields[memberNames.Original] = crdField
 }
 
@@ -209,7 +195,9 @@ func (r *CRD) GoCodeSetInput(
 		case "structure":
 			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
 			tmpVarCount++
-			out += fmt.Sprintf("%s%s := &svcsdk.%s{}\n", indent, tmpVarName, memberShape.ShapeName)
+			memberType := memberShape.GoTypeWithPkgName()
+			memberType = r.replacePkgName(memberType, "svcsdk", false)
+			out += fmt.Sprintf("%s%s := &%s{}\n", indent, tmpVarName, memberType)
 			// TODO(jaypipes): Populate the struct's subfields recursively
 			out += fmt.Sprintf("%s%s = %s\n", indent, inAccessor, tmpVarName)
 		case "list":
@@ -217,19 +205,7 @@ func (r *CRD) GoCodeSetInput(
 			tmpVarCount++
 			// Trim off the [] prefix...
 			memberType := memberShape.GoTypeWithPkgName()[2:]
-
-			// We need to convert any package name that the aws-sdk-private
-			// model uses "such as 'ecr.' to just 'svcsdk' since we always
-			// alias the aws-sdk-go API with that.
-			if strings.Contains(memberType, ".") {
-				pkgName := strings.Split(memberType, ".")[0]
-				typeName := strings.Split(memberType, ".")[1]
-				memberType = "svcsdk." + typeName
-				if strings.HasPrefix(pkgName, "*") {
-					// Make sure to preserve pointer types...
-					memberType = "*" + memberType
-				}
-			}
+			memberType = r.replacePkgName(memberType, "svcsdk", true)
 			out += fmt.Sprintf("%s%s := []%s{}\n", indent, tmpVarName, memberType)
 			// TODO(jaypipes): For each element in the source slice, append an
 			// element to the target slice
@@ -315,12 +291,14 @@ func (r *CRD) GoCodeSetOutput(
 		}
 
 		memberShape := memberShapeRef.Shape
-		outAccessor := koVarName + "." + statusField.Names.Original
+		outAccessor := koVarName + "." + statusField.Names.Camel
 		switch memberShape.Type {
 		case "structure":
 			tmpVarName = fmt.Sprintf("tmp%d", tmpVarCount)
 			tmpVarCount++
-			out += fmt.Sprintf("%s%s := &%s{}\n", indent, tmpVarName, statusField.GoType)
+			memberType := memberShape.GoTypeWithPkgName()
+			memberType = r.replacePkgName(memberType, "svcapitypes", false)
+			out += fmt.Sprintf("%s%s := &%s{}\n", indent, tmpVarName, memberType)
 			// TODO(jaypipes): Populate the struct's subfields recursively
 			out += fmt.Sprintf("%s%s = %s\n", indent, outAccessor, tmpVarName)
 		case "list":
@@ -328,19 +306,7 @@ func (r *CRD) GoCodeSetOutput(
 			tmpVarCount++
 			// Trim off the [] prefix...
 			memberType := memberShape.GoTypeWithPkgName()[2:]
-
-			// We need to convert any package name that the aws-sdk-private
-			// model uses "such as 'ecr.' to just 'svcapitypes' since we always
-			// alias the Kubernetes API types for the service API with that
-			if strings.Contains(memberType, ".") {
-				pkgName := strings.Split(memberType, ".")[0]
-				typeName := strings.Split(memberType, ".")[1]
-				memberType = "svcapitypes." + typeName
-				if strings.HasPrefix(pkgName, "*") {
-					// Make sure to preserve pointer types...
-					memberType = "*" + memberType
-				}
-			}
+			memberType = r.replacePkgName(memberType, "svcapitypes", true)
 			out += fmt.Sprintf("%s%s := []%s{}\n", indent, tmpVarName, memberType)
 			// TODO(jaypipes): For each element in the source slice, append an
 			// element to the target slice
@@ -352,6 +318,37 @@ func (r *CRD) GoCodeSetOutput(
 		}
 	}
 	return out
+}
+
+// replacePkgName accepts a type string, as returned by
+// Shape.GoTypeWithPkgName() and replaces the package name of the aws-sdk-go
+// SDK API (e.g. "ecr" for the ECR API) with the string "svcsdkapi" which is
+// the only alias we always use in our templated output.
+func (r *CRD) replacePkgName(
+	subject string,
+	replacePkgAlias string,
+	keepPointer bool,
+) string {
+	memberType := subject
+	// We need to convert any package name that the aws-sdk-private
+	// model uses "such as 'ecr.' to just 'svcapitypes' since we always
+	// alias the Kubernetes API types for the service API with that
+	if strings.Contains(memberType, ".") {
+		pkgName := strings.Split(memberType, ".")[0]
+		typeName := strings.Split(memberType, ".")[1]
+		apiPkgName := r.helper.sdkAPI.PackageName()
+		if pkgName == apiPkgName || pkgName == "*"+apiPkgName {
+			memberType = replacePkgAlias + "." + typeName
+		} else {
+			// Leave package prefixes like "time." alone...
+			memberType = pkgName + "." + typeName
+		}
+		if strings.HasPrefix(pkgName, "*") && keepPointer {
+			// Make sure to preserve pointer types...
+			memberType = "*" + memberType
+		}
+	}
+	return memberType
 }
 
 func newCRD(

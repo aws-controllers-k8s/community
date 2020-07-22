@@ -81,7 +81,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 				}
 				pkg := strings.Split(goPkgType, ".")[0]
 				if pkg != h.sdkAPI.PackageName() {
-					// Shape.GoPTypeWithPkgNameElem() always returns the type
+					// Shape.GoTypeWithPkgNameElem() always returns the type
 					// as a full package dot-notation name. We only want to add
 					// imports for "normal" package types like "time.Time", not
 					// "ecr.ImageScanningConfiguration"
