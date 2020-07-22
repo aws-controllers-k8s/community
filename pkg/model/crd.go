@@ -44,14 +44,35 @@ type CRDField struct {
 // newCRDField returns a pointer to a new CRDField object
 func newCRDField(
 	crd *CRD,
-	crdNames names.Names,
+	fieldNames names.Names,
 	shape *awssdkmodel.Shape,
 ) *CRDField {
+	// There are shapes that are called things like DBProxyStatus that are
+	// fields in a DBProxy CRD... we need to ensure the type names don't
+	// conflict.
+	var gt string
+	if shape.Type == "structure" {
+		typeNames := names.New(shape.ShapeName)
+		gt = "*" + typeNames.Camel
+		if typeNames.Camel == crd.Kind+"Spec" || typeNames.Camel == crd.Kind+"Status" {
+			gt = "*" + typeNames.Camel + "_SDK"
+		}
+	} else if shape.Type == "list" {
+		// If it's a list type, where the element is a structure, we need to
+		// set the GoType to the cleaned-up Camel-cased name
+		typeNames := names.New(shape.GoTypeElem())
+		gt = "[]*" + typeNames.Camel
+		if typeNames.Camel == crd.Kind+"Spec" || typeNames.Camel == crd.Kind+"Status" {
+			gt = "[]*" + typeNames.Camel + "_SDK"
+		}
+	} else {
+		gt = shape.GoType()
+	}
 	return &CRDField{
 		CRD:    crd,
-		Names:  crdNames,
+		Names:  fieldNames,
 		Shape:  shape,
-		GoType: shape.GoType(),
+		GoType: gt,
 	}
 }
 

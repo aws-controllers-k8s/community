@@ -42,8 +42,12 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	payloads := h.getPayloads()
 
 	crdNames := []string{}
+	crdSpecNames := []string{}
+	crdStatusNames := []string{}
 	for _, crd := range crds {
 		crdNames = append(crdNames, crd.Kind)
+		crdSpecNames = append(crdSpecNames, crd.Kind+"Spec")
+		crdStatusNames = append(crdStatusNames, crd.Kind+"Status")
 	}
 
 	for shapeName, shape := range h.sdkAPI.Shapes {
@@ -62,6 +66,13 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			// Neither are exceptions
 			continue
 		}
+		tdefNames := names.New(shapeName)
+		// Handle name conflicts with top-level CRD.Spec or CRD.Status
+		// types
+		if inStrings(tdefNames.Camel, crdSpecNames) || inStrings(tdefNames.Camel, crdStatusNames) {
+			tdefNames.Camel = tdefNames.Camel + "_SDK"
+		}
+
 		attrs := map[string]*Attr{}
 		for propName, memberRef := range shape.MemberRefs {
 			propNames := names.New(propName)
@@ -88,14 +99,36 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 					timports[pkg] = ""
 				}
 			}
-			attrs[propName] = NewAttr(propNames, propShape.GoType(), propShape)
+			// There are shapes that are called things like DBProxyStatus that are
+			// fields in a DBProxy CRD... we need to ensure the type names don't
+			// conflict. Also, the name of the Go type in the generated code is
+			// Camel-cased and normalized, so we use that as the Go type
+			var gt string
+			if propShape.Type == "structure" {
+				typeNames := names.New(propShape.ShapeName)
+				if inStrings(typeNames.Camel, crdSpecNames) || inStrings(typeNames.Camel, crdStatusNames) {
+					typeNames.Camel = typeNames.Camel + "_SDK"
+				}
+				gt = "*" + typeNames.Camel
+			} else if propShape.Type == "list" {
+				// If it's a list type, where the element is a structure, we need to
+				// set the GoType to the cleaned-up Camel-cased name
+				typeNames := names.New(propShape.GoTypeElem())
+				if inStrings(typeNames.Camel, crdSpecNames) || inStrings(typeNames.Camel, crdStatusNames) {
+					typeNames.Camel = typeNames.Camel + "_SDK"
+				}
+				gt = "[]*" + typeNames.Camel
+			} else {
+				gt = propShape.GoType()
+			}
+			attrs[propName] = NewAttr(propNames, gt, propShape)
 		}
 		if len(attrs) == 0 {
 			// Just ignore these...
 			continue
 		}
 		tdefs = append(tdefs, &TypeDef{
-			Names: names.New(shapeName),
+			Names: tdefNames,
 			Attrs: attrs,
 		})
 	}
