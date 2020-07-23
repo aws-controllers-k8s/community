@@ -69,7 +69,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 		tdefNames := names.New(shapeName)
 		// Handle name conflicts with top-level CRD.Spec or CRD.Status
 		// types
-		if inStrings(tdefNames.Camel, crdSpecNames) || inStrings(tdefNames.Camel, crdStatusNames) {
+		if inStrings(tdefNames.Camel, crdNames) || inStrings(tdefNames.Camel, crdSpecNames) || inStrings(tdefNames.Camel, crdStatusNames) {
 			tdefNames.Camel = tdefNames.Camel + "_SDK"
 		}
 
