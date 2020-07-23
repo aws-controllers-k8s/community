@@ -51,10 +51,6 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	}
 
 	for shapeName, shape := range h.sdkAPI.Shapes {
-		if inStrings(shapeName, crdNames) {
-			// CRDs are already top-level structs
-			continue
-		}
 		if inStrings(shapeName, payloads) {
 			// Payloads are not type defs
 			continue
@@ -67,7 +63,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			continue
 		}
 		tdefNames := names.New(shapeName)
-		// Handle name conflicts with top-level CRD.Spec or CRD.Status
+		// Handle name conflicts with top-level CRD, CRD.Spec or CRD.Status
 		// types
 		if inStrings(tdefNames.Camel, crdNames) || inStrings(tdefNames.Camel, crdSpecNames) || inStrings(tdefNames.Camel, crdStatusNames) {
 			tdefNames.Camel = tdefNames.Camel + "_SDK"
