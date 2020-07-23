@@ -5,6 +5,12 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 
+{{- if .CRD.TypeImports }}
+{{- range $packagePath, $alias := .CRD.TypeImports }}
+    {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
+{{ end }}
+
+{{- end }}
 
 {{- if .CRD.Ops.ReadOne }}
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -12,7 +18,14 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 {{- end }}
 
+	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
+)
+
+// Hack to avoid import errors during build...
+var (
+    _ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
+    _ = &svcapitypes.{{ .CRD.Names.Camel }}{}
 )
 
 // sdkFind returns SDK-specific information about a supplied resource
@@ -123,7 +136,7 @@ func (rm *resourceManager) sdkUpdate(
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
-) (*svcsdk.UpdateBookInput, error) {
+) (*svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetUpdateInput .CRD "res" "r.ko.Spec" 1 }}
 	return res, nil

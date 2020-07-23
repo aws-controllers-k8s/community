@@ -297,10 +297,11 @@ func writeCRDManagerGo(sh *model.Helper, crd *model.CRD) error {
 func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDSDKGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
-		CRD:          crd,
+		APIVersion:              latestAPIVersion,
+		APIGroup:                sh.GetAPIGroup(),
+		ServiceAlias:            strings.ToLower(sh.GetServiceAlias()),
+		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
+		CRD:                     crd,
 	}
 	tpl, err := pkgtemplate.NewCRDSDKGoTemplate(optTemplatesDir)
 	if err != nil {

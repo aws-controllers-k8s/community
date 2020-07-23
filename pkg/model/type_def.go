@@ -92,11 +92,15 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 				}
 				pkg := strings.Split(goPkgType, ".")[0]
 				if pkg != h.sdkAPI.PackageName() {
-					// Shape.GoTypeWithPkgNameElem() always returns the type
-					// as a full package dot-notation name. We only want to add
-					// imports for "normal" package types like "time.Time", not
-					// "ecr.ImageScanningConfiguration"
-					timports[pkg] = ""
+					// time.Time needs to be converted to apimachinery/metav1.Time otherwise there is no DeepCopy support
+					if pkg == "time" {
+						timports["k8s.io/apimachinery/pkg/apis/meta/v1"] = "metav1"
+					} else {
+						// Shape.GoPTypeWithPkgNameElem() always returns the type
+						// as a full package dot-notation name. We only want to add
+						// imports for "normal" packages
+						timports[pkg] = ""
+					}
 				}
 			}
 			// There are shapes that are called things like DBProxyStatus that are
@@ -118,6 +122,10 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 					typeNames.Camel = typeNames.Camel + "_SDK"
 				}
 				gt = "[]*" + typeNames.Camel
+			} else if propShape.Type == "timestamp" {
+				// time.Time needs to be converted to apimachinery/metav1.Time
+				// otherwise there is no DeepCopy support
+				gt = "*metav1.Time"
 			} else {
 				gt = propShape.GoType()
 			}

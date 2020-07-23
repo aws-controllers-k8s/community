@@ -108,6 +108,12 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		}
 
 		gt = "[]" + mgt
+	} else if shape.Type == "timestamp" {
+		// time.Time needs to be converted to apimachinery/metav1.Time
+		// otherwise there is no DeepCopy support
+		gtwp = "*metav1.Time"
+		gte = "metav1.Time"
+		gt = "*metav1.Time"
 	}
 
 	// Replace the type part of the full type-with-package-name with the
@@ -135,26 +141,6 @@ func (r *CRD) AddStatusField(
 	memberNames names.Names,
 	shape *awssdkmodel.Shape,
 ) {
-	goPkgType := shape.GoTypeWithPkgNameElem()
-	if strings.Contains(goPkgType, ".") {
-		if strings.HasPrefix(goPkgType, "[]") {
-			// For slice types, we just want the element type...
-			goPkgType = goPkgType[2:]
-		}
-		if strings.HasPrefix(goPkgType, "*") {
-			// For slice types, the element type might be a pointer to
-			// a struct...
-			goPkgType = goPkgType[1:]
-		}
-		pkg := strings.Split(goPkgType, ".")[0]
-		if pkg != r.helper.sdkAPI.PackageName() {
-			// Shape.GoPTypeWithPkgNameElem() always returns the type
-			// as a full package dot-notation name. We only want to add
-			// imports for "normal" package types like "time.Time", not
-			// "ecr.ImageScanningConfiguration"
-			r.AddTypeImport(pkg, "")
-		}
-	}
 	crdField := newCRDField(r, memberNames, shape)
 	r.StatusFields[memberNames.Original] = crdField
 }
