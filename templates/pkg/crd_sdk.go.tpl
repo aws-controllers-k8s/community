@@ -5,6 +5,9 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
+
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
     {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
@@ -19,11 +22,11 @@ import (
 {{- end }}
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
-	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
 
 // Hack to avoid import errors during build...
 var (
+    _ = &metav1.Time{}
     _ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
     _ = &svcapitypes.{{ .CRD.Names.Camel }}{}
 )

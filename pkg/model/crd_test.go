@@ -240,7 +240,7 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	tmp0f0f0.SetInstanceInterruptionBehavior(*r.ko.Spec.LaunchTemplateData.InstanceInterruptionBehavior)
 	tmp0f0f0.SetMaxPrice(*r.ko.Spec.LaunchTemplateData.MaxPrice)
 	tmp0f0f0.SetSpotInstanceType(*r.ko.Spec.LaunchTemplateData.SpotInstanceType)
-	tmp0f0f0.SetValidUntil(*r.ko.Spec.LaunchTemplateData.ValidUntil)
+	tmp0f0f0.SetValidUntil(*r.ko.Spec.LaunchTemplateData.ValidUntil.Time)
 	tmp0f0.SpotOptions = tmp0f0f0
 	tmp0.InstanceMarketOptions = tmp0f0
 	tmp0.SetInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceType)
@@ -362,7 +362,7 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	// within the CreateLaunchTemplateResult shape, which has a single field called
 	// "LaunchTemplate" that contains the CreatedBy field.
 	expCreateOutput := `
-	ko.Status.CreateTime = resp.LaunchTemplate.CreateTime
+	ko.Status.CreateTime = &metav1.Time{*resp.LaunchTemplate.CreateTime}
 	ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
 	ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
 	ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
@@ -477,7 +477,7 @@ func TestECRRepository(t *testing.T) {
 	// within the CreateRepositoryOutput shape, which has a single field called
 	// "Repository" that contains the RegistryId field.
 	expCreateOutput := `
-	ko.Status.CreatedAt = resp.Repository.CreatedAt
+	ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
 	ko.Status.RegistryID = resp.Repository.RegistryId
 	ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 `

@@ -290,6 +290,12 @@ func (r *CRD) GoCodeSetInput(
 				if memberShapeRef.UseIndirection() {
 					setTo = "*" + setTo
 				}
+				// time.Time needs to be extracted from the wrapping
+				// apimachinery/metav1.Time struct, since the SDK structs use
+				// time.Time directly.
+				if memberShape.Type == "timestamp" {
+					setTo += ".Time"
+				}
 				out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, inVarName, specField.Names.Original, setTo)
 			}
 		}
@@ -387,6 +393,9 @@ func (r *CRD) goCodeSetInputForField(
 			setTo := sourceVarPath + "." + cleanNames.Camel
 			if shapeRef.UseIndirection() {
 				setTo = "*" + setTo
+			}
+			if shape.Type == "timestamp" {
+				setTo += ".Time"
 			}
 			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, sdkFieldName, setTo)
 		}
@@ -523,6 +532,11 @@ func (r *CRD) GoCodeSetOutput(
 			{
 				setAccessor := koVarName + "." + statusField.Names.Camel
 				setTo := sourceVarPath + "." + memberName
+				// time.Time fields need to be converted into a metav1.Time
+				// struct, which wraps the time.Time value.
+				if memberShape.Type == "timestamp" {
+					setTo = "&metav1.Time{*" + sourceVarPath + "." + memberName + "}"
+				}
 				out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, setTo)
 			}
 		}
@@ -617,6 +631,9 @@ func (r *CRD) goCodeSetOutputForField(
 		{
 			setAccessor := targetVarName + "." + koFieldName
 			setTo := sourceVarPath
+			if shape.Type == "timestamp" {
+				setTo = "&metav1.Time{*" + sourceVarPath + "}"
+			}
 			out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, setTo)
 		}
 	}
