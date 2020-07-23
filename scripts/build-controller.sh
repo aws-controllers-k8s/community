@@ -85,6 +85,14 @@ pushd services/$SERVICE/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
 controller-gen object:headerFile=$TEMPLATES_DIR/boilerplate.txt paths=./...
 popd 1>/dev/null
 
+echo "Generating custom resource definitions for $SERVICE"
+pushd services/$SERVICE/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
+# Latest version of controller-gen (master) is required for following two reasons
+# a) support for pointer values in map https://github.com/kubernetes-sigs/controller-tools/pull/317
+# b) support for float type (allowDangerousTypes) https://github.com/kubernetes-sigs/controller-tools/pull/449
+controller-gen crd:allowDangerousTypes=true paths=./...
+popd 1>/dev/null
+
 echo "Building service controller for $SERVICE"
 controller_args="controller $ag_args"
 $ACK_GENERATE_BIN_PATH $controller_args
