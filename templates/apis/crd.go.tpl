@@ -4,10 +4,10 @@
 package {{ .APIVersion }}
 
 import (
+{{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
     {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
-{{ end -}}
-{{- if .CRD.TypeImports }}
+{{ end }}
 
 {{- end }}
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"

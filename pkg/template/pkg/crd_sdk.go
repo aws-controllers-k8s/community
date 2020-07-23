@@ -23,10 +23,11 @@ import (
 )
 
 type CRDSDKGoTemplateVars struct {
-	APIVersion   string
-	APIGroup     string
-	ServiceAlias string
-	CRD          *model.CRD
+	APIVersion              string
+	APIGroup                string
+	ServiceAlias            string
+	SDKAPIInterfaceTypeName string
+	CRD                     *model.CRD
 }
 
 func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
