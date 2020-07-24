@@ -170,17 +170,65 @@ func (r *CRD) SpecFieldNames() []string {
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
 // from a CRD's Spec fields.
 //
-// We loop through the Spec fields, outputting code that looks something like
-// this:
+// Assume a CRD called Repository that looks like this pseudo-schema:
 //
-//   res.SetAttributes(r.ko.Spec.Attributes)
-//   res.SetName(*r.ko.Spec.Name)
-//   tmp0 := []*svcsdk.Tag{}
-//   res.Tags = tmp0
+// .Status
+//   .Authors ([]*string)
+//   .ImageData
+//     .Location (*string)
+//     .Tag (*string)
+//   .Name (*string)
+//
+// And assume an SDK Shape CreateRepositoryInput that looks like this
+// pseudo-schema:
+//
+// .Repository
+//   .Authors ([]*string)
+//   .ImageData
+//     .Location (*string)
+//     .Tag (*string)
+//   .Name
+//
+// This function is called from a template that generates the Go code that
+// represents linkage between the Kubernetes objects (CRs) and the aws-sdk-go
+// (SDK) objects. If we call this function with the following parameters:
+//
+//  opType:			OpTypeCreate
+//  sourceVarName:	ko.Spec
+//  targetVarName:	res
+//  indentLevel:	1
+//
+// Then this function should output something like this:
+//
+//   field1 := []*string{}
+//   for _, elem0 := range r.ko.Spec.Authors {
+//       elem0 := &string{*elem0}
+//       field0 = append(field0, elem0)
+//   }
+//   res.Authors = field1
+//   field1 := &svcsdk.ImageData{}
+//   field1.SetLocation(*r.ko.Spec.ImageData.Location)
+//   field1.SetTag(*r.ko.Spec.ImageData.Tag)
+//   res.ImageData = field1
+//	 res.SetName(*r.ko.Spec.Name)
+//
+// Note that for scalar fields, we use the SetXXX methods that are on all
+// aws-sdk-go SDK structs
 func (r *CRD) GoCodeSetInput(
+	// The type of operation to look for the Input shape
 	opType OpType,
-	inVarName string,
-	koVarAccessor string,
+	// String representing the name of the variable that we will grab the
+	// Input shape from. This will likely be "r.ko.Spec" since in the templates
+	// that call this method, the "source variable" is the CRD struct's Spec
+	// field which is used to populate the target variable, which is the Input
+	// shape
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "res" since that is the name of the "target variable" that the
+	// templates that call this method use for the Input shape.
+	targetVarName string,
+	// Number of levels of indentation to use
 	indentLevel int,
 ) string {
 	var op *awssdkmodel.Operation
@@ -207,110 +255,110 @@ func (r *CRD) GoCodeSetInput(
 	}
 
 	out := "\n"
-	tmpVarCount := 0
-	indent := strings.Repeat("\t", indentLevel)
 
-	for _, fieldName := range r.SpecFieldNames() {
-		specField := r.SpecFields[fieldName]
+	for memberIndex, memberName := range r.SpecFieldNames() {
+		specField := r.SpecFields[memberName]
 		memberShapeRef, found := inputShape.MemberRefs[specField.Names.Original]
 		if !found || memberShapeRef.Shape == nil {
 			continue
 		}
 
 		memberShape := memberShapeRef.Shape
-		inAccessor := inVarName + "." + specField.Names.Original
+
+		// we construct variables containing temporary storage for sub-elements
+		// and sub-fields that are structs. Names of fields are "f" appended by
+		// the 0-based index of the field within the set of a struct's set of
+		// fields. Nested structs simply append another "f" and the field index
+		// to the variable name.
+		//
+		// This means you can tell what field a temporary fields variable
+		// represents by the name.
+		//
+		// For example, the field variable name "f0f5f2", it contains the third
+		// field of the sixth field of the first field of the input shape being
+		// constructed.
+		//
+		// If we have two levels of nested struct fields, we will end
+		// up with a targetVarName of "field0f0f0" and the generated code
+		// might look something like this:
+		//
+		// res := &sdkapi.CreateBookInput{}
+		// f0 := &sdkapi.BookData{}
+		// f0f0 := &sdkapi.Author{}
+		// f0f0f0 := &sdkapi.Address{}
+		// f0f0f0.SetStreet(*ko.Spec.Author.Address.Street)
+		// f0f0f0.SetCity(*ko.Spec.Author.Address.City)
+		// f0f0f0.SetState(*ko.Spec.Author.Address.State)
+		// f0f0.Address = field0f0f0
+		// f0f0.SetName(*r.ko.Author.Name)
+		// f0.Author = field0f0
+		// res.Book = field0
+		//
+		// It's ugly but at least consistent and mostly readable...
+		//
+		// For populating list fields, we need an iterator and a temporary
+		// element variable. We name these "{fieldName}iter" and
+		// "{fieldName}elem" respectively. For nested levels, the names will be
+		// progressively longer.
+		//
+		// For list fields, we want to end up with something like this:
+		//
+		// res := &sdkapi.CreateCustomAvailabilityZoneInput{}
+		// f0 := []*sdkapi.VpnGroupMembership{}
+		// for _, f0iter := ko.Spec.VPNGroupMemberships {
+		//     f0elem := &sdkapi.VpnGroupMembership{}
+		//     f0elem.SetVpnId(f0elem.VPNID)
+		//     f0 := append(f0, f0elem)
+		// }
+		// res.VpnMemberships = f0
+
 		switch memberShape.Type {
-		case "structure":
+		case "list", "structure":
 			{
-				// If we have two levels of nested struct fields, we will end
-				// up with a targetVarName of "tmp0f0f0" and the generated code
-				// might look something like this:
-				//
-				// res := &sdkapi.CreateBookInput{}
-				// tmp0 := &sdkapi.BookData{}
-				// tmp0f0 := &sdkapi.Author{}
-				// tmp0f0f0 := &sdkapi.Address{}
-				// tmp0f0f0.SetStreet(*ko.Spec.Author.Address.Street)
-				// tmp0f0f0.SetCity(*ko.Spec.Author.Address.City)
-				// tmp0f0f0.SetState(*ko.Spec.Author.Address.State)
-				// tmp0f0.Address = tmp0f0f0
-				// tmp0f0.SetName(*r.ko.Author.Name)
-				// tmp0.Author = tmp0f0
-				// res.Book = tmp0
-				//
-				// It's ugly but at least consistent and mostly readable...
-				fieldVarName := fmt.Sprintf("tmp%d", tmpVarCount)
-				tmpVarCount++
-				memberType := memberShape.GoTypeWithPkgName()
-				memberType = r.replacePkgName(memberType, "svcsdk", false)
-
-				out += fmt.Sprintf("%s%s := &%s{}\n", indent, fieldVarName, memberType)
-				for _, subMemberShapeName := range memberShape.MemberNames() {
-					subMemberShapeRef := memberShape.MemberRefs[subMemberShapeName]
-					sourceVarPath := koVarAccessor + "." + specField.Names.Camel
-					out += r.goCodeSetInputForField(
-						subMemberShapeName, fieldVarName, sourceVarPath, subMemberShapeRef, &tmpVarCount, indentLevel, false,
-					)
-				}
-				out += fmt.Sprintf("%s%s = %s\n", indent, inAccessor, fieldVarName)
-			}
-		case "list":
-			{
-				// For list fields, we want to end up with something like this:
-				//
-				// res := &sdkapi.CreateCustomAvailabilityZoneInput{}
-				// tmp0 := []*sdkapi.VpnGroupMembership{}
-				// for _, elem := ko.Spec.VPNGroupMemberships {
-				//     tmpElem := &sdkapi.VpnGroupMembership{}
-				//     tmpElem.SetVpnId(elem.VPNID)
-				//     tmp0 := append(tmp0, tmpElem)
-				// }
-				// res.VpnMemberships = tmp0
-				fieldVarName := fmt.Sprintf("tmp%d", tmpVarCount)
-				// Trim off the [] prefix...
-				memberType := memberShape.GoTypeWithPkgName()[2:]
-				memberType = r.replacePkgName(memberType, "svcsdk", true)
-				elemLoopVarName := fmt.Sprintf("elem%d", tmpVarCount)
-				elemAccessor := elemLoopVarName + "." + specField.Names.Camel
-				elemVarName := fmt.Sprintf("tmpElem%d", tmpVarCount)
-				tmpVarCount++
-
-				out += fmt.Sprintf("%s%s := []%s{}\n", indent, fieldVarName, memberType)
-				out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, elemLoopVarName, inAccessor)
-				out += r.goCodeSetInputForField(
-					memberShape.ShapeName, elemVarName, elemAccessor, &memberShape.MemberRef, &tmpVarCount, indentLevel+1, true,
+				memberVarName := fmt.Sprintf("f%d", memberIndex)
+				out += r.goCodeVarEmptyConstructorSDKType(
+					memberVarName,
+					memberShape,
+					indentLevel,
 				)
-				out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, fieldVarName, fieldVarName, elemVarName)
-				out += fmt.Sprintf("%s}\n", indent)
-				out += fmt.Sprintf("%s%s = %s\n", indent, inAccessor, fieldVarName)
+				out += r.goCodeSetInputForContainer(
+					memberName,
+					memberVarName,
+					sourceVarName+"."+specField.Names.Camel,
+					memberShapeRef,
+					indentLevel,
+				)
+				out += r.goCodeSetInputForScalar(
+					memberName,
+					targetVarName,
+					memberVarName,
+					memberShapeRef,
+					indentLevel,
+				)
 			}
 		default:
-			{
-				setTo := koVarAccessor + "." + specField.Names.Camel
-				if memberShapeRef.UseIndirection() {
-					setTo = "*" + setTo
-				}
-				// time.Time needs to be extracted from the wrapping
-				// apimachinery/metav1.Time struct, since the SDK structs use
-				// time.Time directly.
-				if memberShape.Type == "timestamp" {
-					setTo += ".Time"
-				}
-				out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, inVarName, specField.Names.Original, setTo)
-			}
+			out += r.goCodeSetInputForScalar(
+				memberName,
+				targetVarName,
+				sourceVarName+"."+specField.Names.Camel,
+				memberShapeRef,
+				indentLevel,
+			)
 		}
 	}
 	return out
 }
 
-func (r *CRD) goCodeSetInputForField(
-	sdkFieldName string, // The name of the member we're outputting for
-	targetVarName string, // The variable name that we want to set a value to
-	sourceVarPath string, // The struct or struct field that we access our source value from
+func (r *CRD) goCodeSetInputForContainer(
+	// The name of the SDK Input shape member we're outputting for
+	targetFieldName string,
+	// The variable name that we want to set a value to
+	targetVarName string,
+	// The struct or struct field that we access our source value from
+	sourceVarName string,
+	// ShapeRef of the struct field
 	shapeRef *awssdkmodel.ShapeRef,
-	tmpVarCount *int, // Number of temporary variables created for this field...
 	indentLevel int,
-	isElement bool, // Is the field an element of a list container?
 ) string {
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
@@ -319,106 +367,210 @@ func (r *CRD) goCodeSetInputForField(
 	switch shape.Type {
 	case "structure":
 		{
-			targetVarPath := targetVarName + "." + sdkFieldName
-			fieldTmpVarCount := 0
-			fieldGoType := shape.GoTypeWithPkgName()
-			fieldGoType = r.replacePkgName(fieldGoType, "svcsdk", false)
-			fieldTmpVarName := fmt.Sprintf("%sf%d", targetVarName, fieldTmpVarCount)
-			if isElement {
-				// When we're processing list elements, we don't want to create
-				// a temporary variable since we're always going to be
-				// assigning to the variable supplied as targetVarName
-				fieldTmpVarName = targetVarName
-			} else {
-				fieldTmpVarCount++
-			}
-			out += fmt.Sprintf("%s%s := &%s{}\n", indent, fieldTmpVarName, fieldGoType)
-			for _, subMemberShapeName := range shape.MemberNames() {
-				subMemberShapeRef := shape.MemberRefs[subMemberShapeName]
-				subMemberSourceVarPath := sourceVarPath
-				if isElement {
-					// If we're an element, then the sourceVarPath will look something like this:
-					//
-					//  elem1.Tags
-					//
-					// We want to pass just the "elem1" part, though, as that
-					// is the variable path that we want to use as the source
-					// accessor so that, for instance, we generate something like this:
-					//
-					//  for _, elem0 := ko.Spec.SomeListField {
-					//      tmpElem0 := &sdkapi.SomeListElement{}
-					//      tmpElem0.SetStringValue(*elem0.StringField)
-					//      tmp0 = append(tmp0, tmpElem0)
-					//  }
-					subMemberSourceVarPath = strings.Split(sourceVarPath, ".")[0]
+			for memberIndex, memberName := range shape.MemberNames() {
+				cleanMemberNames := names.New(memberName)
+				cleanMemberName := cleanMemberNames.Camel
+				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
+				memberShapeRef := shape.MemberRefs[memberName]
+				memberShape := memberShapeRef.Shape
+				switch memberShape.Type {
+				case "list", "structure":
+					{
+						out += r.goCodeVarEmptyConstructorSDKType(
+							memberVarName,
+							memberShape,
+							indentLevel,
+						)
+						out += r.goCodeSetInputForContainer(
+							memberName,
+							memberVarName,
+							sourceVarName+"."+cleanMemberName,
+							memberShapeRef,
+							indentLevel,
+						)
+						out += r.goCodeSetInputForScalar(
+							memberName,
+							targetVarName,
+							memberVarName,
+							memberShapeRef,
+							indentLevel,
+						)
+					}
+				default:
+					out += r.goCodeSetInputForScalar(
+						memberName,
+						targetVarName,
+						sourceVarName+"."+cleanMemberName,
+						memberShapeRef,
+						indentLevel,
+					)
 				}
-				out += r.goCodeSetInputForField(
-					subMemberShapeName, fieldTmpVarName, subMemberSourceVarPath, subMemberShapeRef, &fieldTmpVarCount, indentLevel, subMemberShapeRef.Shape.Type == "list",
-				)
-			}
-			if !isElement {
-				// Likewise, if we're processing an element, we don't need to
-				// output this because the list constructor handles assignment
-				// of the end variable into the input shape's appropriate
-				// member field
-				out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, fieldTmpVarName)
 			}
 		}
 	case "list":
 		{
-			cleanNames := names.New(sdkFieldName)
-			listFieldPath := sourceVarPath + "." + cleanNames.Camel
-			targetVarPath := targetVarName + "." + sdkFieldName
-			fieldVarName := fmt.Sprintf("%sf%d", targetVarName, *tmpVarCount)
-			// Trim off the [] prefix...
-			fieldGoType := shape.GoTypeWithPkgName()[2:]
-			fieldGoType = r.replacePkgName(fieldGoType, "svcsdk", true)
-			elemLoopVarName := fmt.Sprintf("elem%d", *tmpVarCount)
-			elemAccessor := elemLoopVarName + "." + cleanNames.Camel
-			elemVarName := fmt.Sprintf("tmpElem%d", *tmpVarCount)
-			*tmpVarCount++
-
-			out += fmt.Sprintf("%s%s := []%s{}\n", indent, fieldVarName, fieldGoType)
-			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, elemLoopVarName, listFieldPath)
-			out += r.goCodeSetInputForField(
-				shape.ShapeName, elemVarName, elemAccessor, &shape.MemberRef, tmpVarCount, indentLevel+1, true,
+			iterVarName := fmt.Sprintf("%siter", targetVarName)
+			elemVarName := fmt.Sprintf("%selem", targetVarName)
+			// for _, f0iter0 := range r.ko.Spec.Tags {
+			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarName)
+			//		f0elem0 := &string{}
+			//		f0elem0 = *f0iter0
+			//		f0 = append(f0, f0elem0)
+			out += r.goCodeVarEmptyConstructorSDKType(
+				elemVarName,
+				shape.MemberRef.Shape,
+				indentLevel+1,
 			)
-			out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, fieldVarName, fieldVarName, elemVarName)
+			//  f0elem0 = *f0iter0
+			out += r.goCodeSetInputForContainer(
+				targetFieldName,
+				elemVarName,
+				iterVarName,
+				&shape.MemberRef,
+				indentLevel+1,
+			)
+			//  f0 = append(f0, elem0)
+			out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, targetVarName, targetVarName, elemVarName)
 			out += fmt.Sprintf("%s}\n", indent)
-			out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, fieldVarName)
 		}
 	default:
-		{
-			cleanNames := names.New(sdkFieldName)
-			setTo := sourceVarPath + "." + cleanNames.Camel
-			if shapeRef.UseIndirection() {
-				setTo = "*" + setTo
-			}
-			if shape.Type == "timestamp" {
-				setTo += ".Time"
-			}
-			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, sdkFieldName, setTo)
-		}
+		out += r.goCodeSetInputForScalar(
+			targetFieldName,
+			targetVarName,
+			sourceVarName,
+			shapeRef,
+			indentLevel,
+		)
 	}
 	return out
 }
 
+func (r *CRD) goCodeVarEmptyConstructorSDKType(
+	varName string,
+	// The shape we want to construct a new thing for
+	shape *awssdkmodel.Shape,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+	goType := shape.GoTypeWithPkgName()
+	goType = r.replacePkgName(goType, "svcsdk", shape.Type == "list")
+	if shape.Type == "structure" {
+		// f0 := &svcsdk.BookData{}
+		out += fmt.Sprintf("%s%s := &%s{}\n", indent, varName, goType)
+	} else if shape.Type == "list" {
+		// f0 := []*string{}
+		out += fmt.Sprintf("%s%s := %s{}\n", indent, varName, goType)
+	}
+	return out
+}
+
+func (r *CRD) goCodeVarEmptyConstructorK8sType(
+	varName string,
+	// The shape we want to construct a new thing for
+	shape *awssdkmodel.Shape,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+	goType := shape.GoTypeWithPkgName()
+	goType = r.replacePkgName(goType, "svcapitypes", shape.Type == "list")
+	altTypeName, renamed := r.helper.typeRenames[goType]
+	if renamed {
+		goType = altTypeName
+	}
+
+	if shape.Type == "structure" {
+		// f0 := &svcsdk.BookData{}
+		out += fmt.Sprintf("%s%s := &%s{}\n", indent, varName, goType)
+	} else if shape.Type == "list" {
+		// f0 := []*string{}
+		out += fmt.Sprintf("%s%s := %s{}\n", indent, varName, goType)
+	}
+	return out
+}
+
+func (r *CRD) goCodeSetInputForScalar(
+	targetFieldName string, // The name of the Input SDK Shape member we're outputting for
+	targetVarName string, // The variable name that we want to set a value to
+	sourceVarName string, // The struct or struct field that we access our source value from
+	shapeRef *awssdkmodel.ShapeRef,
+	indentLevel int,
+) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+	setTo := sourceVarName
+	if shapeRef.UseIndirection() {
+		setTo = "*" + setTo
+	}
+	shape := shapeRef.Shape
+	if shape.Type == "timestamp" {
+		setTo += ".Time"
+	}
+	out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, targetFieldName, setTo)
+	return out
+}
+
 // GoCodeSetOutput returns the Go code that sets a CRD's Status field value to
-// the value of an output shape's member fields
+// the value of an output shape's member fields.
 //
-// We loop through the output shape's fields, outputting code that looks something like
-// this:
+// Assume a CRD called Repository that looks like this pseudo-schema:
 //
-//   tmp0 := &ImageData{}
-//   tmp0.Location = resp.ImageData.Location
-//   tmp0.Tag = resp.ImageData.Tag
-//   r.ko.Status.ImageData = tmp0
-//   r.ko.Status.Name = resp.Name
+// .Status
+//   .Authors ([]*string)
+//   .ImageData
+//     .Location (*string)
+//     .Tag (*string)
+//   .Name (*string)
 //
+// And assume an SDK Shape CreateRepositoryOutput that looks like this
+// pseudo-schema:
+//
+// .Repository
+//   .Authors ([]*string)
+//   .ImageData
+//     .Location (*string)
+//     .Tag (*string)
+//   .Name
+//
+// This function is called from a template that generates the Go code that
+// represents linkage between the Kubernetes objects (CRs) and the aws-sdk-go
+// (SDK) objects. If we call this function with the following parameters:
+//
+//  opType:			OpTypeCreate
+//  sourceVarName:	resp
+//  targetVarName:	ko.Status
+//  indentLevel:	1
+//
+// Then this function should output something like this:
+//
+//   field0 := []*string{}
+//   for _, iter0 := range resp.Authors {
+//       elem0 := &string{*iter0}
+//       field0 = append(field0, elem0)
+//   }
+//   ko.Status.Authors = field0
+//   field1 := &svcapitypes.ImageData{}
+//   field1.Location = resp.ImageData.Location
+//   field1.Tag = resp.ImageData.Tag
+//   ko.Status.ImageData = field1
+//   ko.Status.Name = resp.Name
 func (r *CRD) GoCodeSetOutput(
+	// The type of operation to look for the Output shape
 	opType OpType,
-	sourceVarPath string,
-	koVarName string,
+	// String representing the name of the variable that we will grab the
+	// Output shape from. This will likely be "resp" since in the templates
+	// that call this method, the "source variable" is the response struct
+	// returned by the aws-sdk-go's SDK API call corresponding to the Operation
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "ko.Status" since that is the name of the "target variable" that the
+	// templates that call this method use.
+	targetVarName string,
+	// Number of levels of indentation to use
 	indentLevel int,
 ) string {
 	var op *awssdkmodel.Operation
@@ -450,108 +602,110 @@ func (r *CRD) GoCodeSetOutput(
 	if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
 		for _, memberRef := range outputShape.MemberRefs {
 			if memberRef.Shape.Type == "structure" {
-				sourceVarPath += "." + memberRef.Shape.ShapeName
+				sourceVarName += "." + memberRef.Shape.ShapeName
 				outputShape = memberRef.Shape
 			}
 		}
 	}
 	out := "\n"
-	tmpVarCount := 0
-	indent := strings.Repeat("\t", indentLevel)
 
-	for _, memberName := range outputShape.MemberNames() {
+	// Recursively descend down through the set of fields on the Output shape,
+	// creating temporary variables, populating those temporary variables'
+	// fields with further-nested fields as needed
+	for memberIndex, memberName := range outputShape.MemberNames() {
 		statusField, found := r.StatusFields[memberName]
 		if !found {
-			// TODO(jaypipes): Handle the special case of ARN for primary
-			// resource identifier
+			// Note that not all fields in the output shape will be in the
+			// Status fields collection of the CRD. If a same-named field is in
+			// the Spec, then that's where it stays. This function is only here
+			// to set the Status field values after getting a response via the
+			// aws-sdk-go for an API call...
 			continue
 		}
+
+		// TODO(jaypipes): Handle the special case of ARN for primary
+		// resource identifier
+
 		memberShapeRef := outputShape.MemberRefs[memberName]
 		if memberShapeRef.Shape == nil {
-			continue
+			// Technically this should not happen, so let's bail here if it
+			// does...
+			msg := fmt.Sprintf(
+				"expected .Shape to not be nil for ShapeRef of memberName %s",
+				memberName,
+			)
+			panic(msg)
 		}
+
+		// fieldVarName is the name of the variable that is used for temporary
+		// storage of complex member field values
+		//
+		// For struct fields, we want to output code sort of like this:
+		//
+		//   field0 := &svapitypes.ImageData{}
+		//   field0.Location = resp.ImageData.Location
+		//   field0.Tag = resp.ImageData.Tag
+		//   r.ko.Status.ImageData = field0
+		//   r.ko.Status.Name = resp.Name
+		//
+		// For list fields, we want to end up with something like this:
+		//
+		// field0 := []*svcapitypes.VpnGroupMembership{}
+		// for _, iter0 := resp.CustomAvailabilityZone.VpnGroupMemberships {
+		//     elem0 := &svcapitypes.VPNGroupMembership{}
+		//     elem0.VPNID = iter0.VPNID
+		//     field0 := append(field0, elem0)
+		// }
+		// ko.Status.VpnMemberships = field0
 
 		memberShape := memberShapeRef.Shape
 		switch memberShape.Type {
-		case "structure":
+		case "list", "structure":
 			{
-				// We want to output code sort of like this:
-				//
-				//   tmp0 := &svapitypes.ImageData{}
-				//   tmp0.Location = resp.ImageData.Location
-				//   tmp0.Tag = resp.ImageData.Tag
-				//   r.ko.Status.ImageData = tmp0
-				//   r.ko.Status.Name = resp.Name
-				fieldVarName := fmt.Sprintf("tmp%d", tmpVarCount)
-				tmpVarCount++
-				// Trim the pointer prefix...
-				memberType := statusField.GoTypeWithPkgName[1:]
-				memberType = r.replacePkgName(memberType, "svcapitypes", false)
-
-				out += fmt.Sprintf("%s%s := &%s{}\n", indent, fieldVarName, memberType)
-				for _, subMemberShapeName := range memberShape.MemberNames() {
-					subMemberShapeRef := memberShape.MemberRefs[subMemberShapeName]
-					out += r.goCodeSetOutputForField(
-						subMemberShapeName, fieldVarName, sourceVarPath, subMemberShapeRef, &tmpVarCount, indentLevel, false,
-					)
-				}
-				sourceAccessor := sourceVarPath + "." + memberName
-				out += fmt.Sprintf("%s%s = %s\n", indent, sourceAccessor, fieldVarName)
-			}
-		case "list":
-			{
-				// For list fields, we want to end up with something like this:
-				//
-				// tmp0 := []*svcapitypes.VpnGroupMembership{}
-				// for _, elem := resp.CustomAvailabilityZone.VpnGroupMemberships {
-				//     tmpElem := &svcapitypes.VPNGroupMembership{}
-				//     tmpElem.VPNID = elem.VPNID
-				//     tmp0 := append(tmp0, tmpElem)
-				// }
-				// ko.Status.VpnMemberships = tmp0
-				fieldVarName := fmt.Sprintf("tmp%d", tmpVarCount)
-				// Trim off the [] prefix...
-				memberType := statusField.GoTypeWithPkgName[2:]
-				memberType = r.replacePkgName(memberType, "svcapitypes", true)
-				elemLoopVarName := fmt.Sprintf("elem%d", tmpVarCount)
-				elemAccessor := elemLoopVarName + "." + statusField.Names.Camel
-				elemVarName := fmt.Sprintf("tmpElem%d", tmpVarCount)
-				setAccessor := koVarName + "." + statusField.Names.Camel
-				tmpVarCount++
-
-				out += fmt.Sprintf("%s%s := []%s{}\n", indent, fieldVarName, memberType)
-				out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, elemLoopVarName, setAccessor)
-				out += r.goCodeSetOutputForField(
-					memberShape.ShapeName, elemVarName, elemAccessor, &memberShape.MemberRef, &tmpVarCount, indentLevel+1, true,
+				memberVarName := fmt.Sprintf("f%d", memberIndex)
+				out += r.goCodeVarEmptyConstructorK8sType(
+					memberVarName,
+					memberShape,
+					indentLevel,
 				)
-				out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, fieldVarName, fieldVarName, elemVarName)
-				out += fmt.Sprintf("%s}\n", indent)
-				out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, fieldVarName)
+				out += r.goCodeSetOutputForContainer(
+					statusField.Names.Camel,
+					memberVarName,
+					sourceVarName+"."+memberName,
+					memberShapeRef,
+					indentLevel,
+				)
+				out += r.goCodeSetOutputForScalar(
+					memberName,
+					targetVarName,
+					memberVarName,
+					memberShapeRef,
+					indentLevel,
+				)
 			}
 		default:
-			{
-				setAccessor := koVarName + "." + statusField.Names.Camel
-				setTo := sourceVarPath + "." + memberName
-				// time.Time fields need to be converted into a metav1.Time
-				// struct, which wraps the time.Time value.
-				if memberShape.Type == "timestamp" {
-					setTo = "&metav1.Time{*" + sourceVarPath + "." + memberName + "}"
-				}
-				out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, setTo)
-			}
+			out += r.goCodeSetOutputForScalar(
+				statusField.Names.Camel,
+				targetVarName,
+				sourceVarName+"."+memberName,
+				memberShapeRef,
+				indentLevel,
+			)
 		}
 	}
 	return out
 }
 
-func (r *CRD) goCodeSetOutputForField(
-	koFieldName string, // The name of the field member we're outputting for
-	targetVarName string, // The variable name that we want to set a value to
-	sourceVarPath string, // The struct or struct field that we access our source value from
+func (r *CRD) goCodeSetOutputForContainer(
+	// The name of the SDK Input shape member we're outputting for
+	targetFieldName string,
+	// The variable name that we want to set a value to
+	targetVarName string,
+	// The struct or struct field that we access our source value from
+	sourceVarName string,
+	// ShapeRef of the struct field
 	shapeRef *awssdkmodel.ShapeRef,
-	tmpVarCount *int, // Number of temporary variables created for this field...
 	indentLevel int,
-	isElement bool, // Is the field an element of a list container?
 ) string {
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
@@ -560,83 +714,137 @@ func (r *CRD) goCodeSetOutputForField(
 	switch shape.Type {
 	case "structure":
 		{
-			targetVarPath := targetVarName + "." + koFieldName
-			fieldTmpVarCount := 0
-			fieldGoType := shape.GoTypeWithPkgName()
-			fieldGoType = r.replacePkgName(fieldGoType, "svcapitypes", false)
-			fieldTmpVarName := fmt.Sprintf("%sf%d", targetVarName, fieldTmpVarCount)
-			if isElement {
-				// When we're processing list elements, we don't want to create
-				// a temporary variable since we're always going to be
-				// assigning to the variable supplied as targetVarName
-				fieldTmpVarName = targetVarName
-			} else {
-				fieldTmpVarCount++
-			}
-			out += fmt.Sprintf("%s%s := &%s{}\n", indent, fieldTmpVarName, fieldGoType)
-			for _, subMemberShapeName := range shape.MemberNames() {
-				subMemberShapeRef := shape.MemberRefs[subMemberShapeName]
-				subMemberSourceVarPath := sourceVarPath
-				if isElement {
-					// If we're an element, then the sourceVarPath will look something like this:
-					//
-					//  elem1.Tags
-					//
-					// We want to pass just the "elem1" part, though, as that
-					// is the variable path that we want to use as the source
-					// accessor so that, for instance, we generate something like this:
-					//
-					//  for _, elem0 := resp.SomeListField {
-					//      tmpElem0 := &svcapitypes.SomeListElement{}
-					//      tmpElem0.StringField = elem0.StringField
-					//      tmp0 = append(tmp0, tmpElem0)
-					//  }
-					subMemberSourceVarPath = strings.Split(sourceVarPath, ".")[0]
+			for memberIndex, memberName := range shape.MemberNames() {
+				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
+				memberShapeRef := shape.MemberRefs[memberName]
+				memberShape := memberShapeRef.Shape
+				switch memberShape.Type {
+				case "list", "structure":
+					{
+						out += r.goCodeVarEmptyConstructorK8sType(
+							memberVarName,
+							memberShape,
+							indentLevel,
+						)
+						out += r.goCodeSetOutputForContainer(
+							memberName,
+							memberVarName,
+							sourceVarName+"."+memberName,
+							memberShapeRef,
+							indentLevel,
+						)
+						out += r.goCodeSetOutputForScalar(
+							memberName,
+							targetVarName,
+							memberVarName,
+							memberShapeRef,
+							indentLevel,
+						)
+					}
+				default:
+					out += r.goCodeSetOutputForScalar(
+						memberName,
+						targetVarName,
+						sourceVarName+"."+memberName,
+						memberShapeRef,
+						indentLevel,
+					)
 				}
-				out += r.goCodeSetOutputForField(
-					subMemberShapeName, fieldTmpVarName, subMemberSourceVarPath, subMemberShapeRef, &fieldTmpVarCount, indentLevel, subMemberShapeRef.Shape.Type == "list",
-				)
-			}
-			if !isElement {
-				// Likewise, if we're processing an element, we don't need to
-				// output this because the list constructor handles assignment
-				// of the end variable into the input shape's appropriate
-				// member field
-				out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, fieldTmpVarName)
 			}
 		}
 	case "list":
 		{
-			listFieldPath := sourceVarPath + "." + shapeRef.Shape.ShapeName
-			targetVarPath := targetVarName + "." + koFieldName
-			fieldVarName := fmt.Sprintf("%sf%d", targetVarName, *tmpVarCount)
-			// Trim off the [] prefix...
-			fieldGoType := shape.GoTypeWithPkgName()[2:]
-			fieldGoType = r.replacePkgName(fieldGoType, "svcapitypes", true)
-			elemLoopVarName := fmt.Sprintf("elem%d", *tmpVarCount)
-			elemAccessor := elemLoopVarName + "." + sourceVarPath
-			elemVarName := fmt.Sprintf("tmpElem%d", *tmpVarCount)
-			*tmpVarCount++
+			sourceVarPath := sourceVarName
+			iterVarName := fmt.Sprintf("%siter", targetVarName)
+			elemVarName := fmt.Sprintf("%selem", targetVarName)
 
-			out += fmt.Sprintf("%s%s := []%s{}\n", indent, fieldVarName, fieldGoType)
-			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, elemLoopVarName, listFieldPath)
-			out += r.goCodeSetOutputForField(
-				shape.ShapeName, elemVarName, elemAccessor, &shape.MemberRef, tmpVarCount, indentLevel+1, true,
+			// for _, f0iter0 := range resp.TagSpecifications {
+			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarPath)
+			//		f0elem0 := &string{}
+			//		f0elem0 = *f0iter0
+			//		f0 = append(f0, f0elem0)
+			out += r.goCodeSetOutputForElement(
+				targetVarName,
+				elemVarName,
+				iterVarName,
+				&shape.MemberRef,
+				indentLevel+1,
 			)
-			out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, fieldVarName, fieldVarName, elemVarName)
 			out += fmt.Sprintf("%s}\n", indent)
-			out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, fieldVarName)
 		}
 	default:
-		{
-			setAccessor := targetVarName + "." + koFieldName
-			setTo := sourceVarPath
-			if shape.Type == "timestamp" {
-				setTo = "&metav1.Time{*" + sourceVarPath + "}"
-			}
-			out += fmt.Sprintf("%s%s = %s\n", indent, setAccessor, setTo)
-		}
+		out += r.goCodeSetOutputForScalar(
+			targetFieldName,
+			targetVarName,
+			sourceVarName,
+			shapeRef,
+			indentLevel,
+		)
 	}
+	return out
+}
+
+// For an element in a list container, then we
+// need to output something like this:
+//
+//  f0elem0 := &string{}
+//  f0elem0 = *f0iter0
+//  f0 = append(f0, f0elem0)
+//
+// Above, the parameters supplied to this function would be:
+//
+//  listFieldVarName:	f0
+//  iterVarName:		f0iter0
+//  iterShapeRef:		SDK ShapeRef for the object represented by f0iter0
+func (r *CRD) goCodeSetOutputForElement(
+	// The name of the list field that will contain the generated elements
+	listFieldVarName string,
+	// The variable name of the element that we construct
+	elemVarName string,
+	// The variable name of the iterator pointer that we will set attributes on
+	// the element variable with. e.g. "f0iter0"
+	iterVarName string,
+	// The Shape of the object represented by the iterator variable
+	iterShapeRef *awssdkmodel.ShapeRef,
+	indentLevel int,
+) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+	iterShape := iterShapeRef.Shape
+	out += r.goCodeVarEmptyConstructorK8sType(
+		elemVarName,
+		iterShape,
+		indentLevel,
+	)
+	//  f0elem0 = *f0iter0
+	out += r.goCodeSetOutputForContainer(
+		listFieldVarName,
+		elemVarName,
+		iterVarName,
+		iterShapeRef,
+		indentLevel,
+	)
+	//  f0 = append(f0, elem0)
+	out += fmt.Sprintf("%s%s = append(%s, %s)\n", indent, listFieldVarName, listFieldVarName, elemVarName)
+	return out
+}
+
+func (r *CRD) goCodeSetOutputForScalar(
+	targetFieldName string, // The name of the Input SDK Shape member we're outputting for
+	targetVarName string, // The variable name that we want to set a value to
+	sourceVarName string, // The struct or struct field that we access our source value from
+	shapeRef *awssdkmodel.ShapeRef,
+	indentLevel int,
+) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+	setTo := sourceVarName
+	shape := shapeRef.Shape
+	if shape.Type == "timestamp" {
+		setTo = "&metav1.Time{*" + sourceVarName + "}"
+	}
+	targetVarPath := targetVarName + "." + targetFieldName
+	out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, setTo)
 	return out
 }
 
@@ -650,6 +858,18 @@ func (r *CRD) replacePkgName(
 	keepPointer bool,
 ) string {
 	memberType := subject
+	isSliceType := strings.HasPrefix(memberType, "[]")
+	if isSliceType {
+		memberType = memberType[2:]
+	}
+	isMapType := strings.HasPrefix(memberType, "map[string]")
+	if isMapType {
+		memberType = memberType[11:]
+	}
+	isPointerType := strings.HasPrefix(memberType, "*")
+	if isPointerType {
+		memberType = memberType[1:]
+	}
 	// We need to convert any package name that the aws-sdk-private
 	// model uses "such as 'ecr.' to just 'svcapitypes' since we always
 	// alias the Kubernetes API types for the service API with that
@@ -657,16 +877,21 @@ func (r *CRD) replacePkgName(
 		pkgName := strings.Split(memberType, ".")[0]
 		typeName := strings.Split(memberType, ".")[1]
 		apiPkgName := r.helper.sdkAPI.PackageName()
-		if pkgName == apiPkgName || pkgName == "*"+apiPkgName {
+		if pkgName == apiPkgName {
 			memberType = replacePkgAlias + "." + typeName
 		} else {
 			// Leave package prefixes like "time." alone...
 			memberType = pkgName + "." + typeName
 		}
-		if strings.HasPrefix(pkgName, "*") && keepPointer {
-			// Make sure to preserve pointer types...
-			memberType = "*" + memberType
-		}
+	}
+	if isPointerType && keepPointer {
+		memberType = "*" + memberType
+	}
+	if isMapType {
+		memberType = "map[string]" + memberType
+	}
+	if isSliceType {
+		memberType = "[]" + memberType
 	}
 	return memberType
 }

@@ -81,16 +81,16 @@ func TestSNSTopic(t *testing.T) {
 	expCreateInput := `
 	res.SetAttributes(r.ko.Spec.Attributes)
 	res.SetName(*r.ko.Spec.Name)
-	tmp0 := []*svcsdk.Tag{}
-	for _, elem0 := range res.Tags {
-		tmpElem0 := &svcsdk.Tag{}
-		tmpElem0.SetKey(*elem0.Key)
-		tmpElem0.SetValue(*elem0.Value)
-		tmp0 = append(tmp0, tmpElem0)
+	f2 := []*svcsdk.Tag{}
+	for _, f2iter := range r.ko.Spec.Tags {
+		f2elem := &svcsdk.Tag{}
+		f2elem.SetKey(*f2iter.Key)
+		f2elem.SetValue(*f2iter.Value)
+		f2 = append(f2, f2elem)
 	}
-	res.Tags = tmp0
+	res.SetTags(f2)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
 	// None of the fields in the Topic resource's CreateTopicInput shape are
 	// returned in the CreateTopicOutput shape, so none of them return any Go
@@ -175,188 +175,188 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	expCreateInput := `
 	res.SetClientToken(*r.ko.Spec.ClientToken)
 	res.SetDryRun(*r.ko.Spec.DryRun)
-	tmp0 := &svcsdk.RequestLaunchTemplateData{}
-	tmp0f1 := []*svcsdk.LaunchTemplateBlockDeviceMappingRequest{}
-	for _, elem1 := range r.ko.Spec.LaunchTemplateData.BlockDeviceMappings {
-		tmpElem1 := &svcsdk.LaunchTemplateBlockDeviceMappingRequest{}
-		tmpElem1.SetDeviceName(*elem1.DeviceName)
-		tmpElem1f0 := &svcsdk.LaunchTemplateEbsBlockDeviceRequest{}
-		tmpElem1f0.SetDeleteOnTermination(*elem1.DeleteOnTermination)
-		tmpElem1f0.SetEncrypted(*elem1.Encrypted)
-		tmpElem1f0.SetIops(*elem1.IOPS)
-		tmpElem1f0.SetKmsKeyId(*elem1.KMSKeyID)
-		tmpElem1f0.SetSnapshotId(*elem1.SnapshotID)
-		tmpElem1f0.SetVolumeSize(*elem1.VolumeSize)
-		tmpElem1f0.SetVolumeType(*elem1.VolumeType)
-		tmpElem1.Ebs = tmpElem1f0
-		tmpElem1.SetNoDevice(*elem1.NoDevice)
-		tmpElem1.SetVirtualName(*elem1.VirtualName)
-		tmp0f1 = append(tmp0f1, tmpElem1)
+	f2 := &svcsdk.RequestLaunchTemplateData{}
+	f2f0 := []*svcsdk.LaunchTemplateBlockDeviceMappingRequest{}
+	for _, f2f0iter := range r.ko.Spec.LaunchTemplateData.BlockDeviceMappings {
+		f2f0elem := &svcsdk.LaunchTemplateBlockDeviceMappingRequest{}
+		f2f0elem.SetDeviceName(*f2f0iter.DeviceName)
+		f2f0elemf1 := &svcsdk.LaunchTemplateEbsBlockDeviceRequest{}
+		f2f0elemf1.SetDeleteOnTermination(*f2f0iter.EBS.DeleteOnTermination)
+		f2f0elemf1.SetEncrypted(*f2f0iter.EBS.Encrypted)
+		f2f0elemf1.SetIops(*f2f0iter.EBS.IOPS)
+		f2f0elemf1.SetKmsKeyId(*f2f0iter.EBS.KMSKeyID)
+		f2f0elemf1.SetSnapshotId(*f2f0iter.EBS.SnapshotID)
+		f2f0elemf1.SetVolumeSize(*f2f0iter.EBS.VolumeSize)
+		f2f0elemf1.SetVolumeType(*f2f0iter.EBS.VolumeType)
+		f2f0elem.SetEbs(f2f0elemf1)
+		f2f0elem.SetNoDevice(*f2f0iter.NoDevice)
+		f2f0elem.SetVirtualName(*f2f0iter.VirtualName)
+		f2f0 = append(f2f0, f2f0elem)
 	}
-	tmp0.BlockDeviceMappings = tmp0f1
-	tmp0f0 := &svcsdk.LaunchTemplateCapacityReservationSpecificationRequest{}
-	tmp0f0.SetCapacityReservationPreference(*r.ko.Spec.LaunchTemplateData.CapacityReservationPreference)
-	tmp0f0f0 := &svcsdk.CapacityReservationTarget{}
-	tmp0f0f0.SetCapacityReservationId(*r.ko.Spec.LaunchTemplateData.CapacityReservationID)
-	tmp0f0.CapacityReservationTarget = tmp0f0f0
-	tmp0.CapacityReservationSpecification = tmp0f0
-	tmp0f0 := &svcsdk.LaunchTemplateCpuOptionsRequest{}
-	tmp0f0.SetCoreCount(*r.ko.Spec.LaunchTemplateData.CoreCount)
-	tmp0f0.SetThreadsPerCore(*r.ko.Spec.LaunchTemplateData.ThreadsPerCore)
-	tmp0.CpuOptions = tmp0f0
-	tmp0f0 := &svcsdk.CreditSpecificationRequest{}
-	tmp0f0.SetCpuCredits(*r.ko.Spec.LaunchTemplateData.CPUCredits)
-	tmp0.CreditSpecification = tmp0f0
-	tmp0.SetDisableApiTermination(*r.ko.Spec.LaunchTemplateData.DisableAPITermination)
-	tmp0.SetEbsOptimized(*r.ko.Spec.LaunchTemplateData.EBSOptimized)
-	tmp0f2 := []*svcsdk.ElasticGpuSpecification{}
-	for _, elem2 := range r.ko.Spec.LaunchTemplateData.ElasticGPUSpecifications {
-		tmpElem2 := &svcsdk.ElasticGpuSpecification{}
-		tmpElem2.SetType(*elem2.Type)
-		tmp0f2 = append(tmp0f2, tmpElem2)
+	f2.SetBlockDeviceMappings(f2f0)
+	f2f1 := &svcsdk.LaunchTemplateCapacityReservationSpecificationRequest{}
+	f2f1.SetCapacityReservationPreference(*r.ko.Spec.LaunchTemplateData.CapacityReservationSpecification.CapacityReservationPreference)
+	f2f1f1 := &svcsdk.CapacityReservationTarget{}
+	f2f1f1.SetCapacityReservationId(*r.ko.Spec.LaunchTemplateData.CapacityReservationSpecification.CapacityReservationTarget.CapacityReservationID)
+	f2f1.SetCapacityReservationTarget(f2f1f1)
+	f2.SetCapacityReservationSpecification(f2f1)
+	f2f2 := &svcsdk.LaunchTemplateCpuOptionsRequest{}
+	f2f2.SetCoreCount(*r.ko.Spec.LaunchTemplateData.CPUOptions.CoreCount)
+	f2f2.SetThreadsPerCore(*r.ko.Spec.LaunchTemplateData.CPUOptions.ThreadsPerCore)
+	f2.SetCpuOptions(f2f2)
+	f2f3 := &svcsdk.CreditSpecificationRequest{}
+	f2f3.SetCpuCredits(*r.ko.Spec.LaunchTemplateData.CreditSpecification.CPUCredits)
+	f2.SetCreditSpecification(f2f3)
+	f2.SetDisableApiTermination(*r.ko.Spec.LaunchTemplateData.DisableAPITermination)
+	f2.SetEbsOptimized(*r.ko.Spec.LaunchTemplateData.EBSOptimized)
+	f2f6 := []*svcsdk.ElasticGpuSpecification{}
+	for _, f2f6iter := range r.ko.Spec.LaunchTemplateData.ElasticGPUSpecifications {
+		f2f6elem := &svcsdk.ElasticGpuSpecification{}
+		f2f6elem.SetType(*f2f6iter.Type)
+		f2f6 = append(f2f6, f2f6elem)
 	}
-	tmp0.ElasticGpuSpecifications = tmp0f2
-	tmp0f3 := []*svcsdk.LaunchTemplateElasticInferenceAccelerator{}
-	for _, elem3 := range r.ko.Spec.LaunchTemplateData.ElasticInferenceAccelerators {
-		tmpElem3 := &svcsdk.LaunchTemplateElasticInferenceAccelerator{}
-		tmpElem3.SetCount(*elem3.Count)
-		tmpElem3.SetType(*elem3.Type)
-		tmp0f3 = append(tmp0f3, tmpElem3)
+	f2.SetElasticGpuSpecifications(f2f6)
+	f2f7 := []*svcsdk.LaunchTemplateElasticInferenceAccelerator{}
+	for _, f2f7iter := range r.ko.Spec.LaunchTemplateData.ElasticInferenceAccelerators {
+		f2f7elem := &svcsdk.LaunchTemplateElasticInferenceAccelerator{}
+		f2f7elem.SetCount(*f2f7iter.Count)
+		f2f7elem.SetType(*f2f7iter.Type)
+		f2f7 = append(f2f7, f2f7elem)
 	}
-	tmp0.ElasticInferenceAccelerators = tmp0f3
-	tmp0f0 := &svcsdk.LaunchTemplateHibernationOptionsRequest{}
-	tmp0f0.SetConfigured(*r.ko.Spec.LaunchTemplateData.Configured)
-	tmp0.HibernationOptions = tmp0f0
-	tmp0f0 := &svcsdk.LaunchTemplateIamInstanceProfileSpecificationRequest{}
-	tmp0f0.SetArn(*r.ko.Spec.LaunchTemplateData.ARN)
-	tmp0f0.SetName(*r.ko.Spec.LaunchTemplateData.Name)
-	tmp0.IamInstanceProfile = tmp0f0
-	tmp0.SetImageId(*r.ko.Spec.LaunchTemplateData.ImageID)
-	tmp0.SetInstanceInitiatedShutdownBehavior(*r.ko.Spec.LaunchTemplateData.InstanceInitiatedShutdownBehavior)
-	tmp0f0 := &svcsdk.LaunchTemplateInstanceMarketOptionsRequest{}
-	tmp0f0.SetMarketType(*r.ko.Spec.LaunchTemplateData.MarketType)
-	tmp0f0f0 := &svcsdk.LaunchTemplateSpotMarketOptionsRequest{}
-	tmp0f0f0.SetBlockDurationMinutes(*r.ko.Spec.LaunchTemplateData.BlockDurationMinutes)
-	tmp0f0f0.SetInstanceInterruptionBehavior(*r.ko.Spec.LaunchTemplateData.InstanceInterruptionBehavior)
-	tmp0f0f0.SetMaxPrice(*r.ko.Spec.LaunchTemplateData.MaxPrice)
-	tmp0f0f0.SetSpotInstanceType(*r.ko.Spec.LaunchTemplateData.SpotInstanceType)
-	tmp0f0f0.SetValidUntil(*r.ko.Spec.LaunchTemplateData.ValidUntil.Time)
-	tmp0f0.SpotOptions = tmp0f0f0
-	tmp0.InstanceMarketOptions = tmp0f0
-	tmp0.SetInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceType)
-	tmp0.SetKernelId(*r.ko.Spec.LaunchTemplateData.KernelID)
-	tmp0.SetKeyName(*r.ko.Spec.LaunchTemplateData.KeyName)
-	tmp0f4 := []*svcsdk.LaunchTemplateLicenseConfigurationRequest{}
-	for _, elem4 := range r.ko.Spec.LaunchTemplateData.LicenseSpecifications {
-		tmpElem4 := &svcsdk.LaunchTemplateLicenseConfigurationRequest{}
-		tmpElem4.SetLicenseConfigurationArn(*elem4.LicenseConfigurationARN)
-		tmp0f4 = append(tmp0f4, tmpElem4)
+	f2.SetElasticInferenceAccelerators(f2f7)
+	f2f8 := &svcsdk.LaunchTemplateHibernationOptionsRequest{}
+	f2f8.SetConfigured(*r.ko.Spec.LaunchTemplateData.HibernationOptions.Configured)
+	f2.SetHibernationOptions(f2f8)
+	f2f9 := &svcsdk.LaunchTemplateIamInstanceProfileSpecificationRequest{}
+	f2f9.SetArn(*r.ko.Spec.LaunchTemplateData.IAMInstanceProfile.ARN)
+	f2f9.SetName(*r.ko.Spec.LaunchTemplateData.IAMInstanceProfile.Name)
+	f2.SetIamInstanceProfile(f2f9)
+	f2.SetImageId(*r.ko.Spec.LaunchTemplateData.ImageID)
+	f2.SetInstanceInitiatedShutdownBehavior(*r.ko.Spec.LaunchTemplateData.InstanceInitiatedShutdownBehavior)
+	f2f12 := &svcsdk.LaunchTemplateInstanceMarketOptionsRequest{}
+	f2f12.SetMarketType(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.MarketType)
+	f2f12f1 := &svcsdk.LaunchTemplateSpotMarketOptionsRequest{}
+	f2f12f1.SetBlockDurationMinutes(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.BlockDurationMinutes)
+	f2f12f1.SetInstanceInterruptionBehavior(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.InstanceInterruptionBehavior)
+	f2f12f1.SetMaxPrice(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.MaxPrice)
+	f2f12f1.SetSpotInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.SpotInstanceType)
+	f2f12f1.SetValidUntil(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.ValidUntil.Time)
+	f2f12.SetSpotOptions(f2f12f1)
+	f2.SetInstanceMarketOptions(f2f12)
+	f2.SetInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceType)
+	f2.SetKernelId(*r.ko.Spec.LaunchTemplateData.KernelID)
+	f2.SetKeyName(*r.ko.Spec.LaunchTemplateData.KeyName)
+	f2f16 := []*svcsdk.LaunchTemplateLicenseConfigurationRequest{}
+	for _, f2f16iter := range r.ko.Spec.LaunchTemplateData.LicenseSpecifications {
+		f2f16elem := &svcsdk.LaunchTemplateLicenseConfigurationRequest{}
+		f2f16elem.SetLicenseConfigurationArn(*f2f16iter.LicenseConfigurationARN)
+		f2f16 = append(f2f16, f2f16elem)
 	}
-	tmp0.LicenseSpecifications = tmp0f4
-	tmp0f0 := &svcsdk.LaunchTemplateInstanceMetadataOptionsRequest{}
-	tmp0f0.SetHttpEndpoint(*r.ko.Spec.LaunchTemplateData.HTTPEndpoint)
-	tmp0f0.SetHttpPutResponseHopLimit(*r.ko.Spec.LaunchTemplateData.HTTPPutResponseHopLimit)
-	tmp0f0.SetHttpTokens(*r.ko.Spec.LaunchTemplateData.HTTPTokens)
-	tmp0.MetadataOptions = tmp0f0
-	tmp0f0 := &svcsdk.LaunchTemplatesMonitoringRequest{}
-	tmp0f0.SetEnabled(*r.ko.Spec.LaunchTemplateData.Enabled)
-	tmp0.Monitoring = tmp0f0
-	tmp0f5 := []*svcsdk.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{}
-	for _, elem5 := range r.ko.Spec.LaunchTemplateData.NetworkInterfaces {
-		tmpElem5 := &svcsdk.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{}
-		tmpElem5.SetAssociatePublicIpAddress(*elem5.AssociatePublicIPAddress)
-		tmpElem5.SetDeleteOnTermination(*elem5.DeleteOnTermination)
-		tmpElem5.SetDescription(*elem5.Description)
-		tmpElem5.SetDeviceIndex(*elem5.DeviceIndex)
-		tmpElem5f0 := []*string{}
-		for _, elem0 := range elem5.Groups {
-			tmpElem0.SetSecurityGroupIdStringList(*elem0.Groups.SecurityGroupIDStringList)
-			tmpElem5f0 = append(tmpElem5f0, tmpElem0)
+	f2.SetLicenseSpecifications(f2f16)
+	f2f17 := &svcsdk.LaunchTemplateInstanceMetadataOptionsRequest{}
+	f2f17.SetHttpEndpoint(*r.ko.Spec.LaunchTemplateData.MetadataOptions.HTTPEndpoint)
+	f2f17.SetHttpPutResponseHopLimit(*r.ko.Spec.LaunchTemplateData.MetadataOptions.HTTPPutResponseHopLimit)
+	f2f17.SetHttpTokens(*r.ko.Spec.LaunchTemplateData.MetadataOptions.HTTPTokens)
+	f2.SetMetadataOptions(f2f17)
+	f2f18 := &svcsdk.LaunchTemplatesMonitoringRequest{}
+	f2f18.SetEnabled(*r.ko.Spec.LaunchTemplateData.Monitoring.Enabled)
+	f2.SetMonitoring(f2f18)
+	f2f19 := []*svcsdk.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{}
+	for _, f2f19iter := range r.ko.Spec.LaunchTemplateData.NetworkInterfaces {
+		f2f19elem := &svcsdk.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{}
+		f2f19elem.SetAssociatePublicIpAddress(*f2f19iter.AssociatePublicIPAddress)
+		f2f19elem.SetDeleteOnTermination(*f2f19iter.DeleteOnTermination)
+		f2f19elem.SetDescription(*f2f19iter.Description)
+		f2f19elem.SetDeviceIndex(*f2f19iter.DeviceIndex)
+		f2f19elemf4 := []*string{}
+		for _, f2f19elemf4iter := range f2f19iter.Groups {
+			f2f19elemf4elem.SetGroups(*f2f19elemf4iter)
+			f2f19elemf4 = append(f2f19elemf4, f2f19elemf4elem)
 		}
-		tmpElem5.Groups = tmpElem5f0
-		tmpElem5.SetInterfaceType(*elem5.InterfaceType)
-		tmpElem5.SetIpv6AddressCount(*elem5.IPv6AddressCount)
-		tmpElem5f1 := []*svcsdk.InstanceIpv6AddressRequest{}
-		for _, elem1 := range elem5.IPv6Addresses {
-			tmpElem1 := &svcsdk.InstanceIpv6AddressRequest{}
-			tmpElem1.SetIpv6Address(*elem1.IPv6Address)
-			tmpElem5f1 = append(tmpElem5f1, tmpElem1)
+		f2f19elem.SetGroups(f2f19elemf4)
+		f2f19elem.SetInterfaceType(*f2f19iter.InterfaceType)
+		f2f19elem.SetIpv6AddressCount(*f2f19iter.IPv6AddressCount)
+		f2f19elemf7 := []*svcsdk.InstanceIpv6AddressRequest{}
+		for _, f2f19elemf7iter := range f2f19iter.IPv6Addresses {
+			f2f19elemf7elem := &svcsdk.InstanceIpv6AddressRequest{}
+			f2f19elemf7elem.SetIpv6Address(*f2f19elemf7iter.IPv6Address)
+			f2f19elemf7 = append(f2f19elemf7, f2f19elemf7elem)
 		}
-		tmpElem5.Ipv6Addresses = tmpElem5f1
-		tmpElem5.SetNetworkInterfaceId(*elem5.NetworkInterfaceID)
-		tmpElem5.SetPrivateIpAddress(*elem5.PrivateIPAddress)
-		tmpElem5f2 := []*svcsdk.PrivateIpAddressSpecification{}
-		for _, elem2 := range elem5.PrivateIPAddresses {
-			tmpElem2 := &svcsdk.PrivateIpAddressSpecification{}
-			tmpElem2.SetPrimary(*elem2.Primary)
-			tmpElem2.SetPrivateIpAddress(*elem2.PrivateIPAddress)
-			tmpElem5f2 = append(tmpElem5f2, tmpElem2)
+		f2f19elem.SetIpv6Addresses(f2f19elemf7)
+		f2f19elem.SetNetworkInterfaceId(*f2f19iter.NetworkInterfaceID)
+		f2f19elem.SetPrivateIpAddress(*f2f19iter.PrivateIPAddress)
+		f2f19elemf10 := []*svcsdk.PrivateIpAddressSpecification{}
+		for _, f2f19elemf10iter := range f2f19iter.PrivateIPAddresses {
+			f2f19elemf10elem := &svcsdk.PrivateIpAddressSpecification{}
+			f2f19elemf10elem.SetPrimary(*f2f19elemf10iter.Primary)
+			f2f19elemf10elem.SetPrivateIpAddress(*f2f19elemf10iter.PrivateIPAddress)
+			f2f19elemf10 = append(f2f19elemf10, f2f19elemf10elem)
 		}
-		tmpElem5.PrivateIpAddresses = tmpElem5f2
-		tmpElem5.SetSecondaryPrivateIpAddressCount(*elem5.SecondaryPrivateIPAddressCount)
-		tmpElem5.SetSubnetId(*elem5.SubnetID)
-		tmp0f5 = append(tmp0f5, tmpElem5)
+		f2f19elem.SetPrivateIpAddresses(f2f19elemf10)
+		f2f19elem.SetSecondaryPrivateIpAddressCount(*f2f19iter.SecondaryPrivateIPAddressCount)
+		f2f19elem.SetSubnetId(*f2f19iter.SubnetID)
+		f2f19 = append(f2f19, f2f19elem)
 	}
-	tmp0.NetworkInterfaces = tmp0f5
-	tmp0f0 := &svcsdk.LaunchTemplatePlacementRequest{}
-	tmp0f0.SetAffinity(*r.ko.Spec.LaunchTemplateData.Affinity)
-	tmp0f0.SetAvailabilityZone(*r.ko.Spec.LaunchTemplateData.AvailabilityZone)
-	tmp0f0.SetGroupName(*r.ko.Spec.LaunchTemplateData.GroupName)
-	tmp0f0.SetHostId(*r.ko.Spec.LaunchTemplateData.HostID)
-	tmp0f0.SetHostResourceGroupArn(*r.ko.Spec.LaunchTemplateData.HostResourceGroupARN)
-	tmp0f0.SetPartitionNumber(*r.ko.Spec.LaunchTemplateData.PartitionNumber)
-	tmp0f0.SetSpreadDomain(*r.ko.Spec.LaunchTemplateData.SpreadDomain)
-	tmp0f0.SetTenancy(*r.ko.Spec.LaunchTemplateData.Tenancy)
-	tmp0.Placement = tmp0f0
-	tmp0.SetRamDiskId(*r.ko.Spec.LaunchTemplateData.RamDiskID)
-	tmp0f6 := []*string{}
-	for _, elem6 := range r.ko.Spec.LaunchTemplateData.SecurityGroupIDs {
-		tmpElem6.SetSecurityGroupIdStringList(*elem6.SecurityGroupIDs.SecurityGroupIDStringList)
-		tmp0f6 = append(tmp0f6, tmpElem6)
+	f2.SetNetworkInterfaces(f2f19)
+	f2f20 := &svcsdk.LaunchTemplatePlacementRequest{}
+	f2f20.SetAffinity(*r.ko.Spec.LaunchTemplateData.Placement.Affinity)
+	f2f20.SetAvailabilityZone(*r.ko.Spec.LaunchTemplateData.Placement.AvailabilityZone)
+	f2f20.SetGroupName(*r.ko.Spec.LaunchTemplateData.Placement.GroupName)
+	f2f20.SetHostId(*r.ko.Spec.LaunchTemplateData.Placement.HostID)
+	f2f20.SetHostResourceGroupArn(*r.ko.Spec.LaunchTemplateData.Placement.HostResourceGroupARN)
+	f2f20.SetPartitionNumber(*r.ko.Spec.LaunchTemplateData.Placement.PartitionNumber)
+	f2f20.SetSpreadDomain(*r.ko.Spec.LaunchTemplateData.Placement.SpreadDomain)
+	f2f20.SetTenancy(*r.ko.Spec.LaunchTemplateData.Placement.Tenancy)
+	f2.SetPlacement(f2f20)
+	f2.SetRamDiskId(*r.ko.Spec.LaunchTemplateData.RamDiskID)
+	f2f22 := []*string{}
+	for _, f2f22iter := range r.ko.Spec.LaunchTemplateData.SecurityGroupIDs {
+		f2f22elem.SetSecurityGroupIds(*f2f22iter)
+		f2f22 = append(f2f22, f2f22elem)
 	}
-	tmp0.SecurityGroupIds = tmp0f6
-	tmp0f7 := []*string{}
-	for _, elem7 := range r.ko.Spec.LaunchTemplateData.SecurityGroups {
-		tmpElem7.SetSecurityGroupStringList(*elem7.SecurityGroups.SecurityGroupStringList)
-		tmp0f7 = append(tmp0f7, tmpElem7)
+	f2.SetSecurityGroupIds(f2f22)
+	f2f23 := []*string{}
+	for _, f2f23iter := range r.ko.Spec.LaunchTemplateData.SecurityGroups {
+		f2f23elem.SetSecurityGroups(*f2f23iter)
+		f2f23 = append(f2f23, f2f23elem)
 	}
-	tmp0.SecurityGroups = tmp0f7
-	tmp0f8 := []*svcsdk.LaunchTemplateTagSpecificationRequest{}
-	for _, elem8 := range r.ko.Spec.LaunchTemplateData.TagSpecifications {
-		tmpElem8 := &svcsdk.LaunchTemplateTagSpecificationRequest{}
-		tmpElem8.SetResourceType(*elem8.ResourceType)
-		tmpElem8f0 := []*svcsdk.Tag{}
-		for _, elem0 := range elem8.Tags {
-			tmpElem0 := &svcsdk.Tag{}
-			tmpElem0.SetKey(*elem0.Key)
-			tmpElem0.SetValue(*elem0.Value)
-			tmpElem8f0 = append(tmpElem8f0, tmpElem0)
+	f2.SetSecurityGroups(f2f23)
+	f2f24 := []*svcsdk.LaunchTemplateTagSpecificationRequest{}
+	for _, f2f24iter := range r.ko.Spec.LaunchTemplateData.TagSpecifications {
+		f2f24elem := &svcsdk.LaunchTemplateTagSpecificationRequest{}
+		f2f24elem.SetResourceType(*f2f24iter.ResourceType)
+		f2f24elemf1 := []*svcsdk.Tag{}
+		for _, f2f24elemf1iter := range f2f24iter.Tags {
+			f2f24elemf1elem := &svcsdk.Tag{}
+			f2f24elemf1elem.SetKey(*f2f24elemf1iter.Key)
+			f2f24elemf1elem.SetValue(*f2f24elemf1iter.Value)
+			f2f24elemf1 = append(f2f24elemf1, f2f24elemf1elem)
 		}
-		tmpElem8.Tags = tmpElem8f0
-		tmp0f8 = append(tmp0f8, tmpElem8)
+		f2f24elem.SetTags(f2f24elemf1)
+		f2f24 = append(f2f24, f2f24elem)
 	}
-	tmp0.TagSpecifications = tmp0f8
-	tmp0.SetUserData(*r.ko.Spec.LaunchTemplateData.UserData)
-	res.LaunchTemplateData = tmp0
+	f2.SetTagSpecifications(f2f24)
+	f2.SetUserData(*r.ko.Spec.LaunchTemplateData.UserData)
+	res.SetLaunchTemplateData(f2)
 	res.SetLaunchTemplateName(*r.ko.Spec.LaunchTemplateName)
-	tmp9 := []*svcsdk.TagSpecification{}
-	for _, elem9 := range res.TagSpecifications {
-		tmpElem9 := &svcsdk.TagSpecification{}
-		tmpElem9.SetResourceType(*elem9.ResourceType)
-		tmpElem9f0 := []*svcsdk.Tag{}
-		for _, elem0 := range elem9.Tags {
-			tmpElem0 := &svcsdk.Tag{}
-			tmpElem0.SetKey(*elem0.Key)
-			tmpElem0.SetValue(*elem0.Value)
-			tmpElem9f0 = append(tmpElem9f0, tmpElem0)
+	f4 := []*svcsdk.TagSpecification{}
+	for _, f4iter := range r.ko.Spec.TagSpecifications {
+		f4elem := &svcsdk.TagSpecification{}
+		f4elem.SetResourceType(*f4iter.ResourceType)
+		f4elemf1 := []*svcsdk.Tag{}
+		for _, f4elemf1iter := range f4iter.Tags {
+			f4elemf1elem := &svcsdk.Tag{}
+			f4elemf1elem.SetKey(*f4elemf1iter.Key)
+			f4elemf1elem.SetValue(*f4elemf1iter.Value)
+			f4elemf1 = append(f4elemf1, f4elemf1elem)
 		}
-		tmpElem9.Tags = tmpElem9f0
-		tmp9 = append(tmp9, tmpElem9)
+		f4elem.SetTags(f4elemf1)
+		f4 = append(f4, f4elem)
 	}
-	res.TagSpecifications = tmp9
+	res.SetTagSpecifications(f4)
 	res.SetVersionDescription(*r.ko.Spec.VersionDescription)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
 	// Check that we properly determined how to find the CreatedBy attribute
 	// within the CreateLaunchTemplateResult shape, which has a single field called
@@ -367,14 +367,14 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
 	ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
 	ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
-	tmp0 := []*svcapitypes.Tag{}
-	for _, elem0 := range ko.Status.Tags {
-		tmpElem0 := &svcapitypes.Tag{}
-		tmpElem0.Key = elem0
-		tmpElem0.Value = elem0
-		tmp0 = append(tmp0, tmpElem0)
+	f6 := []*svcapitypes.Tag{}
+	for _, f6iter := range resp.LaunchTemplate.Tags {
+		f6elem := &svcapitypes.Tag{}
+		f6elem.Key = f6iter.Key
+		f6elem.Value = f6iter.Value
+		f6 = append(f6, f6elem)
 	}
-	ko.Status.Tags = tmp0
+	ko.Status.Tags = f6
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -441,21 +441,21 @@ func TestECRRepository(t *testing.T) {
 	// CreateRepositoryOutput shape, so it should produce Go code to set the
 	// appropriate input shape member.
 	expCreateInput := `
-	tmp0 := &svcsdk.ImageScanningConfiguration{}
-	tmp0.SetScanOnPush(*r.ko.Spec.ImageScanningConfiguration.ScanOnPush)
-	res.ImageScanningConfiguration = tmp0
+	f0 := &svcsdk.ImageScanningConfiguration{}
+	f0.SetScanOnPush(*r.ko.Spec.ImageScanningConfiguration.ScanOnPush)
+	res.SetImageScanningConfiguration(f0)
 	res.SetImageTagMutability(*r.ko.Spec.ImageTagMutability)
 	res.SetRepositoryName(*r.ko.Spec.RepositoryName)
-	tmp1 := []*svcsdk.Tag{}
-	for _, elem1 := range res.Tags {
-		tmpElem1 := &svcsdk.Tag{}
-		tmpElem1.SetKey(*elem1.Key)
-		tmpElem1.SetValue(*elem1.Value)
-		tmp1 = append(tmp1, tmpElem1)
+	f3 := []*svcsdk.Tag{}
+	for _, f3iter := range r.ko.Spec.Tags {
+		f3elem := &svcsdk.Tag{}
+		f3elem.SetKey(*f3iter.Key)
+		f3elem.SetValue(*f3iter.Value)
+		f3 = append(f3, f3elem)
 	}
-	res.Tags = tmp1
+	res.SetTags(f3)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
 	expStatusFieldCamel := []string{
 		"CreatedAt",
@@ -608,7 +608,7 @@ func TestSQSQueue(t *testing.T) {
 	res.SetQueueName(*r.ko.Spec.QueueName)
 	res.SetTags(r.ko.Spec.Tags)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "res", "r.ko.Spec", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
 	// There are no fields other than QueueID in the returned CreateQueueResult
 	// shape

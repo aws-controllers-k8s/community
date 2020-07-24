@@ -66,6 +66,9 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	// Map, keyed by package import path, with the values being an alias to use
 	// for the package
 	timports := map[string]string{}
+	// Map, keyed by original Shape GoTypeElem(), with the values being a
+	// renamed type name (due to conflicting names)
+	trenames := map[string]string{}
 
 	payloads := h.getPayloads()
 
@@ -84,6 +87,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 		tdefNames := names.New(shapeName)
 		if h.HasConflictingTypeName(shapeName) {
 			tdefNames.Camel += ConflictingNameSuffix
+			trenames[shapeName] = tdefNames.Camel
 		}
 
 		attrs := map[string]*Attr{}
