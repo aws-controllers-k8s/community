@@ -20,35 +20,54 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
-// TypeDef is a Go type definition for a struct that is present in the
-// definition of a Custom Resource Definition (CRD)
+const (
+	ConflictingNameSuffix = "_SDK"
+)
+
+// TypeDef is a Go type definition for structs that are member fields of the
+// Spec or Status structs in Custom Resource Definitions (CRDs).
 type TypeDef struct {
 	Names names.Names
 	Attrs map[string]*Attr
 }
 
+// HasConflictingTypeName returns true if the supplied type name will conflict
+// with any generated type in the service's API package
+func (h *Helper) HasConflictingTypeName(typeName string) bool {
+	// First grab the set of CRD struct names and the names of their Spec and
+	// Status structs
+	opMap := h.GetOperationMap()
+	cleanTypeName := names.New(typeName).Camel
+	createOps := (*opMap)[OpTypeCreate]
+	crdNames := []string{}
+	crdSpecNames := []string{}
+	crdStatusNames := []string{}
+
+	for resourceName := range createOps {
+		resourceNames := names.New(resourceName)
+		cleanResourceName := resourceNames.Camel
+		crdNames = append(crdNames, cleanResourceName)
+		crdSpecNames = append(crdSpecNames, cleanResourceName+"Spec")
+		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
+	}
+	return (inStrings(cleanTypeName, crdNames) ||
+		inStrings(cleanTypeName, crdSpecNames) ||
+		inStrings(cleanTypeName, crdStatusNames))
+}
+
 // GetTypeDefs returns a slice of TypeDef pointers and a map of package import
 // information
 func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
-	crds, err := h.GetCRDs()
-	if err != nil {
-		return nil, nil, err
+	if h.typeDefs != nil {
+		return h.typeDefs, h.typeImports, nil
 	}
+
 	tdefs := []*TypeDef{}
 	// Map, keyed by package import path, with the values being an alias to use
 	// for the package
 	timports := map[string]string{}
 
 	payloads := h.getPayloads()
-
-	crdNames := []string{}
-	crdSpecNames := []string{}
-	crdStatusNames := []string{}
-	for _, crd := range crds {
-		crdNames = append(crdNames, crd.Kind)
-		crdSpecNames = append(crdSpecNames, crd.Kind+"Spec")
-		crdStatusNames = append(crdStatusNames, crd.Kind+"Status")
-	}
 
 	for shapeName, shape := range h.sdkAPI.Shapes {
 		if inStrings(shapeName, payloads) {
@@ -63,16 +82,14 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			continue
 		}
 		tdefNames := names.New(shapeName)
-		// Handle name conflicts with top-level CRD, CRD.Spec or CRD.Status
-		// types
-		if inStrings(tdefNames.Camel, crdNames) || inStrings(tdefNames.Camel, crdSpecNames) || inStrings(tdefNames.Camel, crdStatusNames) {
-			tdefNames.Camel = tdefNames.Camel + "_SDK"
+		if h.HasConflictingTypeName(shapeName) {
+			tdefNames.Camel += ConflictingNameSuffix
 		}
 
 		attrs := map[string]*Attr{}
-		for propName, memberRef := range shape.MemberRefs {
-			propNames := names.New(propName)
-			propShape := memberRef.Shape
+		for memberName, memberRef := range shape.MemberRefs {
+			memberNames := names.New(memberName)
+			memberShape := memberRef.Shape
 			goPkgType := memberRef.Shape.GoTypeWithPkgNameElem()
 			if strings.Contains(goPkgType, ".") {
 				if strings.HasPrefix(goPkgType, "[]") {
@@ -104,28 +121,28 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			// conflict. Also, the name of the Go type in the generated code is
 			// Camel-cased and normalized, so we use that as the Go type
 			var gt string
-			if propShape.Type == "structure" {
-				typeNames := names.New(propShape.ShapeName)
-				if inStrings(typeNames.Camel, crdSpecNames) || inStrings(typeNames.Camel, crdStatusNames) {
-					typeNames.Camel = typeNames.Camel + "_SDK"
+			if memberShape.Type == "structure" {
+				typeNames := names.New(memberShape.ShapeName)
+				if h.HasConflictingTypeName(memberShape.ShapeName) {
+					typeNames.Camel += ConflictingNameSuffix
 				}
 				gt = "*" + typeNames.Camel
-			} else if propShape.Type == "list" {
+			} else if memberShape.Type == "list" {
 				// If it's a list type, where the element is a structure, we need to
 				// set the GoType to the cleaned-up Camel-cased name
-				typeNames := names.New(propShape.GoTypeElem())
-				if inStrings(typeNames.Camel, crdSpecNames) || inStrings(typeNames.Camel, crdStatusNames) {
-					typeNames.Camel = typeNames.Camel + "_SDK"
+				typeNames := names.New(memberShape.GoTypeElem())
+				if h.HasConflictingTypeName(memberShape.GoTypeElem()) {
+					typeNames.Camel += ConflictingNameSuffix
 				}
 				gt = "[]*" + typeNames.Camel
-			} else if propShape.Type == "timestamp" {
+			} else if memberShape.Type == "timestamp" {
 				// time.Time needs to be converted to apimachinery/metav1.Time
 				// otherwise there is no DeepCopy support
 				gt = "*metav1.Time"
 			} else {
-				gt = propShape.GoType()
+				gt = memberShape.GoType()
 			}
-			attrs[propName] = NewAttr(propNames, gt, propShape)
+			attrs[memberName] = NewAttr(memberNames, gt, memberShape)
 		}
 		if len(attrs) == 0 {
 			// Just ignore these...
@@ -139,5 +156,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	sort.Slice(tdefs, func(i, j int) bool {
 		return tdefs[i].Names.Camel < tdefs[j].Names.Camel
 	})
+	h.typeDefs = tdefs
+	h.typeImports = timports
 	return tdefs, timports, nil
 }

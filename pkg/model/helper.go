@@ -21,8 +21,10 @@ import (
 )
 
 type Helper struct {
-	sdkAPI *awssdkmodel.API
-	crds   []*CRD
+	sdkAPI      *awssdkmodel.API
+	crds        []*CRD
+	typeDefs    []*TypeDef
+	typeImports map[string]string
 	// A map of operation type and resource name to
 	// aws-sdk-go/private/model/api.Operation structs
 	opMap *OperationMap
@@ -56,7 +58,7 @@ func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
 	// unexported map variable...
 	_ = sdkAPI.ServicePackageDoc()
 
-	return &Helper{sdkAPI, nil, nil}
+	return &Helper{sdkAPI, nil, nil, nil, nil}
 }
 
 // GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
