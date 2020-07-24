@@ -42,8 +42,9 @@ var (
 		// camel-cased "Ids" refers to a set of Identifiers, so the correct
 		// uppercase representation is "IDs"
 		{"Ids", "IDs", "ids", nil},
-		// Need to prevent "Identifier" from becoming "IDentifier"
-		{"Id", "ID", "id", regexp.MustCompile("Id(?!entifier)", regexp.None)},
+		// Need to prevent "Identifier" from becoming "IDentifier",
+		// and "Idle" from becoming "IDle"
+		{"Id", "ID", "id", regexp.MustCompile("Id(?!entifier|le)", regexp.None)},
 		// Need to prevent "DbInstance" from becoming "dbinstance" when lower
 		// prefix-converted (should be dbInstance). Amazingly, even within just
 		// the RDS API, there are fields named "DbiResourceId",
@@ -101,7 +102,8 @@ var (
 		{"Tde", "TDE", "tde", nil},
 		{"Tls", "TLS", "tls", nil},
 		{"Udp", "UDP", "udp", nil},
-		{"Uri", "URI", "uri", nil},
+		// Need to prevent "security" from becoming "SecURIty"
+		{"Uri", "URI", "uri", regexp.MustCompile("(?!sec)uri(?!ty)", regexp.None)},
 		{"Url", "URL", "url", nil},
 		{"Vpc", "VPC", "vpc", nil},
 		{"Vpn", "VPN", "vpn", nil},
@@ -139,6 +141,9 @@ func goName(original string, lowerFirst bool, snake bool) (result string) {
 	}
 	if lowerFirst {
 		result, err = normalizeInitialisms(strcase.ToLowerCamel(result), lowerFirst, snake)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if snake {
 		result = strcase.ToSnake(result)
