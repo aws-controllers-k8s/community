@@ -99,9 +99,15 @@ func generateController(cmd *cobra.Command, args []string) error {
 
 func writeControllerMainGo(sh *model.Helper) error {
 	var b bytes.Buffer
+	crdsNames, error := sh.GetCRDNames()
+	if error != nil {
+		return error
+	}
+
 	vars := &cmdtemplate.ControllerMainTemplateVars{
 		APIVersion:   latestAPIVersion,
 		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		CRDNames:     crdsNames,
 	}
 	tpl, err := cmdtemplate.NewControllerMainTemplate(optTemplatesDir)
 	if err != nil {

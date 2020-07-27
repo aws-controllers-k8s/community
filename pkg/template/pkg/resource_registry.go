@@ -14,6 +14,7 @@
 package pkg
 
 import (
+	"github.com/aws/aws-controllers-k8s/pkg/template"
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
@@ -31,5 +32,16 @@ func NewResourceRegistryGoTemplate(tplDir string) (*ttpl.Template, error) {
 		return nil, err
 	}
 	t := ttpl.New("resource_registry")
-	return t.Parse(string(tplContents))
+	if t, err = t.Parse(string(tplContents)); err != nil {
+		return nil, err
+	}
+	includes := []string{
+		"boilerplate",
+	}
+	for _, include := range includes {
+		if t, err = template.IncludeTemplate(t, tplDir, include); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
 }

@@ -50,6 +50,26 @@ func (h *Helper) GetAPIGroup() string {
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
+func (h *Helper) GetCRDNames() ([]string, error) {
+
+	crds, error := h.GetCRDs()
+	if error != nil {
+		return nil, error
+	}
+
+	crdNames := make([]string, 0)
+
+	if crds == nil {
+		return crdNames, nil
+	}
+
+	for _, crd := range h.crds {
+		crdNames = append(crdNames, crd.Names.Snake)
+	}
+
+	return crdNames, nil
+}
+
 // GetTypeRenames returns a map of original type name to renamed name (some
 // type definition names conflict with generated names)
 func (h *Helper) GetTypeRenames() map[string]string {
