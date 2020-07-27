@@ -5,6 +5,9 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
+
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
     {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
@@ -19,11 +22,11 @@ import (
 {{- end }}
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
-	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
 
 // Hack to avoid import errors during build...
 var (
+    _ = &metav1.Time{}
     _ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
     _ = &svcapitypes.{{ .CRD.Names.Camel }}{}
 )
@@ -67,7 +70,7 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetReadOneInput .CRD "res" "r.ko.Spec" 1 }}
+{{ GoCodeSetReadOneInput .CRD "r.ko.Spec" "res" 1 }}
 	return res, nil
 }
 {{- else }}
@@ -101,7 +104,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetCreateInput .CRD "res" "r.ko.Spec" 1 }}
+{{ GoCodeSetCreateInput .CRD "r.ko.Spec" "res" 1 }}
 	return res, nil
 }
 
@@ -138,7 +141,7 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetUpdateInput .CRD "res" "r.ko.Spec" 1 }}
+{{ GoCodeSetUpdateInput .CRD "r.ko.Spec" "res" 1 }}
 	return res, nil
 }
 {{ end }}
@@ -168,7 +171,7 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetDeleteInput .CRD "res" "r.ko.Spec" 1 }}
+{{ GoCodeSetDeleteInput .CRD "r.ko.Spec" "res" 1 }}
 	return res, nil
 }
 {{- end -}}

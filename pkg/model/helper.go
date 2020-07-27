@@ -21,8 +21,11 @@ import (
 )
 
 type Helper struct {
-	sdkAPI *awssdkmodel.API
-	crds   []*CRD
+	sdkAPI      *awssdkmodel.API
+	crds        []*CRD
+	typeDefs    []*TypeDef
+	typeImports map[string]string
+	typeRenames map[string]string
 	// A map of operation type and resource name to
 	// aws-sdk-go/private/model/api.Operation structs
 	opMap *OperationMap
@@ -47,6 +50,12 @@ func (h *Helper) GetAPIGroup() string {
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
+// GetTypeRenames returns a map of original type name to renamed name (some
+// type definition names conflict with generated names)
+func (h *Helper) GetTypeRenames() map[string]string {
+	return h.typeRenames
+}
+
 func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
 	// If we don't do this, we can end up with panic()'s like this:
 	// panic: assignment to entry in nil map
@@ -56,7 +65,7 @@ func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
 	// unexported map variable...
 	_ = sdkAPI.ServicePackageDoc()
 
-	return &Helper{sdkAPI, nil, nil}
+	return &Helper{sdkAPI, nil, nil, nil, nil, nil}
 }
 
 // GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API

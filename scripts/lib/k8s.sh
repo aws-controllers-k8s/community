@@ -2,7 +2,9 @@
 
 ensure_controller_gen() {
   if ! is_installed controller-gen; then
-    go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0
+    # Need this version of controller-gen to allow dangerous types and float
+    # type support
+    go get sigs.k8s.io/controller-tools/cmd/controller-gen@4a903ddb7005459a7baf4777c67244a74c91083d
   fi
 }
 
