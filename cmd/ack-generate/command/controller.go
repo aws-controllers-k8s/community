@@ -104,11 +104,18 @@ func writeControllerMainGo(sh *model.Helper) error {
 		return error
 	}
 
-	vars := &cmdtemplate.ControllerMainTemplateVars{
-		APIVersion:   latestAPIVersion,
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
-		CRDNames:     crdsNames,
+	// convert CRD names into snake_case to use for package import
+	snakeCasedCRDNames := make([]string, 0)
+	for _, crdName := range crdsNames {
+		snakeCasedCRDNames = append(snakeCasedCRDNames, crdName.Snake)
 	}
+
+	vars := &cmdtemplate.ControllerMainTemplateVars{
+		APIVersion:         latestAPIVersion,
+		ServiceAlias:       strings.ToLower(sh.GetServiceAlias()),
+		SnakeCasedCRDNames: snakeCasedCRDNames,
+	}
+
 	tpl, err := cmdtemplate.NewControllerMainTemplate(optTemplatesDir)
 	if err != nil {
 		return err

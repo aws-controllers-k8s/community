@@ -22,9 +22,9 @@ import (
 )
 
 type ControllerMainTemplateVars struct {
-	APIVersion   string
-	ServiceAlias string
-	CRDNames     []string
+	APIVersion         string
+	ServiceAlias       string
+	SnakeCasedCRDNames []string
 }
 
 func NewControllerMainTemplate(tplDir string) (*ttpl.Template, error) {

@@ -15,6 +15,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 	"strings"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
@@ -50,21 +51,20 @@ func (h *Helper) GetAPIGroup() string {
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
 }
 
-func (h *Helper) GetCRDNames() ([]string, error) {
-
+func (h *Helper) GetCRDNames() ([]names.Names, error) {
 	crds, error := h.GetCRDs()
 	if error != nil {
 		return nil, error
 	}
 
-	crdNames := make([]string, 0)
+	crdNames := make([]names.Names, 0)
 
 	if crds == nil {
 		return crdNames, nil
 	}
 
 	for _, crd := range h.crds {
-		crdNames = append(crdNames, crd.Names.Snake)
+		crdNames = append(crdNames, crd.Names)
 	}
 
 	return crdNames, nil
