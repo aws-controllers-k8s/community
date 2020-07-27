@@ -35,12 +35,13 @@ type CRDOps struct {
 
 // CRDField represents a single field in the CRD's Spec or Status objects
 type CRDField struct {
-	CRD               *CRD
-	Names             names.Names
-	GoType            string
-	GoTypeElem        string
-	GoTypeWithPkgName string
-	Shape             *awssdkmodel.Shape
+	CRD                  *CRD
+	Names                names.Names
+	GoType               string
+	GoTypeElem           string
+	GoTypeWithPkgName    string
+	Shape                *awssdkmodel.Shape
+	FieldGeneratorConfig *FieldGeneratorConfig
 }
 
 // newCRDField returns a pointer to a new CRDField object
@@ -48,15 +49,24 @@ func newCRDField(
 	crd *CRD,
 	fieldNames names.Names,
 	shape *awssdkmodel.Shape,
+	generatorConfig *FieldGeneratorConfig,
 ) *CRDField {
-	gte, gt, gtwp := crd.cleanGoType(shape)
+	var gte, gt, gtwp string
+	if shape != nil {
+		gte, gt, gtwp = crd.cleanGoType(shape)
+	} else {
+		gte = "string"
+		gt = "*string"
+		gtwp = "*string"
+	}
 	return &CRDField{
-		CRD:               crd,
-		Names:             fieldNames,
-		Shape:             shape,
-		GoType:            gt,
-		GoTypeElem:        gte,
-		GoTypeWithPkgName: gtwp,
+		CRD:                  crd,
+		Names:                fieldNames,
+		Shape:                shape,
+		GoType:               gt,
+		GoTypeElem:           gte,
+		GoTypeWithPkgName:    gtwp,
+		FieldGeneratorConfig: generatorConfig,
 	}
 }
 
@@ -131,7 +141,7 @@ func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shape *awssdkmodel.Shape,
 ) {
-	crdField := newCRDField(r, memberNames, shape)
+	crdField := newCRDField(r, memberNames, shape, nil)
 	r.SpecFields[memberNames.Original] = crdField
 }
 
@@ -141,7 +151,7 @@ func (r *CRD) AddStatusField(
 	memberNames names.Names,
 	shape *awssdkmodel.Shape,
 ) {
-	crdField := newCRDField(r, memberNames, shape)
+	crdField := newCRDField(r, memberNames, shape, nil)
 	r.StatusFields[memberNames.Original] = crdField
 }
 
@@ -165,6 +175,33 @@ func (r *CRD) SpecFieldNames() []string {
 	}
 	sort.Strings(res)
 	return res
+}
+
+// UnpacksAttributeMap returns true if the underlying API has
+// Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
+// schema'd fields to a raw `map[string]*string` for this resource (see SNS and
+// SQS APIs)
+func (r *CRD) UnpacksAttributesMap() bool {
+	return r.helper.UnpacksAttributesMap(r.Names.Original)
+}
+
+// UnpackAttributes grabs instructions about fields that are represented in the
+// AWS API as a `map[string]*string` but are actually real, schema'd fields and
+// adds CRDField definitions for those fields.
+func (r *CRD) UnpackAttributes() {
+	if !r.helper.UnpacksAttributesMap(r.Names.Original) {
+		return
+	}
+	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+	for fieldName, fieldConfig := range attrMapConfig.Fields {
+		fieldNames := names.New(fieldName)
+		crdField := newCRDField(r, fieldNames, nil, &fieldConfig)
+		if !fieldConfig.IsReadOnly {
+			r.SpecFields[fieldName] = crdField
+		} else {
+			r.StatusFields[fieldName] = crdField
+		}
+	}
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
@@ -255,6 +292,39 @@ func (r *CRD) GoCodeSetInput(
 	}
 
 	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
+
+	if r.UnpacksAttributesMap() {
+		// For APIs that use a pattern of a parameter called "Attributes" that
+		// is of type `map[string]*string` to represent real, schema'd fields,
+		// we need to set the input shape's "Attributes" member field to the
+		// re-constructed, packed set of fields.
+		//
+		// Therefore, we output here something like this (example from SNS
+		// Topic's Attributes map):
+		//
+		// attrMap := map[string]*string{}
+		// attrMap["DeliveryPolicy"] = r.ko.Spec.DeliveryPolicy
+		// attrMap["DisplayName"} = r.ko.Spec.DisplayName
+		// attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
+		// attrMap["Policy"] = r.ko.Spec.Policy
+		// res.SetAttributes(attrMap)
+		attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+		out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
+		sortedAttrFieldNames := []string{}
+		for fieldName := range attrMapConfig.Fields {
+			sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+		}
+		sort.Strings(sortedAttrFieldNames)
+		for _, fieldName := range sortedAttrFieldNames {
+			fieldConfig := attrMapConfig.Fields[fieldName]
+			fieldNames := names.New(fieldName)
+			if !fieldConfig.IsReadOnly {
+				out += fmt.Sprintf("%sattrMap[\"%s\"] = %s.%s\n", indent, fieldName, sourceVarName, fieldNames.Camel)
+			}
+		}
+		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
+	}
 
 	for memberIndex, memberName := range r.SpecFieldNames() {
 		specField := r.SpecFields[memberName]
@@ -289,10 +359,10 @@ func (r *CRD) GoCodeSetInput(
 		// f0f0f0.SetStreet(*ko.Spec.Author.Address.Street)
 		// f0f0f0.SetCity(*ko.Spec.Author.Address.City)
 		// f0f0f0.SetState(*ko.Spec.Author.Address.State)
-		// f0f0.Address = field0f0f0
+		// f0f0.Address = f0f0f0
 		// f0f0.SetName(*r.ko.Author.Name)
-		// f0.Author = field0f0
-		// res.Book = field0
+		// f0.Author = f0f0
+		// res.Book = f0
 		//
 		// It's ugly but at least consistent and mostly readable...
 		//
@@ -958,6 +1028,10 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			if memberShapeRef.Shape == nil {
 				return nil, ErrNilShapePointer
 			}
+			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
+				crd.UnpackAttributes()
+				continue
+			}
 			crd.AddSpecField(memberNames, memberShapeRef.Shape)
 		}
 
@@ -985,6 +1059,9 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 				// the Status struct
 				continue
 			}
+			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
+				continue
+			}
 			if strings.EqualFold(memberName, "arn") ||
 				strings.EqualFold(memberName, crdName+"arn") {
 				// Normalize primary resource ARN field in the returned output
@@ -1003,6 +1080,20 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 	})
 	h.crds = crds
 	return crds, nil
+}
+
+// UnpacksAttributeMap returns true if the underlying API has
+// Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
+// schema'd fields to a raw `map[string]*string` for this resource (see SNS and
+// SQS APIs)
+func (h *Helper) UnpacksAttributesMap(resourceName string) bool {
+	if h.generatorConfig != nil {
+		resGenConfig, found := h.generatorConfig.Resources[resourceName]
+		if found {
+			return resGenConfig.UnpackAttributesMapConfig != nil
+		}
+	}
+	return false
 }
 
 // GetOperationMap returns a map, keyed by the operation type and operation

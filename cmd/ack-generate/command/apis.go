@@ -83,7 +83,10 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sh := model.NewHelper(sdkAPI)
+	sh, err := model.NewHelper(sdkAPI, optGeneratorConfigPath)
+	if err != nil {
+		return err
+	}
 
 	crds, err := sh.GetCRDs()
 	if err != nil {

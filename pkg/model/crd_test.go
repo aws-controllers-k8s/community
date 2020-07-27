@@ -61,34 +61,53 @@ func TestSNSTopic(t *testing.T) {
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
 
+	// The SNS Topic uses an "Attributes" map[string]*string to masquerade
+	// real fields. DeliveryPolicy, Policy, KMSMasterKeyID and DisplayName are
+	// all examples of these masqueraded fields...
 	expSpecFieldCamel := []string{
-		"Attributes",
+		"DeliveryPolicy",
+		"DisplayName",
+		"KMSMasterKeyID",
 		"Name",
+		"Policy",
 		"Tags",
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
+	// The SNS Topic uses an "Attributes" map[string]*string to masquerade
+	// real fields. EffectiveDeliveryPolicy and Owner are
+	// examples of these masqueraded fields that are ReadOnly and thus belong
+	// in the Status struct
 	expStatusFieldCamel := []string{
-		// "TopicARN" is the only field in the output shape for CreateTopic,
-		// but it is removed because it is the primary resource object's ARN
-		// field and the SDKMapper has identified it as the source for the
-		// standard Status.ACKResourceMetadata.ARN field
+		// "TopicARN" is in the output shape for CreateTopic, but it is removed
+		// because it is the primary resource object's ARN field and the
+		// SDKMapper has identified it as the source for the standard
+		// Status.ACKResourceMetadata.ARN field
+		"EffectiveDeliveryPolicy",
+		"Owner",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
 	// The input shape for the Create operation is set from a variety of scalar
-	// and non-scalar types...
+	// and non-scalar types and the SNS API features an Attributes parameter
+	// that is actually a map[string]*string of real field values that are
+	// unpacked by the code generator.
 	expCreateInput := `
-	res.SetAttributes(r.ko.Spec.Attributes)
+	attrMap := map[string]*string{}
+	attrMap["DeliveryPolicy"] = r.ko.Spec.DeliveryPolicy
+	attrMap["DisplayName"] = r.ko.Spec.DisplayName
+	attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
+	attrMap["Policy"] = r.ko.Spec.Policy
+	res.SetAttributes(attrMap)
 	res.SetName(*r.ko.Spec.Name)
-	f2 := []*svcsdk.Tag{}
-	for _, f2iter := range r.ko.Spec.Tags {
-		f2elem := &svcsdk.Tag{}
-		f2elem.SetKey(*f2iter.Key)
-		f2elem.SetValue(*f2iter.Value)
-		f2 = append(f2, f2elem)
+	f5 := []*svcsdk.Tag{}
+	for _, f5iter := range r.ko.Spec.Tags {
+		f5elem := &svcsdk.Tag{}
+		f5elem.SetKey(*f5iter.Key)
+		f5elem.SetValue(*f5iter.Value)
+		f5 = append(f5, f5elem)
 	}
-	res.SetTags(f2)
+	res.SetTags(f5)
 `
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
@@ -591,20 +610,46 @@ func TestSQSQueue(t *testing.T) {
 	statusFields := crd.StatusFields
 
 	expSpecFieldCamel := []string{
-		"Attributes",
+		"ContentBasedDeduplication",
+		"DelaySeconds",
+		"FifoQueue",
+		"KMSDataKeyReusePeriodSeconds",
+		"KMSMasterKeyID",
+		"MaximumMessageSize",
+		"MessageRetentionPeriod",
+		"Policy",
 		"QueueName",
+		"ReceiveMessageWaitTimeSeconds",
+		"RedrivePolicy",
 		"Tags",
+		"VisibilityTimeout",
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
 	expStatusFieldCamel := []string{
+		// There are a set of Attribute map keys that are readonly
+		// fields...
+		"CreatedTimestamp",
+		"LastModifiedTimestamp",
 		// There is only a QueueURL field returned from CreateQueueResult shape
 		"QueueURL",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
 	expCreateInput := `
-	res.SetAttributes(r.ko.Spec.Attributes)
+	attrMap := map[string]*string{}
+	attrMap["ContentBasedDeduplication"] = r.ko.Spec.ContentBasedDeduplication
+	attrMap["DelaySeconds"] = r.ko.Spec.DelaySeconds
+	attrMap["FifoQueue"] = r.ko.Spec.FifoQueue
+	attrMap["KmsDataKeyReusePeriodSeconds"] = r.ko.Spec.KMSDataKeyReusePeriodSeconds
+	attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
+	attrMap["MaximumMessageSize"] = r.ko.Spec.MaximumMessageSize
+	attrMap["MessageRetentionPeriod"] = r.ko.Spec.MessageRetentionPeriod
+	attrMap["Policy"] = r.ko.Spec.Policy
+	attrMap["ReceiveMessageWaitTimeSeconds"] = r.ko.Spec.ReceiveMessageWaitTimeSeconds
+	attrMap["RedrivePolicy"] = r.ko.Spec.RedrivePolicy
+	attrMap["VisibilityTimeout"] = r.ko.Spec.VisibilityTimeout
+	res.SetAttributes(attrMap)
 	res.SetQueueName(*r.ko.Spec.QueueName)
 	res.SetTags(r.ko.Spec.Tags)
 `

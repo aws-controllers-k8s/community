@@ -79,7 +79,10 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sh := model.NewHelper(sdkAPI)
+	sh, err := model.NewHelper(sdkAPI, optGeneratorConfigPath)
+	if err != nil {
+		return err
+	}
 	latestAPIVersion, err = getLatestAPIVersion()
 	if err != nil {
 		return err
