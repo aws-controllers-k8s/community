@@ -14,10 +14,11 @@
 package pkg
 
 import (
-	"github.com/aws/aws-controllers-k8s/pkg/template"
 	"io/ioutil"
 	"path/filepath"
 	ttpl "text/template"
+
+	"github.com/aws/aws-controllers-k8s/pkg/template"
 )
 
 type ResourceRegistryGoTemplateVars struct {
