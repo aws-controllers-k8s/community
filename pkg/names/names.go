@@ -103,7 +103,7 @@ var (
 		{"Tls", "TLS", "tls", nil},
 		{"Udp", "UDP", "udp", nil},
 		// Need to prevent "security" from becoming "SecURIty"
-		{"Uri", "URI", "uri", regexp.MustCompile("(?!sec)uri(?!ty)", regexp.None)},
+		{"Uri", "URI", "uri", regexp.MustCompile("(?!sec)uri(?!ty)|(Uri)", regexp.None)},
 		{"Url", "URL", "url", nil},
 		{"Vpc", "VPC", "vpc", nil},
 		{"Vpn", "VPN", "vpn", nil},

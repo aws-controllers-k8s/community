@@ -45,6 +45,7 @@ func TestNames(t *testing.T) {
 		{"DBInstanceIdentifier", "DBInstanceIdentifier", "dbInstanceIdentifier", "db_instance_identifier"},
 		{"MaxIdleConnectionsPercent", "MaxIdleConnectionsPercent", "maxIdleConnectionsPercent", "max_idle_connections_percent"},
 		{"CacheSecurityGroup", "CacheSecurityGroup", "cacheSecurityGroup", "cache_security_group"},
+		{"RepositoryUriTest", "RepositoryURITest", "repositoryURITest", "repository_uri_test"},
 	}
 	for _, tc := range testCases {
 		n := names.New(tc.original)
