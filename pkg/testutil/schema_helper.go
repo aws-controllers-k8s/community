@@ -14,6 +14,7 @@
 package testutil
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -27,5 +28,13 @@ func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper 
 	if err != nil {
 		t.Fatal(err)
 	}
-	return model.NewHelper(sdkAPI)
+	generatorConfigPath := filepath.Join(path, "models", "apis", serviceAlias, "0000-00-00", "generator.yaml")
+	if _, err := os.Stat(generatorConfigPath); os.IsNotExist(err) {
+		generatorConfigPath = ""
+	}
+	h, err := model.NewHelper(sdkAPI, generatorConfigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

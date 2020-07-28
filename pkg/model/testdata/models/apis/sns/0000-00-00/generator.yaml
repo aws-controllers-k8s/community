@@ -1,0 +1,13 @@
+resources:
+  Topic:
+    unpack_attributes_map:
+      fields:
+        DeliveryPolicy:
+        DisplayName:
+        Policy:
+        KmsMasterKeyId:
+        Owner:
+          is_read_only: true
+          contains_owner_account_id: true
+        EffectiveDeliveryPolicy:
+          is_read_only: true

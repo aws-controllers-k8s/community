@@ -7,6 +7,7 @@ require (
 	github.com/dlclark/regexp2 v1.2.0
 	// pin to v0.1.1 due to release problem with v0.1.2
 	github.com/gertd/go-pluralize v0.1.1
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
 	github.com/google/go-cmp v0.3.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334

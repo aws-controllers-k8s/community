@@ -31,17 +31,18 @@ A tool to generate AWS service controller code`
 )
 
 var (
-	version             string
-	buildHash           string
-	buildDate           string
-	defaultCacheDir     string
-	optCacheDir         string
-	defaultTemplatesDir string
-	optTemplatesDir     string
-	defaultServicesDir  string
-	optServicesDir      string
-	optDryRun           bool
-	sdkDir              string
+	version                string
+	buildHash              string
+	buildDate              string
+	defaultCacheDir        string
+	optCacheDir            string
+	defaultTemplatesDir    string
+	optTemplatesDir        string
+	defaultServicesDir     string
+	optServicesDir         string
+	optDryRun              bool
+	sdkDir                 string
+	optGeneratorConfigPath string
 )
 
 var rootCmd = &cobra.Command{
@@ -103,6 +104,9 @@ func init() {
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&optCacheDir, "cache-dir", defaultCacheDir, "Path to directory to store cached files (including clone'd aws-sdk-go repo)",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&optGeneratorConfigPath, "generator-config-path", "", "Path to file containing instructions for code generation to use",
 	)
 }
 

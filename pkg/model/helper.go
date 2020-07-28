@@ -29,6 +29,9 @@ type Helper struct {
 	// A map of operation type and resource name to
 	// aws-sdk-go/private/model/api.Operation structs
 	opMap *OperationMap
+	// Instructions to the code generator how to handle the API and its
+	// resources
+	generatorConfig *GeneratorConfig
 }
 
 func (h *Helper) GetServiceAlias() string {
@@ -56,7 +59,13 @@ func (h *Helper) GetTypeRenames() map[string]string {
 	return h.typeRenames
 }
 
-func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
+// NewHelper returns a new Helper struct for a supplied API model. Optionally,
+// pass a file path to a generator config file that can be used to instruct the
+// code generator how to handle the API properly
+func NewHelper(
+	sdkAPI *awssdkmodel.API,
+	configPath string,
+) (*Helper, error) {
 	// If we don't do this, we can end up with panic()'s like this:
 	// panic: assignment to entry in nil map
 	// when trying to execute Shape.GoType().
@@ -65,7 +74,16 @@ func NewHelper(sdkAPI *awssdkmodel.API) *Helper {
 	// unexported map variable...
 	_ = sdkAPI.ServicePackageDoc()
 
-	return &Helper{sdkAPI, nil, nil, nil, nil, nil}
+	var gc *GeneratorConfig
+	var err error
+	if configPath != "" {
+		gc, err = NewGeneratorConfig(configPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Helper{sdkAPI, nil, nil, nil, nil, nil, gc}, nil
 }
 
 // GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API

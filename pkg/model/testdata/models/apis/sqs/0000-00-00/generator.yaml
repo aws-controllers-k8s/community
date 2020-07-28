@@ -1,0 +1,19 @@
+resources:
+  Queue:
+    unpack_attributes_map:
+      fields:
+        DelaySeconds:
+        MaximumMessageSize:
+        MessageRetentionPeriod:
+        KmsMasterKeyId:
+        KmsDataKeyReusePeriodSeconds:
+        Policy:
+        ReceiveMessageWaitTimeSeconds:
+        VisibilityTimeout:
+        FifoQueue:
+        ContentBasedDeduplication:
+        RedrivePolicy:
+        CreatedTimestamp:
+          is_read_only: true
+        LastModifiedTimestamp:
+          is_read_only: true
