@@ -140,7 +140,7 @@ func TestSNSTopic(t *testing.T) {
 	// itself) and should be set specially from the ACKResourceMetadata.ARN
 	// field in the TopicStatus struct
 	expGetAttrsInput := `
-	res.SetTopicArn(*r.ko.Status.ACKResourceMetadata.ARN)
+	res.SetTopicArn(string(*r.ko.Status.ACKResourceMetadata.ARN))
 `
 	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
 
@@ -151,8 +151,10 @@ func TestSNSTopic(t *testing.T) {
 	// AWS Owner account ID, both of which are handled specially.
 	expGetAttrsOutput := `
 	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
-	ko.Status.ACKResourceMetadata.OwnerAccountID = resp.Attributes["Owner"]
-	ko.Status.ACKResourceMetadata.ARN = resp.Attributes["TopicArn"]
+	tmpOwnerID := ackv1alpha1.AWSAccountID(*resp.Attributes["Owner"])
+	ko.Status.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID
+	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["TopicArn"])
+	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }
@@ -720,7 +722,8 @@ func TestSQSQueue(t *testing.T) {
 	expGetAttrsOutput := `
 	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
 	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
-	ko.Status.ACKResourceMetadata.ARN = resp.Attributes["QueueArn"]
+	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
+	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }

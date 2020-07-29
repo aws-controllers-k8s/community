@@ -16,6 +16,7 @@ package pkg
 import (
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	ttpl "text/template"
 
 	"github.com/aws/aws-controllers-k8s/pkg/model"
@@ -64,6 +65,9 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 		},
 		"GoCodeSetDeleteInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeSetInput(model.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
+		},
+		"Empty": func(subject string) bool {
+			return strings.TrimSpace(subject) == ""
 		},
 	})
 	if t, err = t.Parse(string(tplContents)); err != nil {

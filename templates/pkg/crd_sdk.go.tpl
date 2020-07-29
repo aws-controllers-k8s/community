@@ -4,10 +4,6 @@ package {{ .CRD.Names.Snake }}
 
 import (
 	"context"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
-
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
 	{{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
@@ -15,11 +11,10 @@ import (
 
 {{- end }}
 
-{{- if .CRD.Ops.ReadOne }}
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
-{{- end }}
+	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
 )
@@ -29,6 +24,8 @@ var (
 	_ = &metav1.Time{}
 	_ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
 	_ = &svcapitypes.{{ .CRD.Names.Camel }}{}
+    _ = ackv1alpha1.AWSAccountID("")
+    _ = &ackerr.NotFound
 )
 
 // sdkFind returns SDK-specific information about a supplied resource
@@ -41,38 +38,43 @@ func (rm *resourceManager) sdkFind(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
+{{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
+	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFoundException" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
 		}
 		return nil, err
 	}
+
+	// Merge in the information we read from the API call above to the copy of
+	// the original Kubernetes object we passed to the function
+	ko := r.ko.DeepCopy()
+{{ $setCode }}
 {{- else if .CRD.Ops.GetAttributes }}
 	input, err := rm.newGetAttributesRequestPayload(r)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
+{{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
+	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFoundException" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
 		}
 		return nil, err
 	}
-{{- else }}
-	// TODO(jaypipes): Map out the ReadMany codepath
-{{- end }}
 
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ if .CRD.Ops.ReadOne }}
-{{ GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
-{{- else if .CRD.Ops.GetAttributes }}
-{{ GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
+{{ $setCode }}
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
+
+	// Merge in the information we read from the API call above to the copy of
+	// the original Kubernetes object we passed to the function
+	ko := r.ko.DeepCopy()
 {{- end }}
 	return &resource{ko}, nil
 }
@@ -111,14 +113,15 @@ func (rm *resourceManager) sdkCreate(
 	if err != nil {
 		return nil, err
 	}
-	{{ if .CRD.StatusFields }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
+{{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
+	{{ if and .CRD.StatusFields ( not ( Empty $createCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
+{{ $createCode }}
 	return &resource{ko}, nil
 }
 

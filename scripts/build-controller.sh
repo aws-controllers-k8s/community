@@ -15,6 +15,7 @@ source "$SCRIPTS_DIR"/lib/k8s.sh
 : "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
+: "${ACK_GENERATE_CONFIG_PATH:=""}"
 
 USAGE="
 Usage:
@@ -35,6 +36,9 @@ Environment variables:
                             previously generated, the latest generated API
                             version is used. If the service controller has yet
                             to be generated, 'v1alpha1' is used.
+  ACK_GENERATE_CONFIG_PATH: Specify a path to the generator config YAML file to
+                            instruct the code generator for the service.
+                            Default: services/{SERVICE}/generator.yaml
 "
 
 if [ $# -ne 1 ]; then
@@ -64,6 +68,14 @@ fi
 
 SERVICE="$1"
 
+# If there's a generator.yaml in the service's directory and the caller hasn't
+# specified an override, use that.
+if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
+    if [ -f "services/$SERVICE/generator.yaml" ]; then
+        ACK_GENERATE_CONFIG_PATH="services/$SERVICE/generator.yaml"
+    fi
+fi
+
 ag_args="$SERVICE"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
@@ -72,6 +84,11 @@ fi
 apis_args="apis $ag_args"
 if [ -n "$ACK_GENERATE_API_VERSION" ]; then
     apis_args="$apis_args --version $ACK_GENERATE_API_VERSION"
+fi
+
+if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
+    ag_args="$ag_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
+    apis_args="$apis_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
 fi
 
 echo "Building Kubernetes API objects for $SERVICE"
