@@ -13,6 +13,9 @@ import (
 
 	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/pkg/resource"
 	svctypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
+
+	{{ $serviceAlias := .ServiceAlias }} {{range $crdName := .SnakeCasedCRDNames }}_ "github.com/aws/aws-controllers-k8s/services/{{ $serviceAlias }}/pkg/resource/{{ $crdName }}"
+	{{end}}
 )
 
 var (

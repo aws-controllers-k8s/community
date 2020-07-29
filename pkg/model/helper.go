@@ -15,6 +15,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
 	"strings"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
@@ -51,6 +52,25 @@ func (h *Helper) GetServiceFullName() string {
 func (h *Helper) GetAPIGroup() string {
 	serviceAlias := strings.ToLower(h.GetServiceAlias())
 	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
+}
+
+func (h *Helper) GetCRDNames() ([]names.Names, error) {
+	crds, error := h.GetCRDs()
+	if error != nil {
+		return nil, error
+	}
+
+	crdNames := make([]names.Names, 0)
+
+	if crds == nil {
+		return crdNames, nil
+	}
+
+	for _, crd := range h.crds {
+		crdNames = append(crdNames, crd.Names)
+	}
+
+	return crdNames, nil
 }
 
 // GetTypeRenames returns a map of original type name to renamed name (some

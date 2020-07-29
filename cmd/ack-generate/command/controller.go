@@ -102,10 +102,23 @@ func generateController(cmd *cobra.Command, args []string) error {
 
 func writeControllerMainGo(sh *model.Helper) error {
 	var b bytes.Buffer
-	vars := &cmdtemplate.ControllerMainTemplateVars{
-		APIVersion:   latestAPIVersion,
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	crdsNames, error := sh.GetCRDNames()
+	if error != nil {
+		return error
 	}
+
+	// convert CRD names into snake_case to use for package import
+	snakeCasedCRDNames := make([]string, 0)
+	for _, crdName := range crdsNames {
+		snakeCasedCRDNames = append(snakeCasedCRDNames, crdName.Snake)
+	}
+
+	vars := &cmdtemplate.ControllerMainTemplateVars{
+		APIVersion:         latestAPIVersion,
+		ServiceAlias:       strings.ToLower(sh.GetServiceAlias()),
+		SnakeCasedCRDNames: snakeCasedCRDNames,
+	}
+
 	tpl, err := cmdtemplate.NewControllerMainTemplate(optTemplatesDir)
 	if err != nil {
 		return err
