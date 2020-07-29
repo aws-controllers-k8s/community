@@ -26,11 +26,13 @@ import (
 )
 
 type CRDOps struct {
-	Create   *awssdkmodel.Operation
-	ReadOne  *awssdkmodel.Operation
-	ReadMany *awssdkmodel.Operation
-	Update   *awssdkmodel.Operation
-	Delete   *awssdkmodel.Operation
+	Create        *awssdkmodel.Operation
+	ReadOne       *awssdkmodel.Operation
+	ReadMany      *awssdkmodel.Operation
+	Update        *awssdkmodel.Operation
+	Delete        *awssdkmodel.Operation
+	GetAttributes *awssdkmodel.Operation
+	SetAttributes *awssdkmodel.Operation
 }
 
 // CRDField represents a single field in the CRD's Spec or Status objects
@@ -40,7 +42,7 @@ type CRDField struct {
 	GoType               string
 	GoTypeElem           string
 	GoTypeWithPkgName    string
-	Shape                *awssdkmodel.Shape
+	ShapeRef             *awssdkmodel.ShapeRef
 	FieldGeneratorConfig *FieldGeneratorConfig
 }
 
@@ -48,10 +50,14 @@ type CRDField struct {
 func newCRDField(
 	crd *CRD,
 	fieldNames names.Names,
-	shape *awssdkmodel.Shape,
+	shapeRef *awssdkmodel.ShapeRef,
 	generatorConfig *FieldGeneratorConfig,
 ) *CRDField {
 	var gte, gt, gtwp string
+	var shape *awssdkmodel.Shape
+	if shapeRef != nil {
+		shape = shapeRef.Shape
+	}
 	if shape != nil {
 		gte, gt, gtwp = crd.cleanGoType(shape)
 	} else {
@@ -62,7 +68,7 @@ func newCRDField(
 	return &CRDField{
 		CRD:                  crd,
 		Names:                fieldNames,
-		Shape:                shape,
+		ShapeRef:             shapeRef,
 		GoType:               gt,
 		GoTypeElem:           gte,
 		GoTypeWithPkgName:    gtwp,
@@ -139,9 +145,9 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 // field of a CRD
 func (r *CRD) AddSpecField(
 	memberNames names.Names,
-	shape *awssdkmodel.Shape,
+	shapeRef *awssdkmodel.ShapeRef,
 ) {
-	crdField := newCRDField(r, memberNames, shape, nil)
+	crdField := newCRDField(r, memberNames, shapeRef, nil)
 	r.SpecFields[memberNames.Original] = crdField
 }
 
@@ -149,9 +155,9 @@ func (r *CRD) AddSpecField(
 // field of a CRD
 func (r *CRD) AddStatusField(
 	memberNames names.Names,
-	shape *awssdkmodel.Shape,
+	shapeRef *awssdkmodel.ShapeRef,
 ) {
-	crdField := newCRDField(r, memberNames, shape, nil)
+	crdField := newCRDField(r, memberNames, shapeRef, nil)
 	r.StatusFields[memberNames.Original] = crdField
 }
 
@@ -177,7 +183,7 @@ func (r *CRD) SpecFieldNames() []string {
 	return res
 }
 
-// UnpacksAttributeMap returns true if the underlying API has
+// UnpacksAttributesMap returns true if the underlying API has
 // Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
 // schema'd fields to a raw `map[string]*string` for this resource (see SNS and
 // SQS APIs)
@@ -194,6 +200,10 @@ func (r *CRD) UnpackAttributes() {
 	}
 	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
 	for fieldName, fieldConfig := range attrMapConfig.Fields {
+		if r.IsPrimaryARNField(fieldName) {
+			// ignore since this is handled by Status.ACKResourceMetadata.ARN
+			continue
+		}
 		fieldNames := names.New(fieldName)
 		crdField := newCRDField(r, fieldNames, nil, &fieldConfig)
 		if !fieldConfig.IsReadOnly {
@@ -202,6 +212,14 @@ func (r *CRD) UnpackAttributes() {
 			r.StatusFields[fieldName] = crdField
 		}
 	}
+}
+
+// IsPrimaryARNField returns true if the supplied field name is likely the resource's
+// ARN identifier field.
+func (r *CRD) IsPrimaryARNField(fieldName string) bool {
+	lowerName := strings.ToLower(fieldName)
+	lowerResName := strings.ToLower(r.Names.Original)
+	return lowerName == "arn" || lowerName == lowerResName+"arn"
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
@@ -415,6 +433,81 @@ func (r *CRD) GoCodeSetInput(
 				indentLevel,
 			)
 		}
+	}
+	return out
+}
+
+// GoCodeGetAttributesSetInput returns the Go code that sets the Input shape for a
+// resource's GetAttributes operation.
+//
+// As an example, for the GetTopicAttributes SNS API call, the returned code
+// looks like this:
+//
+// res.SetTopicArn(*r.ko.Status.ACKResourceMetadata.ARN)
+//
+// For the SQS API's GetQueueAttributes call, the returned code looks like this:
+//
+// res.SetQueueUrl(*r.ko.Status.QueueURL)
+//
+// You will note the difference due to the special handling of the ARN fields.
+func (r *CRD) GoCodeGetAttributesSetInput(
+	// String representing the name of the variable that we will grab the
+	// Input shape from. This will likely be "r.ko.Spec" since in the templates
+	// that call this method, the "source variable" is the CRD struct's Spec
+	// field which is used to populate the target variable, which is the Input
+	// shape
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "res" since that is the name of the "target variable" that the
+	// templates that call this method use for the Input shape.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	op := r.Ops.GetAttributes
+	if op == nil {
+		return ""
+	}
+	inputShape := op.InputRef.Shape
+	if inputShape == nil {
+		return ""
+	}
+
+	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
+
+	for _, memberName := range inputShape.MemberNames() {
+		if r.IsPrimaryARNField(memberName) {
+			out += fmt.Sprintf(
+				"%s%s.Set%s(*%s.Status.ACKResourceMetadata.ARN)\n",
+				indent, targetVarName, memberName, sourceVarName,
+			)
+			continue
+		}
+
+		cleanMemberNames := names.New(memberName)
+		cleanMemberName := cleanMemberNames.Camel
+
+		sourceVarPath := sourceVarName
+		field, found := r.SpecFields[memberName]
+		if found {
+			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+		} else {
+			field, found = r.StatusFields[memberName]
+			if !found {
+				// If it isn't in our spec/status fields, just ignore it
+				continue
+			}
+			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+		}
+		out += r.goCodeSetInputForScalar(
+			memberName,
+			targetVarName,
+			sourceVarPath,
+			field.ShapeRef,
+			indentLevel,
+		)
 	}
 	return out
 }
@@ -766,6 +859,90 @@ func (r *CRD) GoCodeSetOutput(
 	return out
 }
 
+// GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields
+// from the Output shape returned from a resource's GetAttributes operation.
+//
+// As an example, for the GetTopicAttributes SNS API call, the returned code
+// looks like this:
+//
+// ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
+// ko.Status.ACKResourceMetadata.OwnerAccountID = resp.Attributes["Owner"]
+// ko.Status.ACKResourceMetadata.ARN = resp.Attributes["TopicArn"]
+func (r *CRD) GoCodeGetAttributesSetOutput(
+	// String representing the name of the variable that we will grab the
+	// Output shape from. This will likely be "resp" since in the templates
+	// that call this method, the "source variable" is the response struct
+	// returned by the aws-sdk-go's SDK API call corresponding to the Operation
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "ko.Status" since that is the name of the "target variable" that the
+	// templates that call this method use.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	if !r.UnpacksAttributesMap() {
+		// This is a bug in the code generation if this occurs...
+		panic("caled GoCodeGetAttributesSetOutput for a resource that doesn't unpack attributes map")
+	}
+	op := r.Ops.GetAttributes
+	if op == nil {
+		return ""
+	}
+	inputShape := op.InputRef.Shape
+	if inputShape == nil {
+		return ""
+	}
+
+	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
+
+	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+	sortedAttrFieldNames := []string{}
+	for fieldName := range attrMapConfig.Fields {
+		sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+	}
+	sort.Strings(sortedAttrFieldNames)
+	for _, fieldName := range sortedAttrFieldNames {
+		if r.IsPrimaryARNField(fieldName) {
+			out += fmt.Sprintf(
+				"%s%s.ACKResourceMetadata.ARN = %s.Attributes[\"%s\"]\n",
+				indent,
+				targetVarName,
+				sourceVarName,
+				fieldName,
+			)
+			continue
+		}
+
+		fieldConfig := attrMapConfig.Fields[fieldName]
+		if fieldConfig.ContainsOwnerAccountID {
+			out += fmt.Sprintf(
+				"%s%s.ACKResourceMetadata.OwnerAccountID = %s.Attributes[\"%s\"]\n",
+				indent,
+				targetVarName,
+				sourceVarName,
+				fieldName,
+			)
+			continue
+		}
+
+		fieldNames := names.New(fieldName)
+		if fieldConfig.IsReadOnly {
+			out += fmt.Sprintf(
+				"%s%s.%s = %s.Attributes[\"%s\"]\n",
+				indent,
+				targetVarName,
+				fieldNames.Camel,
+				sourceVarName,
+				fieldName,
+			)
+		}
+	}
+	return out
+}
+
 func (r *CRD) goCodeSetOutputForContainer(
 	// The name of the SDK Input shape member we're outputting for
 	targetFieldName string,
@@ -1002,15 +1179,19 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 	readManyOps := (*opMap)[OpTypeList]
 	updateOps := (*opMap)[OpTypeUpdate]
 	deleteOps := (*opMap)[OpTypeDelete]
+	getAttributesOps := (*opMap)[OpTypeGetAttributes]
+	setAttributesOps := (*opMap)[OpTypeSetAttributes]
 
 	for crdName, createOp := range createOps {
 		crdNames := names.New(crdName)
 		crdOps := CRDOps{
-			Create:   createOps[crdName],
-			ReadOne:  readOneOps[crdName],
-			ReadMany: readManyOps[crdName],
-			Update:   updateOps[crdName],
-			Delete:   deleteOps[crdName],
+			Create:        createOps[crdName],
+			ReadOne:       readOneOps[crdName],
+			ReadMany:      readManyOps[crdName],
+			Update:        updateOps[crdName],
+			Delete:        deleteOps[crdName],
+			GetAttributes: getAttributesOps[crdName],
+			SetAttributes: setAttributesOps[crdName],
 		}
 		crd := newCRD(h, crdNames, crdOps)
 		sdkMapper := NewSDKMapper(crd)
@@ -1032,7 +1213,7 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 				crd.UnpackAttributes()
 				continue
 			}
-			crd.AddSpecField(memberNames, memberShapeRef.Shape)
+			crd.AddSpecField(memberNames, memberShapeRef)
 		}
 
 		// Now process the fields that will go into the Status struct. We want
@@ -1070,7 +1251,7 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 				sdkMapper.SetPrimaryResourceARNField(createOp, memberName)
 				continue
 			}
-			crd.AddStatusField(memberNames, memberShapeRef.Shape)
+			crd.AddStatusField(memberNames, memberShapeRef)
 		}
 
 		crds = append(crds, crd)

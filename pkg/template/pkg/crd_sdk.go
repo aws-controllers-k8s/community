@@ -38,26 +38,32 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	t := ttpl.New("crd_sdk")
 	t = t.Funcs(ttpl.FuncMap{
-		"GoCodeSetReadOneOutput": func(r *model.CRD, outVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetOutput(model.OpTypeGet, outVarName, koVarName, indentLevel)
+		"GoCodeSetReadOneOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetOutput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetReadOneInput": func(r *model.CRD, inVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(model.OpTypeGet, inVarName, koVarName, indentLevel)
+		"GoCodeSetReadOneInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetCreateOutput": func(r *model.CRD, outVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetOutput(model.OpTypeCreate, outVarName, koVarName, indentLevel)
+		"GoCodeGetAttributesSetInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeGetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetCreateInput": func(r *model.CRD, inVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(model.OpTypeCreate, inVarName, koVarName, indentLevel)
+		"GoCodeGetAttributesSetOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeGetAttributesSetOutput(sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetUpdateOutput": func(r *model.CRD, outVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetOutput(model.OpTypeUpdate, outVarName, koVarName, indentLevel)
+		"GoCodeSetCreateOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetOutput(model.OpTypeCreate, sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetUpdateInput": func(r *model.CRD, inVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(model.OpTypeUpdate, inVarName, koVarName, indentLevel)
+		"GoCodeSetCreateInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeCreate, sourceVarName, targetVarName, indentLevel)
 		},
-		"GoCodeSetDeleteInput": func(r *model.CRD, inVarName string, koVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(model.OpTypeDelete, inVarName, koVarName, indentLevel)
+		"GoCodeSetUpdateOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetOutput(model.OpTypeUpdate, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeSetUpdateInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeUpdate, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeSetDeleteInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
 		},
 	})
 	if t, err = t.Parse(string(tplContents)); err != nil {

@@ -10,7 +10,7 @@ import (
 
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
-    {{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
+	{{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
 {{ end }}
 
 {{- end }}
@@ -26,9 +26,9 @@ import (
 
 // Hack to avoid import errors during build...
 var (
-    _ = &metav1.Time{}
-    _ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
-    _ = &svcapitypes.{{ .CRD.Names.Camel }}{}
+	_ = &metav1.Time{}
+	_ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
+	_ = &svcapitypes.{{ .CRD.Names.Camel }}{}
 )
 
 // sdkFind returns SDK-specific information about a supplied resource
@@ -48,6 +48,18 @@ func (rm *resourceManager) sdkFind(
 		}
 		return nil, err
 	}
+{{- else if .CRD.Ops.GetAttributes }}
+	input, err := rm.newGetAttributesRequestPayload(r)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFoundException" {
+			return nil, ackerr.NotFound
+		}
+		return nil, err
+	}
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
 {{- end }}
@@ -57,6 +69,8 @@ func (rm *resourceManager) sdkFind(
 	ko := r.ko.DeepCopy()
 {{ if .CRD.Ops.ReadOne }}
 {{ GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
+{{- else if .CRD.Ops.GetAttributes }}
+{{ GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
 {{- end }}
@@ -73,8 +87,18 @@ func (rm *resourceManager) newDescribeRequestPayload(
 {{ GoCodeSetReadOneInput .CRD "r.ko.Spec" "res" 1 }}
 	return res, nil
 }
-{{- else }}
- // TODO(jaypipes): Map out the ReadMany codepath
+{{- end }}
+
+{{- if .CRD.Ops.GetAttributes }}
+// newGetAttributesRequestPayload returns SDK-specific struct for the HTTP
+// request payload of the GetAttributes API call for the resource
+func (rm *resourceManager) newGetAttributesRequestPayload(
+	r *resource,
+) (*svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }}, error) {
+	res := &svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }}{}
+{{ GoCodeGetAttributesSetInput .CRD "r.ko" "res" 1 }}
+	return res, nil
+}
 {{- end }}
 
 // sdkCreate creates the supplied resource in the backend AWS service API and

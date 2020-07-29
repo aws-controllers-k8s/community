@@ -11,3 +11,5 @@ resources:
           contains_owner_account_id: true
         EffectiveDeliveryPolicy:
           is_read_only: true
+        TopicArn:
+          is_read_only: true
