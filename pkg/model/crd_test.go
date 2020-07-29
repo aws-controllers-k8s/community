@@ -58,6 +58,22 @@ func TestSNSTopic(t *testing.T) {
 	assert.Equal("topic", crd.Names.CamelLower)
 	assert.Equal("topic", crd.Names.Snake)
 
+	// The SNS Topic API is a little weird. There are Create and Delete
+	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
+	// operation (there is a "GetTopicAttributes" call though) or Update
+	// operation (there is a "SetTopicAttributes" call though). And there is a
+	// ReadMany operation (ListTopics)
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
+	assert.NotNil(crd.Ops.ReadMany)
+	assert.NotNil(crd.Ops.GetAttributes)
+	assert.NotNil(crd.Ops.SetAttributes)
+
+	assert.Nil(crd.Ops.ReadOne)
+	assert.Nil(crd.Ops.Update)
+
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
 
@@ -119,19 +135,26 @@ func TestSNSTopic(t *testing.T) {
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
-	// The SNS Topic API is a little weird. There are Create and Delete
-	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
-	// operation (there is a "GetTopicAttributes" call though) or Update
-	// operation (there is a "SetTopicAttributes" call though). And there is a
-	// ReadMany operation (ListTopics)
-	require.NotNil(crd.Ops)
+	// The input shape for the GetAttributes operation has a single TopicArn
+	// field. This field represents the ARN of the primary resource (the Topic
+	// itself) and should be set specially from the ACKResourceMetadata.ARN
+	// field in the TopicStatus struct
+	expGetAttrsInput := `
+	res.SetTopicArn(*r.ko.Status.ACKResourceMetadata.ARN)
+`
+	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
 
-	assert.NotNil(crd.Ops.Create)
-	assert.NotNil(crd.Ops.Delete)
-	assert.NotNil(crd.Ops.ReadMany)
-
-	assert.Nil(crd.Ops.ReadOne)
-	assert.Nil(crd.Ops.Update)
+	// The output shape for the GetAttributes operation contains a single field
+	// "Attributes" that must be unpacked into the Topic CRD's Status fields.
+	// There are only three attribute keys that are *not* in the Input shape
+	// (and thus in the Spec fields). Two of them are the tesource's ARN and
+	// AWS Owner account ID, both of which are handled specially.
+	expGetAttrsOutput := `
+	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
+	ko.Status.ACKResourceMetadata.OwnerAccountID = resp.Attributes["Owner"]
+	ko.Status.ACKResourceMetadata.ARN = resp.Attributes["TopicArn"]
+`
+	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }
 
 func TestEC2LaunchTemplate(t *testing.T) {
@@ -606,6 +629,24 @@ func TestSQSQueue(t *testing.T) {
 	assert.Equal("queue", crd.Names.CamelLower)
 	assert.Equal("queue", crd.Names.Snake)
 
+	// The SQS Queue API has CD+L operations:
+	//
+	// * CreateQueue
+	// * DeleteQueue
+	// * ListQueues
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.ReadMany)
+	assert.NotNil(crd.Ops.Delete)
+	assert.NotNil(crd.Ops.GetAttributes)
+	assert.NotNil(crd.Ops.SetAttributes)
+
+	// But sadly, has no Update or ReadOne operation :(
+	// There is, however, GetQueueUrl and GetQueueAttributes calls...
+	assert.Nil(crd.Ops.ReadOne)
+	assert.Nil(crd.Ops.Update)
+
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
 
@@ -662,19 +703,24 @@ func TestSQSQueue(t *testing.T) {
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
-	// The SQS Queue API has CD+L operations:
-	//
-	// * CreateQueue
-	// * DeleteQueue
-	// * ListQueues
-	require.NotNil(crd.Ops)
+	// The input shape for the GetAttributes operation technically has two
+	// fields in it: an AttributeNames list of attribute keys to file
+	// attributes for and a QueueUrl field. We only care about the QueueUrl
+	// field, since we look for all attributes for a queue.
+	expGetAttrsInput := `
+	res.SetQueueUrl(*r.ko.Status.QueueURL)
+`
+	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
 
-	assert.NotNil(crd.Ops.Create)
-	assert.NotNil(crd.Ops.ReadMany)
-	assert.NotNil(crd.Ops.Delete)
-
-	// But sadly, has no Update or ReadOne operation :(
-	// There is, however, GetQueueUrl and GetQueueAttributes calls...
-	assert.Nil(crd.Ops.ReadOne)
-	assert.Nil(crd.Ops.Update)
+	// The output shape for the GetAttributes operation contains a single field
+	// "Attributes" that must be unpacked into the Queue CRD's Status fields.
+	// There are only three attribute keys that are *not* in the Input shape
+	// (and thus in the Spec fields). One of them is the resource's ARN which
+	// is handled specially.
+	expGetAttrsOutput := `
+	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
+	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
+	ko.Status.ACKResourceMetadata.ARN = resp.Attributes["QueueArn"]
+`
+	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }

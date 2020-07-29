@@ -17,3 +17,5 @@ resources:
           is_read_only: true
         LastModifiedTimestamp:
           is_read_only: true
+        QueueArn:
+          is_read_only: true

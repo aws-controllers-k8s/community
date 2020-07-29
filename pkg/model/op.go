@@ -29,18 +29,20 @@ const (
 	OpTypeDelete
 	OpTypeReplace
 	OpTypeUpdate
-	OpTypeUpdateAttr
 	OpTypeAddChild
 	OpTypeAddChildren
 	OpTypeRemoveChild
 	OpTypeRemoveChildren
 	OpTypeGet
 	OpTypeList
+	OpTypeGetAttributes
+	OpTypeSetAttributes
 )
 
 type OperationMap map[OpType]map[string]*awssdkmodel.Operation
 
-// Guess the resource name and type of operation from the OperationID
+// GetOpTypeAndResourceNameFromOpId guesses the resource name and type of
+// operation from the OperationID
 func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 	pluralize := pluralize.NewClient()
 	if strings.HasPrefix(opID, "CreateOrUpdate") {
@@ -76,6 +78,11 @@ func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 		}
 		return OpTypeGet, resName
 	} else if strings.HasPrefix(opID, "Get") {
+		if strings.HasSuffix(opID, "Attributes") {
+			resName := strings.TrimPrefix(opID, "Get")
+			resName = strings.TrimSuffix(resName, "Attributes")
+			return OpTypeGetAttributes, resName
+		}
 		resName := strings.TrimPrefix(opID, "Get")
 		if pluralize.IsPlural(resName) {
 			return OpTypeList, pluralize.Singular(resName)
@@ -84,6 +91,12 @@ func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 	} else if strings.HasPrefix(opID, "List") {
 		resName := strings.TrimPrefix(opID, "List")
 		return OpTypeList, pluralize.Singular(resName)
+	} else if strings.HasPrefix(opID, "Set") {
+		if strings.HasSuffix(opID, "Attributes") {
+			resName := strings.TrimPrefix(opID, "Set")
+			resName = strings.TrimSuffix(resName, "Attributes")
+			return OpTypeSetAttributes, resName
+		}
 	}
 	return OpTypeUnknown, ""
 }
