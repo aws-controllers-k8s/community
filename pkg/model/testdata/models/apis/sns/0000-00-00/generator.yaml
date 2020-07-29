@@ -13,3 +13,21 @@ resources:
           is_read_only: true
         TopicArn:
           is_read_only: true
+  PlatformApplication:
+    unpack_attributes_map:
+      fields:
+        PlatformCredential:
+        PlatformPrincipal:
+        EventEndpointCreated:
+        EventEndpointDeleted:
+        EventEndpointUpdated:
+        EventDeliveryFailure:
+        SuccessFeedbackRoleArn:
+        FailureFeedbackRoleArn:
+        SuccessFeedbackSampleRate:
+  Endpoint:
+    unpack_attributes_map:
+      fields:
+        CustomUserData:
+        Enabled:
+        Token:

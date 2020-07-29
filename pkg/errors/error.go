@@ -15,6 +15,8 @@ package errors
 
 import (
 	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
 var (
@@ -25,3 +27,10 @@ var (
 	)
 	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
 )
+
+// AWSError returns the type conversion for the supplied error to an aws-sdk-go
+// Error interface
+func AWSError(err error) (awserr.Error, bool) {
+	awsErr, ok := err.(awserr.Error)
+	return awsErr, ok
+}

@@ -312,7 +312,10 @@ func (r *CRD) GoCodeSetInput(
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
 
-	if r.UnpacksAttributesMap() {
+	// Some input shapes for APIs that use GetAttributes API calls don't have
+	// an Attributes member (example: all the Delete shapes...)
+	_, foundAttrs := inputShape.MemberRefs["Attributes"]
+	if r.UnpacksAttributesMap() && foundAttrs {
 		// For APIs that use a pattern of a parameter called "Attributes" that
 		// is of type `map[string]*string` to represent real, schema'd fields,
 		// we need to set the input shape's "Attributes" member field to the
@@ -443,7 +446,7 @@ func (r *CRD) GoCodeSetInput(
 // As an example, for the GetTopicAttributes SNS API call, the returned code
 // looks like this:
 //
-// res.SetTopicArn(*r.ko.Status.ACKResourceMetadata.ARN)
+// res.SetTopicArn(string(*r.ko.Status.ACKResourceMetadata.ARN))
 //
 // For the SQS API's GetQueueAttributes call, the returned code looks like this:
 //
@@ -480,7 +483,7 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 	for _, memberName := range inputShape.MemberNames() {
 		if r.IsPrimaryARNField(memberName) {
 			out += fmt.Sprintf(
-				"%s%s.Set%s(*%s.Status.ACKResourceMetadata.ARN)\n",
+				"%s%s.Set%s(string(*%s.Status.ACKResourceMetadata.ARN))\n",
 				indent, targetVarName, memberName, sourceVarName,
 			)
 			continue
@@ -866,8 +869,8 @@ func (r *CRD) GoCodeSetOutput(
 // looks like this:
 //
 // ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
-// ko.Status.ACKResourceMetadata.OwnerAccountID = resp.Attributes["Owner"]
-// ko.Status.ACKResourceMetadata.ARN = resp.Attributes["TopicArn"]
+// ko.Status.ACKResourceMetadata.OwnerAccountID = ackv1alpha1.AWSAccountID(resp.Attributes["Owner"])
+// ko.Status.ACKResourceMetadata.ARN = ackv1alpha1.AWSResourceName(resp.Attributes["TopicArn"])
 func (r *CRD) GoCodeGetAttributesSetOutput(
 	// String representing the name of the variable that we will grab the
 	// Output shape from. This will likely be "resp" since in the templates
@@ -884,7 +887,8 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 ) string {
 	if !r.UnpacksAttributesMap() {
 		// This is a bug in the code generation if this occurs...
-		panic("caled GoCodeGetAttributesSetOutput for a resource that doesn't unpack attributes map")
+		msg := fmt.Sprintf("called GoCodeGetAttributesSetOutput for a resource '%s' that doesn't unpack attributes map", r.Ops.GetAttributes.Name)
+		panic(msg)
 	}
 	op := r.Ops.GetAttributes
 	if op == nil {
@@ -907,11 +911,15 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	for _, fieldName := range sortedAttrFieldNames {
 		if r.IsPrimaryARNField(fieldName) {
 			out += fmt.Sprintf(
-				"%s%s.ACKResourceMetadata.ARN = %s.Attributes[\"%s\"]\n",
+				"%stmpARN := ackv1alpha1.AWSResourceName(*%s.Attributes[\"%s\"])\n",
 				indent,
-				targetVarName,
 				sourceVarName,
 				fieldName,
+			)
+			out += fmt.Sprintf(
+				"%s%s.ACKResourceMetadata.ARN = &tmpARN\n",
+				indent,
+				targetVarName,
 			)
 			continue
 		}
@@ -919,11 +927,15 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 		fieldConfig := attrMapConfig.Fields[fieldName]
 		if fieldConfig.ContainsOwnerAccountID {
 			out += fmt.Sprintf(
-				"%s%s.ACKResourceMetadata.OwnerAccountID = %s.Attributes[\"%s\"]\n",
+				"%stmpOwnerID := ackv1alpha1.AWSAccountID(*%s.Attributes[\"%s\"])\n",
 				indent,
-				targetVarName,
 				sourceVarName,
 				fieldName,
+			)
+			out += fmt.Sprintf(
+				"%s%s.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID\n",
+				indent,
+				targetVarName,
 			)
 			continue
 		}
