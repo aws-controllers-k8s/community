@@ -314,8 +314,9 @@ func TestEC2LaunchTemplate(t *testing.T) {
 		f2f19elem.SetDeviceIndex(*f2f19iter.DeviceIndex)
 		f2f19elemf4 := []*string{}
 		for _, f2f19elemf4iter := range f2f19iter.Groups {
-			f2f19elemf4elem.SetGroups(*f2f19elemf4iter)
-			f2f19elemf4 = append(f2f19elemf4, f2f19elemf4elem)
+			var f2f19elemf4elem string
+			f2f19elemf4elem = *f2f19elemf4iter
+			f2f19elemf4 = append(f2f19elemf4, &f2f19elemf4elem)
 		}
 		f2f19elem.SetGroups(f2f19elemf4)
 		f2f19elem.SetInterfaceType(*f2f19iter.InterfaceType)
@@ -355,14 +356,16 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	f2.SetRamDiskId(*r.ko.Spec.LaunchTemplateData.RamDiskID)
 	f2f22 := []*string{}
 	for _, f2f22iter := range r.ko.Spec.LaunchTemplateData.SecurityGroupIDs {
-		f2f22elem.SetSecurityGroupIds(*f2f22iter)
-		f2f22 = append(f2f22, f2f22elem)
+		var f2f22elem string
+		f2f22elem = *f2f22iter
+		f2f22 = append(f2f22, &f2f22elem)
 	}
 	f2.SetSecurityGroupIds(f2f22)
 	f2f23 := []*string{}
 	for _, f2f23iter := range r.ko.Spec.LaunchTemplateData.SecurityGroups {
-		f2f23elem.SetSecurityGroups(*f2f23iter)
-		f2f23 = append(f2f23, f2f23elem)
+		var f2f23elem string
+		f2f23elem = *f2f23iter
+		f2f23 = append(f2f23, &f2f23elem)
 	}
 	f2.SetSecurityGroups(f2f23)
 	f2f24 := []*svcsdk.LaunchTemplateTagSpecificationRequest{}
@@ -726,4 +729,93 @@ func TestSQSQueue(t *testing.T) {
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
+}
+
+func TestAPIGatewayV2_Route(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "apigatewayv2")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Route", crds)
+	require.NotNil(crd)
+
+	assert.Equal("Route", crd.Names.Camel)
+	assert.Equal("route", crd.Names.CamelLower)
+	assert.Equal("route", crd.Names.Snake)
+
+	// The APIGatewayV2 Route API has CRUD+L operations:
+	//
+	// * CreateRoute
+	// * DeleteRoute
+	// * UpdateRoute
+	// * GetRoute
+	// * GetRoutes
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
+	assert.NotNil(crd.Ops.Update)
+	assert.NotNil(crd.Ops.ReadOne)
+	assert.NotNil(crd.Ops.ReadMany)
+
+	// And no separate get/set attributes calls.
+	assert.Nil(crd.Ops.GetAttributes)
+	assert.Nil(crd.Ops.SetAttributes)
+
+	specFields := crd.SpecFields
+	statusFields := crd.StatusFields
+
+	expSpecFieldCamel := []string{
+		"APIID",
+		"APIKeyRequired",
+		"AuthorizationScopes",
+		"AuthorizationType",
+		"AuthorizerID",
+		"ModelSelectionExpression",
+		"OperationName",
+		"RequestModels",
+		"RequestParameters",
+		"RouteKey",
+		"RouteResponseSelectionExpression",
+		"Target",
+	}
+	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
+
+	expStatusFieldCamel := []string{
+		"APIGatewayManaged",
+		"RouteID",
+	}
+	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	expCreateInput := `
+	res.SetApiId(*r.ko.Spec.APIID)
+	res.SetApiKeyRequired(*r.ko.Spec.APIKeyRequired)
+	f2 := []*string{}
+	for _, f2iter := range r.ko.Spec.AuthorizationScopes {
+		var f2elem string
+		f2elem = *f2iter
+		f2 = append(f2, &f2elem)
+	}
+	res.SetAuthorizationScopes(f2)
+	res.SetAuthorizationType(*r.ko.Spec.AuthorizationType)
+	res.SetAuthorizerId(*r.ko.Spec.AuthorizerID)
+	res.SetModelSelectionExpression(*r.ko.Spec.ModelSelectionExpression)
+	res.SetOperationName(*r.ko.Spec.OperationName)
+	res.SetRequestModels(r.ko.Spec.RequestModels)
+	res.SetRequestParameters(r.ko.Spec.RequestParameters)
+	res.SetRouteKey(*r.ko.Spec.RouteKey)
+	res.SetRouteResponseSelectionExpression(*r.ko.Spec.RouteResponseSelectionExpression)
+	res.SetTarget(*r.ko.Spec.Target)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+
+	expCreateOutput := `
+	ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	ko.Status.RouteID = resp.RouteId
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 }

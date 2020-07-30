@@ -422,6 +422,7 @@ func (r *CRD) GoCodeSetInput(
 				out += r.goCodeSetInputForScalar(
 					memberName,
 					targetVarName,
+					inputShape.Type,
 					memberVarName,
 					memberShapeRef,
 					indentLevel,
@@ -431,6 +432,7 @@ func (r *CRD) GoCodeSetInput(
 			out += r.goCodeSetInputForScalar(
 				memberName,
 				targetVarName,
+				inputShape.Type,
 				sourceVarName+"."+specField.Names.Camel,
 				memberShapeRef,
 				indentLevel,
@@ -507,6 +509,7 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 		out += r.goCodeSetInputForScalar(
 			memberName,
 			targetVarName,
+			inputShape.Type,
 			sourceVarPath,
 			field.ShapeRef,
 			indentLevel,
@@ -557,6 +560,7 @@ func (r *CRD) goCodeSetInputForContainer(
 						out += r.goCodeSetInputForScalar(
 							memberName,
 							targetVarName,
+							shape.Type,
 							memberVarName,
 							memberShapeRef,
 							indentLevel,
@@ -566,6 +570,7 @@ func (r *CRD) goCodeSetInputForContainer(
 					out += r.goCodeSetInputForScalar(
 						memberName,
 						targetVarName,
+						shape.Type,
 						sourceVarName+"."+cleanMemberName,
 						memberShapeRef,
 						indentLevel,
@@ -580,29 +585,43 @@ func (r *CRD) goCodeSetInputForContainer(
 			// for _, f0iter0 := range r.ko.Spec.Tags {
 			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarName)
 			//		f0elem0 := &string{}
-			//		f0elem0 = *f0iter0
-			//		f0 = append(f0, f0elem0)
 			out += r.goCodeVarEmptyConstructorSDKType(
 				elemVarName,
 				shape.MemberRef.Shape,
 				indentLevel+1,
 			)
 			//  f0elem0 = *f0iter0
+			//
+			// or
+			//
+			//  f0elem0.SetMyField(*f0iter0)
+			containerFieldName := ""
+			if shape.MemberRef.Shape.Type == "structure" {
+				containerFieldName = targetFieldName
+			}
 			out += r.goCodeSetInputForContainer(
-				targetFieldName,
+				containerFieldName,
 				elemVarName,
 				iterVarName,
 				&shape.MemberRef,
 				indentLevel+1,
 			)
+			addressOfVar := ""
+			switch shape.MemberRef.Shape.Type {
+			case "structure", "list", "map":
+				break
+			default:
+				addressOfVar = "&"
+			}
 			//  f0 = append(f0, elem0)
-			out += fmt.Sprintf("%s\t%s = append(%s, %s)\n", indent, targetVarName, targetVarName, elemVarName)
+			out += fmt.Sprintf("%s\t%s = append(%s, %s%s)\n", indent, targetVarName, targetVarName, addressOfVar, elemVarName)
 			out += fmt.Sprintf("%s}\n", indent)
 		}
 	default:
 		out += r.goCodeSetInputForScalar(
 			targetFieldName,
 			targetVarName,
+			shape.Type,
 			sourceVarName,
 			shapeRef,
 			indentLevel,
@@ -622,12 +641,16 @@ func (r *CRD) goCodeVarEmptyConstructorSDKType(
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
 	goType = r.replacePkgName(goType, "svcsdk", shape.Type == "list")
-	if shape.Type == "structure" {
+	switch shape.Type {
+	case "structure":
 		// f0 := &svcsdk.BookData{}
 		out += fmt.Sprintf("%s%s := &%s{}\n", indent, varName, goType)
-	} else if shape.Type == "list" {
+	case "list", "map":
 		// f0 := []*string{}
 		out += fmt.Sprintf("%s%s := %s{}\n", indent, varName, goType)
+	default:
+		// var f0 string
+		out += fmt.Sprintf("%svar %s %s\n", indent, varName, goType)
 	}
 	return out
 }
@@ -658,10 +681,19 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	return out
 }
 
+// goCodeSetInputForScalar returns the Go code that sets the value of a target
+// variable or field to a scalar value. For target variables that are structs,
+// we output the aws-sdk-go's common SetXXX() method. For everything else, we
+// output normal assignment operations.
 func (r *CRD) goCodeSetInputForScalar(
-	targetFieldName string, // The name of the Input SDK Shape member we're outputting for
-	targetVarName string, // The variable name that we want to set a value to
-	sourceVarName string, // The struct or struct field that we access our source value from
+	// The name of the Input SDK Shape member we're outputting for
+	targetFieldName string,
+	// The variable name that we want to set a value to
+	targetVarName string,
+	// The type of shape of the target variable
+	targetVarType string,
+	// The struct or struct field that we access our source value from
+	sourceVarName string,
 	shapeRef *awssdkmodel.ShapeRef,
 	indentLevel int,
 ) string {
@@ -675,7 +707,15 @@ func (r *CRD) goCodeSetInputForScalar(
 	if shape.Type == "timestamp" {
 		setTo += ".Time"
 	}
-	out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, targetFieldName, setTo)
+	if targetVarType == "structure" {
+		out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, targetFieldName, setTo)
+	} else {
+		targetVarPath := targetVarName
+		if targetFieldName != "" {
+			targetVarPath += "." + targetFieldName
+		}
+		out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, setTo)
+	}
 	return out
 }
 
