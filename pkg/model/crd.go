@@ -404,7 +404,7 @@ func (r *CRD) GoCodeSetInput(
 		// res.VpnMemberships = f0
 
 		switch memberShape.Type {
-		case "list", "structure":
+		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorSDKType(
@@ -543,7 +543,7 @@ func (r *CRD) goCodeSetInputForContainer(
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
 				switch memberShape.Type {
-				case "list", "structure":
+				case "list", "structure", "map":
 					{
 						out += r.goCodeVarEmptyConstructorSDKType(
 							memberVarName,
@@ -582,19 +582,19 @@ func (r *CRD) goCodeSetInputForContainer(
 		{
 			iterVarName := fmt.Sprintf("%siter", targetVarName)
 			elemVarName := fmt.Sprintf("%selem", targetVarName)
-			// for _, f0iter0 := range r.ko.Spec.Tags {
+			// for _, f0iter := range r.ko.Spec.Tags {
 			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarName)
-			//		f0elem0 := &string{}
+			//		f0elem := string{}
 			out += r.goCodeVarEmptyConstructorSDKType(
 				elemVarName,
 				shape.MemberRef.Shape,
 				indentLevel+1,
 			)
-			//  f0elem0 = *f0iter0
+			//  f0elem = *f0iter
 			//
 			// or
 			//
-			//  f0elem0.SetMyField(*f0iter0)
+			//  f0elem.SetMyField(*f0iter)
 			containerFieldName := ""
 			if shape.MemberRef.Shape.Type == "structure" {
 				containerFieldName = targetFieldName
@@ -615,6 +615,46 @@ func (r *CRD) goCodeSetInputForContainer(
 			}
 			//  f0 = append(f0, elem0)
 			out += fmt.Sprintf("%s\t%s = append(%s, %s%s)\n", indent, targetVarName, targetVarName, addressOfVar, elemVarName)
+			out += fmt.Sprintf("%s}\n", indent)
+		}
+	case "map":
+		{
+			valIterVarName := fmt.Sprintf("%svaliter", targetVarName)
+			keyVarName := fmt.Sprintf("%skey", targetVarName)
+			valVarName := fmt.Sprintf("%sval", targetVarName)
+			// for f0key, f0valiter := range r.ko.Spec.Tags {
+			out += fmt.Sprintf("%sfor %s, %s := range %s {\n", indent, keyVarName, valIterVarName, sourceVarName)
+			//		f0elem := string{}
+			out += r.goCodeVarEmptyConstructorSDKType(
+				valVarName,
+				shape.ValueRef.Shape,
+				indentLevel+1,
+			)
+			//  f0val = *f0valiter
+			//
+			// or
+			//
+			//  f0val.SetMyField(*f0valiter)
+			containerFieldName := ""
+			if shape.ValueRef.Shape.Type == "structure" {
+				containerFieldName = targetFieldName
+			}
+			out += r.goCodeSetInputForContainer(
+				containerFieldName,
+				valVarName,
+				valIterVarName,
+				&shape.ValueRef,
+				indentLevel+1,
+			)
+			addressOfVar := ""
+			switch shape.ValueRef.Shape.Type {
+			case "structure", "list", "map":
+				break
+			default:
+				addressOfVar = "&"
+			}
+			// f0[f0key] = f0val
+			out += fmt.Sprintf("%s\t%s[%s] = %s%s\n", indent, targetVarName, keyVarName, addressOfVar, valVarName)
 			out += fmt.Sprintf("%s}\n", indent)
 		}
 	default:
@@ -640,7 +680,8 @@ func (r *CRD) goCodeVarEmptyConstructorSDKType(
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
-	goType = r.replacePkgName(goType, "svcsdk", shape.Type == "list")
+	keepPointer := (shape.Type == "list" || shape.Type == "map")
+	goType = r.replacePkgName(goType, "svcsdk", keepPointer)
 	switch shape.Type {
 	case "structure":
 		// f0 := &svcsdk.BookData{}
@@ -665,18 +706,23 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
-	goType = r.replacePkgName(goType, "svcapitypes", shape.Type == "list")
+	keepPointer := (shape.Type == "list" || shape.Type == "map")
+	goType = r.replacePkgName(goType, "svcapitypes", keepPointer)
 	altTypeName, renamed := r.helper.typeRenames[goType]
 	if renamed {
 		goType = altTypeName
 	}
 
-	if shape.Type == "structure" {
-		// f0 := &svcsdk.BookData{}
+	switch shape.Type {
+	case "structure":
+		// f0 := &svcapitypes.BookData{}
 		out += fmt.Sprintf("%s%s := &%s{}\n", indent, varName, goType)
-	} else if shape.Type == "list" {
+	case "list", "map":
 		// f0 := []*string{}
 		out += fmt.Sprintf("%s%s := %s{}\n", indent, varName, goType)
+	default:
+		// var f0 string
+		out += fmt.Sprintf("%svar %s %s\n", indent, varName, goType)
 	}
 	return out
 }
@@ -700,12 +746,11 @@ func (r *CRD) goCodeSetInputForScalar(
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
 	setTo := sourceVarName
-	if shapeRef.UseIndirection() {
-		setTo = "*" + setTo
-	}
 	shape := shapeRef.Shape
 	if shape.Type == "timestamp" {
 		setTo += ".Time"
+	} else if shapeRef.UseIndirection() {
+		setTo = "*" + setTo
 	}
 	if targetVarType == "structure" {
 		out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, targetFieldName, setTo)
@@ -866,7 +911,7 @@ func (r *CRD) GoCodeSetOutput(
 
 		memberShape := memberShapeRef.Shape
 		switch memberShape.Type {
-		case "list", "structure":
+		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorK8sType(
@@ -1018,7 +1063,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
 				switch memberShape.Type {
-				case "list", "structure":
+				case "list", "structure", "map":
 					{
 						out += r.goCodeVarEmptyConstructorK8sType(
 							memberVarName,
@@ -1045,7 +1090,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 						memberName,
 						targetVarName,
 						sourceVarName+"."+memberName,
-						memberShapeRef,
+						shapeRef,
 						indentLevel,
 					)
 				}
@@ -1053,22 +1098,77 @@ func (r *CRD) goCodeSetOutputForContainer(
 		}
 	case "list":
 		{
-			sourceVarPath := sourceVarName
 			iterVarName := fmt.Sprintf("%siter", targetVarName)
 			elemVarName := fmt.Sprintf("%selem", targetVarName)
-
 			// for _, f0iter0 := range resp.TagSpecifications {
-			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarPath)
+			out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarName)
 			//		f0elem0 := &string{}
-			//		f0elem0 = *f0iter0
-			//		f0 = append(f0, f0elem0)
-			out += r.goCodeSetOutputForElement(
-				targetVarName,
+			out += r.goCodeVarEmptyConstructorK8sType(
+				elemVarName,
+				shape.MemberRef.Shape,
+				indentLevel+1,
+			)
+			//  f0elem0 = *f0iter0
+			//
+			// or
+			//
+			//  f0elem0.SetMyField(*f0iter0)
+			containerFieldName := ""
+			if shape.MemberRef.Shape.Type == "structure" {
+				containerFieldName = targetFieldName
+			}
+			out += r.goCodeSetOutputForContainer(
+				containerFieldName,
 				elemVarName,
 				iterVarName,
 				&shape.MemberRef,
 				indentLevel+1,
 			)
+			addressOfVar := ""
+			switch shape.MemberRef.Shape.Type {
+			case "structure", "list", "map":
+				break
+			default:
+				addressOfVar = "&"
+			}
+			//  f0 = append(f0, elem0)
+			out += fmt.Sprintf("%s\t%s = append(%s, %s%s)\n", indent, targetVarName, targetVarName, addressOfVar, elemVarName)
+			out += fmt.Sprintf("%s}\n", indent)
+		}
+	case "map":
+		{
+			valIterVarName := fmt.Sprintf("%svaliter", targetVarName)
+			keyVarName := fmt.Sprintf("%skey", targetVarName)
+			valVarName := fmt.Sprintf("%sval", targetVarName)
+			// for f0key, f0valiter := range resp.Tags {
+			out += fmt.Sprintf("%sfor %s, %s := range %s {\n", indent, keyVarName, valIterVarName, sourceVarName)
+			//		f0elem := string{}
+			out += r.goCodeVarEmptyConstructorK8sType(
+				valVarName,
+				shape.ValueRef.Shape,
+				indentLevel+1,
+			)
+			//  f0val = *f0valiter
+			containerFieldName := ""
+			if shape.ValueRef.Shape.Type == "structure" {
+				containerFieldName = targetFieldName
+			}
+			out += r.goCodeSetOutputForContainer(
+				containerFieldName,
+				valVarName,
+				valIterVarName,
+				&shape.ValueRef,
+				indentLevel+1,
+			)
+			addressOfVar := ""
+			switch shape.ValueRef.Shape.Type {
+			case "structure", "list", "map":
+				break
+			default:
+				addressOfVar = "&"
+			}
+			// f0[f0key] = f0val
+			out += fmt.Sprintf("%s\t%s[%s] = %s%s\n", indent, targetVarName, keyVarName, addressOfVar, valVarName)
 			out += fmt.Sprintf("%s}\n", indent)
 		}
 	default:
@@ -1083,55 +1183,13 @@ func (r *CRD) goCodeSetOutputForContainer(
 	return out
 }
 
-// For an element in a list container, then we
-// need to output something like this:
-//
-//  f0elem0 := &string{}
-//  f0elem0 = *f0iter0
-//  f0 = append(f0, f0elem0)
-//
-// Above, the parameters supplied to this function would be:
-//
-//  listFieldVarName:	f0
-//  iterVarName:		f0iter0
-//  iterShapeRef:		SDK ShapeRef for the object represented by f0iter0
-func (r *CRD) goCodeSetOutputForElement(
-	// The name of the list field that will contain the generated elements
-	listFieldVarName string,
-	// The variable name of the element that we construct
-	elemVarName string,
-	// The variable name of the iterator pointer that we will set attributes on
-	// the element variable with. e.g. "f0iter0"
-	iterVarName string,
-	// The Shape of the object represented by the iterator variable
-	iterShapeRef *awssdkmodel.ShapeRef,
-	indentLevel int,
-) string {
-	out := ""
-	indent := strings.Repeat("\t", indentLevel)
-	iterShape := iterShapeRef.Shape
-	out += r.goCodeVarEmptyConstructorK8sType(
-		elemVarName,
-		iterShape,
-		indentLevel,
-	)
-	//  f0elem0 = *f0iter0
-	out += r.goCodeSetOutputForContainer(
-		listFieldVarName,
-		elemVarName,
-		iterVarName,
-		iterShapeRef,
-		indentLevel,
-	)
-	//  f0 = append(f0, elem0)
-	out += fmt.Sprintf("%s%s = append(%s, %s)\n", indent, listFieldVarName, listFieldVarName, elemVarName)
-	return out
-}
-
 func (r *CRD) goCodeSetOutputForScalar(
-	targetFieldName string, // The name of the Input SDK Shape member we're outputting for
-	targetVarName string, // The variable name that we want to set a value to
-	sourceVarName string, // The struct or struct field that we access our source value from
+	// The name of the Input SDK Shape member we're outputting for
+	targetFieldName string,
+	// The variable name that we want to set a value to
+	targetVarName string,
+	// The struct or struct field that we access our source value from
+	sourceVarName string,
 	shapeRef *awssdkmodel.ShapeRef,
 	indentLevel int,
 ) string {
@@ -1142,7 +1200,12 @@ func (r *CRD) goCodeSetOutputForScalar(
 	if shape.Type == "timestamp" {
 		setTo = "&metav1.Time{*" + sourceVarName + "}"
 	}
-	targetVarPath := targetVarName + "." + targetFieldName
+	targetVarPath := targetVarName
+	if targetFieldName != "" {
+		targetVarPath += "." + targetFieldName
+	} else {
+		setTo = "*" + setTo
+	}
 	out += fmt.Sprintf("%s%s = %s\n", indent, targetVarPath, setTo)
 	return out
 }
