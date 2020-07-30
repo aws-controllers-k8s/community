@@ -284,7 +284,7 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	f2f12f1.SetInstanceInterruptionBehavior(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.InstanceInterruptionBehavior)
 	f2f12f1.SetMaxPrice(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.MaxPrice)
 	f2f12f1.SetSpotInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.SpotInstanceType)
-	f2f12f1.SetValidUntil(*r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.ValidUntil.Time)
+	f2f12f1.SetValidUntil(r.ko.Spec.LaunchTemplateData.InstanceMarketOptions.SpotOptions.ValidUntil.Time)
 	f2f12.SetSpotOptions(f2f12f1)
 	f2.SetInstanceMarketOptions(f2f12)
 	f2.SetInstanceType(*r.ko.Spec.LaunchTemplateData.InstanceType)
@@ -697,7 +697,13 @@ func TestSQSQueue(t *testing.T) {
 	attrMap["VisibilityTimeout"] = r.ko.Spec.VisibilityTimeout
 	res.SetAttributes(attrMap)
 	res.SetQueueName(*r.ko.Spec.QueueName)
-	res.SetTags(r.ko.Spec.Tags)
+	f11 := map[string]*string{}
+	for f11key, f11valiter := range r.ko.Spec.Tags {
+		var f11val string
+		f11val = *f11valiter
+		f11[f11key] = &f11val
+	}
+	res.SetTags(f11)
 `
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
 
@@ -805,8 +811,20 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	res.SetAuthorizerId(*r.ko.Spec.AuthorizerID)
 	res.SetModelSelectionExpression(*r.ko.Spec.ModelSelectionExpression)
 	res.SetOperationName(*r.ko.Spec.OperationName)
-	res.SetRequestModels(r.ko.Spec.RequestModels)
-	res.SetRequestParameters(r.ko.Spec.RequestParameters)
+	f7 := map[string]*string{}
+	for f7key, f7valiter := range r.ko.Spec.RequestModels {
+		var f7val string
+		f7val = *f7valiter
+		f7[f7key] = &f7val
+	}
+	res.SetRequestModels(f7)
+	f8 := map[string]*svcsdk.ParameterConstraints{}
+	for f8key, f8valiter := range r.ko.Spec.RequestParameters {
+		f8val := &svcsdk.ParameterConstraints{}
+		f8val.SetRequired(*f8valiter.Required)
+		f8[f8key] = f8val
+	}
+	res.SetRequestParameters(f8)
 	res.SetRouteKey(*r.ko.Spec.RouteKey)
 	res.SetRouteResponseSelectionExpression(*r.ko.Spec.RouteResponseSelectionExpression)
 	res.SetTarget(*r.ko.Spec.Target)
