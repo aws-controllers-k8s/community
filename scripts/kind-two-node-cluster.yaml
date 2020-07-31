@@ -8,7 +8,4 @@ nodes:
         kind: ClusterConfiguration
         metadata:
           name: config
-        apiServer:
-          extraArgs:
-            "enable-admission-plugins": "NodeRestriction,PodSecurityPolicy"
   - role: worker

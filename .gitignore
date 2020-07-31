@@ -4,4 +4,4 @@
 .idea
 /docs/site
 bin
-/scripts/k8s-local-cluster-test/build/
+build

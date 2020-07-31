@@ -1,10 +1,10 @@
 #!/bin/bash
 set -eo pipefail
-
+OPTIND=1
 AEMM_URL="amazon-ec2-metadata-mock-service.default.svc.cluster.local"
 AEMM_VERSION="1.2.0"
 AEMM_DL_URL="https://github.com/aws/amazon-ec2-metadata-mock/releases/download/v${AEMM_VERSION}/amazon-ec2-metadata-mock-${AEMM_VERSION}.tgz"
-CLUSTER_NAME_BASE="nth-test"
+CLUSTER_NAME_BASE="test"
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION="1.16"
 OVERRIDE_PATH=0
@@ -12,6 +12,7 @@ PRESERVE=false
 PROVISION_CLUSTER_ARGS=""
 START=$(date +%s)
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+ROOT_DIR="$SCRIPT_PATH/../"
 TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
@@ -24,7 +25,7 @@ function relpath() {
 
 function clean_up {
     if [[ "$PRESERVE" == false ]]; then
-        "${SCRIPT_PATH}"/../k8s-local-cluster-test/delete-cluster $DELETE_CLUSTER_ARGS || :
+        "${SCRIPT_PATH}"/delete-kind-cluster.sh $DELETE_CLUSTER_ARGS || :
         return
     fi
     echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
@@ -102,7 +103,7 @@ while getopts "ps:ioc:b:v:" opt; do
 done
 
 if [ -z $TMP_DIR ]; then
-    TMP_DIR=$("${SCRIPT_PATH}"/../k8s-local-cluster-test/provision-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}" "${PROVISION_CLUSTER_ARGS}")
+    TMP_DIR=$("${SCRIPT_PATH}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}" "${PROVISION_CLUSTER_ARGS}")
 fi
 
 if [ $OVERRIDE_PATH == 0 ]; then
@@ -118,13 +119,13 @@ CLUSTER_NAME=$(cat $TMP_DIR/clustername)
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
     echo "🥑 Building ${AWS_SERVICE} docker image"
     DEFAULT_AWS_SERVICE_DOCKER_IMG="${AWS_SERVICE}:${VERSION}"
-    docker build -f services/"${AWS_SERVICE}"/Dockerfile -t "${DEFAULT_AWS_SERVICE_DOCKER_IMG}" .
+    docker build -f ${ROOT_DIR}/services/${AWS_SERVICE}/Dockerfile -t "${DEFAULT_AWS_SERVICE_DOCKER_IMG}" .
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
     echo "👍 Built the ${AWS_SERVICE} docker image"
 else
     echo "🥑 Skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
 fi
-echo "$AWS_SERVICE_DOCKER_IMG" > "${TMP_DIR}"/nth-docker-img
+echo "$AWS_SERVICE_DOCKER_IMG" > "${TMP_DIR}"/"${AWS_SERVICE}"_docker-img
 
 echo "🥑 Loading the images into the cluster"
 kind load docker-image --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}"
@@ -150,11 +151,4 @@ export AEMM_URL
 export AEMM_VERSION
 export AEMM_DL_URL
 export -f timeout
-export -f relpath
-export -f get_nth_worker_pod
-export NTH_WORKER_LABEL="kubernetes\.io/hostname=${CLUSTER_NAME}-worker"
 ###
-
-echo "======================================================================================================"
-echo "✅ All tests passed! ✅"
-echo "======================================================================================================"

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P )"
+ROOT_DIR="$SCRIPT_PATH/../"
 PLATFORM=$(uname | tr '[:upper:]' '[:lower:]')
 CLUSTER_CREATION_TIMEOUT_IN_SEC=300
 TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
@@ -71,7 +72,7 @@ while getopts "b:i:v:k:o" opt; do
 done
 
 CLUSTER_NAME="$CLUSTER_NAME_BASE"-"${TEST_ID}"
-TMP_DIR=$SCRIPT_PATH/build/tmp-$CLUSTER_NAME
+TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
 
 echoerr "🐳 Using Kubernetes $K8_VERSION"
 mkdir -p "${TMP_DIR}"
@@ -126,8 +127,4 @@ done
 
 echo "$CLUSTER_NAME" > $TMP_DIR/clustername
 echoerr "👍 Created k8s cluster using \"kind\""
-
-kubectl apply -f "$SCRIPT_PATH/psp-default.yaml" --context kind-$CLUSTER_NAME --kubeconfig $TMP_DIR/kubeconfig 1>&2
-kubectl apply -f "$SCRIPT_PATH/psp-privileged.yaml" --context kind-$CLUSTER_NAME --kubeconfig $TMP_DIR/kubeconfig 1>&2
-
 echo $TMP_DIR
