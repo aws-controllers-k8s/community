@@ -13,6 +13,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -22,10 +23,11 @@ import (
 // Hack to avoid import errors during build...
 var (
 	_ = &metav1.Time{}
+	_ = &aws.JSONValue{}
 	_ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
 	_ = &svcapitypes.{{ .CRD.Names.Camel }}{}
-    _ = ackv1alpha1.AWSAccountID("")
-    _ = &ackerr.NotFound
+	_ = ackv1alpha1.AWSAccountID("")
+	_ = &ackerr.NotFound
 )
 
 // sdkFind returns SDK-specific information about a supplied resource
@@ -146,14 +148,15 @@ func (rm *resourceManager) sdkUpdate(
 	if err != nil {
 		return nil, err
 	}
-	{{ if .CRD.StatusFields}}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+{{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
+	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
+{{ $setCode }}
 	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Figure this out...

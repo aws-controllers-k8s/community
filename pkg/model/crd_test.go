@@ -837,3 +837,221 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 }
+
+func TestElasticache_CacheCluster(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("CacheCluster", crds)
+	require.NotNil(crd)
+
+	assert.Equal("CacheCluster", crd.Names.Camel)
+	assert.Equal("cacheCluster", crd.Names.CamelLower)
+	assert.Equal("cache_cluster", crd.Names.Snake)
+
+	// The Elasticache CacheCluster API has CUD+L operations:
+	//
+	// * CreateCacheCluster
+	// * DeleteCacheCluster
+	// * UpdateCacheCluster
+	// * GetCacheClusters
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
+	assert.NotNil(crd.Ops.Update)
+	assert.NotNil(crd.Ops.ReadMany)
+
+	// But no ReadOne operation...
+	assert.Nil(crd.Ops.ReadOne)
+
+	// And no separate get/set attributes calls.
+	assert.Nil(crd.Ops.GetAttributes)
+	assert.Nil(crd.Ops.SetAttributes)
+
+	specFields := crd.SpecFields
+	statusFields := crd.StatusFields
+
+	expSpecFieldCamel := []string{
+		"AZMode",
+		"AuthToken",
+		"AutoMinorVersionUpgrade",
+		"CacheClusterID",
+		"CacheNodeType",
+		"CacheParameterGroupName",
+		"CacheSecurityGroupNames",
+		"CacheSubnetGroupName",
+		"Engine",
+		"EngineVersion",
+		"NotificationTopicARN",
+		"NumCacheNodes",
+		"Port",
+		"PreferredAvailabilityZone",
+		"PreferredAvailabilityZones",
+		"PreferredMaintenanceWindow",
+		"ReplicationGroupID",
+		"SecurityGroupIDs",
+		"SnapshotARNs",
+		"SnapshotName",
+		"SnapshotRetentionLimit",
+		"SnapshotWindow",
+		"Tags",
+	}
+	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
+
+	expStatusFieldCamel := []string{
+		"AtRestEncryptionEnabled",
+		"AuthTokenEnabled",
+		"AuthTokenLastModifiedDate",
+		"CacheClusterCreateTime",
+		"CacheClusterStatus",
+		"CacheNodes",
+		"CacheParameterGroup",
+		"CacheSecurityGroups",
+		"ClientDownloadLandingPage",
+		"ConfigurationEndpoint",
+		"NotificationConfiguration",
+		"PendingModifiedValues",
+		"SecurityGroups",
+		"TransitEncryptionEnabled",
+	}
+	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
+
+	expCreateInput := `
+	res.SetAZMode(*r.ko.Spec.AZMode)
+	res.SetAuthToken(*r.ko.Spec.AuthToken)
+	res.SetAutoMinorVersionUpgrade(*r.ko.Spec.AutoMinorVersionUpgrade)
+	res.SetCacheClusterId(*r.ko.Spec.CacheClusterID)
+	res.SetCacheNodeType(*r.ko.Spec.CacheNodeType)
+	res.SetCacheParameterGroupName(*r.ko.Spec.CacheParameterGroupName)
+	f6 := []*string{}
+	for _, f6iter := range r.ko.Spec.CacheSecurityGroupNames {
+		var f6elem string
+		f6elem = *f6iter
+		f6 = append(f6, &f6elem)
+	}
+	res.SetCacheSecurityGroupNames(f6)
+	res.SetCacheSubnetGroupName(*r.ko.Spec.CacheSubnetGroupName)
+	res.SetEngine(*r.ko.Spec.Engine)
+	res.SetEngineVersion(*r.ko.Spec.EngineVersion)
+	res.SetNotificationTopicArn(*r.ko.Spec.NotificationTopicARN)
+	res.SetNumCacheNodes(*r.ko.Spec.NumCacheNodes)
+	res.SetPort(*r.ko.Spec.Port)
+	res.SetPreferredAvailabilityZone(*r.ko.Spec.PreferredAvailabilityZone)
+	f14 := []*string{}
+	for _, f14iter := range r.ko.Spec.PreferredAvailabilityZones {
+		var f14elem string
+		f14elem = *f14iter
+		f14 = append(f14, &f14elem)
+	}
+	res.SetPreferredAvailabilityZones(f14)
+	res.SetPreferredMaintenanceWindow(*r.ko.Spec.PreferredMaintenanceWindow)
+	res.SetReplicationGroupId(*r.ko.Spec.ReplicationGroupID)
+	f17 := []*string{}
+	for _, f17iter := range r.ko.Spec.SecurityGroupIDs {
+		var f17elem string
+		f17elem = *f17iter
+		f17 = append(f17, &f17elem)
+	}
+	res.SetSecurityGroupIds(f17)
+	f18 := []*string{}
+	for _, f18iter := range r.ko.Spec.SnapshotARNs {
+		var f18elem string
+		f18elem = *f18iter
+		f18 = append(f18, &f18elem)
+	}
+	res.SetSnapshotArns(f18)
+	res.SetSnapshotName(*r.ko.Spec.SnapshotName)
+	res.SetSnapshotRetentionLimit(*r.ko.Spec.SnapshotRetentionLimit)
+	res.SetSnapshotWindow(*r.ko.Spec.SnapshotWindow)
+	f22 := []*svcsdk.Tag{}
+	for _, f22iter := range r.ko.Spec.Tags {
+		f22elem := &svcsdk.Tag{}
+		f22elem.SetKey(*f22iter.Key)
+		f22elem.SetValue(*f22iter.Value)
+		f22 = append(f22, f22elem)
+	}
+	res.SetTags(f22)
+`
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+
+	expCreateOutput := `
+	ko.Status.AtRestEncryptionEnabled = resp.CacheCluster.AtRestEncryptionEnabled
+	ko.Status.AuthTokenEnabled = resp.CacheCluster.AuthTokenEnabled
+	ko.Status.AuthTokenLastModifiedDate = &metav1.Time{*resp.CacheCluster.AuthTokenLastModifiedDate}
+	ko.Status.CacheClusterCreateTime = &metav1.Time{*resp.CacheCluster.CacheClusterCreateTime}
+	ko.Status.CacheClusterStatus = resp.CacheCluster.CacheClusterStatus
+	f9 := []*svcapitypes.CacheNode{}
+	for _, f9iter := range resp.CacheCluster.CacheNodes {
+		f9elem := &svcapitypes.CacheNode{}
+		f9elem.CacheNodeCreateTime = &metav1.Time{*f9iter.CacheNodeCreateTime}
+		f9elem.CacheNodeID = f9iter.CacheNodeId
+		f9elem.CacheNodeStatus = f9iter.CacheNodeStatus
+		f9elem.CustomerAvailabilityZone = f9iter.CustomerAvailabilityZone
+		f9elemf4 := &svcapitypes.Endpoint{}
+		f9elemf4.Address = f9iter.Endpoint.Address
+		f9elemf4.Port = f9iter.Endpoint.Port
+		f9elem.Endpoint = f9elemf4
+		f9elem.ParameterGroupStatus = f9iter.ParameterGroupStatus
+		f9elem.SourceCacheNodeID = f9iter.SourceCacheNodeId
+		f9 = append(f9, f9elem)
+	}
+	ko.Status.CacheNodes = f9
+	f10 := &svcapitypes.CacheParameterGroupStatus_SDK{}
+	f10f0 := []*string{}
+	for _, f10f0iter := range resp.CacheCluster.CacheParameterGroup.CacheNodeIdsToReboot {
+		var f10f0elem string
+		f10f0elem = *f10f0iter
+		f10f0 = append(f10f0, &f10f0elem)
+	}
+	f10.CacheNodeIDsToReboot = f10f0
+	f10.CacheParameterGroupName = resp.CacheCluster.CacheParameterGroup.CacheParameterGroupName
+	f10.ParameterApplyStatus = resp.CacheCluster.CacheParameterGroup.ParameterApplyStatus
+	ko.Status.CacheParameterGroup = f10
+	f11 := []*svcapitypes.CacheSecurityGroupMembership{}
+	for _, f11iter := range resp.CacheCluster.CacheSecurityGroups {
+		f11elem := &svcapitypes.CacheSecurityGroupMembership{}
+		f11elem.CacheSecurityGroupName = f11iter.CacheSecurityGroupName
+		f11elem.Status = f11iter.Status
+		f11 = append(f11, f11elem)
+	}
+	ko.Status.CacheSecurityGroups = f11
+	ko.Status.ClientDownloadLandingPage = resp.CacheCluster.ClientDownloadLandingPage
+	f14 := &svcapitypes.Endpoint{}
+	f14.Address = resp.CacheCluster.ConfigurationEndpoint.Address
+	f14.Port = resp.CacheCluster.ConfigurationEndpoint.Port
+	ko.Status.ConfigurationEndpoint = f14
+	f17 := &svcapitypes.NotificationConfiguration{}
+	f17.TopicARN = resp.CacheCluster.NotificationConfiguration.TopicArn
+	f17.TopicStatus = resp.CacheCluster.NotificationConfiguration.TopicStatus
+	ko.Status.NotificationConfiguration = f17
+	f19 := &svcapitypes.PendingModifiedValues{}
+	f19.AuthTokenStatus = resp.CacheCluster.PendingModifiedValues.AuthTokenStatus
+	f19f1 := []*string{}
+	for _, f19f1iter := range resp.CacheCluster.PendingModifiedValues.CacheNodeIdsToRemove {
+		var f19f1elem string
+		f19f1elem = *f19f1iter
+		f19f1 = append(f19f1, &f19f1elem)
+	}
+	f19.CacheNodeIDsToRemove = f19f1
+	f19.CacheNodeType = resp.CacheCluster.PendingModifiedValues.CacheNodeType
+	f19.EngineVersion = resp.CacheCluster.PendingModifiedValues.EngineVersion
+	f19.NumCacheNodes = resp.CacheCluster.PendingModifiedValues.NumCacheNodes
+	ko.Status.PendingModifiedValues = f19
+	f23 := []*svcapitypes.SecurityGroupMembership{}
+	for _, f23iter := range resp.CacheCluster.SecurityGroups {
+		f23elem := &svcapitypes.SecurityGroupMembership{}
+		f23elem.SecurityGroupID = f23iter.SecurityGroupId
+		f23elem.Status = f23iter.Status
+		f23 = append(f23, f23elem)
+	}
+	ko.Status.SecurityGroups = f23
+	ko.Status.TransitEncryptionEnabled = resp.CacheCluster.TransitEncryptionEnabled
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+}

@@ -109,7 +109,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	if shape.Type == "structure" {
 		cleanNames := names.New(gte)
 		gte = cleanNames.Camel
-		if cleanNames.Camel == r.Kind+"Spec" || cleanNames.Camel == r.Kind+"Status" {
+		if r.helper.HasConflictingTypeName(gte) {
 			gte += "_SDK"
 		}
 		gt = "*" + gte
@@ -119,7 +119,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		mgte, mgt, _ := r.cleanGoType(shape.MemberRef.Shape)
 		cleanNames := names.New(mgte)
 		gte = cleanNames.Camel
-		if cleanNames.Camel == r.Kind+"Spec" || cleanNames.Camel == r.Kind+"Status" {
+		if r.helper.HasConflictingTypeName(mgte) {
 			gte += "_SDK"
 		}
 
@@ -708,9 +708,23 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	goType := shape.GoTypeWithPkgName()
 	keepPointer := (shape.Type == "list" || shape.Type == "map")
 	goType = r.replacePkgName(goType, "svcapitypes", keepPointer)
-	altTypeName, renamed := r.helper.typeRenames[goType]
+	goTypeNoPkg := goType
+	goPkg := ""
+	hadPkg := false
+	if strings.Contains(goType, ".") {
+		parts := strings.Split(goType, ".")
+		goTypeNoPkg = parts[1]
+		goPkg = parts[0]
+		hadPkg = true
+	}
+	renames := r.helper.GetTypeRenames()
+	altTypeName, renamed := renames[goTypeNoPkg]
 	if renamed {
-		goType = altTypeName
+		goTypeNoPkg = altTypeName
+	}
+	goType = goTypeNoPkg
+	if hadPkg {
+		goType = goPkg + "." + goType
 	}
 
 	switch shape.Type {
@@ -927,7 +941,7 @@ func (r *CRD) GoCodeSetOutput(
 					indentLevel,
 				)
 				out += r.goCodeSetOutputForScalar(
-					memberName,
+					statusField.Names.Camel,
 					targetVarName,
 					memberVarName,
 					memberShapeRef,
@@ -1062,6 +1076,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
+				cleanNames := names.New(memberName)
 				switch memberShape.Type {
 				case "list", "structure", "map":
 					{
@@ -1071,14 +1086,14 @@ func (r *CRD) goCodeSetOutputForContainer(
 							indentLevel,
 						)
 						out += r.goCodeSetOutputForContainer(
-							memberName,
+							cleanNames.Camel,
 							memberVarName,
 							sourceVarName+"."+memberName,
 							memberShapeRef,
 							indentLevel,
 						)
 						out += r.goCodeSetOutputForScalar(
-							memberName,
+							cleanNames.Camel,
 							targetVarName,
 							memberVarName,
 							memberShapeRef,
@@ -1087,10 +1102,10 @@ func (r *CRD) goCodeSetOutputForContainer(
 					}
 				default:
 					out += r.goCodeSetOutputForScalar(
-						memberName,
+						cleanNames.Camel,
 						targetVarName,
 						sourceVarName+"."+memberName,
-						shapeRef,
+						memberShapeRef,
 						indentLevel,
 					)
 				}

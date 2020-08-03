@@ -102,10 +102,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 
 func writeControllerMainGo(sh *model.Helper) error {
 	var b bytes.Buffer
-	crdsNames, error := sh.GetCRDNames()
-	if error != nil {
-		return error
-	}
+	crdsNames := sh.GetCRDNames()
 
 	// convert CRD names into snake_case to use for package import
 	snakeCasedCRDNames := make([]string, 0)

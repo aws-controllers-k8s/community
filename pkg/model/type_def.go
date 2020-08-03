@@ -36,21 +36,19 @@ type TypeDef struct {
 func (h *Helper) HasConflictingTypeName(typeName string) bool {
 	// First grab the set of CRD struct names and the names of their Spec and
 	// Status structs
-	opMap := h.GetOperationMap()
 	cleanTypeName := names.New(typeName).Camel
-	createOps := (*opMap)[OpTypeCreate]
-	crdNames := []string{}
+	crdNames := h.GetCRDNames()
+	crdResourceNames := []string{}
 	crdSpecNames := []string{}
 	crdStatusNames := []string{}
 
-	for resourceName := range createOps {
-		resourceNames := names.New(resourceName)
-		cleanResourceName := resourceNames.Camel
-		crdNames = append(crdNames, cleanResourceName)
+	for _, crdName := range crdNames {
+		cleanResourceName := crdName.Camel
+		crdResourceNames = append(crdResourceNames, cleanResourceName)
 		crdSpecNames = append(crdSpecNames, cleanResourceName+"Spec")
 		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
 	}
-	return (inStrings(cleanTypeName, crdNames) ||
+	return (inStrings(cleanTypeName, crdResourceNames) ||
 		inStrings(cleanTypeName, crdSpecNames) ||
 		inStrings(cleanTypeName, crdStatusNames))
 }
@@ -112,6 +110,10 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 					// time.Time needs to be converted to apimachinery/metav1.Time otherwise there is no DeepCopy support
 					if pkg == "time" {
 						timports["k8s.io/apimachinery/pkg/apis/meta/v1"] = "metav1"
+					} else if pkg == "aws" {
+						// The "aws.JSONValue" type needs to be handled
+						// specially.
+						timports["github.com/aws/aws-sdk-go/aws"] = ""
 					} else {
 						// Shape.GoPTypeWithPkgNameElem() always returns the type
 						// as a full package dot-notation name. We only want to add
@@ -162,5 +164,6 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 	})
 	h.typeDefs = tdefs
 	h.typeImports = timports
+	h.typeRenames = trenames
 	return tdefs, timports, nil
 }
