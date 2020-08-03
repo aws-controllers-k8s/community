@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-# A script that builds a single ACK service controllers an AWS API
+# A script that builds a single ACK service controller for an AWS service API
 
-set -Eou pipefail
+set -Eo pipefail
 
-SOURCE_REPO=github.com/aws/aws-controllers-k8s
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
-BIN_DIR=$SCRIPTS_DIR/../bin
-TEMPLATES_DIR=$SCRIPTS_DIR/../templates
+ROOT_DIR="$SCRIPTS_DIR/.."
+BIN_DIR="$ROOT_DIR/bin"
+TEMPLATES_DIR="$ROOT_DIR/templates"
 
-source "$SCRIPTS_DIR"/lib/common.sh
-source "$SCRIPTS_DIR"/lib/k8s.sh
+source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/k8s.sh"
 
 : "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
