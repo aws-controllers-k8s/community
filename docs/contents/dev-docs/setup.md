@@ -10,9 +10,9 @@ Then, on your workstation, run:
 
 ```bash
 cd go/src/github.com/aws
-git clone git@github.com:$GITHUB_ID/aws-service-operator-k8s
-cd aws-service-operator-k8s
-git remote add upstream git@github.com:aws/aws-service-operator-k8s
+git clone git@github.com:$GITHUB_ID/aws-controllers-k8s
+cd aws-controllers-k8s
+git remote add upstream git@github.com:aws/aws-controllers-k8s
 ```
 
 ## Create your local branch
@@ -41,12 +41,12 @@ Writing objects: 100% (4/4), 710 bytes | 710.00 KiB/s, done.
 Total 4 (delta 2), reused 0 (delta 0)
 remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
 remote: This repository moved. Please use the new location:
-remote:   git@github.com:$GITHUB_ID/aws-service-operator-k8s.git
+remote:   git@github.com:$GITHUB_ID/aws-controllers-k8s.git
 remote: 
 remote: Create a pull request for 'docs' on GitHub by visiting:
-remote:      https://github.com/$GITHUB_ID/aws-service-operator-k8s/pull/new/docs
+remote:      https://github.com/$GITHUB_ID/aws-controllers-k8s/pull/new/docs
 remote: 
-To github.com:a-hilaly/aws-service-operator-k8s
+To github.com:a-hilaly/aws-controllers-k8s
  * [new branch]      docs -> docs
 ```
 

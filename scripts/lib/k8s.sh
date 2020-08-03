@@ -8,6 +8,19 @@ ensure_controller_gen() {
   fi
 }
 
+# ensure_kubectl installs the kubectl binary if it isn't present on the system.
+# It installs the kubectl binary for the latest stable release of Kubernetes
+# and uses `sudo mv` to place the downloaded binary into your PATH.
+ensure_kubectl() {
+    if ! is_installed kubectl ; then
+        __platform=$(uname | tr '[:upper:]' '[:lower:]')
+        __stable_k8s_version=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+        curl -Lo "https://storage.googleapis.com/kubernetes-release/release/$__stable_k8s_version/bin/$__platform/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+    fi
+}
+
 ensure_service_controller_running() {
 
   __service_path=$1

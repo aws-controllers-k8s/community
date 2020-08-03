@@ -1,9 +1,17 @@
-#!/bin/bash
-set -eo pipefail
+#!/usr/bin/env bash
+
+# A script that builds a single ACK service controller, provisions a KinD
+# Kubernetes cluster, installs the built ACK service controller into that
+# Kubernetes cluster and runs a set of tests
+
+set -Eo pipefail
+
+SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
+ROOT_DIR="$SCRIPTS_DIR/.."
+
+source "$SCRIPTS_DIR/lib/common.sh"
+
 OPTIND=1
-AEMM_URL="amazon-ec2-metadata-mock-service.default.svc.cluster.local"
-AEMM_VERSION="1.2.0"
-AEMM_DL_URL="https://github.com/aws/amazon-ec2-metadata-mock/releases/download/v${AEMM_VERSION}/amazon-ec2-metadata-mock-${AEMM_VERSION}.tgz"
 CLUSTER_NAME_BASE="test"
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION="1.16"
@@ -11,8 +19,6 @@ OVERRIDE_PATH=0
 PRESERVE=false
 PROVISION_CLUSTER_ARGS=""
 START=$(date +%s)
-SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
-ROOT_DIR="$SCRIPT_PATH/../"
 TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
@@ -25,46 +31,37 @@ function relpath() {
 
 function clean_up {
     if [[ "$PRESERVE" == false ]]; then
-        "${SCRIPT_PATH}"/delete-kind-cluster.sh $DELETE_CLUSTER_ARGS || :
+        "${SCRIPTS_DIR}"/delete-kind-cluster.sh -c "$TMP_DIR" || :
         return
     fi
     echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
 }
 
 function exit_and_fail {
-    local pod_id=$(get_nth_worker_pod || :)
-    kubectl logs "${pod_id}" --namespace kube-system || :
     END=$(date +%s)
     echo "⏰ Took $(expr "${END}" - "${START}")sec"
-    echo "❌ NTH Integration Test FAILED $CLUSTER_NAME! ❌"
+    echo "❌ ACK Integration Test FAILED $CLUSTER_NAME! ❌"
     exit 1
 }
 
-function get_nth_worker_pod {
-    kubectl get pods -n kube-system \
-      --selector 'app.kubernetes.io/name=aws-node-termination-handler' \
-      --field-selector="spec.nodeName=$CLUSTER_NAME-worker,status.phase=Running" \
-      --sort-by=.metadata.creationTimestamp \
-      --output jsonpath='{.items[-1].metadata.name}'
-}
+USAGE="
+Usage:
+  $(basename "$0") [-p] [-s] [-o] [-b <TEST_BASE_NAME>] [-c <CLUSTER_CONTEXT_DIR>] [-i <AWS Docker image name>] [-s] [-v K8S_VERSION]
 
-USAGE=$(cat << 'EOM'
-  Usage: bash run.sh [-p] [-s] [-o] [-b <TEST_BASE_NAME>] [-c <CLUSTER_CONTEXT_DIR>] [-i <AWS Docker image name>] [-s] [-v K8S_VERSION]
-  Executes a test within a provisioned kubernetes cluster with NTH and IMDS pre-loaded.
+Builds the Docker image for an ACK service controller, loads the Docker image
+into a KinD Kubernetes cluster, creates the Deployment artifact for the ACK
+service controller and executes a set of tests.
 
-  Example: bash run.sh -p -s petstore
+Example: $(basename "$0") -p -s ecr
 
-          Optional:
-            -b          Base name of test (will be used for cluster too)
-            -c          Cluster context directory, if operating on an existing cluster
-            -p          Preserve kind k8s cluster for inspection
-            -i          Provide AWS Service docker image
-            -s          Provide AWS Service name (ecr, sns, sqs, petstore, bookstore)
-            -o          Override path w/ your own kubectl and kind binaries
-            -v          Kubernetes Version (Default: 1.16) [1.14, 1.15, 1.16, 1.17, and 1.18]
-
-EOM
-)
+Options:
+  -b          Base name of test (will be used for cluster too)
+  -c          Cluster context directory, if operating on an existing cluster
+  -p          Preserve kind k8s cluster for inspection
+  -i          Provide AWS Service docker image
+  -s          Provide AWS Service name (ecr, sns, sqs, petstore, bookstore)
+  -v          Kubernetes Version (Default: 1.16) [1.14, 1.15, 1.16, 1.17, and 1.18]
+"
 
 # Process our input arguments
 while getopts "ps:ioc:b:v:" opt; do
@@ -74,17 +71,10 @@ while getopts "ps:ioc:b:v:" opt; do
         PRESERVE=true
       ;;
     s ) # AWS Service name
-        echo "Running Docker build as you requested for ${OPTARG} service"
         AWS_SERVICE=$(echo "${OPTARG}" | tr '[:upper:]' '[:lower:]')
-        echo $AWS_SERVICE
       ;;
     i ) # AWS Service Docker Image
         AWS_SERVICE_DOCKER_IMG="${OPTARG}"
-      ;;
-    o ) # Override path with your own kubectl and kind binaries
-        DELETE_CLUSTER_ARGS="${DELETE_CLUSTER_ARGS} -o"
-        PROVISION_CLUSTER_ARGS="${PROVISION_CLUSTER_ARGS} -o"
-        OVERRIDE_PATH=1
       ;;
     c ) # Cluster context directory to operate on existing cluster
         TMP_DIR="${OPTARG}"
@@ -103,7 +93,7 @@ while getopts "ps:ioc:b:v:" opt; do
 done
 
 if [ -z $TMP_DIR ]; then
-    TMP_DIR=$("${SCRIPT_PATH}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}" "${PROVISION_CLUSTER_ARGS}")
+    TMP_DIR=$("${SCRIPTS_DIR}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}")
 fi
 
 if [ $OVERRIDE_PATH == 0 ]; then
@@ -143,12 +133,4 @@ echo "export PATH=$TMP_DIR:\$PATH"
 echo "kubectl get pods -A"
 echo "======================================================================================================"
 
-
-### exported vars and funcs that tests can use
-export TMP_DIR
-export CLUSTER_NAME
-export AEMM_URL
-export AEMM_VERSION
-export AEMM_DL_URL
-export -f timeout
-###
+# TODO: export any necessary env vars and run tests
