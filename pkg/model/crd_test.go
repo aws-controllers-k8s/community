@@ -978,7 +978,7 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	}
 	res.SetTags(f22)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expCreateOutput := `
 	ko.Status.AtRestEncryptionEnabled = resp.CacheCluster.AtRestEncryptionEnabled
@@ -1198,7 +1198,7 @@ func TestDynamoDB_Table(t *testing.T) {
 	}
 	res.SetTags(f9)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expStatusFieldCamel := []string{
 		"ArchivalSummary",
