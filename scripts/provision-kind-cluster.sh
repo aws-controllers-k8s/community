@@ -86,18 +86,18 @@ ensure_helm
 CLUSTER_NAME="$CLUSTER_NAME_BASE"-"${TEST_ID}"
 TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
 
-echoerr "🐳 Using Kubernetes $K8_VERSION"
+echoerr "Using Kubernetes $K8_VERSION"
 mkdir -p "${TMP_DIR}"
 
-echoerr "🥑 Creating k8s cluster using \"kind\""
+echoerr "Creating k8s cluster using \"kind\" ..."
 for i in $(seq 0 5); do
   if [[ -z $(kind get clusters | grep $CLUSTER_NAME) ]]; then
-      kind create cluster --name "$CLUSTER_NAME" --image $K8_VERSION --config "$SCRIPT_PATH/kind-two-node-cluster.yaml" --kubeconfig $TMP_DIR/kubeconfig 1>&2 || :
+      kind create cluster -q --name "$CLUSTER_NAME" --image $K8_VERSION --config "$SCRIPT_PATH/kind-two-node-cluster.yaml" --kubeconfig $TMP_DIR/kubeconfig 1>&2 || :
   else
       break
   fi
 done
 
 echo "$CLUSTER_NAME" > $TMP_DIR/clustername
-echoerr "👍 Created k8s cluster using \"kind\""
+echoerr "Created k8s cluster using \"kind\""
 echo $TMP_DIR

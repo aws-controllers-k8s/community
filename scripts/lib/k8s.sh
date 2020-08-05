@@ -21,6 +21,16 @@ ensure_kubectl() {
     fi
 }
 
+# ensure_kustomize installs the kustomize binary if it isn't present on the
+# system and uses `sudo mv` to place the downloaded binary into your PATH.
+ensure_kustomize() {
+    if ! is_installed kustomize ; then
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+        chmod +x kustomize
+        sudo mv kustomize /usr/local/bin/kustomize
+    fi
+}
+
 ensure_service_controller_running() {
 
   __service_path=$1

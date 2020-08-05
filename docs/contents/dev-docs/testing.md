@@ -29,8 +29,26 @@ The above does the following:
 * Builds a Docker image containing the ACK service controller
 * Loads the Docker image for the ACK service controller into the KinD cluster
 * Installs the ACK service controller and related Kubernetes manifests into the
-  KinD cluster using `helm install` (still TODO)
+  KinD cluster using `kustomize build | kubectl apply -f -`
 * Runs a series of Bash test scripts that call `kubectl` and the `aws` CLI
   tools to verify that custom resources (CRs) of the type managed by the ACK
   service controller are created, updated and deleted appropriately (still
   TODO)
+* Deletes the Kubernetes cluster created by KinD. You can prevent this last
+  step from happening by passing the `-p` (for "preserve") flag to the
+  `scripts/kind-build-test.sh` script
+
+**IMPORTANT NOTE**: The first time you run the `scripts/kind-build-test.sh`
+script, the step that builds the Docker image for the target ACK service
+controller can take a LONG time (40+ minutes). This is because a Docker image
+layer contains a lot of dependencies. Once you successfully build the target
+Docker image, that base Docker image layer is cached by Docker and the build
+takes a much shorter amount of time.
+
+# Cleaning up test runs
+
+If you run `scripts/kind-build-test.sh` with the `-p` (for "preserve") flag,
+the Kubernetes cluster created by KinD is not destroyed at the end of the test.
+To cleanup a Kubernetes cluster created by KinD (which will include all the
+configuration files created by the script specifically for your test cluster),
+call `kind delete cluster --name $CLUSTER_NAME`

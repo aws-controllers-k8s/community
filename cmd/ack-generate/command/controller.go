@@ -27,6 +27,9 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 	dockertemplate "github.com/aws/aws-controllers-k8s/pkg/template"
 	cmdtemplate "github.com/aws/aws-controllers-k8s/pkg/template/cmd"
+	configcontrollertemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/controller"
+	configdefaulttemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/default"
+	configrbactemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/rbac"
 	pkgtemplate "github.com/aws/aws-controllers-k8s/pkg/template/pkg"
 )
 
@@ -95,6 +98,9 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if err = writeDockerfile(sh); err != nil {
+		return err
+	}
+	if err = writeConfigDirs(sh); err != nil {
 		return err
 	}
 	return nil
@@ -350,6 +356,144 @@ func writeDockerfile(sh *model.Helper) error {
 		return nil
 	}
 	path := filepath.Join(optControllerOutputPath, "Dockerfile")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeConfigDirs(sh *model.Helper) error {
+	configDefaultPath := filepath.Join(optControllerOutputPath, "config", "default")
+	configControllerPath := filepath.Join(optControllerOutputPath, "config", "controller")
+	configRBACPath := filepath.Join(optControllerOutputPath, "config", "rbac")
+	if !optDryRun {
+		if _, err := ensureDir(configDefaultPath); err != nil {
+			return err
+		}
+		if _, err := ensureDir(configControllerPath); err != nil {
+			return err
+		}
+		if _, err := ensureDir(configRBACPath); err != nil {
+			return err
+		}
+	}
+	if err := writeConfigDefaultKustomizationYAML(sh); err != nil {
+		return err
+	}
+	if err := writeConfigControllerKustomizationYAML(sh); err != nil {
+		return err
+	}
+	if err := writeConfigControllerDeploymentYAML(sh); err != nil {
+		return err
+	}
+	if err := writeConfigRBACKustomizationYAML(sh); err != nil {
+		return err
+	}
+	if err := writeConfigRBACClusterRoleBindingYAML(sh); err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeConfigDefaultKustomizationYAML(sh *model.Helper) error {
+	var b bytes.Buffer
+	vars := &configdefaulttemplate.ConfigDefaultKustomizationYAMLTemplateVars{
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	}
+	tpl, err := configdefaulttemplate.NewConfigDefaultKustomizationYAMLTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= config/default/kustomization.yaml ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "config", "default", "kustomization.yaml")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeConfigControllerKustomizationYAML(sh *model.Helper) error {
+	var b bytes.Buffer
+	vars := &configcontrollertemplate.ConfigControllerKustomizationYAMLTemplateVars{
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	}
+	tpl, err := configcontrollertemplate.NewConfigControllerKustomizationYAMLTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= config/controller/kustomization.yaml ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "config", "controller", "kustomization.yaml")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeConfigControllerDeploymentYAML(sh *model.Helper) error {
+	var b bytes.Buffer
+	vars := &configcontrollertemplate.ConfigControllerDeploymentYAMLTemplateVars{
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	}
+	tpl, err := configcontrollertemplate.NewConfigControllerDeploymentYAMLTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= config/controller/deployment.yaml ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "config", "controller", "deployment.yaml")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeConfigRBACKustomizationYAML(sh *model.Helper) error {
+	var b bytes.Buffer
+	vars := &configrbactemplate.ConfigRBACKustomizationYAMLTemplateVars{
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	}
+	tpl, err := configrbactemplate.NewConfigRBACKustomizationYAMLTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= config/rbac/kustomization.yaml ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "config", "rbac", "kustomization.yaml")
+	return ioutil.WriteFile(path, b.Bytes(), 0666)
+}
+
+func writeConfigRBACClusterRoleBindingYAML(sh *model.Helper) error {
+	var b bytes.Buffer
+	vars := &configrbactemplate.ConfigRBACClusterRoleBindingYAMLTemplateVars{
+		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+	}
+	tpl, err := configrbactemplate.NewConfigRBACClusterRoleBindingYAMLTemplate(optTemplatesDir)
+	if err != nil {
+		return err
+	}
+	if err := tpl.Execute(&b, vars); err != nil {
+		return err
+	}
+	if optDryRun {
+		fmt.Println("============================= config/rbac/cluster-role-binding.yaml ======================================")
+		fmt.Println(strings.TrimSpace(b.String()))
+		return nil
+	}
+	path := filepath.Join(optControllerOutputPath, "config", "rbac", "cluster-role-binding.yaml")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 

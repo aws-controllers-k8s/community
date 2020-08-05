@@ -10,6 +10,7 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 
 source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/k8s.sh"
 
 OPTIND=1
 CLUSTER_NAME_BASE="test"
@@ -67,7 +68,6 @@ Options:
 while getopts "ps:ioc:b:v:" opt; do
   case ${opt} in
     p ) # PRESERVE K8s Cluster
-        echo "❄️  This run will preserve the cluster as you requested"
         PRESERVE=true
       ;;
     s ) # AWS Service name
@@ -92,6 +92,8 @@ while getopts "ps:ioc:b:v:" opt; do
   esac
 done
 
+ensure_kustomize
+
 if [ -z $TMP_DIR ]; then
     TMP_DIR=$("${SCRIPTS_DIR}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}")
 fi
@@ -107,29 +109,57 @@ CLUSTER_NAME=$(cat $TMP_DIR/clustername)
 ## Build and Load Docker Images
 
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
-    echo "🥑 Building ${AWS_SERVICE} docker image"
-    DEFAULT_AWS_SERVICE_DOCKER_IMG="${AWS_SERVICE}:${VERSION}"
-    docker build -f ${ROOT_DIR}/services/${AWS_SERVICE}/Dockerfile -t "${DEFAULT_AWS_SERVICE_DOCKER_IMG}" .
+    echo "Building ${AWS_SERVICE} docker image"
+    DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
+    docker build --quiet -f ${ROOT_DIR}/services/${AWS_SERVICE}/Dockerfile -t "${DEFAULT_AWS_SERVICE_DOCKER_IMG}" .
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
-    echo "👍 Built the ${AWS_SERVICE} docker image"
 else
-    echo "🥑 Skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
+    echo "Skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
 fi
 echo "$AWS_SERVICE_DOCKER_IMG" > "${TMP_DIR}"/"${AWS_SERVICE}"_docker-img
 
-echo "🥑 Loading the images into the cluster"
+echo "Loading the images into the cluster"
 kind load docker-image --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}"
-echo "👍 Loaded image(s) into the cluster"
 
 export KUBECONFIG="${TMP_DIR}/kubeconfig"
 
 trap "exit_and_fail" INT TERM ERR
 trap "clean_up" EXIT
 
+service_config_dir="$ROOT_DIR/services/$AWS_SERVICE/config"
+
+## Register the ACK service controller's CRDs in the target k8s cluster
+# TODO(jaypipes): Remove --validate=false once
+# https://github.com/aws/aws-controllers-k8s/issues/121 (root:
+# https://github.com/kubernetes-sigs/controller-tools/issues/456) is addressed
+# TODO(jaypipes): Eventually use kubebuilder:scaffold:crdkustomizeresource?
+echo "Loading CRD manifests for $AWS_SERVICE into the cluster"
+for crd_file in $service_config_dir/crd/bases; do
+    kubectl apply -f $crd_file --validate=false
+done
+
+echo "Loading RBAC manifests for $AWS_SERVICE into the cluster"
+kustomize build $service_config_dir/rbac | kubectl apply -f -
+
+## Create the ACK service controller Deployment in the target k8s cluster
+test_config_dir=$TMP_DIR/config/test
+mkdir -p $test_config_dir
+
+cp $service_config_dir/controller/deployment.yaml $test_config_dir/deployment.yaml
+
+cat <<EOF >$test_config_dir/kustomization.yaml
+resources:
+- deployment.yaml
+EOF
+
+echo "Loading service controller Deployment for $AWS_SERVICE into the cluster"
+cd $test_config_dir
+kustomize edit set image controller=$AWS_SERVICE_DOCKER_IMG
+kustomize build $test_config_dir | kubectl apply -f -
+
 echo "======================================================================================================"
 echo "To poke around your test manually:"
 echo "export KUBECONFIG=$TMP_DIR/kubeconfig"
-echo "export PATH=$TMP_DIR:\$PATH"
 echo "kubectl get pods -A"
 echo "======================================================================================================"
 
