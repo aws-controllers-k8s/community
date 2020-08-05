@@ -25,6 +25,19 @@ type GeneratorConfig struct {
 	// Resources contains generator instructions for individual CRDs within an
 	// API
 	Resources map[string]ResourceGeneratorConfig `json:"resources"`
+	// CRDs to ignore. ACK generator would skip these resources.
+	Ignore IgnoreSpec `json:"ignore"`
+}
+
+// IgnoreSpec represents instructions to the ACK code generator to
+// ignore operations, resources on an AWS service API
+type IgnoreSpec struct {
+	// Set of operation IDs/names that should be ignored by the
+	// generator when constructing SDK linkage
+	Operations []string `json:"operations"`
+	// Set of resource names that should be ignored by the
+	// generator
+	ResourceNames []string `json:"resource_names"`
 }
 
 // ResourceGeneratorConfig represents instructions to the ACK code generator
@@ -104,8 +117,7 @@ type FieldGeneratorConfig struct {
 }
 
 // NewGeneratorConfig returns a new GeneratorConfig object given a supplied
-// path to a config file and a pointer to an aws-sdk-go private/model/api.API
-// struct
+// path to a config file
 func NewGeneratorConfig(
 	configPath string,
 ) (*GeneratorConfig, error) {

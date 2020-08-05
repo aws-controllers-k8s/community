@@ -1,0 +1,6 @@
+resources:
+ignore:
+  operations:
+    - DeleteSnapshot
+  resource_names:
+    - GlobalReplicationGroup
