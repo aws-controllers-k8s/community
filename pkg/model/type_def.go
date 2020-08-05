@@ -97,12 +97,13 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 				if strings.HasPrefix(goPkgType, "[]") {
 					// For slice types, we just want the element type...
 					goPkgType = goPkgType[2:]
-				} else if strings.HasPrefix(goPkgType, "map[") {
+				}
+				if strings.HasPrefix(goPkgType, "map[") {
 					goPkgType = strings.Split(goPkgType, "]")[1]
 				}
 				if strings.HasPrefix(goPkgType, "*") {
-					// For slice types, the element type might be a pointer to
-					// a struct...
+					// For slice and map types, the element type might be a
+					// pointer to a struct...
 					goPkgType = goPkgType[1:]
 				}
 				pkg := strings.Split(goPkgType, ".")[0]
@@ -126,7 +127,7 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			// fields in a DBProxy CRD... we need to ensure the type names don't
 			// conflict. Also, the name of the Go type in the generated code is
 			// Camel-cased and normalized, so we use that as the Go type
-			var gt string
+			gt := memberShape.GoType()
 			if memberShape.Type == "structure" {
 				typeNames := names.New(memberShape.ShapeName)
 				if h.HasConflictingTypeName(memberShape.ShapeName) {
@@ -136,17 +137,29 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			} else if memberShape.Type == "list" {
 				// If it's a list type, where the element is a structure, we need to
 				// set the GoType to the cleaned-up Camel-cased name
-				typeNames := names.New(memberShape.GoTypeElem())
-				if h.HasConflictingTypeName(memberShape.GoTypeElem()) {
-					typeNames.Camel += ConflictingNameSuffix
+				if memberShape.MemberRef.Shape.Type == "structure" {
+					elemType := memberShape.MemberRef.Shape.GoTypeElem()
+					typeNames := names.New(elemType)
+					if h.HasConflictingTypeName(elemType) {
+						typeNames.Camel += ConflictingNameSuffix
+					}
+					gt = "[]*" + typeNames.Camel
 				}
-				gt = "[]*" + typeNames.Camel
+			} else if memberShape.Type == "map" {
+				// If it's a map type, where the value element is a structure,
+				// we need to set the GoType to the cleaned-up Camel-cased name
+				if memberShape.ValueRef.Shape.Type == "structure" {
+					valType := memberShape.ValueRef.Shape.GoTypeElem()
+					typeNames := names.New(valType)
+					if h.HasConflictingTypeName(valType) {
+						typeNames.Camel += ConflictingNameSuffix
+					}
+					gt = "[]map[string]*" + typeNames.Camel
+				}
 			} else if memberShape.Type == "timestamp" {
 				// time.Time needs to be converted to apimachinery/metav1.Time
 				// otherwise there is no DeepCopy support
 				gt = "*metav1.Time"
-			} else {
-				gt = memberShape.GoType()
 			}
 			attrs[memberName] = NewAttr(memberNames, gt, memberShape)
 		}
