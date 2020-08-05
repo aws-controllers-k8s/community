@@ -86,7 +86,7 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetReadOneInput .CRD "r.ko.Spec" "res" 1 }}
+{{ GoCodeSetReadOneInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
 {{- end }}
@@ -131,7 +131,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetCreateInput .CRD "r.ko.Spec" "res" 1 }}
+{{ GoCodeSetCreateInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
 
@@ -168,7 +168,7 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetUpdateInput .CRD "r.ko.Spec" "res" 1 }}
+{{ GoCodeSetUpdateInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
 {{ end }}
@@ -198,7 +198,7 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	r *resource,
 ) (*svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
-{{ GoCodeSetDeleteInput .CRD "r.ko.Spec" "res" 1 }}
+{{ GoCodeSetDeleteInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
 {{- end -}}
