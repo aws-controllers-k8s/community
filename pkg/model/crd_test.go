@@ -1056,6 +1056,33 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 }
 
+
+func TestElasticache_Ignored_Operations(t *testing.T) {
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Snapshot", crds)
+	require.NotNil(crd)
+	require.NotNil(crd.Ops.Create)
+	require.Nil(crd.Ops.Delete)
+}
+
+func TestElasticache_Ignored_Resources(t *testing.T) {
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+
+	crds, err := sh.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("GlobalReplicationGroup", crds)
+	require.Nil(crd)
+}
+
 func TestDynamoDB_Table(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)

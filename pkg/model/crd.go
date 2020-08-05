@@ -1313,6 +1313,9 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 	setAttributesOps := (*opMap)[OpTypeSetAttributes]
 
 	for crdName, createOp := range createOps {
+		if h.IsIgnoredResource(crdName) {
+			continue
+		}
 		crdNames := names.New(crdName)
 		crdOps := CRDOps{
 			Create:        createOps[crdName],
@@ -1323,6 +1326,7 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			GetAttributes: getAttributesOps[crdName],
 			SetAttributes: setAttributesOps[crdName],
 		}
+		h.RemoveIgnoredOperations(&crdOps)
 		crd := newCRD(h, crdNames, crdOps)
 		sdkMapper := NewSDKMapper(crd)
 		crd.SDKMapper = sdkMapper
@@ -1391,6 +1395,64 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 	})
 	h.crds = crds
 	return crds, nil
+}
+
+// IsIgnoredResource returns true if Operation Name is configured to be ignored
+// in generator config for the AWS service
+func (h *Helper) IsIgnoredResource(resourceName string) bool {
+	if resourceName == "" {
+		return true
+	}
+	if h.generatorConfig != nil {
+		for _, ignoredResourceName := range h.generatorConfig.Ignore.ResourceNames {
+			if ignoredResourceName == resourceName {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// RemoveIgnoredOperations updates CRDOps argument by setting those operations to nil
+// that are configured to be ignored in generator config for the AWS service
+func (h *Helper) RemoveIgnoredOperations(crdOps *CRDOps) {
+	if h.IsIgnoredOperation(crdOps.Create) {
+		crdOps.Create = nil
+	}
+	if h.IsIgnoredOperation(crdOps.ReadOne) {
+		crdOps.ReadOne = nil
+	}
+	if h.IsIgnoredOperation(crdOps.ReadMany) {
+		crdOps.ReadMany = nil
+	}
+	if h.IsIgnoredOperation(crdOps.Update) {
+		crdOps.Update = nil
+	}
+	if h.IsIgnoredOperation(crdOps.Delete) {
+		crdOps.Delete = nil
+	}
+	if h.IsIgnoredOperation(crdOps.GetAttributes) {
+		crdOps.GetAttributes = nil
+	}
+	if h.IsIgnoredOperation(crdOps.SetAttributes) {
+		crdOps.SetAttributes = nil
+	}
+}
+
+// IsIgnoredOperation returns true if Operation Name is configured to be ignored
+// in generator config for the AWS service
+func (h *Helper) IsIgnoredOperation(operation *awssdkmodel.Operation) bool {
+	if operation == nil {
+		return true
+	}
+	if h.generatorConfig != nil {
+		for _, ignoredOperation := range h.generatorConfig.Ignore.Operations {
+			if ignoredOperation == operation.Name {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // UnpacksAttributeMap returns true if the underlying API has
