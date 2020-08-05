@@ -40,6 +40,7 @@ type reconciler struct {
 	rmf acktypes.AWSResourceManagerFactory
 	rd  acktypes.AWSResourceDescriptor
 	log logr.Logger
+	cfg Config
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
@@ -87,6 +88,9 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	)
 
 	rm, err := r.rmf.ManagerFor(acctID)
+	if err != nil {
+		return err
+	}
 
 	if res.IsBeingDeleted() {
 		return r.cleanup(ctx, rm, res)
@@ -307,17 +311,19 @@ func (r *reconciler) getOwnerAccountID(
 	// OK, it's a new resource. Look for an override account ID annotation,
 	// which indicates a cross-account resource request
 	// TODO(jaypipes)
-	return ""
+	return ackv1alpha1.AWSAccountID(r.cfg.AccountID)
 }
 
 // NewReconciler returns a new reconciler object that
 func NewReconciler(
 	rmf acktypes.AWSResourceManagerFactory,
 	log logr.Logger,
+	cfg Config,
 ) acktypes.AWSResourceReconciler {
 	return &reconciler{
 		rmf: rmf,
 		rd:  rmf.ResourceDescriptor(),
 		log: log,
+		cfg: cfg,
 	}
 }

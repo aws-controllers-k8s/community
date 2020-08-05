@@ -72,7 +72,7 @@ func main() {
 	).WithResourceManagerFactories(
 		svcresource.GetManagerFactories(),
 	)
-	if err = sc.BindControllerManager(mgr); err != nil {
+	if err = sc.BindControllerManager(mgr, ackCfg); err != nil {
 		setupLog.Error(
 			err, "unable bind to controller manager to service controller",
 			"aws.service", awsServiceAlias,

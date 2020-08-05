@@ -14,47 +14,76 @@
 package runtime
 
 import (
+	"errors"
+
 	flag "github.com/spf13/pflag"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+)
 
+const (
+	flagBindPort             = "bind-port"
+	flagEnableLeaderElection = "enable-leader-election"
+	flagMetricAddr           = "metrics-addr"
+	flagEnableDevLogging     = "enable-development-logging"
+	flagAWSAccountID         = "aws-account-id"
+	flagAWSRegion            = "aws-region"
 )
 
 type Config struct {
-	BindPort             int
-	MetricsAddr          string
-	EnableLeaderElection bool
+	BindPort                 int
+	MetricsAddr              string
+	EnableLeaderElection     bool
 	EnableDevelopmentLogging bool
+	AccountID                string
+	Region                   string
 }
 
-func (c *Config) BindFlags() {
+func (cfg *Config) BindFlags() {
 	flag.IntVar(
-		&c.BindPort, "bind-port",
+		&cfg.BindPort, flagBindPort,
 		9443,
 		"The port the service controller binds to.",
 	)
 	flag.StringVar(
-		&c.MetricsAddr, "metrics-addr",
+		&cfg.MetricsAddr, flagMetricAddr,
 		"0.0.0.0:8080",
 		"The address the metric endpoint binds to.",
 	)
 	flag.BoolVar(
-		&c.EnableLeaderElection, "enable-leader-election",
+		&cfg.EnableLeaderElection, flagEnableLeaderElection,
 		false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.",
 	)
 	flag.BoolVar(
-		&c.EnableDevelopmentLogging, "enable-development-logging",
+		&cfg.EnableDevelopmentLogging, flagEnableDevLogging,
 		false,
-		"Configures the logger to use a Zap development config (encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn, no sampling), " +
+		"Configures the logger to use a Zap development config (encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn, no sampling), "+
 			"otherwise a Zap production config will be used (encoder=jsonEncoder,logLevel=Info,stackTraceLevel=Error), sampling).",
+	)
+	flag.StringVar(
+		&cfg.AccountID, flagAWSAccountID,
+		"",
+		"The AWS Account ID in which the service controller will create resources",
+	)
+	flag.StringVar(
+		&cfg.Region, flagAWSRegion,
+		"",
+		"The AWS Region in which the service controller will create its resources",
 	)
 }
 
-func (c *Config) SetupLogger()() {
+func (cfg *Config) SetupLogger() {
 	zapOptions := zap.Options{
-		Development:    c.EnableDevelopmentLogging,
+		Development: cfg.EnableDevelopmentLogging,
 	}
 	ctrlrt.SetLogger(zap.New(zap.UseFlagOptions(&zapOptions)))
+}
+
+func (cfg *Config) Validate() error {
+	if cfg.AccountID == "" {
+		return errors.New("unable to start service controller as account ID is nil. Please pass --aws-account-id flag")
+	}
+	return nil
 }

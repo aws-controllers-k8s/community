@@ -96,7 +96,8 @@ func TestServiceController(t *testing.T) {
 	require.Empty(recons)
 
 	mgr := &fakeManager{}
-	err := sc.BindControllerManager(mgr)
+	cfg := ackrt.Config{}
+	err := sc.BindControllerManager(mgr, cfg)
 	require.Nil(err)
 
 	recons = sc.GetReconcilers()
