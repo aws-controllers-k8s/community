@@ -223,7 +223,7 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
-// from a CRD's Spec fields.
+// from a CRD's fields.
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -249,7 +249,7 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 // (SDK) objects. If we call this function with the following parameters:
 //
 //  opType:			OpTypeCreate
-//  sourceVarName:	ko.Spec
+//  sourceVarName:	ko
 //  targetVarName:	res
 //  indentLevel:	1
 //
@@ -272,11 +272,10 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 func (r *CRD) GoCodeSetInput(
 	// The type of operation to look for the Input shape
 	opType OpType,
-	// String representing the name of the variable that we will grab the
-	// Input shape from. This will likely be "r.ko.Spec" since in the templates
-	// that call this method, the "source variable" is the CRD struct's Spec
-	// field which is used to populate the target variable, which is the Input
-	// shape
+	// String representing the name of the variable that we will grab the Input
+	// shape from. This will likely be "r.ko" since in the templates that call
+	// this method, the "source variable" is the CRD struct which is used to
+	// populate the target variable, which is the Input shape
 	sourceVarName string,
 	// String representing the name of the variable that we will be **setting**
 	// with values we get from the Output shape. This will likely be
@@ -341,26 +340,40 @@ func (r *CRD) GoCodeSetInput(
 			fieldConfig := attrMapConfig.Fields[fieldName]
 			fieldNames := names.New(fieldName)
 			if !fieldConfig.IsReadOnly {
-				out += fmt.Sprintf("%sattrMap[\"%s\"] = %s.%s\n", indent, fieldName, sourceVarName, fieldNames.Camel)
+				out += fmt.Sprintf("%sattrMap[\"%s\"] = %s.%s\n", indent, fieldName, sourceVarName+".Spec", fieldNames.Camel)
 			}
 		}
 		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
 	}
 
-	for memberIndex, memberName := range r.SpecFieldNames() {
-		specField := r.SpecFields[memberName]
-		memberShapeRef, found := inputShape.MemberRefs[specField.Names.Original]
-		if !found || memberShapeRef.Shape == nil {
+	for memberIndex, memberName := range inputShape.MemberNames() {
+		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
 		}
-
+		// Determine whether the input shape's field is in the Spec or the
+		// Status struct and set the source variable appropriately.
+		var crdField *CRDField
+		var found bool
+		sourceAdaptedVarName := sourceVarName
+		crdField, found = r.SpecFields[memberName]
+		if found {
+			sourceAdaptedVarName += ".Spec"
+		} else {
+			crdField, found = r.StatusFields[memberName]
+			if !found {
+				// TODO(jaypipes): check generator config for exceptions?
+				continue
+			}
+			sourceAdaptedVarName += ".Status"
+		}
+		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
 
 		// we construct variables containing temporary storage for sub-elements
 		// and sub-fields that are structs. Names of fields are "f" appended by
-		// the 0-based index of the field within the set of a struct's set of
-		// fields. Nested structs simply append another "f" and the field index
-		// to the variable name.
+		// the 0-based index of the field within the set of the target struct's
+		// set of fields. Nested structs simply append another "f" and the
+		// field index to the variable name.
 		//
 		// This means you can tell what field a temporary fields variable
 		// represents by the name.
@@ -415,7 +428,7 @@ func (r *CRD) GoCodeSetInput(
 				out += r.goCodeSetInputForContainer(
 					memberName,
 					memberVarName,
-					sourceVarName+"."+specField.Names.Camel,
+					sourceAdaptedVarName+"."+crdField.Names.Camel,
 					memberShapeRef,
 					indentLevel,
 				)
@@ -433,7 +446,7 @@ func (r *CRD) GoCodeSetInput(
 				memberName,
 				targetVarName,
 				inputShape.Type,
-				sourceVarName+"."+specField.Names.Camel,
+				sourceAdaptedVarName+"."+crdField.Names.Camel,
 				memberShapeRef,
 				indentLevel,
 			)

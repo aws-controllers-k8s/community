@@ -116,16 +116,16 @@ func TestSNSTopic(t *testing.T) {
 	attrMap["Policy"] = r.ko.Spec.Policy
 	res.SetAttributes(attrMap)
 	res.SetName(*r.ko.Spec.Name)
-	f5 := []*svcsdk.Tag{}
-	for _, f5iter := range r.ko.Spec.Tags {
-		f5elem := &svcsdk.Tag{}
-		f5elem.SetKey(*f5iter.Key)
-		f5elem.SetValue(*f5iter.Value)
-		f5 = append(f5, f5elem)
+	f2 := []*svcsdk.Tag{}
+	for _, f2iter := range r.ko.Spec.Tags {
+		f2elem := &svcsdk.Tag{}
+		f2elem.SetKey(*f2iter.Key)
+		f2elem.SetValue(*f2iter.Value)
+		f2 = append(f2, f2elem)
 	}
-	res.SetTags(f5)
+	res.SetTags(f2)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	// None of the fields in the Topic resource's CreateTopicInput shape are
 	// returned in the CreateTopicOutput shape, so none of them return any Go
@@ -403,7 +403,7 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	res.SetTagSpecifications(f4)
 	res.SetVersionDescription(*r.ko.Spec.VersionDescription)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	// Check that we properly determined how to find the CreatedBy attribute
 	// within the CreateLaunchTemplateResult shape, which has a single field called
@@ -502,7 +502,7 @@ func TestECRRepository(t *testing.T) {
 	}
 	res.SetTags(f3)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expStatusFieldCamel := []string{
 		"CreatedAt",
@@ -697,15 +697,15 @@ func TestSQSQueue(t *testing.T) {
 	attrMap["VisibilityTimeout"] = r.ko.Spec.VisibilityTimeout
 	res.SetAttributes(attrMap)
 	res.SetQueueName(*r.ko.Spec.QueueName)
-	f11 := map[string]*string{}
-	for f11key, f11valiter := range r.ko.Spec.Tags {
-		var f11val string
-		f11val = *f11valiter
-		f11[f11key] = &f11val
+	f2 := map[string]*string{}
+	for f2key, f2valiter := range r.ko.Spec.Tags {
+		var f2val string
+		f2val = *f2valiter
+		f2[f2key] = &f2val
 	}
-	res.SetTags(f11)
+	res.SetTags(f2)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	// There are no fields other than QueueID in the returned CreateQueueResult
 	// shape
@@ -829,7 +829,7 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	res.SetRouteResponseSelectionExpression(*r.ko.Spec.RouteResponseSelectionExpression)
 	res.SetTarget(*r.ko.Spec.Target)
 `
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko.Spec", "res", 1))
+	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expCreateOutput := `
 	ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
