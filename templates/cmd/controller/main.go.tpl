@@ -36,6 +36,14 @@ func main() {
 	flag.Parse()
 	ackCfg.SetupLogger()
 
+	if err := ackCfg.Validate(); err != nil {
+		setupLog.Error(
+			err, "Unable to create controller manager",
+			"aws.service", awsServiceAlias,
+		)
+		os.Exit(1)
+	}
+
 	mgr, err := ctrlrt.NewManager(ctrlrt.GetConfigOrDie(), ctrlrt.Options{
 		Scheme:             scheme,
 		Port:               ackCfg.BindPort,
@@ -64,7 +72,7 @@ func main() {
 	).WithResourceManagerFactories(
 		svcresource.GetManagerFactories(),
 	)
-	if err = sc.BindControllerManager(mgr); err != nil {
+	if err = sc.BindControllerManager(mgr, ackCfg); err != nil {
 		setupLog.Error(
 			err, "unable bind to controller manager to service controller",
 			"aws.service", awsServiceAlias,

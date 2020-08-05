@@ -19,7 +19,7 @@ import (
 	"github.com/go-logr/logr"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
-	"github.com/aws/aws-controllers-k8s/pkg/types"
+	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
 // ServiceController wraps a number of `controller-runtime.Reconciler` that are
@@ -34,10 +34,10 @@ type ServiceController struct {
 	// rmFactories is a map of resource manager factories, keyed by the
 	// GroupKind of the resource managed by the resource manager produced by
 	// that factory
-	rmFactories map[string]types.AWSResourceManagerFactory
+	rmFactories map[string]acktypes.AWSResourceManagerFactory
 	// reconcilers is a map containing AWSResourceReconciler objects that are
 	// bound to the `controller-runtime.Manager` in `BindControllerManager`
-	reconcilers []types.AWSResourceReconciler
+	reconcilers []acktypes.AWSResourceReconciler
 	// log refers to the logr.Logger object handling logging for the service
 	// controller
 	log logr.Logger
@@ -45,7 +45,7 @@ type ServiceController struct {
 
 // GetReconcilers returns a slice of types.AWSResourceReconcilers associated
 // with this service controller
-func (c *ServiceController) GetReconcilers() []types.AWSResourceReconciler {
+func (c *ServiceController) GetReconcilers() []acktypes.AWSResourceReconciler {
 	c.metaLock.RLock()
 	defer c.metaLock.RUnlock()
 	return c.reconcilers
@@ -60,14 +60,14 @@ func (c *ServiceController) WithLogger(log logr.Logger) *ServiceController {
 // WithResourceManagerFactories sets the controller up to manage resources with
 // a set of supplied factories
 func (c *ServiceController) WithResourceManagerFactories(
-	rmfs []types.AWSResourceManagerFactory,
+	rmfs []acktypes.AWSResourceManagerFactory,
 ) *ServiceController {
 	c.metaLock.Lock()
 	defer c.metaLock.Unlock()
 
 	if c.rmFactories == nil {
 		c.rmFactories = make(
-			map[string]types.AWSResourceManagerFactory,
+			map[string]acktypes.AWSResourceManagerFactory,
 			len(rmfs),
 		)
 	}
@@ -81,11 +81,11 @@ func (c *ServiceController) WithResourceManagerFactories(
 // BindControllerManager takes a `controller-runtime.Manager`, creates all the
 // AWSResourceReconcilers needed for the service and binds all of the
 // reconcilers within the service controller with that manager
-func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager) error {
+func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager, cfg Config) error {
 	c.metaLock.Lock()
 	defer c.metaLock.Unlock()
 	for _, rmf := range c.rmFactories {
-		rec := NewReconciler(rmf, c.log)
+		rec := NewReconciler(rmf, c.log, cfg)
 		if err := rec.BindControllerManager(mgr); err != nil {
 			return err
 		}
