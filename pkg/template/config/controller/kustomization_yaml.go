@@ -11,36 +11,27 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package pkg
+package config
 
 import (
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 	ttpl "text/template"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/template"
 )
 
-type CRDManagerGoTemplateVars struct {
-	APIVersion              string
-	APIGroup                string
-	ServiceAlias            string
-	SDKAPIInterfaceTypeName string
-	CRD                     *model.CRD
+type ConfigControllerKustomizationYAMLTemplateVars struct {
+	ServiceAlias string
 }
 
-func NewCRDManagerGoTemplate(tplDir string) (*ttpl.Template, error) {
-	tplPath := filepath.Join(tplDir, "pkg", "crd_manager.go.tpl")
+func NewConfigControllerKustomizationYAMLTemplate(tplDir string) (*ttpl.Template, error) {
+	tplPath := filepath.Join(tplDir, "config", "controller", "kustomization.yaml.tpl")
 	tplContents, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return nil, err
 	}
-	t := ttpl.New("crd_manager")
-	t = t.Funcs(ttpl.FuncMap{
-		"ToLower": strings.ToLower,
-	})
+	t := ttpl.New("kustomization_yaml")
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err
 	}

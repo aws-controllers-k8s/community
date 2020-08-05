@@ -14,6 +14,9 @@ import (
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 )
 
+// +kubebuilder:rbac:groups={{ .ServiceAlias }}.services.k8s.aws,resources={{ ToLower .CRD.Plural }},verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups={{ .ServiceAlias }}.services.k8s.aws,resources={{ ToLower .CRD.Plural }}/status,verbs=get;update;patch
+
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
 type resourceManager struct {

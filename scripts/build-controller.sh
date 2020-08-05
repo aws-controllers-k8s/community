@@ -16,6 +16,7 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
 : "${ACK_GENERATE_CONFIG_PATH:=""}"
+: "${K8S_RBAC_ROLE_NAME:="ack-controller-role"}"
 
 USAGE="
 Usage:
@@ -39,6 +40,10 @@ Environment variables:
   ACK_GENERATE_CONFIG_PATH: Specify a path to the generator config YAML file to
                             instruct the code generator for the service.
                             Default: services/{SERVICE}/generator.yaml
+  K8S_RBAC_ROLE_NAME:       Name of the Kubernetes Role to use when generating
+                            the RBAC manifests for the custom resource
+                            definitions.
+                            Default: $K8S_RBAC_ROLE_NAME
 "
 
 if [ $# -ne 1 ]; then
@@ -97,17 +102,19 @@ if [ $? -ne 0 ]; then
     exit 2
 fi
 
-echo "Generating deepcopy code for $SERVICE"
+config_output_dir="$ROOT_DIR/services/$SERVICE/config/"
+
 pushd services/$SERVICE/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
+
+echo "Generating deepcopy code for $SERVICE"
 controller-gen object:headerFile=$TEMPLATES_DIR/boilerplate.txt paths=./...
-popd 1>/dev/null
 
 echo "Generating custom resource definitions for $SERVICE"
-pushd services/$SERVICE/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
 # Latest version of controller-gen (master) is required for following two reasons
 # a) support for pointer values in map https://github.com/kubernetes-sigs/controller-tools/pull/317
 # b) support for float type (allowDangerousTypes) https://github.com/kubernetes-sigs/controller-tools/pull/449
-controller-gen crd:allowDangerousTypes=true paths=./...
+controller-gen crd:allowDangerousTypes=true paths=./... output:crd:artifacts:config=$config_output_dir/crd/bases
+
 popd 1>/dev/null
 
 echo "Building service controller for $SERVICE"
@@ -116,3 +123,10 @@ $ACK_GENERATE_BIN_PATH $controller_args
 if [ $? -ne 0 ]; then
     exit 2
 fi
+
+pushd services/$SERVICE/pkg/resource 1>/dev/null
+
+echo "Generating RBAC manifests for $SERVICE"
+controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifacts:config=$config_output_dir/rbac
+
+popd 1>/dev/null
