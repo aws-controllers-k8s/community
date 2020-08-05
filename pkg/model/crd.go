@@ -865,9 +865,9 @@ func (r *CRD) GoCodeSetOutput(
 	// representation for the CRD's createOp. If there is a single member
 	// shape and that member shape is a structure, unwrap it.
 	if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
-		for _, memberRef := range outputShape.MemberRefs {
+		for memberName, memberRef := range outputShape.MemberRefs {
 			if memberRef.Shape.Type == "structure" {
-				sourceVarName += "." + memberRef.Shape.ShapeName
+				sourceVarName += "." + memberName
 				outputShape = memberRef.Shape
 			}
 		}
