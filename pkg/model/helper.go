@@ -60,6 +60,9 @@ func (h *Helper) GetCRDNames() []names.Names {
 	createOps := (*opMap)[OpTypeCreate]
 	crdNames := []names.Names{}
 	for crdName, _ := range createOps {
+		if h.IsIgnoredResource(crdName) {
+			continue
+		}
 		crdNames = append(crdNames, names.New(crdName))
 	}
 	return crdNames
