@@ -11,7 +11,7 @@ Before installing an AWS service controller, ensure you have added the
 AWS Controllers for Kubernetes Helm repository:
 
 ```
-helm repo add ack https://aws.github.io/aws-service-operator-k8s
+helm repo add ack https://aws.github.io/aws-controllers-k8s
 ```
 
 Each AWS service controller is packaged into a separate container image, published on a public AWS Elastic Container Registry repository. Likewise,
