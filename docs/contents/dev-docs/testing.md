@@ -1,54 +1,85 @@
 # Testing
 
-**NOTE**: Testing is tracked in the umbrella [Issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
+For local development and testing we use [kind](https://kind.sigs.k8s.io/), 
+which in turn requires Docker. To build and test an ACK controller with a
+`kind` cluster, execute the commands as described in the following from the
+root directory of your [checked-out source repository](../setup/).
 
-For local development and/or testing we use [kind](https://kind.sigs.k8s.io/).
+!!! warning "Footprint"
+    When you run the `scripts/kind-build-test.sh` script the first time,
+    the step that builds the container image for the target ACK service
+    controller can 40 or more minutes. This is because the container image
+    contains a lot of dependencies. Once you successfully build the target
+    image this base image layer is cached locally and the build takes a much 
+    shorter amount of time. We are aware of this (and the storage footprint,
+    ca. 3 GB) and aim to reduce both in the fullness of time.
 
-To build and test an ACK controller against a KinD cluster, execute the
-following from the root directory of your checked-out source repository:
+## Preparation
+
+To build the latest `ack-generate` binary, execute the following command:
 
 ```
 make build-ack-generate
-# Replace with the service you want to build and test an ACK controller for...
+```
+
+Don't worry if you forget this, the script in the next step will complain with
+an `ERROR: Unable to find an ack-generate binary` message and give you another
+opportunity to rectify the situation.
+
+## Build an ACK controller
+
+Define the service you want to build and test an ACK controller for by setting
+the `SERVICE_TO_BUILD` environment variable, in our case for Amazon ECR:
+
+```
 SERVICE_TO_BUILD="ecr"
+```
+
+Now we are in a position to generate the ACK service controller for the AWS ECR
+API and output the generated code to the `services/$SERVICE_TO_BUILD` directory:
+
+```
 ./scripts/build-controller.sh $SERVICE_TO_BUILD
+```
+
+Above generates the custom resource definition (CRD) manifests for resources
+managed by that ACK service controller. It further generates the Helm chart
+that can be used to install those CRD manifests and a deployment manifest 
+that runs the ACK service controller in a pod on a Kubernetes cluster (still TODO).
+
+## Run tests
+
+Time to run the tests, so execute:
+
+```
 ./scripts/kind-build-test.sh -s $SERVICE_TO_BUILD
 ```
 
-The above does the following:
+This provisions a Kubernetes cluster using `kind`, builds a container image with
+the ACK service controller, and loads the container image into the `kind` cluster.
+It then installs the ACK service controller and related Kubernetes manifests into
+the `kind` cluster using `kustomize build | kubectl apply -f -`.
 
-* Builds the latest `ack-generate` binary
-* Generates the ACK service controller for the AWS ECR API and output the
-  generated code to the `services/$SERVICE_TO_BUILD` directory
-* Generates the custom resource definition (CRD) manifests for resources
-  managed by that ACK service controller
-* Generates the Helm chart that can be used to install those CRD manifests and
-  a Deployment manifest that runs the ACK service controller in a Pod on a
-  Kubernetes cluster (still TODO)
-* Provisions a KinD Kubernetes cluster
-* Builds a Docker image containing the ACK service controller
-* Loads the Docker image for the ACK service controller into the KinD cluster
-* Installs the ACK service controller and related Kubernetes manifests into the
-  KinD cluster using `kustomize build | kubectl apply -f -`
-* Runs a series of Bash test scripts that call `kubectl` and the `aws` CLI
-  tools to verify that custom resources (CRs) of the type managed by the ACK
-  service controller are created, updated and deleted appropriately (still
-  TODO)
-* Deletes the Kubernetes cluster created by KinD. You can prevent this last
-  step from happening by passing the `-p` (for "preserve") flag to the
-  `scripts/kind-build-test.sh` script
+Then, the above script runs a series of bash test scripts that call `kubectl`
+and the `aws` CLI tools to verify that custom resources of the type managed by
+the respective ACK service controller are created, updated and deleted
+appropriately (still TODO).
 
-**IMPORTANT NOTE**: The first time you run the `scripts/kind-build-test.sh`
-script, the step that builds the Docker image for the target ACK service
-controller can take a LONG time (40+ minutes). This is because a Docker image
-layer contains a lot of dependencies. Once you successfully build the target
-Docker image, that base Docker image layer is cached by Docker and the build
-takes a much shorter amount of time.
+Fianlly, the script deletes the `kind` cluster. You can prevent this last
+step from happening by passing the `-p` (for "preserve") flag to the
+`scripts/kind-build-test.sh` script.
 
-# Cleaning up test runs
+!!! tip "Tracking testing"
+    We track testing in the umbrella [issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
+    on GitHub. Use this issue as a starting point and if you create a new
+    testing-related issue, mention it from there.
 
-If you run `scripts/kind-build-test.sh` with the `-p` (for "preserve") flag,
-the Kubernetes cluster created by KinD is not destroyed at the end of the test.
-To cleanup a Kubernetes cluster created by KinD (which will include all the
-configuration files created by the script specifically for your test cluster),
-call `kind delete cluster --name $CLUSTER_NAME`
+## Clean up test runs
+
+To clean up a `kind` Kubernetes cluster, which includes all the
+configuration files created by the script specifically for your test cluster,
+execute:
+
+```
+kind delete cluster --name $CLUSTER_NAME
+```

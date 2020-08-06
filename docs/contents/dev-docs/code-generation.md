@@ -4,10 +4,10 @@ In order to keep the code for all the service controllers consistent, we will
 use a strategy of generating the custom resource definitions and controller
 code stubs for new AWS services.
 
-## Options
+## Options considered
 
-To generate the CRDs and controller stub code, we investigated a number of
-options:
+To generate custom resource (definitions) and controller stub code, we 
+investigated a number of options:
 
 - home-grown custom code generator
 - [kudo](https://kudo.dev)
@@ -47,11 +47,12 @@ the files and content for multiple API groups but still stay within the
 recommended guardrails of the upstream Kubernetes community.
 
 
-## Hybrid custom+controller-runtime
+## Our approach
+
+We ended up with a hybrid custom+controller-runtime, using multiple phases of
+code generation:
 
 ![Multi-phase approach to code generation for ASO](../images/multi-phase-code-generation.png)
-
-This approach uses multiple phases of code generation.
 
 The first code generation phase consumes model information from a canonical
 source of truth about an AWS service and the objects and interfaces that
