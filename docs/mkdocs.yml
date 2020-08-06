@@ -1,34 +1,37 @@
-site_name: ACK
+site_name: 'ACK'
 site_description: 'AWS Controllers for Kubernetes'
 site_author: 'The ACK contributors'
-repo_name: 'aws/aws-service-operator-k8s'
+repo_name: 'aws/aws-controllers-k8s'
 repo_url: 'https://github.com/aws/aws-controllers-k8s'
 copyright: 'Copyright &copy; 2020 Amazon'
-docs_dir: contents
+docs_dir: 'contents'
 nav:
-    - Home: index.md
-    - End-user docs: 
-      - Install: user-docs/install.md
-      - Permissions: user-docs/permissions.md
-      - Usage: user-docs/usage.md
-    - Developer docs: 
-      - Overview: dev-docs/overview.md
-      - Setup: dev-docs/setup.md
-      - Code generation: dev-docs/code-generation.md
-      - Testing: dev-docs/testing.md
+    - Home: 'index.md'
+    - End-user docs:
+      - Install: 'user-docs/install.md'
+      - Permissions: 'user-docs/permissions.md'
+      - Usage: 'user-docs/usage.md'
+    - Developer docs:
+      - Overview: 'dev-docs/overview.md'
+      - Setup: 'dev-docs/setup.md'
+      - Code generation: 'dev-docs/code-generation.md'
+      - Testing: 'dev-docs/testing.md'
     - Community:
-      - Background: community/background.md
-      - FAQ: community/faq.md
-      - Discussions: community/discussions.md
-      - Contributing: https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md
-      - Governance: https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md
+      - Background: 'community/background.md'
+      - FAQ: 'community/faq.md'
+      - Discussions: 'community/discussions.md'
+      - Contributing: 'https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md'
+      - Governance: 'https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md'
 extra:
     social:
-    - type: 'twitter'
+    - icon: 'fontawesome/brands/twitter'
       link: 'https://twitter.com/awscloud'
 theme:
     name: 'material'
-    custom_dir: theme
+    features:
+    - 'tabs'
+    - 'instant'
+    custom_dir: 'theme'
     favicon: 'assets/images/favicon.png'
     logo: 'assets/images/logo.png'
     font:
@@ -38,9 +41,9 @@ theme:
       primary: 'orange'
     highlightjs: true
     hljs_languages:
-        - yaml
-        - json
-        - bash
+        - 'yaml'
+        - 'json'
+        - 'bash'
 markdown_extensions:
     - toc:
         permalink: true
