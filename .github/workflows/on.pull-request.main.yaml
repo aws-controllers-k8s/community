@@ -1,0 +1,17 @@
+name: on.pull-request.main
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.go'
+      - Makefile
+      - '**.tpl'
+
+jobs:
+  build:
+    name: make test
+    runs-on: ubuntu-latest
+    steps:
+      - name: make test
+        run: make test
