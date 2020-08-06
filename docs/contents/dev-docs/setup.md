@@ -1,32 +1,48 @@
 # Setup 
 
-In the following, we walk you through the setup to start developing on AWS Controller for Kubernetes (ACK) in the `mvp` phase.
+We walk you now through the setup to start contributing to the AWS Controller
+for Kubernetes (ACK). No matter if you're contributing code or docs, follow 
+the steps below.
 
-## Fork the repository
+!!! tip "Issue before PR"
+    Of course we're happy about code drops via PRs, however, in order to give
+    us time to plan ahead and also to avoid disappointment, consider creating
+    an issue first and submit a PR later. This also helps us to coordinate
+    between different contributors and should in general help keeping everyone
+    happy.
 
-First, fork the [upstream source repository](github.com/aws/aws-controllers-k8s) to your private GitHub account.
+## Fork the upstream repository
 
-Then, on your workstation, run:
+First, fork the [upstream source repository](https://github.com/aws/aws-controllers-k8s) 
+into your personal GitHub account. Then, in `$GOPATH/src/github.com/aws/`,
+clone your repo and add the upstream like so:
 
-```bash
-cd go/src/github.com/aws
-git clone git@github.com:$GITHUB_ID/aws-controllers-k8s
-cd aws-controllers-k8s
+```
+git clone git@github.com:$GITHUB_ID/aws-controllers-k8s && \
+cd aws-controllers-k8s && \
 git remote add upstream git@github.com:aws/aws-controllers-k8s
 ```
 
+!!! note "Go version"
+    We recommend to use a Go version of `1.14` or above for development.
+
 ## Create your local branch
 
-```bash
-git fetch --all && git checkout -b $BRANCH_NAME upstream/mvp
+Next, you create a local branch where you work on your feature or bug fix.
+Let's say you want to enhance the docs, so set `BRANCH_NAME=docs-improve` and
+then:
+
+```
+git fetch --all && git checkout -b $BRANCH_NAME upstream/main
 ```
 
 ## Commit changes
 
 Make your changes locally, commit and push using:
 
-```bash
-git add . && git commit
+```
+git commit -a -m "improves the docs a lot"
+
 git push origin $BRANCH_NAME
 ```
 
@@ -50,10 +66,15 @@ To github.com:a-hilaly/aws-controllers-k8s
  * [new branch]      docs -> docs
 ```
 
-## Create pull request
+## Create a pull request
 
 Finally, submit a pull request against the upstream source repository.
 
-Use either the link that show up as in the example above or to the upstream source repository and open the Pull Request. You'll see a link like the image below:
+Use either the link that show up as in the example above or to the upstream 
+source repository and there open the pull request as depicted below:
 
 ![images](../images/github-pr.png)
+
+We monitor the GitHub repo and try to follow up with comments within a working
+day.
+

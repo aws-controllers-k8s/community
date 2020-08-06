@@ -7,14 +7,14 @@ copyright: 'Copyright &copy; 2020 Amazon'
 docs_dir: 'contents'
 nav:
     - Home: 'index.md'
-    - End-user docs:
+    - User docs:
       - Install: 'user-docs/install.md'
       - Permissions: 'user-docs/permissions.md'
       - Usage: 'user-docs/usage.md'
-    - Developer docs:
+    - Contributor docs:
       - Overview: 'dev-docs/overview.md'
-      - Setup: 'dev-docs/setup.md'
       - Code generation: 'dev-docs/code-generation.md'
+      - Setup: 'dev-docs/setup.md'
       - Testing: 'dev-docs/testing.md'
     - Community:
       - Background: 'community/background.md'
