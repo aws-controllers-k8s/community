@@ -13,5 +13,7 @@ jobs:
     name: make test
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: make test
         run: make test
