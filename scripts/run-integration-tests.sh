@@ -28,7 +28,7 @@ GO111MODULE=on
 : "${RUN_CONFORMANCE:=false}"
 : "${HELM_LOCAL_REPO_NAME:=ack}"
 # TODO: HELM_REPO_SOURCE will change to aws org.
-: "${HELM_REPO_SOURCE:=https://varun1524.github.io/aws-service-operator-k8s/helm/charts/}"
+: "${HELM_REPO_SOURCE:=https://aws.github.io/aws-controllers-k8s/helm/charts/}"
 : "${HELM_REPO_CHART_NAME:=start-service-controller}"
 : "${HELM_CONTROLLER_NAME_PREFIX:=aws-k8s}"
 : "${HELM_LOCAL_CHART_NAME:=ack}"
