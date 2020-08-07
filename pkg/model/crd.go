@@ -340,7 +340,18 @@ func (r *CRD) GoCodeSetInput(
 			fieldConfig := attrMapConfig.Fields[fieldName]
 			fieldNames := names.New(fieldName)
 			if !fieldConfig.IsReadOnly {
-				out += fmt.Sprintf("%sattrMap[\"%s\"] = %s.%s\n", indent, fieldName, sourceVarName+".Spec", fieldNames.Camel)
+				sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+				out += fmt.Sprintf(
+					"%sif %s != nil {\n",
+					indent, sourceAdaptedVarName,
+				)
+				out += fmt.Sprintf(
+					"%s\tattrMap[\"%s\"] = %s\n",
+					indent, fieldName, sourceAdaptedVarName,
+				)
+				out += fmt.Sprintf(
+					"%s}\n", indent,
+				)
 			}
 		}
 		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
@@ -366,6 +377,7 @@ func (r *CRD) GoCodeSetInput(
 			}
 			sourceAdaptedVarName += ".Status"
 		}
+		sourceAdaptedVarName += "." + crdField.Names.Camel
 		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
 
@@ -388,15 +400,21 @@ func (r *CRD) GoCodeSetInput(
 		//
 		// res := &sdkapi.CreateBookInput{}
 		// f0 := &sdkapi.BookData{}
-		// f0f0 := &sdkapi.Author{}
-		// f0f0f0 := &sdkapi.Address{}
-		// f0f0f0.SetStreet(*ko.Spec.Author.Address.Street)
-		// f0f0f0.SetCity(*ko.Spec.Author.Address.City)
-		// f0f0f0.SetState(*ko.Spec.Author.Address.State)
-		// f0f0.Address = f0f0f0
-		// f0f0.SetName(*r.ko.Author.Name)
-		// f0.Author = f0f0
-		// res.Book = f0
+		// if ko.Spec.Author != nil {
+		//     f0f0 := &sdkapi.Author{}
+		//     if ko.Spec.Author.Address != nil {
+		//         f0f0f0 := &sdkapi.Address{}
+		//         f0f0f0.SetStreet(*ko.Spec.Author.Address.Street)
+		//         f0f0f0.SetCity(*ko.Spec.Author.Address.City)
+		//         f0f0f0.SetState(*ko.Spec.Author.Address.State)
+		//         f0f0.Address = f0f0f0
+		//     }
+		//     if ko.Spec.Author.Name != nil {
+		//         f0f0.SetName(*r.ko.Author.Name)
+		//         f0.Author = f0f0
+		//     }
+		//     res.Book = f0
+		// }
 		//
 		// It's ugly but at least consistent and mostly readable...
 		//
@@ -408,13 +426,18 @@ func (r *CRD) GoCodeSetInput(
 		// For list fields, we want to end up with something like this:
 		//
 		// res := &sdkapi.CreateCustomAvailabilityZoneInput{}
-		// f0 := []*sdkapi.VpnGroupMembership{}
-		// for _, f0iter := ko.Spec.VPNGroupMemberships {
-		//     f0elem := &sdkapi.VpnGroupMembership{}
-		//     f0elem.SetVpnId(f0elem.VPNID)
-		//     f0 := append(f0, f0elem)
+		// if ko.Spec.VPNGroupsMemberships != nil {
+		//     f0 := []*sdkapi.VpnGroupMembership{}
+		//     for _, f0iter := ko.Spec.VPNGroupMemberships {
+		//         f0elem := &sdkapi.VpnGroupMembership{}
+		//         f0elem.SetVpnId(f0elem.VPNID)
+		//         f0 := append(f0, f0elem)
+		//     }
+		//     res.VpnMemberships = f0
 		// }
-		// res.VpnMemberships = f0
+		out += fmt.Sprintf(
+			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
+		)
 
 		switch memberShape.Type {
 		case "list", "structure", "map":
@@ -423,14 +446,14 @@ func (r *CRD) GoCodeSetInput(
 				out += r.goCodeVarEmptyConstructorSDKType(
 					memberVarName,
 					memberShape,
-					indentLevel,
+					indentLevel+1,
 				)
 				out += r.goCodeSetInputForContainer(
 					memberName,
 					memberVarName,
-					sourceAdaptedVarName+"."+crdField.Names.Camel,
+					sourceAdaptedVarName,
 					memberShapeRef,
-					indentLevel,
+					indentLevel+1,
 				)
 				out += r.goCodeSetInputForScalar(
 					memberName,
@@ -438,7 +461,7 @@ func (r *CRD) GoCodeSetInput(
 					inputShape.Type,
 					memberVarName,
 					memberShapeRef,
-					indentLevel,
+					indentLevel+1,
 				)
 			}
 		default:
@@ -446,11 +469,14 @@ func (r *CRD) GoCodeSetInput(
 				memberName,
 				targetVarName,
 				inputShape.Type,
-				sourceAdaptedVarName+"."+crdField.Names.Camel,
+				sourceAdaptedVarName,
 				memberShapeRef,
-				indentLevel,
+				indentLevel+1,
 			)
 		}
+		out += fmt.Sprintf(
+			"%s}\n", indent,
+		)
 	}
 	return out
 }
@@ -498,8 +524,15 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 	for _, memberName := range inputShape.MemberNames() {
 		if r.IsPrimaryARNField(memberName) {
 			out += fmt.Sprintf(
-				"%s%s.Set%s(string(*%s.Status.ACKResourceMetadata.ARN))\n",
+				"%sif %s.Status.ACKResourceMetadata != nil && %s.Status.ACKResourceMetadata.ARN != nil {\n",
+				indent, sourceVarName, sourceVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.Set%s(string(*%s.Status.ACKResourceMetadata.ARN))\n",
 				indent, targetVarName, memberName, sourceVarName,
+			)
+			out += fmt.Sprintf(
+				"%s}\n", indent,
 			)
 			continue
 		}
@@ -519,13 +552,20 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 			}
 			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
 		}
+		out += fmt.Sprintf(
+			"%sif %s != nil {\n",
+			indent, sourceVarPath,
+		)
 		out += r.goCodeSetInputForScalar(
 			memberName,
 			targetVarName,
 			inputShape.Type,
 			sourceVarPath,
 			field.ShapeRef,
-			indentLevel,
+			indentLevel+1,
+		)
+		out += fmt.Sprintf(
+			"%s}\n", indent,
 		)
 	}
 	return out
@@ -555,20 +595,24 @@ func (r *CRD) goCodeSetInputForContainer(
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
+				sourceAdaptedVarName := sourceVarName + "." + cleanMemberName
+				out += fmt.Sprintf(
+					"%sif %s != nil {\n", indent, sourceAdaptedVarName,
+				)
 				switch memberShape.Type {
 				case "list", "structure", "map":
 					{
 						out += r.goCodeVarEmptyConstructorSDKType(
 							memberVarName,
 							memberShape,
-							indentLevel,
+							indentLevel+1,
 						)
 						out += r.goCodeSetInputForContainer(
 							memberName,
 							memberVarName,
-							sourceVarName+"."+cleanMemberName,
+							sourceAdaptedVarName,
 							memberShapeRef,
-							indentLevel,
+							indentLevel+1,
 						)
 						out += r.goCodeSetInputForScalar(
 							memberName,
@@ -576,7 +620,7 @@ func (r *CRD) goCodeSetInputForContainer(
 							shape.Type,
 							memberVarName,
 							memberShapeRef,
-							indentLevel,
+							indentLevel+1,
 						)
 					}
 				default:
@@ -584,11 +628,14 @@ func (r *CRD) goCodeSetInputForContainer(
 						memberName,
 						targetVarName,
 						shape.Type,
-						sourceVarName+"."+cleanMemberName,
+						sourceAdaptedVarName,
 						memberShapeRef,
-						indentLevel,
+						indentLevel+1,
 					)
 				}
+				out += fmt.Sprintf(
+					"%s}\n", indent,
+				)
 			}
 		}
 	case "list":
