@@ -23,15 +23,14 @@ tightly coupled to CloudFormation. In fact, the CRDs for individual AWS
 services like S3 or RDS were thin wrappers around CloudFormation stacks that
 described the object being operated upon.
 
-
 `kudo` is a platform for building Kubernetes Operators. It stores state in its
 own kudo.dev CRDs and allows users to define "plans" for a deployed application
 to deploy itself. We determined that kudo was not a particularly good fit for
 ASO for a couple reasons. First, we needed a way to generate CRDs in several
-API groups (s3.aws.com and iam.aws.com for example) and the ASO controller code
+API groups (s3.aws.com and iam.aws.com for example) and the ACK controller code
 isn't deploying an "application" that needs to have a controlled deployment
-plan. Instead, ASO is a controller that facilitates creation and management of
-various AWS service objects using Kubernetes CRD instances.
+plan. Instead, ACK is a collection of controllers that facilitates creation and
+management of various AWS service objects using Kubernetes CRD instances.
 
 `kubebuilder` is the recommended upstream tool for generating CRDs and controller 
 stub code. It is a Go binary that creates the scaffolding for CRDs and
@@ -52,76 +51,61 @@ recommended guardrails of the upstream Kubernetes community.
 We ended up with a hybrid custom+controller-runtime, using multiple phases of
 code generation:
 
-![Multi-phase approach to code generation for ASO](../images/multi-phase-code-generation.png)
+![Multi-phase approach to code generation for ACK](../images/multi-phase-code-generation.png)
 
 The first code generation phase consumes model information from a canonical
 source of truth about an AWS service and the objects and interfaces that
-service exposes and generates one or more files containing code that exposes
-Go types for those objects. These "type files" should be annotated with the
-marker and comments that will allow the core code generators and controller-gen
-to do its work.
+service exposes and generates files containing code that exposes Go types for
+those objects. These "type files" should be annotated with the marker and
+comments that will allow the core code generators and controller-gen to do its
+work. We will use the [model
+files](https://github.com/aws/aws-sdk-go/tree/master/models/apis) from the
+[`aws-sdk-go`](github.com/aws/aws-sdk-go) source repository as our source of
+truth and use the `aws-sdk-go/private/model/api` Go package to navigate that
+model.
 
-Once we have generated the type files, we need to generate basic scaffolding
-for consumers of those types. The upstream code-generator project contains
-generators for this scaffolding. We should be able to make a modified version
-of the upstream [`generate-groups.sh`][8] script to generate all the defaults,
-deepcopy, informers, listers and clientset code.
+!!! note
 
-Next, we will need to generate some skeleton code for the reconciling
-controller handling the new API along with the YAML files representing the CRDs
-that will get loaded into `kube-apiserver` and the YAML files for RBAC and
-OpenAPI v3 schemas for the CRDs. This is where the [`controller-gen`][9] tool
-from the `sigs.kubernetes.io/controller-tools` project will come in handy.
+    This step is the `ack-generate apis` command.
 
+After generating Kubernetes API type definitions for the top-level resources
+exposed by the AWS API, we then need to generate the "DeepCopy" interface
+implementations that enable those top-level resources and type definitions to
+be used by the Kubernetes runtime package (it defines an interface called
+`runtime.Object` that requires certain methods that copy the object and its
+component parts).
 
-We also want to generate some stub code for a new reconciling controller into
-the primary aws-service-operator binary.
+!!! note
 
-When we run `make generate $SERVICE $VERSION`, we should end up with a directory
-structure like this:
+    This step runs the `controller-gen object` command 
 
-```
-/cmd
- /aws-service-operator
-  main.go
-/crds
- /$SERVICE
-  crds.yaml
-  rbac.yaml
-/pkg
- /apis
-  /$SERVICE
-   /$VERSION
-     doc.go
-     register.go
-     types.go
-     deepcopy.go
-     defaults.go
- /client
-  /clientset
-   /versioned
-    /fake
-     ...
-    /scheme
-     ...
-    /typed
-     /$SERVICE
-      /$VERSION
-       …
-  /controllers
-   /$SERVICE
-    controller.go
-  /informers
-   /externalversions
-    /$SERVICE
-     /$VERSION
-      ...
-    /internalinterfaces
-  /listers
-   /$SERVICE
-    /$VERSION
-     ...
-```
+Next, we generate the custom resource definition (CRD) configuration files, one
+for each top-level resource identified in earlier steps.
+
+!!! note
+
+    This step runs the `controller-gen crd` command
+
+Next, we generate the actual implementation of the ACK controller for the
+target service. This step uses a set of templates and code in the `pkg/model`
+Go package to construct the service-specific resource management and linkage
+with the `aws-sdk-go` client for the service. Along with these controller
+implementation Go files, this step also outputs a set of Kubernetes
+configuration files for the `Deployment` and the `ClusterRoleBinding` of the
+`Role` created in the next step.
+
+!!! note
+
+    This step runs the `ack-generate controller` command
+
+Finally, we generate the configuration file for a Kubernetes `Role` that the
+Kubernetes `Pod` (running in a Kubernetes `Deployment`) running the ACK service
+controller. This `Role` needs to have permissions to read and write CRs of the
+Kind that the service controller manages.
+
+!!! note
+
+    This step runs the `controller-gen rbac` command
 
 [1]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation
 [2]: https://github.com/amazon-archives/aws-service-operator/tree/master/models
@@ -130,5 +114,3 @@ structure like this:
 [5]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/operator.go.templ
 [6]: https://github.com/amazon-archives/aws-service-operator/blob/master/code-generation/pkg/codegen/assets/types.go.templ
 [7]: https://github.com/kubernetes-sigs/kubebuilder/issues/1268
-[8]: https://github.com/kubernetes/code-generator/blob/6b257a9d6f461b5e15dc2f0d13e29731a5b5255a/generate-groups.sh
-[9]: https://github.com/kubernetes-sigs/controller-tools/blob/a5fa7b956b85a6e792bc7086fedf7107d62452b1/cmd/controller-gen/main.go
