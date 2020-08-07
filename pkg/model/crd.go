@@ -933,6 +933,7 @@ func (r *CRD) GoCodeSetOutput(
 		}
 	}
 	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
 
 	// Recursively descend down through the set of fields on the Output shape,
 	// creating temporary variables, populating those temporary variables'
@@ -968,21 +969,33 @@ func (r *CRD) GoCodeSetOutput(
 		// For struct fields, we want to output code sort of like this:
 		//
 		//   field0 := &svapitypes.ImageData{}
-		//   field0.Location = resp.ImageData.Location
-		//   field0.Tag = resp.ImageData.Tag
+		//   if resp.ImageData.Location != nil {
+		//	     field0.Location = resp.ImageData.Location
+		//   }
+		//   if resp.ImageData.Tag != nil {
+		//       field0.Tag = resp.ImageData.Tag
+		//   }
 		//   r.ko.Status.ImageData = field0
-		//   r.ko.Status.Name = resp.Name
+		//   if resp.Name != nil {
+		//	     r.ko.Status.Name = resp.Name
+		//   }
 		//
 		// For list fields, we want to end up with something like this:
 		//
 		// field0 := []*svcapitypes.VpnGroupMembership{}
 		// for _, iter0 := resp.CustomAvailabilityZone.VpnGroupMemberships {
 		//     elem0 := &svcapitypes.VPNGroupMembership{}
-		//     elem0.VPNID = iter0.VPNID
+		//     if iter0.VPNID != nil {
+		//         elem0.VPNID = iter0.VPNID
+		//     }
 		//     field0 := append(field0, elem0)
 		// }
 		// ko.Status.VpnMemberships = field0
 
+		sourceAdaptedVarName := sourceVarName + "." + memberName
+		out += fmt.Sprintf(
+			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
+		)
 		memberShape := memberShapeRef.Shape
 		switch memberShape.Type {
 		case "list", "structure", "map":
@@ -991,32 +1004,35 @@ func (r *CRD) GoCodeSetOutput(
 				out += r.goCodeVarEmptyConstructorK8sType(
 					memberVarName,
 					memberShape,
-					indentLevel,
+					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForContainer(
 					statusField.Names.Camel,
 					memberVarName,
-					sourceVarName+"."+memberName,
+					sourceAdaptedVarName,
 					memberShapeRef,
-					indentLevel,
+					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForScalar(
 					statusField.Names.Camel,
 					targetVarName,
 					memberVarName,
 					memberShapeRef,
-					indentLevel,
+					indentLevel+1,
 				)
 			}
 		default:
 			out += r.goCodeSetOutputForScalar(
 				statusField.Names.Camel,
 				targetVarName,
-				sourceVarName+"."+memberName,
+				sourceAdaptedVarName,
 				memberShapeRef,
-				indentLevel,
+				indentLevel+1,
 			)
 		}
+		out += fmt.Sprintf(
+			"%s}\n", indent,
+		)
 	}
 	return out
 }
@@ -1137,38 +1153,45 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
 				cleanNames := names.New(memberName)
+				sourceAdaptedVarName := sourceVarName + "." + memberName
+				out += fmt.Sprintf(
+					"%sif %s != nil {\n", indent, sourceAdaptedVarName,
+				)
 				switch memberShape.Type {
 				case "list", "structure", "map":
 					{
 						out += r.goCodeVarEmptyConstructorK8sType(
 							memberVarName,
 							memberShape,
-							indentLevel,
+							indentLevel+1,
 						)
 						out += r.goCodeSetOutputForContainer(
 							cleanNames.Camel,
 							memberVarName,
-							sourceVarName+"."+memberName,
+							sourceAdaptedVarName,
 							memberShapeRef,
-							indentLevel,
+							indentLevel+1,
 						)
 						out += r.goCodeSetOutputForScalar(
 							cleanNames.Camel,
 							targetVarName,
 							memberVarName,
 							memberShapeRef,
-							indentLevel,
+							indentLevel+1,
 						)
 					}
 				default:
 					out += r.goCodeSetOutputForScalar(
 						cleanNames.Camel,
 						targetVarName,
-						sourceVarName+"."+memberName,
+						sourceAdaptedVarName,
 						memberShapeRef,
-						indentLevel,
+						indentLevel+1,
 					)
 				}
+				out += fmt.Sprintf(
+					"%s}\n", indent,
+				)
 			}
 		}
 	case "list":
