@@ -625,19 +625,35 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	// within the CreateLaunchTemplateResult shape, which has a single field called
 	// "LaunchTemplate" that contains the CreatedBy field.
 	expCreateOutput := `
-	ko.Status.CreateTime = &metav1.Time{*resp.LaunchTemplate.CreateTime}
-	ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
-	ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
-	ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
-	ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
-	f6 := []*svcapitypes.Tag{}
-	for _, f6iter := range resp.LaunchTemplate.Tags {
-		f6elem := &svcapitypes.Tag{}
-		f6elem.Key = f6iter.Key
-		f6elem.Value = f6iter.Value
-		f6 = append(f6, f6elem)
+	if resp.LaunchTemplate.CreateTime != nil {
+		ko.Status.CreateTime = &metav1.Time{*resp.LaunchTemplate.CreateTime}
 	}
-	ko.Status.Tags = f6
+	if resp.LaunchTemplate.CreatedBy != nil {
+		ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
+	}
+	if resp.LaunchTemplate.DefaultVersionNumber != nil {
+		ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
+	}
+	if resp.LaunchTemplate.LatestVersionNumber != nil {
+		ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
+	}
+	if resp.LaunchTemplate.LaunchTemplateId != nil {
+		ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
+	}
+	if resp.LaunchTemplate.Tags != nil {
+		f6 := []*svcapitypes.Tag{}
+		for _, f6iter := range resp.LaunchTemplate.Tags {
+			f6elem := &svcapitypes.Tag{}
+			if f6iter.Key != nil {
+				f6elem.Key = f6iter.Key
+			}
+			if f6iter.Value != nil {
+				f6elem.Value = f6iter.Value
+			}
+			f6 = append(f6, f6elem)
+		}
+		ko.Status.Tags = f6
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -754,9 +770,15 @@ func TestECRRepository(t *testing.T) {
 	// within the CreateRepositoryOutput shape, which has a single field called
 	// "Repository" that contains the RegistryId field.
 	expCreateOutput := `
-	ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
-	ko.Status.RegistryID = resp.Repository.RegistryId
-	ko.Status.RepositoryURI = resp.Repository.RepositoryUri
+	if resp.Repository.CreatedAt != nil {
+		ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
+	}
+	if resp.Repository.RegistryId != nil {
+		ko.Status.RegistryID = resp.Repository.RegistryId
+	}
+	if resp.Repository.RepositoryUri != nil {
+		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -818,7 +840,9 @@ func TestCodeDeployDeployment(t *testing.T) {
 	// shape, and there is a DeploymentInfo wrapper struct for the output
 	// shape, so the readOne accessor contains the wrapper struct's name.
 	expCreateOutput := `
-	ko.Status.DeploymentID = resp.DeploymentId
+	if resp.DeploymentId != nil {
+		ko.Status.DeploymentID = resp.DeploymentId
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -966,7 +990,9 @@ func TestSQSQueue(t *testing.T) {
 	// There are no fields other than QueueID in the returned CreateQueueResult
 	// shape
 	expCreateOutput := `
-	ko.Status.QueueURL = resp.QueueUrl
+	if resp.QueueUrl != nil {
+		ko.Status.QueueURL = resp.QueueUrl
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -1116,8 +1142,12 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expCreateOutput := `
-	ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
-	ko.Status.RouteID = resp.RouteId
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
+	if resp.RouteId != nil {
+		ko.Status.RouteID = resp.RouteId
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 }
@@ -1315,77 +1345,155 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expCreateOutput := `
-	ko.Status.AtRestEncryptionEnabled = resp.CacheCluster.AtRestEncryptionEnabled
-	ko.Status.AuthTokenEnabled = resp.CacheCluster.AuthTokenEnabled
-	ko.Status.AuthTokenLastModifiedDate = &metav1.Time{*resp.CacheCluster.AuthTokenLastModifiedDate}
-	ko.Status.CacheClusterCreateTime = &metav1.Time{*resp.CacheCluster.CacheClusterCreateTime}
-	ko.Status.CacheClusterStatus = resp.CacheCluster.CacheClusterStatus
-	f9 := []*svcapitypes.CacheNode{}
-	for _, f9iter := range resp.CacheCluster.CacheNodes {
-		f9elem := &svcapitypes.CacheNode{}
-		f9elem.CacheNodeCreateTime = &metav1.Time{*f9iter.CacheNodeCreateTime}
-		f9elem.CacheNodeID = f9iter.CacheNodeId
-		f9elem.CacheNodeStatus = f9iter.CacheNodeStatus
-		f9elem.CustomerAvailabilityZone = f9iter.CustomerAvailabilityZone
-		f9elemf4 := &svcapitypes.Endpoint{}
-		f9elemf4.Address = f9iter.Endpoint.Address
-		f9elemf4.Port = f9iter.Endpoint.Port
-		f9elem.Endpoint = f9elemf4
-		f9elem.ParameterGroupStatus = f9iter.ParameterGroupStatus
-		f9elem.SourceCacheNodeID = f9iter.SourceCacheNodeId
-		f9 = append(f9, f9elem)
+	if resp.CacheCluster.AtRestEncryptionEnabled != nil {
+		ko.Status.AtRestEncryptionEnabled = resp.CacheCluster.AtRestEncryptionEnabled
 	}
-	ko.Status.CacheNodes = f9
-	f10 := &svcapitypes.CacheParameterGroupStatus_SDK{}
-	f10f0 := []*string{}
-	for _, f10f0iter := range resp.CacheCluster.CacheParameterGroup.CacheNodeIdsToReboot {
-		var f10f0elem string
-		f10f0elem = *f10f0iter
-		f10f0 = append(f10f0, &f10f0elem)
+	if resp.CacheCluster.AuthTokenEnabled != nil {
+		ko.Status.AuthTokenEnabled = resp.CacheCluster.AuthTokenEnabled
 	}
-	f10.CacheNodeIDsToReboot = f10f0
-	f10.CacheParameterGroupName = resp.CacheCluster.CacheParameterGroup.CacheParameterGroupName
-	f10.ParameterApplyStatus = resp.CacheCluster.CacheParameterGroup.ParameterApplyStatus
-	ko.Status.CacheParameterGroup = f10
-	f11 := []*svcapitypes.CacheSecurityGroupMembership{}
-	for _, f11iter := range resp.CacheCluster.CacheSecurityGroups {
-		f11elem := &svcapitypes.CacheSecurityGroupMembership{}
-		f11elem.CacheSecurityGroupName = f11iter.CacheSecurityGroupName
-		f11elem.Status = f11iter.Status
-		f11 = append(f11, f11elem)
+	if resp.CacheCluster.AuthTokenLastModifiedDate != nil {
+		ko.Status.AuthTokenLastModifiedDate = &metav1.Time{*resp.CacheCluster.AuthTokenLastModifiedDate}
 	}
-	ko.Status.CacheSecurityGroups = f11
-	ko.Status.ClientDownloadLandingPage = resp.CacheCluster.ClientDownloadLandingPage
-	f14 := &svcapitypes.Endpoint{}
-	f14.Address = resp.CacheCluster.ConfigurationEndpoint.Address
-	f14.Port = resp.CacheCluster.ConfigurationEndpoint.Port
-	ko.Status.ConfigurationEndpoint = f14
-	f17 := &svcapitypes.NotificationConfiguration{}
-	f17.TopicARN = resp.CacheCluster.NotificationConfiguration.TopicArn
-	f17.TopicStatus = resp.CacheCluster.NotificationConfiguration.TopicStatus
-	ko.Status.NotificationConfiguration = f17
-	f19 := &svcapitypes.PendingModifiedValues{}
-	f19.AuthTokenStatus = resp.CacheCluster.PendingModifiedValues.AuthTokenStatus
-	f19f1 := []*string{}
-	for _, f19f1iter := range resp.CacheCluster.PendingModifiedValues.CacheNodeIdsToRemove {
-		var f19f1elem string
-		f19f1elem = *f19f1iter
-		f19f1 = append(f19f1, &f19f1elem)
+	if resp.CacheCluster.CacheClusterCreateTime != nil {
+		ko.Status.CacheClusterCreateTime = &metav1.Time{*resp.CacheCluster.CacheClusterCreateTime}
 	}
-	f19.CacheNodeIDsToRemove = f19f1
-	f19.CacheNodeType = resp.CacheCluster.PendingModifiedValues.CacheNodeType
-	f19.EngineVersion = resp.CacheCluster.PendingModifiedValues.EngineVersion
-	f19.NumCacheNodes = resp.CacheCluster.PendingModifiedValues.NumCacheNodes
-	ko.Status.PendingModifiedValues = f19
-	f23 := []*svcapitypes.SecurityGroupMembership{}
-	for _, f23iter := range resp.CacheCluster.SecurityGroups {
-		f23elem := &svcapitypes.SecurityGroupMembership{}
-		f23elem.SecurityGroupID = f23iter.SecurityGroupId
-		f23elem.Status = f23iter.Status
-		f23 = append(f23, f23elem)
+	if resp.CacheCluster.CacheClusterStatus != nil {
+		ko.Status.CacheClusterStatus = resp.CacheCluster.CacheClusterStatus
 	}
-	ko.Status.SecurityGroups = f23
-	ko.Status.TransitEncryptionEnabled = resp.CacheCluster.TransitEncryptionEnabled
+	if resp.CacheCluster.CacheNodes != nil {
+		f9 := []*svcapitypes.CacheNode{}
+		for _, f9iter := range resp.CacheCluster.CacheNodes {
+			f9elem := &svcapitypes.CacheNode{}
+			if f9iter.CacheNodeCreateTime != nil {
+				f9elem.CacheNodeCreateTime = &metav1.Time{*f9iter.CacheNodeCreateTime}
+			}
+			if f9iter.CacheNodeId != nil {
+				f9elem.CacheNodeID = f9iter.CacheNodeId
+			}
+			if f9iter.CacheNodeStatus != nil {
+				f9elem.CacheNodeStatus = f9iter.CacheNodeStatus
+			}
+			if f9iter.CustomerAvailabilityZone != nil {
+				f9elem.CustomerAvailabilityZone = f9iter.CustomerAvailabilityZone
+			}
+			if f9iter.Endpoint != nil {
+				f9elemf4 := &svcapitypes.Endpoint{}
+				if f9iter.Endpoint.Address != nil {
+					f9elemf4.Address = f9iter.Endpoint.Address
+				}
+				if f9iter.Endpoint.Port != nil {
+					f9elemf4.Port = f9iter.Endpoint.Port
+				}
+				f9elem.Endpoint = f9elemf4
+			}
+			if f9iter.ParameterGroupStatus != nil {
+				f9elem.ParameterGroupStatus = f9iter.ParameterGroupStatus
+			}
+			if f9iter.SourceCacheNodeId != nil {
+				f9elem.SourceCacheNodeID = f9iter.SourceCacheNodeId
+			}
+			f9 = append(f9, f9elem)
+		}
+		ko.Status.CacheNodes = f9
+	}
+	if resp.CacheCluster.CacheParameterGroup != nil {
+		f10 := &svcapitypes.CacheParameterGroupStatus_SDK{}
+		if resp.CacheCluster.CacheParameterGroup.CacheNodeIdsToReboot != nil {
+			f10f0 := []*string{}
+			for _, f10f0iter := range resp.CacheCluster.CacheParameterGroup.CacheNodeIdsToReboot {
+				var f10f0elem string
+				f10f0elem = *f10f0iter
+				f10f0 = append(f10f0, &f10f0elem)
+			}
+			f10.CacheNodeIDsToReboot = f10f0
+		}
+		if resp.CacheCluster.CacheParameterGroup.CacheParameterGroupName != nil {
+			f10.CacheParameterGroupName = resp.CacheCluster.CacheParameterGroup.CacheParameterGroupName
+		}
+		if resp.CacheCluster.CacheParameterGroup.ParameterApplyStatus != nil {
+			f10.ParameterApplyStatus = resp.CacheCluster.CacheParameterGroup.ParameterApplyStatus
+		}
+		ko.Status.CacheParameterGroup = f10
+	}
+	if resp.CacheCluster.CacheSecurityGroups != nil {
+		f11 := []*svcapitypes.CacheSecurityGroupMembership{}
+		for _, f11iter := range resp.CacheCluster.CacheSecurityGroups {
+			f11elem := &svcapitypes.CacheSecurityGroupMembership{}
+			if f11iter.CacheSecurityGroupName != nil {
+				f11elem.CacheSecurityGroupName = f11iter.CacheSecurityGroupName
+			}
+			if f11iter.Status != nil {
+				f11elem.Status = f11iter.Status
+			}
+			f11 = append(f11, f11elem)
+		}
+		ko.Status.CacheSecurityGroups = f11
+	}
+	if resp.CacheCluster.ClientDownloadLandingPage != nil {
+		ko.Status.ClientDownloadLandingPage = resp.CacheCluster.ClientDownloadLandingPage
+	}
+	if resp.CacheCluster.ConfigurationEndpoint != nil {
+		f14 := &svcapitypes.Endpoint{}
+		if resp.CacheCluster.ConfigurationEndpoint.Address != nil {
+			f14.Address = resp.CacheCluster.ConfigurationEndpoint.Address
+		}
+		if resp.CacheCluster.ConfigurationEndpoint.Port != nil {
+			f14.Port = resp.CacheCluster.ConfigurationEndpoint.Port
+		}
+		ko.Status.ConfigurationEndpoint = f14
+	}
+	if resp.CacheCluster.NotificationConfiguration != nil {
+		f17 := &svcapitypes.NotificationConfiguration{}
+		if resp.CacheCluster.NotificationConfiguration.TopicArn != nil {
+			f17.TopicARN = resp.CacheCluster.NotificationConfiguration.TopicArn
+		}
+		if resp.CacheCluster.NotificationConfiguration.TopicStatus != nil {
+			f17.TopicStatus = resp.CacheCluster.NotificationConfiguration.TopicStatus
+		}
+		ko.Status.NotificationConfiguration = f17
+	}
+	if resp.CacheCluster.PendingModifiedValues != nil {
+		f19 := &svcapitypes.PendingModifiedValues{}
+		if resp.CacheCluster.PendingModifiedValues.AuthTokenStatus != nil {
+			f19.AuthTokenStatus = resp.CacheCluster.PendingModifiedValues.AuthTokenStatus
+		}
+		if resp.CacheCluster.PendingModifiedValues.CacheNodeIdsToRemove != nil {
+			f19f1 := []*string{}
+			for _, f19f1iter := range resp.CacheCluster.PendingModifiedValues.CacheNodeIdsToRemove {
+				var f19f1elem string
+				f19f1elem = *f19f1iter
+				f19f1 = append(f19f1, &f19f1elem)
+			}
+			f19.CacheNodeIDsToRemove = f19f1
+		}
+		if resp.CacheCluster.PendingModifiedValues.CacheNodeType != nil {
+			f19.CacheNodeType = resp.CacheCluster.PendingModifiedValues.CacheNodeType
+		}
+		if resp.CacheCluster.PendingModifiedValues.EngineVersion != nil {
+			f19.EngineVersion = resp.CacheCluster.PendingModifiedValues.EngineVersion
+		}
+		if resp.CacheCluster.PendingModifiedValues.NumCacheNodes != nil {
+			f19.NumCacheNodes = resp.CacheCluster.PendingModifiedValues.NumCacheNodes
+		}
+		ko.Status.PendingModifiedValues = f19
+	}
+	if resp.CacheCluster.SecurityGroups != nil {
+		f23 := []*svcapitypes.SecurityGroupMembership{}
+		for _, f23iter := range resp.CacheCluster.SecurityGroups {
+			f23elem := &svcapitypes.SecurityGroupMembership{}
+			if f23iter.SecurityGroupId != nil {
+				f23elem.SecurityGroupID = f23iter.SecurityGroupId
+			}
+			if f23iter.Status != nil {
+				f23elem.Status = f23iter.Status
+			}
+			f23 = append(f23, f23elem)
+		}
+		ko.Status.SecurityGroups = f23
+	}
+	if resp.CacheCluster.TransitEncryptionEnabled != nil {
+		ko.Status.TransitEncryptionEnabled = resp.CacheCluster.TransitEncryptionEnabled
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 }
@@ -1672,59 +1780,133 @@ func TestDynamoDB_Table(t *testing.T) {
 	// memberName (which is "Table" and not "TableDescription") when we build
 	// the Table CRD's Status field from the DescribeTableOutput shape.
 	expReadOneOutput := `
-	f0 := &svcapitypes.ArchivalSummary{}
-	f0.ArchivalBackupARN = resp.Table.ArchivalSummary.ArchivalBackupArn
-	f0.ArchivalDateTime = &metav1.Time{*resp.Table.ArchivalSummary.ArchivalDateTime}
-	f0.ArchivalReason = resp.Table.ArchivalSummary.ArchivalReason
-	ko.Status.ArchivalSummary = f0
-	f2 := &svcapitypes.BillingModeSummary{}
-	f2.BillingMode = resp.Table.BillingModeSummary.BillingMode
-	f2.LastUpdateToPayPerRequestDateTime = &metav1.Time{*resp.Table.BillingModeSummary.LastUpdateToPayPerRequestDateTime}
-	ko.Status.BillingModeSummary = f2
-	ko.Status.CreationDateTime = &metav1.Time{*resp.Table.CreationDateTime}
-	ko.Status.GlobalTableVersion = resp.Table.GlobalTableVersion
-	ko.Status.ItemCount = resp.Table.ItemCount
-	ko.Status.LatestStreamARN = resp.Table.LatestStreamArn
-	ko.Status.LatestStreamLabel = resp.Table.LatestStreamLabel
-	f12 := []*svcapitypes.ReplicaDescription{}
-	for _, f12iter := range resp.Table.Replicas {
-		f12elem := &svcapitypes.ReplicaDescription{}
-		f12elemf0 := []*svcapitypes.ReplicaGlobalSecondaryIndexDescription{}
-		for _, f12elemf0iter := range f12iter.GlobalSecondaryIndexes {
-			f12elemf0elem := &svcapitypes.ReplicaGlobalSecondaryIndexDescription{}
-			f12elemf0elem.IndexName = f12elemf0iter.IndexName
-			f12elemf0elemf1 := &svcapitypes.ProvisionedThroughputOverride{}
-			f12elemf0elemf1.ReadCapacityUnits = f12elemf0iter.ProvisionedThroughputOverride.ReadCapacityUnits
-			f12elemf0elem.ProvisionedThroughputOverride = f12elemf0elemf1
-			f12elemf0 = append(f12elemf0, f12elemf0elem)
+	if resp.Table.ArchivalSummary != nil {
+		f0 := &svcapitypes.ArchivalSummary{}
+		if resp.Table.ArchivalSummary.ArchivalBackupArn != nil {
+			f0.ArchivalBackupARN = resp.Table.ArchivalSummary.ArchivalBackupArn
 		}
-		f12elem.GlobalSecondaryIndexes = f12elemf0
-		f12elem.KMSMasterKeyID = f12iter.KMSMasterKeyId
-		f12elemf2 := &svcapitypes.ProvisionedThroughputOverride{}
-		f12elemf2.ReadCapacityUnits = f12iter.ProvisionedThroughputOverride.ReadCapacityUnits
-		f12elem.ProvisionedThroughputOverride = f12elemf2
-		f12elem.RegionName = f12iter.RegionName
-		f12elem.ReplicaStatus = f12iter.ReplicaStatus
-		f12elem.ReplicaStatusDescription = f12iter.ReplicaStatusDescription
-		f12elem.ReplicaStatusPercentProgress = f12iter.ReplicaStatusPercentProgress
-		f12 = append(f12, f12elem)
+		if resp.Table.ArchivalSummary.ArchivalDateTime != nil {
+			f0.ArchivalDateTime = &metav1.Time{*resp.Table.ArchivalSummary.ArchivalDateTime}
+		}
+		if resp.Table.ArchivalSummary.ArchivalReason != nil {
+			f0.ArchivalReason = resp.Table.ArchivalSummary.ArchivalReason
+		}
+		ko.Status.ArchivalSummary = f0
 	}
-	ko.Status.Replicas = f12
-	f13 := &svcapitypes.RestoreSummary{}
-	f13.RestoreDateTime = &metav1.Time{*resp.Table.RestoreSummary.RestoreDateTime}
-	f13.RestoreInProgress = resp.Table.RestoreSummary.RestoreInProgress
-	f13.SourceBackupARN = resp.Table.RestoreSummary.SourceBackupArn
-	f13.SourceTableARN = resp.Table.RestoreSummary.SourceTableArn
-	ko.Status.RestoreSummary = f13
-	f14 := &svcapitypes.SSEDescription{}
-	f14.InaccessibleEncryptionDateTime = &metav1.Time{*resp.Table.SSEDescription.InaccessibleEncryptionDateTime}
-	f14.KMSMasterKeyARN = resp.Table.SSEDescription.KMSMasterKeyArn
-	f14.SSEType = resp.Table.SSEDescription.SSEType
-	f14.Status = resp.Table.SSEDescription.Status
-	ko.Status.SSEDescription = f14
-	ko.Status.TableID = resp.Table.TableId
-	ko.Status.TableSizeBytes = resp.Table.TableSizeBytes
-	ko.Status.TableStatus = resp.Table.TableStatus
+	if resp.Table.BillingModeSummary != nil {
+		f2 := &svcapitypes.BillingModeSummary{}
+		if resp.Table.BillingModeSummary.BillingMode != nil {
+			f2.BillingMode = resp.Table.BillingModeSummary.BillingMode
+		}
+		if resp.Table.BillingModeSummary.LastUpdateToPayPerRequestDateTime != nil {
+			f2.LastUpdateToPayPerRequestDateTime = &metav1.Time{*resp.Table.BillingModeSummary.LastUpdateToPayPerRequestDateTime}
+		}
+		ko.Status.BillingModeSummary = f2
+	}
+	if resp.Table.CreationDateTime != nil {
+		ko.Status.CreationDateTime = &metav1.Time{*resp.Table.CreationDateTime}
+	}
+	if resp.Table.GlobalTableVersion != nil {
+		ko.Status.GlobalTableVersion = resp.Table.GlobalTableVersion
+	}
+	if resp.Table.ItemCount != nil {
+		ko.Status.ItemCount = resp.Table.ItemCount
+	}
+	if resp.Table.LatestStreamArn != nil {
+		ko.Status.LatestStreamARN = resp.Table.LatestStreamArn
+	}
+	if resp.Table.LatestStreamLabel != nil {
+		ko.Status.LatestStreamLabel = resp.Table.LatestStreamLabel
+	}
+	if resp.Table.Replicas != nil {
+		f12 := []*svcapitypes.ReplicaDescription{}
+		for _, f12iter := range resp.Table.Replicas {
+			f12elem := &svcapitypes.ReplicaDescription{}
+			if f12iter.GlobalSecondaryIndexes != nil {
+				f12elemf0 := []*svcapitypes.ReplicaGlobalSecondaryIndexDescription{}
+				for _, f12elemf0iter := range f12iter.GlobalSecondaryIndexes {
+					f12elemf0elem := &svcapitypes.ReplicaGlobalSecondaryIndexDescription{}
+					if f12elemf0iter.IndexName != nil {
+						f12elemf0elem.IndexName = f12elemf0iter.IndexName
+					}
+					if f12elemf0iter.ProvisionedThroughputOverride != nil {
+						f12elemf0elemf1 := &svcapitypes.ProvisionedThroughputOverride{}
+						if f12elemf0iter.ProvisionedThroughputOverride.ReadCapacityUnits != nil {
+							f12elemf0elemf1.ReadCapacityUnits = f12elemf0iter.ProvisionedThroughputOverride.ReadCapacityUnits
+						}
+						f12elemf0elem.ProvisionedThroughputOverride = f12elemf0elemf1
+					}
+					f12elemf0 = append(f12elemf0, f12elemf0elem)
+				}
+				f12elem.GlobalSecondaryIndexes = f12elemf0
+			}
+			if f12iter.KMSMasterKeyId != nil {
+				f12elem.KMSMasterKeyID = f12iter.KMSMasterKeyId
+			}
+			if f12iter.ProvisionedThroughputOverride != nil {
+				f12elemf2 := &svcapitypes.ProvisionedThroughputOverride{}
+				if f12iter.ProvisionedThroughputOverride.ReadCapacityUnits != nil {
+					f12elemf2.ReadCapacityUnits = f12iter.ProvisionedThroughputOverride.ReadCapacityUnits
+				}
+				f12elem.ProvisionedThroughputOverride = f12elemf2
+			}
+			if f12iter.RegionName != nil {
+				f12elem.RegionName = f12iter.RegionName
+			}
+			if f12iter.ReplicaStatus != nil {
+				f12elem.ReplicaStatus = f12iter.ReplicaStatus
+			}
+			if f12iter.ReplicaStatusDescription != nil {
+				f12elem.ReplicaStatusDescription = f12iter.ReplicaStatusDescription
+			}
+			if f12iter.ReplicaStatusPercentProgress != nil {
+				f12elem.ReplicaStatusPercentProgress = f12iter.ReplicaStatusPercentProgress
+			}
+			f12 = append(f12, f12elem)
+		}
+		ko.Status.Replicas = f12
+	}
+	if resp.Table.RestoreSummary != nil {
+		f13 := &svcapitypes.RestoreSummary{}
+		if resp.Table.RestoreSummary.RestoreDateTime != nil {
+			f13.RestoreDateTime = &metav1.Time{*resp.Table.RestoreSummary.RestoreDateTime}
+		}
+		if resp.Table.RestoreSummary.RestoreInProgress != nil {
+			f13.RestoreInProgress = resp.Table.RestoreSummary.RestoreInProgress
+		}
+		if resp.Table.RestoreSummary.SourceBackupArn != nil {
+			f13.SourceBackupARN = resp.Table.RestoreSummary.SourceBackupArn
+		}
+		if resp.Table.RestoreSummary.SourceTableArn != nil {
+			f13.SourceTableARN = resp.Table.RestoreSummary.SourceTableArn
+		}
+		ko.Status.RestoreSummary = f13
+	}
+	if resp.Table.SSEDescription != nil {
+		f14 := &svcapitypes.SSEDescription{}
+		if resp.Table.SSEDescription.InaccessibleEncryptionDateTime != nil {
+			f14.InaccessibleEncryptionDateTime = &metav1.Time{*resp.Table.SSEDescription.InaccessibleEncryptionDateTime}
+		}
+		if resp.Table.SSEDescription.KMSMasterKeyArn != nil {
+			f14.KMSMasterKeyARN = resp.Table.SSEDescription.KMSMasterKeyArn
+		}
+		if resp.Table.SSEDescription.SSEType != nil {
+			f14.SSEType = resp.Table.SSEDescription.SSEType
+		}
+		if resp.Table.SSEDescription.Status != nil {
+			f14.Status = resp.Table.SSEDescription.Status
+		}
+		ko.Status.SSEDescription = f14
+	}
+	if resp.Table.TableId != nil {
+		ko.Status.TableID = resp.Table.TableId
+	}
+	if resp.Table.TableSizeBytes != nil {
+		ko.Status.TableSizeBytes = resp.Table.TableSizeBytes
+	}
+	if resp.Table.TableStatus != nil {
+		ko.Status.TableStatus = resp.Table.TableStatus
+	}
 `
 	assert.Equal(expReadOneOutput, crd.GoCodeSetOutput(model.OpTypeGet, "resp", "ko.Status", 1))
 }

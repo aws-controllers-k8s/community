@@ -20,10 +20,7 @@ test: | mocks
 clean-mocks:
 	rm -rf mocks
 
-mocks: ensure-mockery $(MOCKS)
+mocks: $(MOCKS)
 
 $(MOCKS): mocks/% : %
-	mockery ${GO_TAGS} -case=underscore -output=$@ -dir=$^ -all
-
-ensure-mockery:
-	@mockery -version 2>&1 >/dev/null || go get github.com/vektra/mockery/cmd/mockery
+	./bin/mockery --tags=codegen --case=underscore --output=$@ --dir=$^ --all
