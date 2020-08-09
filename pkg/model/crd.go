@@ -905,7 +905,9 @@ func (r *CRD) GoCodeSetOutput(
 	case OpTypeGet:
 		op = r.Ops.ReadOne
 	case OpTypeList:
-		op = r.Ops.ReadMany
+		return r.goCodeSetOutputReadMany(
+			r.Ops.ReadMany, sourceVarName, targetVarName, indentLevel,
+		)
 	case OpTypeUpdate:
 		op = r.Ops.Update
 	case OpTypeDelete:
@@ -1034,6 +1036,188 @@ func (r *CRD) GoCodeSetOutput(
 			"%s}\n", indent,
 		)
 	}
+	return out
+}
+
+// goCodeSetOutputReadMany sets the supplied target variable from the results
+// of a List operation. This is a special-case handling of those APIs where
+// there is no ReadOne operation and instead the only way to grab information
+// for a single object is to call the ReadMany/List operation with one of more
+// filtering fields and then look for one element in the returned array of
+// results and unpack that into the target variable.
+//
+// As an example, for the DescribeCacheClusters Elasticache API call, the
+// returned code looks like this:
+//
+// Note: "resp" is the source variable and represents the
+//       DescribeCacheClustersOutput shape/struct in the aws-sdk-go API for
+//       Elasticache
+// Note: "ko" is the target variable and represents the thing we'll be
+//		 setting fields on
+//
+//  if len(resp.CacheClusters) == 1 {
+//  	elem := resp.CacheClusters[0]
+//  	if elem.ARN != nil {
+//          if ko.Status.ACKResourceMetadata == nil {
+//  	        ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+//          }
+//          tmpARN := ackv1alpha1.AWSResourceName(*elemARN)
+//  		ko.Status.ACKResourceMetadata.ARN = &tmpARN
+//  	}
+//  	if elem.AtRestEncryptionEnabled != nil {
+//  		ko.Status.AtRestEncryptionEnabled = elem.AtRestEncryptionEnabled
+//  	}
+//  	...
+//  }
+func (r *CRD) goCodeSetOutputReadMany(
+	// The ReadMany operation descriptor
+	op *awssdkmodel.Operation,
+	// String representing the name of the variable that we will grab the
+	// Output shape from. This will likely be "resp" since in the templates
+	// that call this method, the "source variable" is the response struct
+	// returned by the aws-sdk-go's SDK API call corresponding to the Operation
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "ko" since that is the name of the "target variable" that the
+	// templates that call this method use.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	outputShape := op.OutputRef.Shape
+	if outputShape == nil {
+		return ""
+	}
+
+	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
+
+	listShapeName := ""
+	var elemShape *awssdkmodel.Shape
+
+	// Find the element in the output shape that contains the list of
+	// resources. This heuristic is simplistic (just look for the field with a
+	// list type) but seems to be followed consistently by the aws-sdk-go for
+	// List operations.
+	for memberName, memberShapeRef := range outputShape.MemberRefs {
+		if memberShapeRef.Shape.Type == "list" {
+			listShapeName = memberName
+			elemShape = memberShapeRef.Shape.MemberRef.Shape
+			break
+		}
+	}
+
+	if listShapeName == "" {
+		panic("List output shape had no field of type 'list'")
+	}
+
+	//  if len(resp.CacheClusters) == 1 {
+	out += fmt.Sprintf(
+		"%sif len(%s.%s) == 1 {\n",
+		indent, sourceVarName, listShapeName,
+	)
+	//  	elem := resp.CacheClusters[0]
+	out += fmt.Sprintf(
+		"%s\telem := %s.%s[0]\n",
+		indent, sourceVarName, listShapeName,
+	)
+	for memberIndex, memberName := range elemShape.MemberNames() {
+		sourceAdaptedVarName := "elem." + memberName
+		if r.IsPrimaryARNField(memberName) {
+			out += fmt.Sprintf(
+				"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
+			)
+			//          if ko.Status.ACKResourceMetadata == nil {
+			//  	        ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+			//          }
+			out += fmt.Sprintf(
+				"%s\t\tif %s.Status.ACKResourceMetadata == nil {\n",
+				indent, targetVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t\t\t%s.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+				indent, targetVarName,
+			)
+			out += fmt.Sprintf(
+				"\t\t%s}\n", indent,
+			)
+			//          tmpARN := ackv1alpha1.AWSResourceName(*elemARN)
+			//  		ko.Status.ACKResourceMetadata.ARN = &tmpARN
+			out += fmt.Sprintf(
+				"%s\t\ttmpARN := ackv1alpha1.AWSResourceName(*%s)\n",
+				indent,
+				sourceAdaptedVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t\t%s.Status.ACKResourceMetadata.ARN = &tmpARN\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf(
+				"\t%s}\n", indent,
+			)
+			continue
+		}
+		// Determine whether the input shape's field is in the Spec or the
+		// Status struct and set the source variable appropriately.
+		var crdField *CRDField
+		var found bool
+		targetAdaptedVarName := targetVarName
+		crdField, found = r.SpecFields[memberName]
+		if found {
+			targetAdaptedVarName += ".Spec"
+		} else {
+			crdField, found = r.StatusFields[memberName]
+			if !found {
+				// TODO(jaypipes): check generator config for exceptions?
+				continue
+			}
+			targetAdaptedVarName += ".Status"
+		}
+		out += fmt.Sprintf(
+			"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
+		)
+		memberShapeRef := elemShape.MemberRefs[memberName]
+		memberShape := memberShapeRef.Shape
+		switch memberShape.Type {
+		case "list", "structure", "map":
+			{
+				memberVarName := fmt.Sprintf("f%d", memberIndex)
+				out += r.goCodeVarEmptyConstructorK8sType(
+					memberVarName,
+					memberShape,
+					indentLevel+2,
+				)
+				out += r.goCodeSetOutputForContainer(
+					crdField.Names.Camel,
+					memberVarName,
+					sourceAdaptedVarName,
+					memberShapeRef,
+					indentLevel+2,
+				)
+				out += r.goCodeSetOutputForScalar(
+					crdField.Names.Camel,
+					targetAdaptedVarName,
+					memberVarName,
+					memberShapeRef,
+					indentLevel+2,
+				)
+			}
+		default:
+			out += r.goCodeSetOutputForScalar(
+				crdField.Names.Camel,
+				targetAdaptedVarName,
+				sourceAdaptedVarName,
+				memberShapeRef,
+				indentLevel+2,
+			)
+		}
+		out += fmt.Sprintf(
+			"\t%s}\n", indent,
+		)
+	}
+	out += fmt.Sprintf("%s}\n", indent)
 	return out
 }
 

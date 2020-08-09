@@ -74,8 +74,24 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode }}
 	return &resource{ko}, nil
 {{- else }}
-	// TODO(jaypipes): Map out the ReadMany codepath
-    return nil, ackerr.NotImplemented
+	input, err := rm.newListRequestPayload(r)
+	if err != nil {
+		return nil, err
+	}
+{{ $setCode := GoCodeSetReadManyOutput .CRD "resp" "ko" 1 }}
+	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
+	if err != nil {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
+			return nil, ackerr.NotFound
+		}
+		return nil, err
+	}
+
+	// Merge in the information we read from the API call above to the copy of
+	// the original Kubernetes object we passed to the function
+	ko := r.ko.DeepCopy()
+{{ $setCode }}
+	return &resource{ko}, nil
 {{- end }}
 }
 
@@ -87,6 +103,18 @@ func (rm *resourceManager) newDescribeRequestPayload(
 ) (*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}, error) {
 	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetReadOneInput .CRD "r.ko" "res" 1 }}
+	return res, nil
+}
+{{- end }}
+
+{{- if .CRD.Ops.ReadMany }}
+// newListRequestPayload returns SDK-specific struct for the HTTP request
+// payload of the List API call for the resource
+func (rm *resourceManager) newListRequestPayload(
+	r *resource,
+) (*svcsdk.{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}, error) {
+	res := &svcsdk.{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}{}
+{{ GoCodeSetReadManyInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
 {{- end }}
