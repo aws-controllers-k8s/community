@@ -20,10 +20,10 @@ ensure_aws_k8s_tester() {
 
     # Download aws-k8s-tester if not yet
     if [[ ! -e $TESTER_PATH ]]; then
-        mkdir -p $TESTER_DIR
+        mkdir -p "$TESTER_DIR"
         echo "Downloading aws-k8s-tester from $TESTER_DOWNLOAD_URL to $TESTER_PATH"
-        curl -s -L -X GET $TESTER_DOWNLOAD_URL -o $TESTER_PATH
-        chmod +x $TESTER_PATH
+        curl -s -L -X GET "$TESTER_DOWNLOAD_URL" -o "$TESTER_PATH"
+        chmod +x "$TESTER_PATH"
     fi
 }
 
@@ -44,4 +44,26 @@ ensure_ecr_image() {
     DOCKER_BUILD_DURATION=$((SECONDS - START))
     echo "TIMELINE: Docker build took $DOCKER_BUILD_DURATION seconds."
   fi
+}
+
+# generate_aws_temp_creds function will generate temporary AWS CREDENTIALS which are valid for 900 seconds
+generate_aws_temp_creds() {
+  __uuid=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+
+  if [ -z "$AWS_ROLE_ARN" ]; then
+    printf "Missing input Role ARN, exiting...\n"
+    exit 1
+  fi
+
+  printf "Running aws sts assume-role --role-arn %s --role-session-name tmp-role-%s --duration-seconds 900", "$AWS_ROLE_ARN", "$__uuid "
+
+  JSON=$(aws sts assume-role \
+           --role-arn "$AWS_ROLE_ARN"  \
+           --role-session-name tmp-role-"$__uuid" \
+           --duration-seconds 900 || exit 1)
+
+      AWS_ACCESS_KEY_ID=$(echo "${JSON}" | jq --raw-output ".Credentials[\"AccessKeyId\"]")
+      AWS_SECRET_ACCESS_KEY=$(echo "${JSON}" | jq --raw-output ".Credentials[\"SecretAccessKey\"]")
+      AWS_SESSION_TOKEN=$(echo "${JSON}" | jq --raw-output ".Credentials[\"SessionToken\"]")
+      printf "\nTemporary credentials generated\n"
 }

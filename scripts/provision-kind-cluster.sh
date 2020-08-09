@@ -49,7 +49,7 @@ Example: $(basename "$0") -b my-test -i 123 -v 1.16
 "
 
 # Process our input arguments
-while getopts "b:i:v:k:o" opt; do
+while getopts "b:i:v:k:" opt; do
   case ${opt} in
     b ) # BASE CLUSTER NAME
         CLUSTER_NAME_BASE=$OPTARG
