@@ -29,22 +29,22 @@ opportunity to rectify the situation.
 ## Build an ACK controller
 
 Define the service you want to build and test an ACK controller for by setting
-the `SERVICE_TO_BUILD` environment variable, in our case for Amazon ECR:
+the `SERVICE` environment variable, in our case for Amazon ECR:
 
 ```
-SERVICE_TO_BUILD="ecr"
+SERVICE="ecr"
 ```
 
 Now we are in a position to generate the ACK service controller for the AWS ECR
-API and output the generated code to the `services/$SERVICE_TO_BUILD` directory:
+API and output the generated code to the `services/$SERVICE` directory:
 
 ```
-./scripts/build-controller.sh $SERVICE_TO_BUILD
+make build-controller SERVICE=$SERVICE
 ```
 
 Above generates the custom resource definition (CRD) manifests for resources
 managed by that ACK service controller. It further generates the Helm chart
-that can be used to install those CRD manifests and a deployment manifest 
+that can be used to install those CRD manifests, and a deployment manifest 
 that runs the ACK service controller in a pod on a Kubernetes cluster (still TODO).
 
 ## Run tests
@@ -52,7 +52,7 @@ that runs the ACK service controller in a pod on a Kubernetes cluster (still TOD
 Time to run the tests, so execute:
 
 ```
-./scripts/kind-build-test.sh -s $SERVICE_TO_BUILD
+make kind-cluster -s SERVICE=$SERVICE
 ```
 
 This provisions a Kubernetes cluster using `kind`, builds a container image with
@@ -62,12 +62,20 @@ the `kind` cluster using `kustomize build | kubectl apply -f -`.
 
 Then, the above script runs a series of bash test scripts that call `kubectl`
 and the `aws` CLI tools to verify that custom resources of the type managed by
-the respective ACK service controller are created, updated and deleted
+the respective ACK service controller is created, updated and deleted
 appropriately (still TODO).
 
-Fianlly, the script deletes the `kind` cluster. You can prevent this last
+The script deletes the `kind` cluster. You can prevent this last
 step from happening by passing the `-p` (for "preserve") flag to the
-`scripts/kind-build-test.sh` script.
+`scripts/kind-build-test.sh` script or by `make kind-cluster-preserve SERVICE=ecr`.
+
+Finally, if you would like to do functional testing, where you would like to create a AWS Services 
+in your account using `KinD` cluster, please use `-r` and pass in `AWS ROLE ARN` to `scripts/kind-build-test.sh` script or
+`make kind-cluster-functional SERVICE=ecr ROLE_ARN=arn:aws:iam::12345678980:role/Admin-k8s`
+
+Note: For above functional test, `sts-assume-role.sh` under `scripts/lib` directory will 
+make `aws sts assume-role --role-session-arn $AWS_ROLE_ARN --role-session-name $TEMP_ROLE` API call to fetch `AWS_ACCESS_KEY_ID`, 
+`AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` variable and inject them as secrets to the deployment. The duration of the session token is 900 seconds (15 minutes)
 
 !!! tip "Tracking testing"
     We track testing in the umbrella [issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
@@ -82,4 +90,8 @@ execute:
 
 ```
 kind delete cluster --name $CLUSTER_NAME
+```
+or to delete all kind cluster running on your machine execute: 
+```
+make delete-all-kind-clusters
 ```
