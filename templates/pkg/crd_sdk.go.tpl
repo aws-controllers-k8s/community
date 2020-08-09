@@ -53,6 +53,7 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+	return &resource{ko}, nil
 {{- else if .CRD.Ops.GetAttributes }}
 	input, err := rm.newGetAttributesRequestPayload(r)
 	if err != nil {
@@ -71,14 +72,11 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Map out the ReadMany codepath
-
-	// Merge in the information we read from the API call above to the copy of
-	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+    return nil, ackerr.NotImplemented
 {{- end }}
-	return &resource{ko}, nil
 }
 
 {{- if .CRD.Ops.ReadOne }}

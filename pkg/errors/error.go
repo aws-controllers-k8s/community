@@ -20,11 +20,19 @@ import (
 )
 
 var (
-	NotFound                  = fmt.Errorf("resource not found")
+	// NotImplemented is returned when a code path isn't implemented yet
+	NotImplemented = fmt.Errorf("not implemented")
+	// NotFound is returned when an expected resource was not found
+	NotFound = fmt.Errorf("resource not found")
+	// NilResourceManagerFactory is returned when a resource manager factory
+	// that has not been properly initialized is bound to a controller manager
 	NilResourceManagerFactory = fmt.Errorf(
 		"error binding controller manager to reconciler before " +
 			"setting resource manager factory",
 	)
+	// AdoptedResourceNotFound is like NotFound but provides the caller with
+	// information that the resource being checked for existence was
+	// previously-created out of band from ACK
 	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
 )
 
