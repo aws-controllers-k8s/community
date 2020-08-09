@@ -4,6 +4,8 @@ GO111MODULE=on
 PKGS=$(sort $(dir $(wildcard pkg/*/*/)))
 MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
+MOCKERY_BIN=$(shell which mockery || "./bin/mockery")
+
 # We need to use the codegen tag when building and testing because the
 # aws-sdk-go/private/model/api package is gated behind a build tag "codegen"...
 GO_TAGS=-tags codegen
@@ -46,4 +48,4 @@ delete-all-kind-clusters:
 mocks: $(MOCKS)
 
 $(MOCKS): mocks/% : %
-	./bin/mockery --tags=codegen --case=underscore --output=$@ --dir=$^ --all
+	${MOCKERY_BIN} --tags=codegen --case=underscore --output=$@ --dir=$^ --all
