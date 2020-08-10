@@ -25,7 +25,6 @@ import (
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-controllers-k8s/pkg/model"
-	dockertemplate "github.com/aws/aws-controllers-k8s/pkg/template"
 	cmdtemplate "github.com/aws/aws-controllers-k8s/pkg/template/cmd"
 	configcontrollertemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/controller"
 	configdefaulttemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/default"
@@ -95,9 +94,6 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if err = writeResourcePackage(sh); err != nil {
-		return err
-	}
-	if err = writeDockerfile(sh); err != nil {
 		return err
 	}
 	if err = writeConfigDirs(sh); err != nil {
@@ -335,27 +331,6 @@ func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "sdk.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeDockerfile(sh *model.Helper) error {
-	var b bytes.Buffer
-	vars := &dockertemplate.DockerTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
-	}
-	tpl, err := dockertemplate.NewDockerfileTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= Dockerfile ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "Dockerfile")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 

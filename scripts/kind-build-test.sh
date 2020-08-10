@@ -117,7 +117,7 @@ CLUSTER_NAME=$(cat "$TMP_DIR"/clustername)
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
     echo "Building ${AWS_SERVICE} docker image"
     DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
-    docker build --quiet -f "${ROOT_DIR}"/services/"${AWS_SERVICE}"/Dockerfile -t "${DEFAULT_AWS_SERVICE_DOCKER_IMG}" .
+    "${SCRIPTS_DIR}"/build-controller-image.sh -q -s ${AWS_SERVICE} -i ${DEFAULT_AWS_SERVICE_DOCKER_IMG}
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
 else
     echo "Skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
