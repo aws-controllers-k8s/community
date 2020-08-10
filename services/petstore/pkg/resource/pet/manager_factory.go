@@ -44,6 +44,7 @@ func (f *resourceManagerFactory) GroupKind() string {
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
 func (f *resourceManagerFactory) ManagerFor(
+	rr acktypes.AWSResourceReconciler,
 	id ackv1alpha1.AWSAccountID,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
@@ -57,7 +58,7 @@ func (f *resourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newResourceManager(id)
+	rm, err := newResourceManager(rr, id)
 	if err != nil {
 		return nil, err
 	}

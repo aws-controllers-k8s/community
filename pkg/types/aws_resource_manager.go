@@ -60,5 +60,5 @@ type AWSResourceManagerFactory interface {
 	ResourceDescriptor() AWSResourceDescriptor
 	// ManagerFor returns an AWSResourceManager that manages AWS resources on
 	// behalf of a particular AWS account
-	ManagerFor(ackv1alpha1.AWSAccountID) (AWSResourceManager, error)
+	ManagerFor(AWSResourceReconciler, ackv1alpha1.AWSAccountID) (AWSResourceManager, error)
 }

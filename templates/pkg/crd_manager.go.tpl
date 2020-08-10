@@ -20,6 +20,9 @@ import (
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
 type resourceManager struct {
+	// rr is the AWSResourceReconciler which can be used for various utility
+	// functions such as querying for Secret values given a SecretReference
+	rr acktypes.AWSResourceReconciler
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
@@ -117,6 +120,7 @@ func (rm *resourceManager) Delete(
 // newResourceManager returns a new struct implementing
 // acktypes.AWSResourceManager
 func newResourceManager(
+	rr acktypes.AWSResourceReconciler,
 	id ackv1alpha1.AWSAccountID,
 ) (*resourceManager, error) {
 	sess, err := ackrt.NewSession()
@@ -124,8 +128,9 @@ func newResourceManager(
 		return nil, err
 	}
 	return &resourceManager{
+		rr: rr,
 		awsAccountID: id,
-		sess:         sess,
-		sdkapi:       svcsdk.New(sess),
+		sess:		 sess,
+		sdkapi:	   svcsdk.New(sess),
 	}, nil
 }
