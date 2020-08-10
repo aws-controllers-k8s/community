@@ -10,6 +10,7 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 
 source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/aws.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 
 OPTIND=1
