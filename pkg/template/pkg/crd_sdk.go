@@ -45,6 +45,12 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 		"GoCodeSetReadOneInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeSetInput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel)
 		},
+		"GoCodeSetReadManyOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetOutput(model.OpTypeList, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeSetReadManyInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetInput(model.OpTypeList, sourceVarName, targetVarName, indentLevel)
+		},
 		"GoCodeGetAttributesSetInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeGetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
 		},
