@@ -4,6 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
+	corev1 "k8s.io/api/core/v1"
 	manager "sigs.k8s.io/controller-runtime/pkg/manager"
 
 	reconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -59,6 +60,27 @@ func (_m *AWSResourceReconciler) Reconcile(_a0 reconcile.Request) (reconcile.Res
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(reconcile.Request) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SecretValueFromReference provides a mock function with given fields: _a0
+func (_m *AWSResourceReconciler) SecretValueFromReference(_a0 *corev1.SecretReference) (string, error) {
+	ret := _m.Called(_a0)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(*corev1.SecretReference) string); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*corev1.SecretReference) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

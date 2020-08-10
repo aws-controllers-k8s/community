@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,6 +68,15 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	).Complete(r)
 }
 
+// SecretValueFromReference fetches the value of a Secret given a
+// SecretReference
+func (r *reconciler) SecretValueFromReference(
+	ref *corev1.SecretReference,
+) (string, error) {
+	// TODO(alina-kim): Implement this method :)
+	return "", ackerr.NotImplemented
+}
+
 // Reconcile implements `controller-runtime.Reconciler` and handles reconciling
 // a CR CRUD request
 func (r *reconciler) Reconcile(req ctrlrt.Request) (ctrlrt.Result, error) {
@@ -87,7 +97,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		"kind", r.rd.GroupKind().String(),
 	)
 
-	rm, err := r.rmf.ManagerFor(acctID)
+	rm, err := r.rmf.ManagerFor(r, acctID)
 	if err != nil {
 		return err
 	}
