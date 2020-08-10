@@ -9,7 +9,7 @@ delete and retrieve the status of objects in AWS services such as S3 buckets,
 DynamoDB, RDS databases, SNS, etc. using the Kubernetes API, for example using
 Kubernetes manifests or `kubectl` plugins.
 
-Documentation, including installation and usage instructions, are
+[Documentation](https://aws.github.io/aws-controllers-k8s/), including installation and usage instructions, are
 available online.
 
 [TODO]: # (link to generated documentation)
