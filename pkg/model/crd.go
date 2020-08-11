@@ -222,6 +222,36 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 	return lowerName == "arn" || lowerName == lowerResName+"arn"
 }
 
+// NotFoundException returns the name of the resource's NotFound
+// exception code
+func (r *CRD) NotFoundException() string {
+	if r.Ops.ReadOne != nil {
+		op := r.Ops.ReadOne
+		for _, errShapeRef := range op.ErrorRefs {
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
+				return errShapeRef.Shape.ErrorInfo.Code
+			}
+		}
+	}
+	if r.Ops.ReadMany != nil {
+		op := r.Ops.ReadMany
+		for _, errShapeRef := range op.ErrorRefs {
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
+				return errShapeRef.Shape.ErrorInfo.Code
+			}
+		}
+	}
+	if r.Ops.GetAttributes != nil {
+		op := r.Ops.GetAttributes
+		for _, errShapeRef := range op.ErrorRefs {
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
+				return errShapeRef.Shape.ErrorInfo.Code
+			}
+		}
+	}
+	return "NotFoundException"
+}
+
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
 // from a CRD's fields.
 //
@@ -1056,18 +1086,20 @@ func (r *CRD) GoCodeSetOutput(
 //		 setting fields on
 //
 //  if len(resp.CacheClusters) == 1 {
-//  	elem := resp.CacheClusters[0]
-//  	if elem.ARN != nil {
+//      elem := resp.CacheClusters[0]
+//      if elem.ARN != nil {
 //          if ko.Status.ACKResourceMetadata == nil {
-//  	        ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+//              ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 //          }
 //          tmpARN := ackv1alpha1.AWSResourceName(*elemARN)
-//  		ko.Status.ACKResourceMetadata.ARN = &tmpARN
-//  	}
-//  	if elem.AtRestEncryptionEnabled != nil {
-//  		ko.Status.AtRestEncryptionEnabled = elem.AtRestEncryptionEnabled
-//  	}
-//  	...
+//          ko.Status.ACKResourceMetadata.ARN = &tmpARN
+//      }
+//      if elem.AtRestEncryptionEnabled != nil {
+//          ko.Status.AtRestEncryptionEnabled = elem.AtRestEncryptionEnabled
+//      }
+//      ...
+//  } else {
+//      return nil, ackerr.NotFound
 //  }
 func (r *CRD) goCodeSetOutputReadMany(
 	// The ReadMany operation descriptor
@@ -1217,6 +1249,8 @@ func (r *CRD) goCodeSetOutputReadMany(
 			"\t%s}\n", indent,
 		)
 	}
+	out += fmt.Sprintf("%s} else {\n", indent)
+	out += fmt.Sprintf("%s\treturn nil, ackerr.NotFound\n", indent)
 	out += fmt.Sprintf("%s}\n", indent)
 	return out
 }

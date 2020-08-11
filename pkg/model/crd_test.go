@@ -1703,6 +1703,8 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		if elem.TransitEncryptionEnabled != nil {
 			ko.Status.TransitEncryptionEnabled = elem.TransitEncryptionEnabled
 		}
+	} else {
+		return nil, ackerr.NotFound
 	}
 `
 	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))

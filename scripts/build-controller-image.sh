@@ -63,7 +63,7 @@ docker build \
   --quiet=${QUIET} \
   -t ${AWS_SERVICE_DOCKER_IMG} \
   -f ${DOCKERFILE} \
-  --build-arg service_alias=${SERVICE} \
+  --build-arg service_alias=${AWS_SERVICE} \
   ${BUILD_CONTEXT}
 
 if [ $? -ne 0 ]; then

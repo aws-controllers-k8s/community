@@ -15,7 +15,10 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 
 OPTIND=1
 CLUSTER_NAME_BASE="test"
+AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-"123456789012"}
+AWS_REGION=${AWS_REGION_ID:-"us-west-2"}
 AWS_ROLE_ARN=""
+ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION="1.16"
 OVERRIDE_PATH=0
@@ -132,6 +135,11 @@ export KUBECONFIG="${TMP_DIR}/kubeconfig"
 trap "exit_and_fail" INT TERM ERR
 trap "clean_up" EXIT
 
+export AWS_ACCOUNT_ID
+export AWS_REGION
+export AWS_ROLE_ARN
+export ACK_ENABLE_DEVELOPMENT_LOGGING
+
 service_config_dir="$ROOT_DIR/services/$AWS_SERVICE/config"
 
 ## Register the ACK service controller's CRDs in the target k8s cluster
@@ -171,7 +179,8 @@ if [ -n "$AWS_ROLE_ARN" ]; then
    kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
    AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
    AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-   AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN"
+   AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+   AWS_REGION="$AWS_REGION"
    echo "Added AWS Credentials to env vars map"
 fi
 

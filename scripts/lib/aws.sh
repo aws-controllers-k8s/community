@@ -60,7 +60,8 @@ generate_aws_temp_creds() {
   JSON=$(aws sts assume-role \
            --role-arn "$AWS_ROLE_ARN"  \
            --role-session-name tmp-role-"$__uuid" \
-           --duration-seconds 900 || exit 1)
+           --duration-seconds 900 \
+           --output json || exit 1)
 
       AWS_ACCESS_KEY_ID=$(echo "${JSON}" | jq --raw-output ".Credentials[\"AccessKeyId\"]")
       AWS_SECRET_ACCESS_KEY=$(echo "${JSON}" | jq --raw-output ".Credentials[\"SecretAccessKey\"]")
