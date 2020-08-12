@@ -73,7 +73,7 @@ func (rm *resourceManager) sdkFind(
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
 	return &resource{ko}, nil
-{{- else }}
+{{- else if .CRD.Ops.ReadMany }}
 	input, err := rm.newListRequestPayload(r)
 	if err != nil {
 		return nil, err
