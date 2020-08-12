@@ -8,6 +8,7 @@ set -Eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
+TEST_E2E_DIR="$ROOT_DIR/test/e2e"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/aws.sh"
@@ -184,6 +185,7 @@ if [ -n "$AWS_ROLE_ARN" ]; then
    echo "Added AWS Credentials to env vars map"
 fi
 
+sleep 10
 
 echo "======================================================================================================"
 echo "To poke around your test manually:"
@@ -191,4 +193,6 @@ echo "export KUBECONFIG=$TMP_DIR/kubeconfig"
 echo "kubectl get pods -A"
 echo "======================================================================================================"
 
-# TODO: export any necessary env vars and run tests
+export KUBECONFIG
+
+$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE

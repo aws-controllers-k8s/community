@@ -44,6 +44,7 @@ delete-all-kind-clusters:
 	while read name ; do \
 	kind delete cluster --name $$name; \
 	done
+	@rm -rf build/tmp-test*
 
 mocks: $(MOCKS)
 

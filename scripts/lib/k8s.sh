@@ -62,3 +62,16 @@ ensure_service_controller_running() {
     fi
   done
 }
+
+# resource_exists returns 0 when the supplied resource can be found, 1
+# otherwise. An optional second parameter overrides the Kubernetes namespace
+# argument
+k8s_resource_exists() {
+    local __res_name="$1"
+    local __namespace="$2"
+    local __args=""
+    if [ -n "$__namespace" ]; then
+        __args="$__args-n $__namespace"
+    fi
+    kubectl get $__args "$__res_name" >/dev/null 2>&1
+}
