@@ -75,9 +75,9 @@ SERVICE="$1"
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.
-if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
-    if [ -f "services/$SERVICE/generator.yaml" ]; then
-        ACK_GENERATE_CONFIG_PATH="services/$SERVICE/generator.yaml"
+if [ -z "$ACK_GENERATE_CONFIG_PATH" ]; then
+    if [ -f "$ROOT_DIR/services/$SERVICE/generator.yaml" ]; then
+        ACK_GENERATE_CONFIG_PATH="$ROOT_DIR/services/$SERVICE/generator.yaml"
     fi
 fi
 

@@ -222,34 +222,59 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 	return lowerName == "arn" || lowerName == lowerResName+"arn"
 }
 
-// NotFoundException returns the name of the resource's NotFound
-// exception code
-func (r *CRD) NotFoundException() string {
+// ExceptionCode returns the name of the resource's Exception code for the
+// Exception having the exception code. If the generator config has
+// instructions for overriding the name of an exception code for a resource for
+// a particular HTTP status code, we return that, otherwise we look through the
+// API model definitions looking for a match
+func (r *CRD) ExceptionCode(httpStatusCode int) string {
+	if r.helper.generatorConfig != nil {
+		resGenConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
+		if found && resGenConfig.Exceptions != nil {
+			for httpCode, excCode := range resGenConfig.Exceptions.Codes {
+				if httpCode == httpStatusCode {
+					return excCode
+				}
+			}
+		}
+	}
 	if r.Ops.ReadOne != nil {
 		op := r.Ops.ReadOne
 		for _, errShapeRef := range op.ErrorRefs {
-			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
-				return errShapeRef.Shape.ErrorInfo.Code
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == httpStatusCode {
+				code := errShapeRef.Shape.ErrorInfo.Code
+				if code != "" {
+					return code
+				}
+				return errShapeRef.Shape.ShapeName
 			}
 		}
 	}
 	if r.Ops.ReadMany != nil {
 		op := r.Ops.ReadMany
 		for _, errShapeRef := range op.ErrorRefs {
-			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
-				return errShapeRef.Shape.ErrorInfo.Code
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == httpStatusCode {
+				code := errShapeRef.Shape.ErrorInfo.Code
+				if code != "" {
+					return code
+				}
+				return errShapeRef.Shape.ShapeName
 			}
 		}
 	}
 	if r.Ops.GetAttributes != nil {
 		op := r.Ops.GetAttributes
 		for _, errShapeRef := range op.ErrorRefs {
-			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == 404 {
-				return errShapeRef.Shape.ErrorInfo.Code
+			if errShapeRef.Shape.ErrorInfo.HTTPStatusCode == httpStatusCode {
+				code := errShapeRef.Shape.ErrorInfo.Code
+				if code != "" {
+					return code
+				}
+				return errShapeRef.Shape.ShapeName
 			}
 		}
 	}
-	return "NotFoundException"
+	return "UNKNOWN"
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
