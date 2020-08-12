@@ -9,6 +9,7 @@ BUILD_CONTEXT=$DIR/..
 QUIET=false
 OPTIND=1
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
+export DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
 
 source $SCRIPTS_DIR/lib/common.sh
 
