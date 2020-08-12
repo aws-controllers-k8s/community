@@ -17,7 +17,7 @@ is_installed() {
     fi
 }
 
-function display_timelines() {
+display_timelines() {
     echo ""
     echo "Displaying all step durations."
     echo "TIMELINE: Docker build took $DOCKER_BUILD_DURATION seconds."
@@ -34,4 +34,13 @@ should_execute() {
   else
     return 0
   fi
+}
+
+# filenoext returns just the name of the supplied filename without the
+# extension
+filenoext() {
+    local __name="$1"
+    local __filename=$( basename "$__name" )
+    # How much do I despise Bash?!
+    echo "${__filename%.*}"
 }
