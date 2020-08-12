@@ -43,7 +43,7 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceNotFoundException .CRD }}" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
 		}
 		return nil, err
@@ -62,7 +62,7 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceNotFoundException .CRD }}" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr
@@ -81,7 +81,7 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode := GoCodeSetReadManyOutput .CRD "resp" "ko" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceNotFoundException .CRD }}" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr

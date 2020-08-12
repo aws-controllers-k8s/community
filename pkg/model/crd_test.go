@@ -58,6 +58,48 @@ func TestSNSTopic(t *testing.T) {
 	assert.Equal("topic", crd.Names.CamelLower)
 	assert.Equal("topic", crd.Names.Snake)
 
+	// The GetTopicAttributes operation has the following definition:
+	//
+	//    "GetTopicAttributes":{
+	//      "name":"GetTopicAttributes",
+	//      "http":{
+	//        "method":"POST",
+	//        "requestUri":"/"
+	//      },
+	//      "input":{"shape":"GetTopicAttributesInput"},
+	//      "output":{
+	//        "shape":"GetTopicAttributesResponse",
+	//        "resultWrapper":"GetTopicAttributesResult"
+	//      },
+	//      "errors":[
+	//        {"shape":"InvalidParameterException"},
+	//        {"shape":"InternalErrorException"},
+	//        {"shape":"NotFoundException"},
+	//        {"shape":"AuthorizationErrorException"},
+	//        {"shape":"InvalidSecurityException"}
+	//      ]
+	//    },
+	//
+	// Where the NotFoundException shape looks like this:
+	//
+	//    "NotFoundException":{
+	//      "type":"structure",
+	//      "members":{
+	//        "message":{"shape":"string"}
+	//      },
+	//      "error":{
+	//        "code":"NotFound",
+	//        "httpStatusCode":404,
+	//        "senderFault":true
+	//      },
+	//      "exception":true
+	//    },
+	//
+	// So, we expect that the normal logic in CRD.ExceptionCode(404)
+	// identifies the above as the 404 Not Found error with a code of
+	// "NotFound"
+	assert.Equal("NotFound", crd.ExceptionCode(404))
+
 	// The SNS Topic API is a little weird. There are Create and Delete
 	// operations ("CreateTopic", "DeleteTopic") but there is no ReadOne
 	// operation (there is a "GetTopicAttributes" call though) or Update
@@ -192,6 +234,12 @@ func TestEC2LaunchTemplate(t *testing.T) {
 	assert.Equal("LaunchTemplate", crd.Names.Camel)
 	assert.Equal("launchTemplate", crd.Names.CamelLower)
 	assert.Equal("launch_template", crd.Names.Snake)
+
+	// The DescribeLaunchTemplatesResult shape has no defined error codes (in
+	// fact, none of the EC2 API shapes do). We will need to create exceptions
+	// config in the generate.yaml for EC2, but this will take quite some
+	// manual work. For now, return UNKNOWN
+	assert.Equal("UNKNOWN", crd.ExceptionCode(404))
 
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
@@ -690,6 +738,61 @@ func TestECRRepository(t *testing.T) {
 	crd := getCRDByName("Repository", crds)
 	require.NotNil(crd)
 
+	// The ECR Repository API has just the C and R of the normal CRUD
+	// operations:
+	//
+	// * CreateRepository
+	// * DeleteRepository
+	require.NotNil(crd.Ops)
+
+	assert.NotNil(crd.Ops.Create)
+	assert.NotNil(crd.Ops.Delete)
+
+	// There is no DescribeRepository operation. There is a List operation for
+	// Repositories, though: DescribeRepositories
+	assert.Nil(crd.Ops.ReadOne)
+	assert.NotNil(crd.Ops.ReadMany)
+
+	// There is no update operation (you need to call various SetXXX operations
+	// on the Repository's components
+	assert.Nil(crd.Ops.Update)
+
+	// The DescribeRepositories operation has the following definition:
+	//
+	//    "DescribeRepositories":{
+	//      "name":"DescribeRepositories",
+	//      "http":{
+	//        "method":"POST",
+	//        "requestUri":"/"
+	//      },
+	//      "input":{"shape":"DescribeRepositoriesRequest"},
+	//      "output":{"shape":"DescribeRepositoriesResponse"},
+	//      "errors":[
+	//        {"shape":"ServerException"},
+	//        {"shape":"InvalidParameterException"},
+	//        {"shape":"RepositoryNotFoundException"}
+	//      ]
+	//    },
+	//
+	// NOTE: This is UNUSUAL for a List operation to return a 404 Not Found.
+	// Typically a return of zero results for a List operation results in a 200
+	// OK.
+	//
+	// Where the RepositoryNotFoundException shape looks like this:
+	//
+	//    "RepositoryNotFoundException":{
+	//      "type":"structure",
+	//      "members":{
+	//        "message":{"shape":"ExceptionMessage"}
+	//      },
+	//      "exception":true
+	//    },
+	//
+	// Which does not indicate that the error is a 404 :( So, the logic in the
+	// CRD.ExceptionCode(404) method needs to get its override from the
+	// generate.yaml configuration file.
+	assert.Equal("RepositoryNotFoundException", crd.ExceptionCode(404))
+
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
 
@@ -781,25 +884,6 @@ func TestECRRepository(t *testing.T) {
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
-
-	// The ECR Repository API has just the C and R of the normal CRUD
-	// operations:
-	//
-	// * CreateRepository
-	// * DeleteRepository
-	require.NotNil(crd.Ops)
-
-	assert.NotNil(crd.Ops.Create)
-	assert.NotNil(crd.Ops.Delete)
-
-	// There is no DescribeRepository operation. There is a List operation for
-	// Repositories, though: DescribeRepositories
-	assert.Nil(crd.Ops.ReadOne)
-	assert.NotNil(crd.Ops.ReadMany)
-
-	// There is no update operation (you need to call various SetXXX operations
-	// on the Repository's components
-	assert.Nil(crd.Ops.Update)
 }
 
 func TestCodeDeployDeployment(t *testing.T) {
@@ -817,6 +901,37 @@ func TestCodeDeployDeployment(t *testing.T) {
 	assert.Equal("Deployment", crd.Names.Camel)
 	assert.Equal("deployment", crd.Names.CamelLower)
 	assert.Equal("deployment", crd.Names.Snake)
+
+	// The GetDeployment operation has the following definition:
+	//
+	//    "GetDeployment":{
+	//      "name":"GetDeployment",
+	//      "http":{
+	//        "method":"POST",
+	//        "requestUri":"/"
+	//      },
+	//      "input":{"shape":"GetDeploymentInput"},
+	//      "output":{"shape":"GetDeploymentOutput"},
+	//      "errors":[
+	//        {"shape":"DeploymentIdRequiredException"},
+	//        {"shape":"InvalidDeploymentIdException"},
+	//        {"shape":"DeploymentDoesNotExistException"}
+	//      ]
+	//    },
+	//
+	// Where the DeploymentDoesNotExistException shape looks like this:
+	//
+	//    "DeploymentDoesNotExistException":{
+	//      "type":"structure",
+	//      "members":{
+	//      },
+	//      "exception":true
+	//    },
+	//
+	// Which does not indicate that the error is a 404 :( So, the logic in the
+	// CRD.ExceptionCode(404) method needs to get its override from the
+	// generate.yaml configuration file.
+	assert.Equal("DeploymentDoesNotExistException", crd.ExceptionCode(404))
 
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields
@@ -1037,6 +1152,54 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	assert.Equal("route", crd.Names.CamelLower)
 	assert.Equal("route", crd.Names.Snake)
 
+	// The GetRoute operation has the following definition:
+	//
+	//    "GetRoute" : {
+	//      "name" : "GetRoute",
+	//      "http" : {
+	//        "method" : "GET",
+	//        "requestUri" : "/v2/apis/{apiId}/routes/{routeId}",
+	//        "responseCode" : 200
+	//      },
+	//      "input" : {
+	//        "shape" : "GetRouteRequest"
+	//      },
+	//      "output" : {
+	//        "shape" : "GetRouteResult"
+	//      },
+	//      "errors" : [ {
+	//        "shape" : "NotFoundException"
+	//      }, {
+	//        "shape" : "TooManyRequestsException"
+	//      } ]
+	//    },
+	//
+	// Where the NotFoundException shape looks like this:
+	//
+	//    "NotFoundException" : {
+	//      "type" : "structure",
+	//      "members" : {
+	//        "Message" : {
+	//          "shape" : "__string",
+	//          "locationName" : "message"
+	//        },
+	//        "ResourceType" : {
+	//          "shape" : "__string",
+	//          "locationName" : "resourceType"
+	//        }
+	//      },
+	//      "exception" : true,
+	//      "error" : {
+	//        "httpStatusCode" : 404
+	//      }
+	//    },
+	//
+	// Which indicates that the error is a 404 and is our NotFoundException
+	// code but the "code" attribute of the ErrorInfo struct is empty so
+	// instead of returning a blank string, we need to use the name of the
+	// shape itself...
+	assert.Equal("NotFoundException", crd.ExceptionCode(404))
+
 	// The APIGatewayV2 Route API has CRUD+L operations:
 	//
 	// * CreateRoute
@@ -1167,6 +1330,44 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal("CacheCluster", crd.Names.Camel)
 	assert.Equal("cacheCluster", crd.Names.CamelLower)
 	assert.Equal("cache_cluster", crd.Names.Snake)
+
+	// The DescribeCacheClusters operation has the following definition:
+	//
+	//    "DescribeCacheClusters":{
+	//      "name":"DescribeCacheClusters",
+	//      "http":{
+	//        "method":"POST",
+	//        "requestUri":"/"
+	//      },
+	//      "input":{"shape":"DescribeCacheClustersMessage"},
+	//      "output":{
+	//        "shape":"CacheClusterMessage",
+	//        "resultWrapper":"DescribeCacheClustersResult"
+	//      },
+	//      "errors":[
+	//        {"shape":"CacheClusterNotFoundFault"},
+	//        {"shape":"InvalidParameterValueException"},
+	//        {"shape":"InvalidParameterCombinationException"}
+	//      ]
+	//    },
+	//
+	// Where the CacheClusterNotFoundFault shape looks like this:
+	//
+	//    "CacheClusterNotFoundFault":{
+	//      "type":"structure",
+	//      "members":{
+	//      },
+	//      "error":{
+	//        "code":"CacheClusterNotFound",
+	//        "httpStatusCode":404,
+	//        "senderFault":true
+	//      },
+	//      "exception":true
+	//    },
+	//
+	// Which indicates that the error is a 404 and is our NotFoundException
+	// error with a "code" value of CacheClusterNotFound
+	assert.Equal("CacheClusterNotFound", crd.ExceptionCode(404))
 
 	// The Elasticache CacheCluster API has CUD+L operations:
 	//
@@ -1765,6 +1966,40 @@ func TestDynamoDB_Table(t *testing.T) {
 
 	assert.Nil(crd.Ops.GetAttributes)
 	assert.Nil(crd.Ops.SetAttributes)
+
+	// The DescribeTable operation has the following definition:
+	//
+	//    "DescribeTable":{
+	//      "name":"DescribeTable",
+	//      "http":{
+	//        "method":"POST",
+	//        "requestUri":"/"
+	//      },
+	//      "input":{"shape":"DescribeTableInput"},
+	//      "output":{"shape":"DescribeTableOutput"},
+	//      "errors":[
+	//        {"shape":"ResourceNotFoundException"},
+	//        {"shape":"InternalServerError"}
+	//      ],
+	//      "endpointdiscovery":{
+	//      }
+	//    },
+	//
+	// Where the ResourceNotFoundException shape looks like this:
+	//
+	//    "ResourceNotFoundException":{
+	//      "type":"structure",
+	//      "members":{
+	//        "message":{"shape":"ErrorMessage"}
+	//      },
+	//      "exception":true
+	//    },
+	//
+	//
+	// Which does not indicate that the error is a 404 :( So, the logic in the
+	// CRD.ExceptionCode(404) method needs to get its override from the
+	// generate.yaml configuration file.
+	assert.Equal("ResourceNotFoundException", crd.ExceptionCode(404))
 
 	specFields := crd.SpecFields
 	statusFields := crd.StatusFields

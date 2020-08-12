@@ -46,6 +46,12 @@ type ResourceGeneratorConfig struct {
 	// UnpackAttributeMapConfig contains instructions for converting a raw
 	// `map[string]*string` into real fields on a CRD's Spec or Status object
 	UnpackAttributesMapConfig *UnpackAttributesMapConfig `json:"unpack_attributes_map,omitempty"`
+	// ExceptionsConfig identifies the exception codes for the resource. Some
+	// API model files don't contain the ErrorInfo struct that contains the
+	// HTTPStatusCode attribute that we usually look for to identify 404 Not
+	// Found and other common error types for primary resources, and thus we
+	// need these instructions.
+	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -114,6 +120,18 @@ type FieldGeneratorConfig struct {
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
 	ContainsOwnerAccountID bool `json:"contains_owner_account_id"`
+}
+
+// ExceptionsConfig contains instructions to the code generator about how to
+// handle the exceptions for the operations on a resource. These instructions
+// are necessary for those APIs where the API models do not contain any
+// information about the HTTP status codes a particular exception has (or, like
+// the EC2 API, where the API model has no information at all about error
+// responses for any operation)
+type ExceptionsConfig struct {
+	// Codes is a map of HTTP status code to the name of the Exception shape
+	// that corresponds to that HTTP status code for this resource
+	Codes map[int]string `json:"codes"`
 }
 
 // NewGeneratorConfig returns a new GeneratorConfig object given a supplied

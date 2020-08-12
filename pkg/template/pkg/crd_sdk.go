@@ -39,8 +39,8 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 	}
 	t := ttpl.New("crd_sdk")
 	t = t.Funcs(ttpl.FuncMap{
-		"ResourceNotFoundException": func(r *model.CRD) string {
-			return r.NotFoundException()
+		"ResourceExceptionCode": func(r *model.CRD, httpStatusCode int) string {
+			return r.ExceptionCode(httpStatusCode)
 		},
 		"GoCodeSetReadOneOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeSetOutput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel)

@@ -1,0 +1,5 @@
+resources:
+  Repository:
+    exceptions:
+      codes:
+        404: RepositoryNotFoundException

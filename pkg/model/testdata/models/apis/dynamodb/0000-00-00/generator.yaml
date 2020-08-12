@@ -1,0 +1,5 @@
+resources:
+  Table:
+    exceptions:
+      codes:
+        404: ResourceNotFoundException
