@@ -1,0 +1,21 @@
+---
+apiVersion: "ecr.services.k8s.aws/v1alpha1"
+kind: Repository
+metadata:
+    name: "test-full-repository-from-ack"
+spec:
+    repositoryName: "test-full-repository-from-ack"
+    encryptionConfiguration:
+        encryptionType: KMS
+        # This key needs to exist already
+        kmsKey: "9d319c68-60ea-4ed6-8a33-2e09086fad2d"
+    imageScanningConfiguration:
+        scanOnPush: true
+    imageTagMutability: true
+    tags:
+    - tag1:
+        key: "is-encrypted"
+        value: "true"
+    - tag2:
+        key: "is-scanned"
+        value: "true"
