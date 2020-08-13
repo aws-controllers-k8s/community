@@ -13,9 +13,7 @@ spec:
         scanOnPush: true
     imageTagMutability: true
     tags:
-    - tag1:
-        key: "is-encrypted"
-        value: "true"
-    - tag2:
-        key: "is-scanned"
-        value: "true"
+    - key: "is-encrypted"
+      value: "true"
+    - key: "is-scanned"
+      mvalue: "true"

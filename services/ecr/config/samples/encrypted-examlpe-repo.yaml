@@ -8,6 +8,5 @@ spec:
     encryptionConfiguration:
         encryptionType: AES256
     tags:
-    - tag1:
-        key: "is-encrypted"
-        value: "true"
+    - key: "is-encrypted"
+      value: "true"

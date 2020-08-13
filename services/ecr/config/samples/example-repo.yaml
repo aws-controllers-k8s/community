@@ -6,6 +6,5 @@ metadata:
 spec:
   repositoryName: "test-repository-from-ack"
   tags:
-    - tag1:
-        key: "is-encrypted"
-        value: "false"
+  - key: "is-encrypted"
+    value: "false"
