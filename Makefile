@@ -15,7 +15,7 @@ GO_TAGS=-tags codegen
 
 all: test
 
-build-ack-generate:	## Bulid ack-generate binary
+build-ack-generate:	## Build ack-generate binary
 	go build ${GO_TAGS} -o bin/ack-generate cmd/ack-generate/main.go
 
 test: | mocks	## Run code tests
@@ -27,7 +27,7 @@ clean-mocks:	## Remove mocks directory
 build-controller-image: build-controller	## Build container image for SERVICE
 	./scripts/build-controller-image.sh -s $(SERVICE)
 
-build-controller:	## Build controller binary for SERVICE
+build-controller:	## Generate controller code for SERVICE
 	./scripts/build-controller.sh $(SERVICE)
 
 kind-cluster: test	## Run tests in a local kind cluster for SERVICE
