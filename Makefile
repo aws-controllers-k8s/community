@@ -24,10 +24,10 @@ test: | mocks	## Run code tests
 clean-mocks:	## Remove mocks directory
 	rm -rf mocks
 
-build-controller-image: build-controller	## Build container image for SERVICE
+build-controller-image:	## Build container image for SERVICE
 	./scripts/build-controller-image.sh -s $(SERVICE)
 
-build-controller:	## Generate controller code for SERVICE
+build-controller: build-ack-generate	## Generate controller code for SERVICE
 	./scripts/build-controller.sh $(SERVICE)
 
 kind-cluster: test	## Run tests in a local kind cluster for SERVICE
@@ -55,5 +55,5 @@ $(MOCKS): mocks/% : %
 	${MOCKERY_BIN} --tags=codegen --case=underscore --output=$@ --dir=$^ --all
 
 help:           ## Show this help.
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' \
+	@fgrep -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' \
 		| awk -F'[:#]' '{print $$1 = sprintf("%-30s", $$1), $$4}'
