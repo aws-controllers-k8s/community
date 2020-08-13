@@ -836,6 +836,9 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	altTypeName, renamed := renames[goTypeNoPkg]
 	if renamed {
 		goTypeNoPkg = altTypeName
+	} else if hadPkg {
+		cleanNames := names.New(goTypeNoPkg)
+		goTypeNoPkg = cleanNames.Camel
 	}
 	goType = goTypeNoPkg
 	if hadPkg {
