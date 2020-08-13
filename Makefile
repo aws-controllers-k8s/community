@@ -33,7 +33,7 @@ build-controller: build-ack-generate	## Generate controller code for SERVICE
 kind-cluster: test	## Run tests in a local kind cluster for SERVICE
 	./scripts/kind-build-test.sh -s $(SERVICE)
 
-kind-cluster-preserve: test	## Run tests in o local kind cluster for SERVICE and preserve cluster
+kind-cluster-preserve: test	## Run tests in a local kind cluster for SERVICE and preserve cluster
 	./scripts/kind-build-test.sh -s $(SERVICE) -p
 
 kind-cluster-functional: test	## Run functional tests for SERVICE with ROLE_ARN
