@@ -79,7 +79,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeSetReadManyOutput .CRD "resp" "ko" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -92,6 +92,11 @@ func (rm *resourceManager) sdkFind(
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
 	return &resource{ko}, nil
+{{- else }}
+    // Believe it or not, there are API resources that can be created but there
+    // is no read operation. Point in case: RDS' CreateDBInstanceReadReplica
+    // has no corresponding read operation that I know of...
+	return nil, ackerr.NotImplemented
 {{- end }}
 }
 
