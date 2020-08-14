@@ -55,5 +55,5 @@ $(MOCKS): mocks/% : %
 	${MOCKERY_BIN} --tags=codegen --case=underscore --output=$@ --dir=$^ --all
 
 help:           ## Show this help.
-	@fgrep -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' \
+	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' \
 		| awk -F'[:#]' '{print $$1 = sprintf("%-30s", $$1), $$4}'
