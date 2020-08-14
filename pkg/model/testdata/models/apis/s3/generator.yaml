@@ -1,0 +1,7 @@
+ignore:
+  resource_names:
+    - Object
+    - MultipartUpload
+  shape_names:
+    # These shapes are structs with no members...
+    - SSES3

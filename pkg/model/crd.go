@@ -35,6 +35,26 @@ type CRDOps struct {
 	SetAttributes *awssdkmodel.Operation
 }
 
+func (ops CRDOps) IterOps() []*awssdkmodel.Operation {
+	res := []*awssdkmodel.Operation{}
+	if ops.Create != nil {
+		res = append(res, ops.Create)
+	}
+	if ops.ReadOne != nil {
+		res = append(res, ops.ReadOne)
+	}
+	if ops.ReadMany != nil {
+		res = append(res, ops.ReadMany)
+	}
+	if ops.Update != nil {
+		res = append(res, ops.Update)
+	}
+	if ops.Delete != nil {
+		res = append(res, ops.Delete)
+	}
+	return res
+}
+
 // CRDField represents a single field in the CRD's Spec or Status objects
 type CRDField struct {
 	CRD                  *CRD
@@ -95,6 +115,47 @@ type CRD struct {
 	// TypeImports is a map, keyed by an import string, with the map value
 	// being the import alias
 	TypeImports map[string]string
+}
+
+// HasShapeAsMember returns true if the supplied Shape name appears in *any*
+// payload shape of *any* Operation for the resource. It recurses down through
+// the resource's Operation Input and Output shapes and their member shapes
+// looking for a shape with the supplied name
+func (r *CRD) HasShapeAsMember(toFind string) bool {
+	for _, op := range r.Ops.IterOps() {
+		if op.InputRef.Shape != nil {
+			inShape := op.InputRef.Shape
+			for _, memberShapeRef := range inShape.MemberRefs {
+				if shapeHasMember(memberShapeRef.Shape, toFind) {
+					return true
+				}
+			}
+		}
+		if op.OutputRef.Shape != nil {
+			outShape := op.OutputRef.Shape
+			for _, memberShapeRef := range outShape.MemberRefs {
+				if shapeHasMember(memberShapeRef.Shape, toFind) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func shapeHasMember(shape *awssdkmodel.Shape, toFind string) bool {
+	if shape.ShapeName == toFind {
+		return true
+	}
+	if shape.Type != "structure" {
+		return false
+	}
+	for _, memberShapeRef := range shape.MemberRefs {
+		if shapeHasMember(memberShapeRef.Shape, toFind) {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
@@ -433,8 +494,12 @@ func (r *CRD) GoCodeSetInput(
 			sourceAdaptedVarName += ".Status"
 		}
 		sourceAdaptedVarName += "." + crdField.Names.Camel
+
 		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
+		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+			continue
+		}
 
 		// we construct variables containing temporary storage for sub-elements
 		// and sub-fields that are structs. Names of fields are "f" appended by
@@ -645,11 +710,14 @@ func (r *CRD) goCodeSetInputForContainer(
 	case "structure":
 		{
 			for memberIndex, memberName := range shape.MemberNames() {
+				memberShapeRef := shape.MemberRefs[memberName]
+				memberShape := memberShapeRef.Shape
+				if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+					continue
+				}
 				cleanMemberNames := names.New(memberName)
 				cleanMemberName := cleanMemberNames.Camel
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
-				memberShapeRef := shape.MemberRefs[memberName]
-				memberShape := memberShapeRef.Shape
 				sourceAdaptedVarName := sourceVarName + "." + cleanMemberName
 				out += fmt.Sprintf(
 					"%sif %s != nil {\n", indent, sourceAdaptedVarName,
@@ -999,6 +1067,22 @@ func (r *CRD) GoCodeSetOutput(
 	// creating temporary variables, populating those temporary variables'
 	// fields with further-nested fields as needed
 	for memberIndex, memberName := range outputShape.MemberNames() {
+		memberShapeRef := outputShape.MemberRefs[memberName]
+		if memberShapeRef.Shape == nil {
+			// Technically this should not happen, so let's bail here if it
+			// does...
+			msg := fmt.Sprintf(
+				"expected .Shape to not be nil for ShapeRef of memberName %s",
+				memberName,
+			)
+			panic(msg)
+		}
+
+		memberShape := memberShapeRef.Shape
+		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+			continue
+		}
+
 		statusField, found := r.StatusFields[memberName]
 		if !found {
 			// Note that not all fields in the output shape will be in the
@@ -1011,17 +1095,6 @@ func (r *CRD) GoCodeSetOutput(
 
 		// TODO(jaypipes): Handle the special case of ARN for primary
 		// resource identifier
-
-		memberShapeRef := outputShape.MemberRefs[memberName]
-		if memberShapeRef.Shape == nil {
-			// Technically this should not happen, so let's bail here if it
-			// does...
-			msg := fmt.Sprintf(
-				"expected .Shape to not be nil for ShapeRef of memberName %s",
-				memberName,
-			)
-			panic(msg)
-		}
 
 		// fieldVarName is the name of the variable that is used for temporary
 		// storage of complex member field values
@@ -1056,7 +1129,6 @@ func (r *CRD) GoCodeSetOutput(
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		memberShape := memberShapeRef.Shape
 		switch memberShape.Type {
 		case "list", "structure", "map":
 			{
@@ -1183,6 +1255,11 @@ func (r *CRD) goCodeSetOutputReadMany(
 		indent, sourceVarName, listShapeName,
 	)
 	for memberIndex, memberName := range elemShape.MemberNames() {
+		memberShapeRef := elemShape.MemberRefs[memberName]
+		memberShape := memberShapeRef.Shape
+		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+			continue
+		}
 		sourceAdaptedVarName := "elem." + memberName
 		if r.IsPrimaryARNField(memberName) {
 			out += fmt.Sprintf(
@@ -1238,8 +1315,6 @@ func (r *CRD) goCodeSetOutputReadMany(
 		out += fmt.Sprintf(
 			"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		memberShapeRef := elemShape.MemberRefs[memberName]
-		memberShape := memberShapeRef.Shape
 		switch memberShape.Type {
 		case "list", "structure", "map":
 			{
@@ -1398,6 +1473,9 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
+				if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+					continue
+				}
 				cleanNames := names.New(memberName)
 				sourceAdaptedVarName := sourceVarName + "." + memberName
 				out += fmt.Sprintf(
@@ -1668,10 +1746,13 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			return nil, ErrNilShapePointer
 		}
 		for memberName, memberShapeRef := range inputShape.MemberRefs {
-			memberNames := names.New(memberName)
 			if memberShapeRef.Shape == nil {
 				return nil, ErrNilShapePointer
 			}
+			if h.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
+				continue
+			}
+			memberNames := names.New(memberName)
 			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
 				crd.UnpackAttributes()
 				continue
@@ -1694,10 +1775,13 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			}
 		}
 		for memberName, memberShapeRef := range outputShape.MemberRefs {
-			memberNames := names.New(memberName)
+			if h.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
+				continue
+			}
 			if memberShapeRef.Shape == nil {
 				return nil, ErrNilShapePointer
 			}
+			memberNames := names.New(memberName)
 			if _, found := crd.SpecFields[memberName]; found {
 				// We don't put fields that are already in the Spec struct into
 				// the Status struct
@@ -1733,11 +1817,7 @@ func (h *Helper) IsIgnoredResource(resourceName string) bool {
 		return true
 	}
 	if h.generatorConfig != nil {
-		for _, ignoredResourceName := range h.generatorConfig.Ignore.ResourceNames {
-			if ignoredResourceName == resourceName {
-				return true
-			}
-		}
+		return inStrings(resourceName, h.generatorConfig.Ignore.ResourceNames)
 	}
 	return false
 }
@@ -1775,10 +1855,8 @@ func (h *Helper) IsIgnoredOperation(operation *awssdkmodel.Operation) bool {
 		return true
 	}
 	if h.generatorConfig != nil {
-		for _, ignoredOperation := range h.generatorConfig.Ignore.Operations {
-			if ignoredOperation == operation.Name {
-				return true
-			}
+		if inStrings(operation.Name, h.generatorConfig.Ignore.Operations) {
+			return true
 		}
 	}
 	return false

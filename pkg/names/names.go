@@ -63,6 +63,8 @@ var (
 		// Prevent "MD5OfBody" from becoming "MD5OfBody" when lower
 		// prefix-converted (should be "md5OfBody")
 		{"MD5Of", "MD5Of", "md5Of", regexp.MustCompile("M[dD]5Of", regexp.None)},
+		// Prevent "MultipartUpload" from becoming "MultIPartUpload"
+		{"Ip", "IP", "ip", regexp.MustCompile("Ip(?!art)", regexp.None)},
 		// Easy find-and-replacements...
 		{"Acl", "ACL", "acl", nil},
 		{"Acp", "ACP", "acp", nil},
@@ -89,7 +91,6 @@ var (
 		{"Iam", "IAM", "iam", nil},
 		{"Icmp", "ICMP", "icmp", nil},
 		{"Iops", "IOPS", "iops", nil},
-		{"Ip", "IP", "ip", nil},
 		{"Json", "JSON", "json", nil},
 		{"Jwt", "JWT", "jwt", nil},
 		{"Kms", "KMS", "kms", nil},

@@ -46,6 +46,8 @@ func TestNames(t *testing.T) {
 		{"MaxIdleConnectionsPercent", "MaxIdleConnectionsPercent", "maxIdleConnectionsPercent", "max_idle_connections_percent"},
 		{"CacheSecurityGroup", "CacheSecurityGroup", "cacheSecurityGroup", "cache_security_group"},
 		{"RepositoryUriTest", "RepositoryURITest", "repositoryURITest", "repository_uri_test"},
+		{"Ip", "IP", "ip", "ip"},
+		{"MultipartUpload", "MultipartUpload", "multipartUpload", "multipart_upload"},
 	}
 	for _, tc := range testCases {
 		n := names.New(tc.original)

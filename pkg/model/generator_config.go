@@ -38,6 +38,9 @@ type IgnoreSpec struct {
 	// Set of resource names that should be ignored by the
 	// generator
 	ResourceNames []string `json:"resource_names"`
+	// Set of shapes to ignore when constructing API type definitions and
+	// associated SDK code for structs that have these shapes as members
+	ShapeNames []string `json:"shape_names"`
 }
 
 // ResourceGeneratorConfig represents instructions to the ACK code generator
