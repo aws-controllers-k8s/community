@@ -25,7 +25,7 @@ Read more on the [motivation and background](/docs/background.md) for the this p
 To get started, [choose and install](https://aws.github.io/aws-controllers-k8s/user-docs/install/) the controllers for the AWS services you want to manage. Then, [configure permissions](https://aws.github.io/aws-controllers-k8s/user-docs/permissions/) and [define your first AWS resource](https://aws.github.io/aws-controllers-k8s/user-docs/usage/).
 
 ### Supported Services
-See the current list of the supported AWS services [here](/services)
+[List of supported AWS services](/services)
 
 ## Help & Feedback
 For help, please consider the following venues (in order):

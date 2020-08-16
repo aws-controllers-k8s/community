@@ -3,10 +3,10 @@ The following services are currently supported by ACK. For information on how to
 
 |AWS Service|Status|Controller|AWS Documentation|
 |-----------|------|----------|-----------------|
-|[DynamoDB](https://aws.amazon.com/dynamodb/)|Preview|`dynamodb`|[documentation](https://docs.aws.amazon.com/dynamodb)|
-|[ElastiCache](https://aws.amazon.com/elasticache/)|Preview|`elasticache`|[documentation](https://docs.aws.amazon.com/elasticache)|
-|[SQS](https://aws.amazon.com/sqs/)|Preview|`sqs`|[documentation](https://docs.aws.amazon.com/sqs)|
-|[SNS](https://aws.amazon.com/sbs/)|Preview|`sns`|[documentation](https://docs.aws.amazon.com/sns)|
+|[DynamoDB](https://aws.amazon.com/dynamodb/)|Preview|`dynamodb`|[docs link](https://docs.aws.amazon.com/dynamodb)|
+|[ElastiCache](https://aws.amazon.com/elasticache/)|Preview|`elasticache`|[docs link](https://docs.aws.amazon.com/elasticache)|
+|[SQS](https://aws.amazon.com/sqs/)|Preview|`sqs`|[docs link](https://docs.aws.amazon.com/sqs)|
+|[SNS](https://aws.amazon.com/sns/)|Preview|`sns`|[docs link](https://docs.aws.amazon.com/sns)|
 
 
 ### Adding a service controller
