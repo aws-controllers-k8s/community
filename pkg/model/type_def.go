@@ -43,6 +43,9 @@ func (h *Helper) HasConflictingTypeName(typeName string) bool {
 	crdStatusNames := []string{}
 
 	for _, crdName := range crdNames {
+		if h.IsIgnoredResource(crdName.Original) {
+			continue
+		}
 		cleanResourceName := crdName.Camel
 		crdResourceNames = append(crdResourceNames, cleanResourceName)
 		crdSpecNames = append(crdSpecNames, cleanResourceName+"Spec")
@@ -51,6 +54,27 @@ func (h *Helper) HasConflictingTypeName(typeName string) bool {
 	return (inStrings(cleanTypeName, crdResourceNames) ||
 		inStrings(cleanTypeName, crdSpecNames) ||
 		inStrings(cleanTypeName, crdStatusNames))
+}
+
+// IgnoreShape returns true if the supplied shape name should be ignored by the
+// code generator, false otherwise
+func (h *Helper) IsIgnoredShape(shapeName string) bool {
+	if h.generatorConfig == nil || len(h.generatorConfig.Ignore.ShapeNames) == 0 {
+		return false
+	}
+	return inStrings(shapeName, h.generatorConfig.Ignore.ShapeNames)
+}
+
+// IsShapeUsedInCRDs returns true if the supplied shape name is a member of amy
+// CRD's payloads or those payloads sub-member shapes
+func (h *Helper) IsShapeUsedInCRDs(shapeName string) bool {
+	crds, _ := h.GetCRDs()
+	for _, crd := range crds {
+		if crd.HasShapeAsMember(shapeName) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetTypeDefs returns a slice of TypeDef pointers and a map of package import
@@ -82,6 +106,9 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 			// Neither are exceptions
 			continue
 		}
+		if h.IsIgnoredShape(shapeName) {
+			continue
+		}
 		tdefNames := names.New(shapeName)
 		if h.HasConflictingTypeName(shapeName) {
 			tdefNames.Camel += ConflictingNameSuffix
@@ -92,6 +119,12 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 		for memberName, memberRef := range shape.MemberRefs {
 			memberNames := names.New(memberName)
 			memberShape := memberRef.Shape
+			if h.IsIgnoredShape(memberShape.ShapeName) {
+				continue
+			}
+			if !h.IsShapeUsedInCRDs(memberShape.ShapeName) {
+				continue
+			}
 			goPkgType := memberRef.Shape.GoTypeWithPkgNameElem()
 			if strings.Contains(goPkgType, ".") {
 				if strings.HasPrefix(goPkgType, "[]") {
