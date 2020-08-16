@@ -49,12 +49,24 @@ type ResourceGeneratorConfig struct {
 	// UnpackAttributeMapConfig contains instructions for converting a raw
 	// `map[string]*string` into real fields on a CRD's Spec or Status object
 	UnpackAttributesMapConfig *UnpackAttributesMapConfig `json:"unpack_attributes_map,omitempty"`
-	// ExceptionsConfig identifies the exception codes for the resource. Some
-	// API model files don't contain the ErrorInfo struct that contains the
+	// Exceptions identifies the exception codes for the resource. Some API
+	// model files don't contain the ErrorInfo struct that contains the
 	// HTTPStatusCode attribute that we usually look for to identify 404 Not
 	// Found and other common error types for primary resources, and thus we
 	// need these instructions.
 	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
+	// Renames identifies fields in Operations that should be renamed.
+	Renames *RenamesConfig `json:"renames,omitempty"`
+	// ListOperation contains instructions for the code generator to generate
+	// Go code that filters the results of a List operation looking for a
+	// singular object. Certain AWS services (e.g. S3's ListBuckets API) have
+	// absolutely no way to pass a filter to the operation. Instead, the List
+	// operation always returns ALL objects of that type.
+	//
+	// The ListOperationConfig object enables us to inject some custom code to
+	// filter the results of these List operations from within the generated
+	// code in sdk.go's sdkFind().
+	ListOperation *ListOperationConfig `json:"list_operation,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -135,6 +147,32 @@ type ExceptionsConfig struct {
 	// Codes is a map of HTTP status code to the name of the Exception shape
 	// that corresponds to that HTTP status code for this resource
 	Codes map[int]string `json:"codes"`
+}
+
+// RenamesConfig contains instructions to the code generator how to rename
+// fields in various Operation payloads
+type RenamesConfig struct {
+	// Operations is a map, keyed by Operation ID, of instructions on how to
+	// handle renamed fields in Input and Output shapes.
+	Operations map[string]*OperationRenamesConfig `json:"operations"`
+}
+
+// OperationRenamesConfig contains instructions to the code generator on how to
+// rename fields in an Operation's input and output payload shapes
+type OperationRenamesConfig struct {
+	// InputFields is a map of Input shape fields to renamed field name.
+	InputFields map[string]string `json:"input_fields"`
+	// OutputFields is a map of Output shape fields to renamed field name.
+	OutputFields map[string]string `json:"output_fields"`
+}
+
+// ListOperationConfig contains instructions for the code generator to handle
+// List operations for service APIs that have no built-in filtering ability and
+// whose List Operation always returns all objects.
+type ListOperationConfig struct {
+	// MatchFields lists the names of fields in the Shape of the
+	// list element in the List Operation's Output shape.
+	MatchFields []string `json:"match_fields"`
 }
 
 // NewGeneratorConfig returns a new GeneratorConfig object given a supplied

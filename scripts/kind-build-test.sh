@@ -194,5 +194,6 @@ echo "kubectl get pods -A"
 echo "======================================================================================================"
 
 export KUBECONFIG
+export AWS_REGION
 
 $TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
