@@ -1,5 +1,4 @@
 # AWS Controllers for Kubernetes (ACK)
-
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
 This is a new open source project built with ❤️ by AWS and available as a **Developer Preview**. We encourage you to try it out, provide feedback and contribute to development.
@@ -21,7 +20,6 @@ ACK is a collection of [Kubernetes Custom Resource Definitions](https://kubernet
 Read more on the [motivation and background](/docs/background.md) for the this project.
 
 ## Getting Started
-
 To get started, [choose and install](https://aws.github.io/aws-controllers-k8s/user-docs/install/) the controllers for the AWS services you want to manage. Then, [configure permissions](https://aws.github.io/aws-controllers-k8s/user-docs/permissions/) and [define your first AWS resource](https://aws.github.io/aws-controllers-k8s/user-docs/usage/).
 
 ### Supported Services
