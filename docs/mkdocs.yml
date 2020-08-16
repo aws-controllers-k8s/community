@@ -7,6 +7,7 @@ copyright: 'Copyright &copy; 2020 Amazon'
 docs_dir: 'contents'
 nav:
     - Home: 'index.md'
+      - Services: 'services.md'
     - User docs:
       - Install: 'user-docs/install.md'
       - Permissions: 'user-docs/permissions.md'

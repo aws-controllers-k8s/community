@@ -6,18 +6,16 @@ This is a new open source project built with ❤️ by AWS and available as a **
 *Important: Because this project is a preview, there may be significant and breaking changes introduced in the future. We encourage you to try and experiment with this project. Please do not adopt it for production use.*
 
 ### Contents
-* [Overview](#Overview)
+* [Overview](#background)
 * [Getting Started](#getting-started)
 * [Help & Feedback](#help--feedback)
 * [Contributing](#contributing)
 * [License](#license)
 
-## Overview
+## Background
 Kubernetes applications often require a number of supporting resources like databases, message queues, and object stores to operate. AWS provides a set of managed services that you can use to provide these resources for your applications, but provisioning and integrating them with Kubernetes was complex and time consuming. ACK lets you define and consume many AWS services and resources directly within a Kubernetes cluster. ACK gives you a unified, operationally seamless way to manage your application and its dependencies.
 
 ACK is a collection of [Kubernetes Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) and controllers which work together to extend the Kubernetes API and create AWS resources on your cluster’s behalf.
-
-Read more on the [motivation and background](/docs/background.md) for the this project.
 
 ## Getting Started
 To get started, [choose and install](https://aws.github.io/aws-controllers-k8s/user-docs/install/) the controllers for the AWS services you want to manage. Then, [configure permissions](https://aws.github.io/aws-controllers-k8s/user-docs/permissions/) and [define your first AWS resource](https://aws.github.io/aws-controllers-k8s/user-docs/usage/).
