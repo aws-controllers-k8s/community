@@ -4,10 +4,9 @@
 
 This is a new open source project built with ❤️ by AWS and available as a **Developer Preview**. We encourage you to try it out, provide feedback and contribute to development.
 
-*IMPORTANT: Because this project is a preview, there may be significant and breaking changes introduced in the future. We encourage you to try and experiment with this project. Please do not adopt it for production use.*
+*Important: Because this project is a preview, there may be significant and breaking changes introduced in the future. We encourage you to try and experiment with this project. Please do not adopt it for production use.*
 
 ### Contents
-
 * [Overview](#Overview)
 * [Getting Started](#getting-started)
 * [Help & Feedback](#help--feedback)
@@ -25,6 +24,9 @@ Read more on the [motivation and background](/docs/background.md) for the this p
 
 To get started, [choose and install](https://aws.github.io/aws-controllers-k8s/user-docs/install/) the controllers for the AWS services you want to manage. Then, [configure permissions](https://aws.github.io/aws-controllers-k8s/user-docs/permissions/) and [define your first AWS resource](https://aws.github.io/aws-controllers-k8s/user-docs/usage/).
 
+### Supported Services
+See the current list of the supported AWS services [here](/services)
+
 ## Help & Feedback
 For help, please consider the following venues (in order):
 
@@ -36,12 +38,9 @@ For help, please consider the following venues (in order):
 * Slack: Talk to us on the #provider-aws channel on the Kubernetes Slack (https://kubernetes.slack.com/) community.
 
 ## Contributing
-We welcome community contributions and pull requests. See our [contribution guide](/CONTRIBUTING.md) for more information on how to report issues, set up a development environment and submit code.
+We welcome community contributions and pull requests. See our [contribution guide](/CONTRIBUTING.md) for more information on how to report issues, set up a development environment, and submit code.
 
-Check the [issues list](https://github.com/aws/aws-controllers-k8s/issues) for
-descriptions of work items. We invite any and all feedback and contributions,
-so please don't hesitate to submit an issue, a pull request or comment on an
-existing issue.
+Check the [issues list](https://github.com/aws/aws-controllers-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
 
 ACK adheres to the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct). You can also learn more about our [Governance](/GOVERNANCE.md) structure.
 
