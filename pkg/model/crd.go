@@ -158,6 +158,35 @@ func shapeHasMember(shape *awssdkmodel.Shape, toFind string) bool {
 	return false
 }
 
+// InputFieldRename returns the renamed field for a supplied Operation ID and
+// original field name and whether or not a renamed override field name was
+// found
+func (r *CRD) InputFieldRename(
+	opID string,
+	origFieldName string,
+) (string, bool) {
+	h := r.helper
+	if h.generatorConfig == nil {
+		return origFieldName, false
+	}
+	rConfig, ok := h.generatorConfig.Resources[r.Names.Original]
+	if !ok {
+		return origFieldName, false
+	}
+	if rConfig.Renames == nil {
+		return origFieldName, false
+	}
+	oRenames, ok := rConfig.Renames.Operations[opID]
+	if !ok {
+		return origFieldName, false
+	}
+	renamed, ok := oRenames.InputFields[origFieldName]
+	if !ok {
+		return origFieldName, false
+	}
+	return renamed, true
+}
+
 func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	// There are shapes that are called things like DBProxyStatus that are
 	// fields in a DBProxy CRD... we need to ensure the type names don't
@@ -477,12 +506,13 @@ func (r *CRD) GoCodeSetInput(
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
 		}
+		renamedName, _ := r.InputFieldRename(op.Name, memberName)
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
 		var crdField *CRDField
 		var found bool
 		sourceAdaptedVarName := sourceVarName
-		crdField, found = r.SpecFields[memberName]
+		crdField, found = r.SpecFields[renamedName]
 		if found {
 			sourceAdaptedVarName += ".Spec"
 		} else {
@@ -1752,7 +1782,10 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			if h.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
 				continue
 			}
-			memberNames := names.New(memberName)
+			renamedName, _ := crd.InputFieldRename(
+				createOp.Name, memberName,
+			)
+			memberNames := names.New(renamedName)
 			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
 				crd.UnpackAttributes()
 				continue

@@ -5,3 +5,10 @@ ignore:
   shape_names:
     # These shapes are structs with no members...
     - SSES3
+resources:
+  Bucket:
+    renames:
+      operations:
+        CreateBucket:
+          input_fields:
+            Bucket: Name

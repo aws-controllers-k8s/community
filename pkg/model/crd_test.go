@@ -3506,13 +3506,17 @@ func TestS3_Bucket(t *testing.T) {
 
 	expSpecFieldCamel := []string{
 		"ACL",
-		"Bucket",
 		"CreateBucketConfiguration",
 		"GrantFullControl",
 		"GrantRead",
 		"GrantReadACP",
 		"GrantWrite",
 		"GrantWriteACP",
+		// NOTE(jaypipes): Original field name in CreateBucket input is
+		// "Bucket" but should be renamed to "Name" from the generator.yaml (in
+		// order to match with the name of the field in the Output shape for a
+		// ListBuckets API call...
+		"Name",
 		"ObjectLockEnabledForBucket",
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
@@ -3526,8 +3530,8 @@ func TestS3_Bucket(t *testing.T) {
 	if r.ko.Spec.ACL != nil {
 		res.SetACL(*r.ko.Spec.ACL)
 	}
-	if r.ko.Spec.Bucket != nil {
-		res.SetBucket(*r.ko.Spec.Bucket)
+	if r.ko.Spec.Name != nil {
+		res.SetBucket(*r.ko.Spec.Name)
 	}
 	if r.ko.Spec.CreateBucketConfiguration != nil {
 		f2 := &svcsdk.CreateBucketConfiguration{}
