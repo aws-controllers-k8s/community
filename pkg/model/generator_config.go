@@ -57,6 +57,16 @@ type ResourceGeneratorConfig struct {
 	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
 	// Renames identifies fields in Operations that should be renamed.
 	Renames *RenamesConfig `json:"renames,omitempty"`
+	// ListOperation contains instructions for the code generator to generate
+	// Go code that filters the results of a List operation looking for a
+	// singular object. Certain AWS services (e.g. S3's ListBuckets API) have
+	// absolutely no way to pass a filter to the operation. Instead, the List
+	// operation always returns ALL objects of that type.
+	//
+	// The ListOperationConfig object enables us to inject some custom code to
+	// filter the results of these List operations from within the generated
+	// code in sdk.go's sdkFind().
+	ListOperation *ListOperationConfig `json:"list_operation,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -154,6 +164,15 @@ type OperationRenamesConfig struct {
 	InputFields map[string]string `json:"input_fields"`
 	// OutputFields is a map of Output shape fields to renamed field name.
 	OutputFields map[string]string `json:"output_fields"`
+}
+
+// ListOperationConfig contains instructions for the code generator to handle
+// List operations for service APIs that have no built-in filtering ability and
+// whose List Operation always returns all objects.
+type ListOperationConfig struct {
+	// MatchFields lists the names of fields in the Shape of the
+	// list element in the List Operation's Output shape.
+	MatchFields []string `json:"match_fields"`
 }
 
 // NewGeneratorConfig returns a new GeneratorConfig object given a supplied

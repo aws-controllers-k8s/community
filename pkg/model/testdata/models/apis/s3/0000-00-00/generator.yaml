@@ -12,3 +12,9 @@ resources:
         CreateBucket:
           input_fields:
             Bucket: Name
+        DeleteBucket:
+          input_fields:
+            Bucket: Name
+    list_operation:
+      match_fields:
+        - Name

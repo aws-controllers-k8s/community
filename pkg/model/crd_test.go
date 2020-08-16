@@ -1710,8 +1710,11 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expReadManyInput, crd.GoCodeSetInput(model.OpTypeList, "r.ko", "res", 1))
 
 	expReadManyOutput := `
-	if len(resp.CacheClusters) == 1 {
-		elem := resp.CacheClusters[0]
+	if len(resp.CacheClusters) == 0 {
+		return nil, ackerr.NotFound
+	}
+	found := false
+	for _, elem := range resp.CacheClusters {
 		if elem.ARN != nil {
 			if ko.Status.ACKResourceMetadata == nil {
 				ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
@@ -1904,7 +1907,10 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		if elem.TransitEncryptionEnabled != nil {
 			ko.Status.TransitEncryptionEnabled = elem.TransitEncryptionEnabled
 		}
-	} else {
+		found = true
+		break
+	}
+	if !found {
 		return nil, ackerr.NotFound
 	}
 `
@@ -3011,8 +3017,11 @@ func TestRDS_DBInstance(t *testing.T) {
 	// target variable are constructed with cleaned, renamed-friendly names
 	// referring to the generated Kubernetes API type definitions
 	expReadManyOutput := `
-	if len(resp.DBInstances) == 1 {
-		elem := resp.DBInstances[0]
+	if len(resp.DBInstances) == 0 {
+		return nil, ackerr.NotFound
+	}
+	found := false
+	for _, elem := range resp.DBInstances {
 		if elem.AllocatedStorage != nil {
 			ko.Spec.AllocatedStorage = elem.AllocatedStorage
 		}
@@ -3452,7 +3461,10 @@ func TestRDS_DBInstance(t *testing.T) {
 			}
 			ko.Status.VPCSecurityGroups = f57
 		}
-	} else {
+		found = true
+		break
+	}
+	if !found {
 		return nil, ackerr.NotFound
 	}
 `
@@ -3567,4 +3579,34 @@ func TestS3_Bucket(t *testing.T) {
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+
+	expDeleteInput := `
+	if r.ko.Spec.Name != nil {
+		res.SetBucket(*r.ko.Spec.Name)
+	}
+`
+	assert.Equal(expDeleteInput, crd.GoCodeSetInput(model.OpTypeDelete, "r.ko", "res", 1))
+
+	expReadManyOutput := `
+	if len(resp.Buckets) == 0 {
+		return nil, ackerr.NotFound
+	}
+	found := false
+	for _, elem := range resp.Buckets {
+		if elem.Name != nil {
+			if ko.Spec.Name != nil {
+				if *elem.Name != *ko.Spec.Name {
+					continue
+				}
+			}
+			ko.Spec.Name = elem.Name
+		}
+		found = true
+		break
+	}
+	if !found {
+		return nil, ackerr.NotFound
+	}
+`
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
 }

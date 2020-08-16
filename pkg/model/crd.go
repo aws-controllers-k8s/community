@@ -1215,8 +1215,11 @@ func (r *CRD) GoCodeSetOutput(
 // Note: "ko" is the target variable and represents the thing we'll be
 //		 setting fields on
 //
-//  if len(resp.CacheClusters) == 1 {
-//      elem := resp.CacheClusters[0]
+//  if len(resp.CacheClusters) == 0 {
+//      return nil, ackerr.NotFound
+//  }
+//  found := false
+//  for _, elem := range resp.CacheClusters {
 //      if elem.ARN != nil {
 //          if ko.Status.ACKResourceMetadata == nil {
 //              ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
@@ -1228,7 +1231,17 @@ func (r *CRD) GoCodeSetOutput(
 //          ko.Status.AtRestEncryptionEnabled = elem.AtRestEncryptionEnabled
 //      }
 //      ...
-//  } else {
+//      if elem.CacheClusterId != nil {
+//          if ko.Spec.CacheClusterID != nil {
+//              if *elem.CacheClusterId != *ko.Spec.CacheClusterID {
+//                  continue
+//              }
+//          }
+//          r.ko.Spec.CacheClusterID = elem.CacheClusterId
+//      }
+//      found = true
+//  }
+//  if !found {
 //      return nil, ackerr.NotFound
 //  }
 func (r *CRD) goCodeSetOutputReadMany(
@@ -1274,14 +1287,26 @@ func (r *CRD) goCodeSetOutputReadMany(
 		panic("List output shape had no field of type 'list'")
 	}
 
-	//  if len(resp.CacheClusters) == 1 {
+	// Set of field names in the element shape that, if the generator config
+	// instructs us to, we will write Go code to filter results of the List
+	// operation by checking for matching values in these fields.
+	matchFieldNames := r.listOpMatchFieldNames()
+
+	//  if len(resp.CacheClusters) == 0 {
+	//      return nil, ackerr.NotFound
+	//  }
 	out += fmt.Sprintf(
-		"%sif len(%s.%s) == 1 {\n",
+		"%sif len(%s.%s) == 0 {\n",
 		indent, sourceVarName, listShapeName,
 	)
-	//  	elem := resp.CacheClusters[0]
+	out += fmt.Sprintf("%s\treturn nil, ackerr.NotFound\n", indent)
+	out += fmt.Sprintf("%s}\n", indent)
+
+	// found := false
+	out += fmt.Sprintf("%sfound := false\n", indent)
+	// for _, elem := range resp.CacheClusters {
 	out += fmt.Sprintf(
-		"%s\telem := %s.%s[0]\n",
+		"%sfor _, elem := range %s.%s {\n",
 		indent, sourceVarName, listShapeName,
 	)
 	for memberIndex, memberName := range elemShape.MemberNames() {
@@ -1295,9 +1320,9 @@ func (r *CRD) goCodeSetOutputReadMany(
 			out += fmt.Sprintf(
 				"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
 			)
-			//          if ko.Status.ACKResourceMetadata == nil {
-			//  	        ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-			//          }
+			//     if ko.Status.ACKResourceMetadata == nil {
+			//  	   ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+			//     }
 			out += fmt.Sprintf(
 				"%s\t\tif %s.Status.ACKResourceMetadata == nil {\n",
 				indent, targetVarName,
@@ -1370,6 +1395,36 @@ func (r *CRD) goCodeSetOutputReadMany(
 				)
 			}
 		default:
+			//          if ko.Spec.CacheClusterID != nil {
+			//              if *elem.CacheClusterId != *ko.Spec.CacheClusterID {
+			//                  continue
+			//              }
+			//          }
+			if inStrings(memberName, matchFieldNames) {
+				out += fmt.Sprintf(
+					"%s\t\tif %s.%s != nil {\n",
+					indent,
+					targetAdaptedVarName,
+					crdField.Names.Camel,
+				)
+				out += fmt.Sprintf(
+					"%s\t\t\tif *%s != *%s.%s {\n",
+					indent,
+					sourceAdaptedVarName,
+					targetAdaptedVarName,
+					crdField.Names.Camel,
+				)
+				out += fmt.Sprintf(
+					"%s\t\t\t\tcontinue\n", indent,
+				)
+				out += fmt.Sprintf(
+					"%s\t\t\t}\n", indent,
+				)
+				out += fmt.Sprintf(
+					"%s\t\t}\n", indent,
+				)
+			}
+			//          r.ko.Spec.CacheClusterID = elem.CacheClusterId
 			out += r.goCodeSetOutputForScalar(
 				crdField.Names.Camel,
 				targetAdaptedVarName,
@@ -1379,13 +1434,47 @@ func (r *CRD) goCodeSetOutputReadMany(
 			)
 		}
 		out += fmt.Sprintf(
-			"\t%s}\n", indent,
+			"%s\t}\n", indent,
 		)
 	}
-	out += fmt.Sprintf("%s} else {\n", indent)
+	// When we don't have custom matching/filtering logic for the list
+	// operation, we just take the first element in the returned slice
+	// of objects. When we DO have match fields, the generated Go code
+	// above will output a `continue` when the required fields don't
+	// match. Thus, we will break here only when getting a record where
+	// all match fields have matched.
+	out += fmt.Sprintf(
+		"%s\tfound = true\n", indent,
+	)
+	out += fmt.Sprintf(
+		"%s\tbreak\n", indent,
+	)
+	out += fmt.Sprintf("%s}\n", indent)
+	//  if !found {
+	//      return nil, ackerr.NotFound
+	//  }
+	out += fmt.Sprintf("%sif !found {\n", indent)
 	out += fmt.Sprintf("%s\treturn nil, ackerr.NotFound\n", indent)
 	out += fmt.Sprintf("%s}\n", indent)
 	return out
+}
+
+// listOpMatchFieldNames returns a slice of strings representing the field
+// names in the List operation's Output shape's element Shape that we should
+// check a corresponding value in the target Spec exists.
+func (r *CRD) listOpMatchFieldNames() []string {
+	res := []string{}
+	if r.helper.generatorConfig == nil {
+		return res
+	}
+	rConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
+	if !found {
+		return res
+	}
+	if rConfig.ListOperation == nil {
+		return res
+	}
+	return rConfig.ListOperation.MatchFields
 }
 
 // GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields

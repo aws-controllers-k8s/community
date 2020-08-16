@@ -9,10 +9,11 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
-ack_ctrl_pod_id=$( controller_pod_id "ecr")
-debug_msg "executing test: $test_name"
+service_name="ecr"
+ack_ctrl_pod_id=$( controller_pod_id "$service_name")
+debug_msg "executing test: $service_name/$test_name"
 
-repo_name="ack-test-smoke-ecr"
+repo_name="ack-test-smoke-$service_name"
 resource_name="repositories/$repo_name"
 
 # PRE-CHECKS
@@ -54,7 +55,7 @@ assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 
 
 aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
 if [ $? -ne 255 ]; then
-    echo "FAIL: expected $repo_name to deleted in ECR"
+    echo "FAIL: expected $repo_name to be deleted in ECR"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
 fi
