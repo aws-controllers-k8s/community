@@ -45,6 +45,7 @@ theme:
         - 'json'
         - 'bash'
 markdown_extensions:
+    - pymdownx.snippets
     - toc:
         permalink: true
     - admonition

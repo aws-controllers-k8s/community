@@ -70,12 +70,65 @@ step from happening by passing the `-p` (for "preserve") flag to the
 `scripts/kind-build-test.sh` script or by `make kind-cluster-preserve SERVICE=ecr`.
 
 Finally, if you would like to do functional testing, where you would like to create a AWS Services 
-in your account using `KinD` cluster, please use `-r` and pass in `AWS ROLE ARN` to `scripts/kind-build-test.sh` script or
+in your account using `KinD` cluster, use `-r` and pass in `AWS ROLE ARN` to `scripts/kind-build-test.sh` script or
 `make kind-cluster-functional SERVICE=ecr ROLE_ARN=arn:aws:iam::12345678980:role/Admin-k8s`
 
-Note: For above functional test, `sts-assume-role.sh` under `scripts/lib` directory will 
-make `aws sts assume-role --role-session-arn $AWS_ROLE_ARN --role-session-name $TEMP_ROLE` API call to fetch `AWS_ACCESS_KEY_ID`, 
-`AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` variable and inject them as secrets to the deployment. The duration of the session token is 900 seconds (15 minutes)
+!!! info 
+     For above functional testing, `generate_temp_creds` function under `scripts/lib/aws.sh` script will 
+     make `aws sts assume-role --role-session-arn $AWS_ROLE_ARN --role-session-name $TEMP_ROLE` API call 
+     to fetch `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. 
+     The duration of the session token is 900 seconds (15 minutes). These variables will be added as Environment variables to the controller (deployment). 
+
+
+!!! note
+    The IAM user should be able to assume the role passed above else we can generate temporary credentials. 
+    Make sure the trust relationship in the role has `sts:assume-role` permission. 
+
+* To verify which IAM entity is making assume role API call, run `aws sts get-caller-identity` command:
+    
+```
+aws sts get-caller-identity
+```
+
+* Check if the above returned IAM entity has necessary permissions to make assume role API call. 
+  The contents of the example-role-trust-policy.json file should be similar to this:    
+``` json
+{
+	"Version": "2012-10-17",
+	"Statement": {
+		"Effect": "Allow",
+		"Principal": {
+			"AWS": "arn:aws:iam::12345678970:user/kubernetes"
+		},
+		"Action": "sts:AssumeRole"
+	}
+}
+```
+
+If you do not have a role, run below commands to create a role, add the trust relationship to the role along with a sample policy arn which has ECR full permissions. 
+If you have a role, verify your role has below trust relationship. 
+       
+``` json
+cat > example-role-trust-policy.json << EOF
+{
+	"Version": "2012-10-17",
+	"Statement": {
+		"Effect": "Allow",
+		"Principal": {
+			"AWS": "arn:aws:iam::12345678970:user/kubernetes"
+		},
+		"Action": "sts:AssumeRole"
+	}
+}
+EOF 
+```
+
+```
+aws iam create-role --role-name example-role --assume-role-policy-document file://example-role-trust-policy.json
+```
+```
+aws iam attach-role-policy --role-name example-role --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+```
 
 !!! tip "Tracking testing"
     We track testing in the umbrella [issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
