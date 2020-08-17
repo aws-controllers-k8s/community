@@ -103,12 +103,6 @@ if [ -z "$AWS_SERVICE" ]; then
     exit  1
 fi
 
-if [ -z "$AWS_ROLE_ARN" ]; then
-    echo "AWS_ROLE_ARN is not defined. Use flag -r <AWS_ROLE_ARN> to indicate the ARN of the IAM Role to use in testing"
-    echo "(Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\")"
-    exit  1
-fi
-
 ensure_kustomize
 
 if [ -z "$TMP_DIR" ]; then
@@ -176,15 +170,20 @@ kustomize edit set image controller="$AWS_SERVICE_DOCKER_IMG"
 kustomize build "$test_config_dir" | kubectl apply -f -
 
 ## Functional tests where we assume role and pass aws temporary credentials as env vars to deployment
-generate_aws_temp_creds
-kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
-AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-AWS_REGION="$AWS_REGION"
-echo "Added AWS Credentials to env vars map"
-
-sleep 10
+if [ -z "$AWS_ROLE_ARN" ] ; then
+  echo "no functional tests as Role ARN is not passed. for functional tests run make kind-cluster-functional SERVICE=$AWS_SERVICE ROLE_ARN=<role-arn"
+else
+  generate_aws_temp_creds
+  kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
+  AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+  AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+  AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+  AWS_REGION="$AWS_REGION"
+  echo "Added AWS Credentials to env vars map"
+  sleep 10
+  ## E2E tests
+  "$TEST_E2E_DIR"/run-tests.sh "$AWS_SERVICE"
+fi
 
 echo "======================================================================================================"
 echo "To poke around your test manually:"
@@ -193,5 +192,3 @@ echo "kubectl get pods -A"
 echo "======================================================================================================"
 
 export KUBECONFIG
-
-$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
