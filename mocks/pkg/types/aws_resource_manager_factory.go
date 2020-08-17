@@ -14,13 +14,13 @@ type AWSResourceManagerFactory struct {
 	mock.Mock
 }
 
-// ManagerFor provides a mock function with given fields: _a0, _a1
-func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSResourceReconciler, _a1 v1alpha1.AWSAccountID) (types.AWSResourceManager, error) {
-	ret := _m.Called(_a0, _a1)
+// ManagerFor provides a mock function with given fields: _a0, _a1, _a2
+func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSResourceReconciler, _a1 v1alpha1.AWSAccountID, _a2 v1alpha1.AWSRegion) (types.AWSResourceManager, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 types.AWSResourceManager
-	if rf, ok := ret.Get(0).(func(types.AWSResourceReconciler, v1alpha1.AWSAccountID) types.AWSResourceManager); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(types.AWSResourceReconciler, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) types.AWSResourceManager); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResourceManager)
@@ -28,8 +28,8 @@ func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSResourceReconciler,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSResourceReconciler, v1alpha1.AWSAccountID) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(types.AWSResourceReconciler, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}

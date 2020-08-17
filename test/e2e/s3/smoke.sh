@@ -48,7 +48,7 @@ EOF
 
 sleep 20
 
-debug_msg "checking bucket $bucket_name created in ECR"
+debug_msg "checking bucket $bucket_name created in S3"
 list_bucket_json
 if [ $? -eq 4 ]; then
     echo "FAIL: expected $bucket_name to have been created in S3"

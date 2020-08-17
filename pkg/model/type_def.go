@@ -56,7 +56,7 @@ func (h *Helper) HasConflictingTypeName(typeName string) bool {
 		inStrings(cleanTypeName, crdStatusNames))
 }
 
-// IgnoreShape returns true if the supplied shape name should be ignored by the
+// IsIgnoredShape returns true if the supplied shape name should be ignored by the
 // code generator, false otherwise
 func (h *Helper) IsIgnoredShape(shapeName string) bool {
 	if h.generatorConfig == nil || len(h.generatorConfig.Ignore.ShapeNames) == 0 {

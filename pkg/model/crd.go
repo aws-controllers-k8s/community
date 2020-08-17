@@ -147,13 +147,17 @@ func shapeHasMember(shape *awssdkmodel.Shape, toFind string) bool {
 	if shape.ShapeName == toFind {
 		return true
 	}
-	if shape.Type != "structure" {
-		return false
-	}
-	for _, memberShapeRef := range shape.MemberRefs {
-		if shapeHasMember(memberShapeRef.Shape, toFind) {
-			return true
+	switch shape.Type {
+	case "structure":
+		for _, memberShapeRef := range shape.MemberRefs {
+			if shapeHasMember(memberShapeRef.Shape, toFind) {
+				return true
+			}
 		}
+	case "list":
+		return shapeHasMember(shape.MemberRef.Shape, toFind)
+	case "map":
+		return shapeHasMember(shape.ValueRef.Shape, toFind)
 	}
 	return false
 }
@@ -673,6 +677,11 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 
 	for _, memberName := range inputShape.MemberNames() {
 		if r.IsPrimaryARNField(memberName) {
+			// if ko.Status.ACKResourceMetadata != nil && ko.Status.ACKResourceMetadata.ARN != nil {
+			//     res.SetTopicArn(string(*ko.Status.ACKResourceMetadata.ARN))
+			// } else {
+			//     res.SetTopicArn(rm.ARNFromName(*ko.Spec.Name))
+			// }
 			out += fmt.Sprintf(
 				"%sif %s.Status.ACKResourceMetadata != nil && %s.Status.ACKResourceMetadata.ARN != nil {\n",
 				indent, sourceVarName, sourceVarName,
@@ -680,6 +689,14 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 			out += fmt.Sprintf(
 				"%s\t%s.Set%s(string(*%s.Status.ACKResourceMetadata.ARN))\n",
 				indent, targetVarName, memberName, sourceVarName,
+			)
+			out += fmt.Sprintf(
+				"%s} else {\n", indent,
+			)
+			nameField := r.NameField()
+			out += fmt.Sprintf(
+				"%s\t%s.Set%s(rm.ARNFromName(*%s.Spec.%s))\n",
+				indent, targetVarName, memberName, sourceVarName, nameField,
 			)
 			out += fmt.Sprintf(
 				"%s}\n", indent,
@@ -719,6 +736,29 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 		)
 	}
 	return out
+}
+
+// NameField returns the name of the "Name" or string identifier field in the Spec
+func (r *CRD) NameField() string {
+	if r.helper.generatorConfig != nil {
+		rConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
+		if found {
+			if rConfig.NameField != nil {
+				return *rConfig.NameField
+			}
+		}
+	}
+	lookup := []string{
+		"Name",
+		r.Names.Original + "Name",
+		r.Names.Original + "Id",
+	}
+	for memberName := range r.SpecFields {
+		if inStrings(memberName, lookup) {
+			return memberName
+		}
+	}
+	return "???"
 }
 
 func (r *CRD) goCodeSetInputForContainer(
@@ -1123,8 +1163,41 @@ func (r *CRD) GoCodeSetOutput(
 			continue
 		}
 
-		// TODO(jaypipes): Handle the special case of ARN for primary
-		// resource identifier
+		sourceAdaptedVarName := sourceVarName + "." + memberName
+
+		// Handle the special case of ARN for primary resource identifier
+		if r.IsPrimaryARNField(memberName) {
+			// if ko.Status.ACKResourceMetadata == nil {
+			//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+			// }
+			out += fmt.Sprintf(
+				"%sif %s.ACKResourceMetadata == nil {\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf("%s}\n", indent)
+
+			// if resp.BookArn != nil {
+			//     ko.Status.ACKResourceMetadata.ARN = resp.BookArn
+			// }
+			out += fmt.Sprintf(
+				"%sif %s == nil {\n",
+				indent,
+				sourceAdaptedVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.ACKResourceMetadata.ARN = %s\n",
+				indent,
+				targetVarName,
+				sourceAdaptedVarName,
+			)
+			out += fmt.Sprintf("%s}\n", indent)
+		}
 
 		// fieldVarName is the name of the variable that is used for temporary
 		// storage of complex member field values
@@ -1155,7 +1228,6 @@ func (r *CRD) GoCodeSetOutput(
 		// }
 		// ko.Status.VpnMemberships = field0
 
-		sourceAdaptedVarName := sourceVarName + "." + memberName
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
@@ -1483,6 +1555,9 @@ func (r *CRD) listOpMatchFieldNames() []string {
 // As an example, for the GetTopicAttributes SNS API call, the returned code
 // looks like this:
 //
+// if ko.Status.ACKResourceMetadata == nil {
+//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+// }
 // ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
 // ko.Status.ACKResourceMetadata.OwnerAccountID = ackv1alpha1.AWSAccountID(resp.Attributes["Owner"])
 // ko.Status.ACKResourceMetadata.ARN = ackv1alpha1.AWSResourceName(resp.Attributes["TopicArn"])
@@ -1516,6 +1591,21 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
+
+	// if ko.Status.ACKResourceMetadata == nil {
+	//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	// }
+	out += fmt.Sprintf(
+		"%sif %s.ACKResourceMetadata == nil {\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf(
+		"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf("%s}\n", indent)
 
 	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
 	sortedAttrFieldNames := []string{}

@@ -91,13 +91,15 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	}
 
 	acctID := r.getOwnerAccountID(res)
+	region := r.getRegion(res)
 
 	r.log.WithValues(
 		"account_id", acctID,
+		"region", region,
 		"kind", r.rd.GroupKind().String(),
 	)
 
-	rm, err := r.rmf.ManagerFor(r, acctID)
+	rm, err := r.rmf.ManagerFor(r, acctID, region)
 	if err != nil {
 		return err
 	}
@@ -322,6 +324,16 @@ func (r *reconciler) getOwnerAccountID(
 	// which indicates a cross-account resource request
 	// TODO(jaypipes)
 	return ackv1alpha1.AWSAccountID(r.cfg.AccountID)
+}
+
+// getRegion returns the AWS region that the given resource is in or should be
+// created in. If the Namespace has a region associated with it, that is used,
+// otherwise the region specified in the configuration is used.
+func (r *reconciler) getRegion(
+	res acktypes.AWSResource,
+) ackv1alpha1.AWSRegion {
+	// TODO(jaypipes): Do the Namespace region lookup...
+	return ackv1alpha1.AWSRegion(r.cfg.Region)
 }
 
 // NewReconciler returns a new reconciler object that

@@ -43,14 +43,15 @@ func TestManagerFor(t *testing.T) {
 	require.NotNil(bookRMF)
 
 	acctID := ackv1alpha1.AWSAccountID("aws-account-id")
-	bookRM, err := bookRMF.ManagerFor(nil, acctID)
+	region := ackv1alpha1.AWSRegion("us-west-2")
+	bookRM, err := bookRMF.ManagerFor(nil, acctID, region)
 	require.Nil(err)
 	require.NotNil(bookRM)
 	require.Implements((*acktypes.AWSResourceManager)(nil), bookRM)
 
 	// The resource manager factory should keep a cache of resource manager
 	// objects, keyed by account ID.
-	otherBookRM, err := bookRMF.ManagerFor(nil, acctID)
+	otherBookRM, err := bookRMF.ManagerFor(nil, acctID, region)
 	require.Nil(err)
 	require.Exactly(bookRM, otherBookRM)
 }

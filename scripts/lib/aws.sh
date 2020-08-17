@@ -68,3 +68,8 @@ generate_aws_temp_creds() {
       AWS_SESSION_TOKEN=$(echo "${JSON}" | jq --raw-output ".Credentials[\"SessionToken\"]")
       printf "\nTemporary credentials generated\n"
 }
+
+aws_account_id() {
+    JSON=$(aws sts get-caller-identity --output json || exit 1)
+    echo "${JSON}" | jq --raw-output ".Account"
+}
