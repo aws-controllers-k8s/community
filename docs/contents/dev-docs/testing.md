@@ -52,7 +52,7 @@ that runs the ACK service controller in a pod on a Kubernetes cluster (still TOD
 Time to run the tests, so execute:
 
 ```
-make kind-cluster -s SERVICE=$SERVICE
+make kind-cluster SERVICE=$SERVICE
 ```
 
 This provisions a Kubernetes cluster using `kind`, builds a container image with
