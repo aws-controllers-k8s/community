@@ -1,6 +1,6 @@
 # ECR Resources
 
-The ECR controller managed EC2 Container Registry resources inside AWS.
+The ECR controller managed Elastic Container Registry resources inside AWS.
 
 Once you have the controller deployed and a custom resource definition defined in your cluster you can try deploying some test ECR repositories with the manifests in this folder.
 

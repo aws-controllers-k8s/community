@@ -11,7 +11,7 @@ spec:
         kmsKey: "9d319c68-60ea-4ed6-8a33-2e09086fad2d"
     imageScanningConfiguration:
         scanOnPush: true
-    imageTagMutability: true
+    imageTagMutability: "IMMUTABLE"
     tags:
     - key: "is-encrypted"
       value: "true"
