@@ -85,7 +85,7 @@ in your account using `KinD` cluster, use `-r` and pass in `AWS ROLE ARN` to `sc
     Make sure the trust relationship in the role has `sts:assume-role` permission. 
 
 * To verify which IAM entity is making assume role API call, run `aws sts get-caller-identity` command:
-    
+
 ```
 aws sts get-caller-identity
 ```
@@ -107,7 +107,7 @@ aws sts get-caller-identity
 
 If you do not have a role, run below commands to create a role, add the trust relationship to the role along with a sample policy arn which has ECR full permissions. 
 If you have a role, verify your role has below trust relationship. 
-       
+
 ``` json
 cat > example-role-trust-policy.json << EOF
 {
