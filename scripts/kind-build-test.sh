@@ -17,14 +17,12 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 OPTIND=1
 CLUSTER_NAME_BASE="test"
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
-AWS_REGION=${AWS_REGION_ID:-"us-west-2"}
-AWS_ROLE_ARN=""
+AWS_REGION=${AWS_REGION:-"us-west-2"}
+AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION="1.16"
-OVERRIDE_PATH=0
 PRESERVE=false
-PROVISION_CLUSTER_ARGS=""
 START=$(date +%s)
 TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
@@ -51,26 +49,25 @@ function exit_and_fail {
 
 USAGE="
 Usage:
-  $(basename "$0") [-p] [-s] [-o] [-b <TEST_BASE_NAME>] [-c <CLUSTER_CONTEXT_DIR>] [-i <AWS Docker image name>] [-r] [-s] [-v K8S_VERSION]
+  $(basename "$0") -s <SERVICE> -r <ROLE> [-p] [-c <CLUSTER_CONTEXT_DIR>] [-i <AWS Docker image name>] [-v K8S_VERSION]
 
 Builds the Docker image for an ACK service controller, loads the Docker image
 into a KinD Kubernetes cluster, creates the Deployment artifact for the ACK
 service controller and executes a set of tests.
 
-Example: $(basename "$0") -p -s ecr
+Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\"
 
 Options:
-  -b          Base name of test (will be used for cluster too)
   -c          Cluster context directory, if operating on an existing cluster
   -p          Preserve kind k8s cluster for inspection
   -i          Provide AWS Service docker image
   -r          Provide AWS Role ARN for functional testing on local KinD Cluster
-  -s          Provide AWS Service name (ecr, sns, sqs, petstore, bookstore)
+  -s          Provide AWS Service name (ecr, sns, sqs, etc)
   -v          Kubernetes Version (Default: 1.16) [1.14, 1.15, 1.16, 1.17, and 1.18]
 "
 
 # Process our input arguments
-while getopts "ps:r:ic:b:v" opt; do
+while getopts "ps:r:ic:v" opt; do
   case ${opt} in
     p ) # PRESERVE K8s Cluster
         PRESERVE=true
@@ -102,7 +99,13 @@ done
 
 if [ -z "$AWS_SERVICE" ]; then
     echo "AWS_SERVICE is not defined. Use flag -s <AWS_SERVICE> to build that docker images of that service and load into Kind"
-    echo "(Example: $(basename "$0") -p -s ecr)"
+    echo "(Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\")"
+    exit  1
+fi
+
+if [ -z "$AWS_ROLE_ARN" ]; then
+    echo "AWS_ROLE_ARN is not defined. Use flag -r <AWS_ROLE_ARN> to indicate the ARN of the IAM Role to use in testing"
+    echo "(Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\")"
     exit  1
 fi
 
@@ -111,12 +114,7 @@ ensure_kustomize
 if [ -z "$TMP_DIR" ]; then
     TMP_DIR=$("${SCRIPTS_DIR}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}")
 fi
-
-if [ "$OVERRIDE_PATH" == 0 ]; then
-  export PATH=$TMP_DIR:$PATH
-else
-  export PATH=$PATH:$TMP_DIR
-fi
+export PATH=$TMP_DIR:$PATH
 
 CLUSTER_NAME=$(cat "$TMP_DIR"/clustername)
 
@@ -178,16 +176,13 @@ kustomize edit set image controller="$AWS_SERVICE_DOCKER_IMG"
 kustomize build "$test_config_dir" | kubectl apply -f -
 
 ## Functional tests where we assume role and pass aws temporary credentials as env vars to deployment
-if [ -n "$AWS_ROLE_ARN" ]; then
-   export AWS_ROLE_ARN
-   generate_aws_temp_creds
-   kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
-   AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-   AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-   AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-   AWS_REGION="$AWS_REGION"
-   echo "Added AWS Credentials to env vars map"
-fi
+generate_aws_temp_creds
+kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
+AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+AWS_REGION="$AWS_REGION"
+echo "Added AWS Credentials to env vars map"
 
 sleep 10
 
