@@ -6,49 +6,50 @@ repo_url: 'https://github.com/aws/aws-controllers-k8s'
 copyright: 'Copyright &copy; 2020 Amazon'
 docs_dir: 'contents'
 nav:
-    - Home: 'index.md'
-      - Services: 'services.md'
-    - User docs:
-      - Install: 'user-docs/install.md'
-      - Permissions: 'user-docs/permissions.md'
-      - Usage: 'user-docs/usage.md'
-    - Contributor docs:
-      - Overview: 'dev-docs/overview.md'
-      - Code generation: 'dev-docs/code-generation.md'
-      - Setup: 'dev-docs/setup.md'
-      - Testing: 'dev-docs/testing.md'
-    - Community:
-      - Background: 'community/background.md'
-      - FAQ: 'community/faq.md'
-      - Discussions: 'community/discussions.md'
-      - Contributing: 'https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md'
-      - Governance: 'https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md'
+- Home:
+  - Overview: 'index.md'
+  - Services: 'services.md'
+- User docs:
+  - Install: 'user-docs/install.md'
+  - Permissions: 'user-docs/permissions.md'
+  - Usage: 'user-docs/usage.md'
+- Contributor docs:
+  - Overview: 'dev-docs/overview.md'
+  - Code generation: 'dev-docs/code-generation.md'
+  - Setup: 'dev-docs/setup.md'
+  - Testing: 'dev-docs/testing.md'
+- Community:
+  - Background: 'community/background.md'
+  - FAQ: 'community/faq.md'
+  - Discussions: 'community/discussions.md'
+  - Contributing: 'https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md'
+  - Governance: 'https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md'
 extra:
-    social:
-    - icon: 'fontawesome/brands/twitter'
-      link: 'https://twitter.com/awscloud'
+  social:
+  - icon: 'fontawesome/brands/twitter'
+    link: 'https://twitter.com/awscloud'
 theme:
-    name: 'material'
-    features:
-    - 'tabs'
-    - 'instant'
-    custom_dir: 'theme'
-    favicon: 'assets/images/favicon.png'
-    logo: 'assets/images/logo.png'
-    font:
-        text: 'Oxygen'
-        code: 'Oxygen Mono'
-    palette:
-      primary: 'orange'
-    highlightjs: true
-    hljs_languages:
-        - 'yaml'
-        - 'json'
-        - 'bash'
+  name: 'material'
+  features:
+  - 'tabs'
+  - 'instant'
+  custom_dir: 'theme'
+  favicon: 'assets/images/favicon.png'
+  logo: 'assets/images/logo.png'
+  font:
+      text: 'Oxygen'
+      code: 'Oxygen Mono'
+  palette:
+    primary: 'orange'
+  highlightjs: true
+  hljs_languages:
+  - 'yaml'
+  - 'json'
+  - 'bash'
 markdown_extensions:
-    - pymdownx.snippets
-    - toc:
-        permalink: true
-    - admonition
-    - codehilite:
-        linenums: true
+- pymdownx.snippets
+- toc:
+    permalink: true
+- admonition
+- codehilite:
+    linenums: true
