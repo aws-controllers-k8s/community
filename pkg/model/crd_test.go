@@ -200,6 +200,8 @@ func TestSNSTopic(t *testing.T) {
 	expGetAttrsInput := `
 	if r.ko.Status.ACKResourceMetadata != nil && r.ko.Status.ACKResourceMetadata.ARN != nil {
 		res.SetTopicArn(string(*r.ko.Status.ACKResourceMetadata.ARN))
+	} else {
+		res.SetTopicArn(rm.ARNFromName(*r.ko.Spec.Name))
 	}
 `
 	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
@@ -210,6 +212,9 @@ func TestSNSTopic(t *testing.T) {
 	// (and thus in the Spec fields). Two of them are the tesource's ARN and
 	// AWS Owner account ID, both of which are handled specially.
 	expGetAttrsOutput := `
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
 	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
 	tmpOwnerID := ackv1alpha1.AWSAccountID(*resp.Attributes["Owner"])
 	ko.Status.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID
@@ -1128,6 +1133,9 @@ func TestSQSQueue(t *testing.T) {
 	// (and thus in the Spec fields). One of them is the resource's ARN which
 	// is handled specially.
 	expGetAttrsOutput := `
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
 	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
 	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])

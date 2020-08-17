@@ -16,7 +16,7 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 
 OPTIND=1
 CLUSTER_NAME_BASE="test"
-AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-"123456789012"}
+AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
 AWS_REGION=${AWS_REGION_ID:-"us-west-2"}
 AWS_ROLE_ARN=""
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
@@ -29,6 +29,10 @@ START=$(date +%s)
 TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
+
+if [ "z$AWS_ACCOUNT_ID" == "z" ]; then
+    AWS_ACCOUNT_ID=$( aws_account_id )
+fi
 
 function clean_up {
     if [[ "$PRESERVE" == false ]]; then
@@ -194,6 +198,5 @@ echo "kubectl get pods -A"
 echo "======================================================================================================"
 
 export KUBECONFIG
-export AWS_REGION
 
 $TEST_E2E_DIR/run-tests.sh $AWS_SERVICE

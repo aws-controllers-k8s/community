@@ -15,6 +15,7 @@ package book
 
 import (
 	"context"
+	"fmt"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
@@ -36,6 +37,8 @@ type resourceManager struct {
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
+	// The AWS Region that this resource manager targets
+	awsRegion ackv1alpha1.AWSRegion
 	// sess is the AWS SDK Session object used to communicate with the backend
 	// AWS service API
 	sess *session.Session
@@ -127,11 +130,25 @@ func (rm *resourceManager) Delete(
 	return rm.sdkDelete(ctx, r)
 }
 
+// ARNFromName returns an AWS Resource Name from a given string name. This
+// is useful for constructing ARNs for APIs that require ARNs in their
+// GetAttributes operations but all we have (for new CRs at least) is a
+// name for the resource
+func (rm *resourceManager) ARNFromName(name string) string {
+	return fmt.Sprintf(
+		"arn:aws:bookstore:%s:%s:%s",
+		rm.awsRegion,
+		rm.awsAccountID,
+		name,
+	)
+}
+
 // newResourceManager returns a new struct implementing
 // acktypes.AWSResourceManager
 func newResourceManager(
 	rr acktypes.AWSResourceReconciler,
 	id ackv1alpha1.AWSAccountID,
+	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
 	sess, err := ackrt.NewSession()
 	if err != nil {
@@ -140,6 +157,7 @@ func newResourceManager(
 	return &resourceManager{
 		rr:           rr,
 		awsAccountID: id,
+		awsRegion:    region,
 		sess:         sess,
 		sdkapi:       svcsdk.New(sess),
 	}, nil

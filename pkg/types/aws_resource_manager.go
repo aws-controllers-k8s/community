@@ -48,6 +48,11 @@ type AWSResourceManager interface {
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
 	Delete(context.Context, AWSResource) error
+	// ARNFromName returns an AWS Resource Name from a given string name. This
+	// is useful for constructing ARNs for APIs that require ARNs in their
+	// GetAttributes operations but all we have (for new CRs at least) is a
+	// name for the resource
+	ARNFromName(string) string
 }
 
 // AWSResourceManagerFactory returns an AWSResourceManager that can be used to
@@ -59,6 +64,10 @@ type AWSResourceManagerFactory interface {
 	// prototypes
 	ResourceDescriptor() AWSResourceDescriptor
 	// ManagerFor returns an AWSResourceManager that manages AWS resources on
-	// behalf of a particular AWS account
-	ManagerFor(AWSResourceReconciler, ackv1alpha1.AWSAccountID) (AWSResourceManager, error)
+	// behalf of a particular AWS account and in a specific AWS region
+	ManagerFor(
+		AWSResourceReconciler,
+		ackv1alpha1.AWSAccountID,
+		ackv1alpha1.AWSRegion,
+	) (AWSResourceManager, error)
 }

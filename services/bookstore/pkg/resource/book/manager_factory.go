@@ -41,6 +41,7 @@ func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescri
 func (f *resourceManagerFactory) ManagerFor(
 	rr acktypes.AWSResourceReconciler,
 	id ackv1alpha1.AWSAccountID,
+	region ackv1alpha1.AWSRegion,
 ) (acktypes.AWSResourceManager, error) {
 	f.RLock()
 	rm, found := f.rmCache[id]
@@ -53,7 +54,7 @@ func (f *resourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newResourceManager(rr, id)
+	rm, err := newResourceManager(rr, id, region)
 	if err != nil {
 		return nil, err
 	}
