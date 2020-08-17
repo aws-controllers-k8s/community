@@ -130,6 +130,9 @@ aws iam create-role --role-name example-role --assume-role-policy-document file:
 aws iam attach-role-policy --role-name example-role --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 ```
 
+!!! note
+    We use [mockery](https://github.com/vektra/mockery) command for unit testing. You can install it by following [the guideline on the mockery's GitHub repository](https://github.com/vektra/mockery) or by just running our handy scirpt at `./scripts/install_mockery.sh` for general Linux environments.
+
 !!! tip "Tracking testing"
     We track testing in the umbrella [issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
     on GitHub. Use this issue as a starting point and if you create a new
