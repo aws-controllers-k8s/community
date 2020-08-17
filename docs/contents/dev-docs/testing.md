@@ -49,8 +49,22 @@ that runs the ACK service controller in a pod on a Kubernetes cluster (still TOD
 
 ## Run tests
 
-Time to run the tests, so execute:
+Time to run the tests, define the service you want test by setting 
+the `SERVICE` environment variable, in our case for Amazon ECR. 
+If you already set this environment variable above during build stage, ignore this step:
 
+```
+SERVICE=ecr
+```
+
+To generate temporary credentials for functional testing, pass in a role ARN. This will create a resource in your account in us-west-2 region
+for the respective AWS Service:
+
+```
+AWS_ROLE_ARN=arn:aws:iam::12345678980:role/Admin-k8
+```
+
+Then run:
 ```
 make kind-cluster SERVICE=$SERVICE
 ```
@@ -65,13 +79,12 @@ and the `aws` CLI tools to verify that custom resources of the type managed by
 the respective ACK service controller is created, updated and deleted
 appropriately (still TODO).
 
+Finally, it will run E2E tests, which will create resources for the respective service in your AWS account in `us-west-2` region and 
+verify if the resource has successfully created. 
+
 The script deletes the `kind` cluster. You can prevent this last
 step from happening by passing the `-p` (for "preserve") flag to the
 `scripts/kind-build-test.sh` script or by `make kind-cluster-preserve SERVICE=ecr`.
-
-Finally, if you would like to do functional testing, where you would like to create a AWS Services 
-in your account using `KinD` cluster, use `-r` and pass in `AWS ROLE ARN` to `scripts/kind-build-test.sh` script or
-`make kind-cluster-functional SERVICE=ecr ROLE_ARN=arn:aws:iam::12345678980:role/Admin-k8s`
 
 !!! info 
      For above functional testing, `generate_temp_creds` function under `scripts/lib/aws.sh` script will 
