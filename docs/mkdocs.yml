@@ -10,9 +10,9 @@ nav:
   - Overview: 'index.md'
   - Services: 'services.md'
 - User docs:
-  - Install: 'user-docs/install.md'
-  - Permissions: 'user-docs/permissions.md'
-  - Usage: 'user-docs/usage.md'
+  - Install: 'user-docs/wip.md'
+  - Permissions: 'user-docs/wip.md'
+  - Usage: 'user-docs/wip.md'
 - Contributor docs:
   - Overview: 'dev-docs/overview.md'
   - Code generation: 'dev-docs/code-generation.md'
