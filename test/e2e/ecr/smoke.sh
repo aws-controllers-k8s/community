@@ -19,7 +19,7 @@ resource_name="repositories/$repo_name"
 # PRE-CHECKS
 
 aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-if [ $? -ne 255 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $repo_name to not exist in ECR. Did previous test run cleanup?"
     exit 1
 fi
@@ -44,7 +44,7 @@ sleep 5
 
 debug_msg "checking repository $repo_name created in ECR"
 aws ecr describe-repositories --repository-names "$repo_name" --output table
-if [ $? -eq 255 ]; then
+if [[ $? -eq 255 || $? -eq 254 ]]; then
     echo "FAIL: expected $repo_name to have been created in ECR"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
@@ -54,7 +54,7 @@ kubectl delete "$resource_name" 2>/dev/null
 assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
 
 aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-if [ $? -ne 255 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $repo_name to be deleted in ECR"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
