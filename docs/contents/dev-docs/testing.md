@@ -10,7 +10,7 @@ root directory of your [checked-out source repository](../setup/).
     the step that builds the container image for the target ACK service
     controller can 40 or more minutes. This is because the container image
     contains a lot of dependencies. Once you successfully build the target
-    image this base image layer is cached locally and the build takes a much 
+    image this base image layer is cached locally, and the build takes a much 
     shorter amount of time. We are aware of this (and the storage footprint,
     ca. 3 GB) and aim to reduce both in the fullness of time.
 
@@ -32,7 +32,7 @@ Define the service you want to build and test an ACK controller for by setting
 the `SERVICE` environment variable, in our case for Amazon ECR:
 
 ```
-SERVICE="ecr"
+export SERVICE="ecr"
 ```
 
 Now we are in a position to generate the ACK service controller for the AWS ECR
@@ -54,15 +54,19 @@ the `SERVICE` environment variable, in our case for Amazon ECR.
 If you already set this environment variable above during build stage, ignore this step:
 
 ```
-SERVICE=ecr
+export SERVICE=ecr
 ```
 
-To generate temporary credentials for functional testing, pass in a role ARN. This will create a resource in your account in us-west-2 region
-for the respective AWS Service:
+To generate temporary credentials for functional testing, pass in a role ARN. 
 
 ```
-AWS_ROLE_ARN=arn:aws:iam::12345678980:role/Admin-k8
+export AWS_ROLE_ARN=arn:aws:iam::<account-id>:role/<role-name>
 ```
+
+!!! warning
+    The role ARN passed should exist in your AWS account, and has necessary permissions to create/describe/delete the resource. 
+    Also, ensure the IAM entity assuming the role has correct policies and/or have correct trust relationship permissions to make `sts:assume-role` API call.
+    For more info about assume-role, scroll down to [IAM setup for users to assume a role section](../testing/#iam-setup-for-users-to-assume-a-role).
 
 Then run:
 ```
@@ -92,10 +96,7 @@ step from happening by passing the `-p` (for "preserve") flag to the
      to fetch `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. 
      The duration of the session token is 900 seconds (15 minutes). These variables will be added as Environment variables to the controller (deployment). 
 
-
-!!! note
-    The IAM user should be able to assume the role passed above else we can generate temporary credentials. 
-    Make sure the trust relationship in the role has `sts:assume-role` permission. 
+## IAM setup for users to assume a role 
 
 * To verify which IAM entity is making assume role API call, run `aws sts get-caller-identity` command:
 
@@ -142,6 +143,8 @@ aws iam create-role --role-name example-role --assume-role-policy-document file:
 ```
 aws iam attach-role-policy --role-name example-role --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 ```
+
+For more information about delegating Access, checkout this [IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html)
 
 !!! note
     We use [mockery](https://github.com/vektra/mockery) command for unit testing. You can install it by following [the guideline on the mockery's GitHub repository](https://github.com/vektra/mockery) or by just running our handy scirpt at `./scripts/install_mockery.sh` for general Linux environments.
