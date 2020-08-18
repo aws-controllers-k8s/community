@@ -30,6 +30,7 @@ installed and configured:
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
 1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) version 1
+1. [jq](https://github.com/stedolan/jq/wiki/Installation)
 1. `make`
 
 To build and test an ACK controller with `kind`, execute the commands as 
@@ -64,7 +65,7 @@ and will give you another opportunity to rectify the situation.
 ## Build an ACK service controller
 
 Now that we have the basic code generation step done we will create the
-respective ACK service controller and its supportive artifacts.
+respective ACK service controller and its supporting artifacts.
 
 So first you have to select a service that you want to build and test.
 You do that by setting the `SERVICE` environment variable. Let's say we want 
@@ -83,7 +84,7 @@ The following outputs the generated code to the `services/$SERVICE` directory:
 make build-controller SERVICE=$SERVICE
 ```
 
-In addition to the ACK service controller code, bove generates the 
+In addition to the ACK service controller code, above generates the
 custom resource definition (CRD) manifests as well as the necessary RBAC
 settings using the [`build-controller.sh`](https://github.com/aws/aws-controllers-k8s/blob/main/scripts/build-controller.sh)
 script.
@@ -94,7 +95,7 @@ script.
     and a deployment manifest that runs the ACK service controller in a pod.
 
 Now that we have the generation part completed, we want to see if the
-so generated artifacts indeed are able to create an S3 bucket for us.
+generated artifacts indeed are able to create an S3 bucket for us.
 
 You don't have to do the next steps, if all you want to test is if the
 generation works, however, for an end-to-end test, the next, final step is
@@ -110,33 +111,24 @@ In order for the ACK service controller to manage the S3 bucket, it needs an
 identity. In other words, it needs an IAM role that represents the ACK service
 controller towards the S3 service.
 
-In the following, we assume that you know your AWS account ID. Let's say it's 
-`1234567890121` (replace with your own in the following):
-
-```
-export ACCOUNT_ID=1234567890121
-```
-
-
-Next, define the name of the IAM role that will have the permission to manage
+First, define the name of the IAM role that will have the permission to manage
 S3 buckets on your behalf:
 
 ```
 export ACK_TEST_IAM_ROLE=Admin-k8s
 ```
 
-Now we need to verify the IAM entity (likely an IAM user) that is going to
-assume the IAM role `ACK_TEST_IAM_ROLE`, so execute:
+Now we need to verify the IAM principal (likely an IAM user) that is going to
+assume the IAM role `ACK_TEST_IAM_ROLE`. So to get its ARN, execute:
 
 ```
-aws sts get-caller-identity
+export ACK_TEST_PRINCIPAL_ARN=$(aws sts get-caller-identity --query 'Arn' --output text)
 ```
 
-From this above command's output, note the `Arn` field value, something along
-the lines of `arn:aws:iam::1234567890121:user/ausername` and store it in
-an environment variable called `ACK_PRINCIPAL_ARN`.
+You can verify if that worked using `echo $ACK_TEST_PRINCIPAL_ARN` and that should
+print something along the lines of `arn:aws:iam::1234567890121:user/ausername`.
 
-Now create the IAM role, adding the necessary trust relationship to the role,
+Next up, create the IAM role, adding the necessary trust relationship to the role,
 using the following commands:
 
 ```
@@ -146,7 +138,7 @@ $ cat > trust-policy.json << EOF
 	"Statement": {
 		"Effect": "Allow",
 		"Principal": {
-			"AWS": "$ACK_PRINCIPAL_ARN"
+			"AWS": "$ACK_TEST_PRINCIPAL_ARN"
 		},
 		"Action": "sts:AssumeRole"
 	}
@@ -176,10 +168,13 @@ aws iam attach-role-policy \
     to peruse the [IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html)
 
 Next, in order for our test to generate [temporary credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
-we need to tell it to use the IAM role we created in the previous step:
+we need to tell it to use the IAM role we created in the previous step.
+To generate the IAM role ARN, do:
 
 ```
-export AWS_ROLE_ARN=arn:aws:iam::$ACCOUNT_ID/$ACK_TEST_IAM_ROLE
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) && \
+AWS_ROLE_ARN=arn:aws:iam::$AWS_ACCOUNT_ID/$ACK_TEST_IAM_ROLE && \
+export $AWS_ROLE_ARN
 ```
 
 !!! info 
@@ -226,7 +221,51 @@ should create an S3 bucket and then destroy it again, yielding something like
 the following (edited down to the relevant parts):
 
 ```
+...
+./scripts/kind-build-test.sh -s s3
+Using Kubernetes kindest/node:v1.16.9@sha256:7175872357bc85847ec4b1aba46ed1d12fa054c83ac7a8a11f5c268957fd5765
+Creating k8s cluster using "kind" ...
+No kind clusters found.
+Created k8s cluster using "kind"
+Building s3 docker image
+Building 's3' controller docker image with tag: ack-s3-controller:ec452ed
+sha256:c9cbcc028f2b7351d0507f8542ab88c80f9fb5a3b8b800feee8e362882833eef
+Loading the images into the cluster
+Image: "ack-s3-controller:ec452ed" with ID "sha256:c9cbcc028f2b7351d0507f8542ab88c80f9fb5a3b8b800feee8e362882833eef" not yet present on node "test-ccc3c7f1-worker", loading...
+Image: "ack-s3-controller:ec452ed" with ID "sha256:c9cbcc028f2b7351d0507f8542ab88c80f9fb5a3b8b800feee8e362882833eef" not yet present on node "test-ccc3c7f1-control-plane", loading...
+Loading CRD manifests for s3 into the cluster
+customresourcedefinition.apiextensions.k8s.io/buckets.s3.services.k8s.aws created
+Loading RBAC manifests for s3 into the cluster
+clusterrole.rbac.authorization.k8s.io/ack-controller-role created
+clusterrolebinding.rbac.authorization.k8s.io/ack-controller-rolebinding created
+Loading service controller Deployment for s3 into the cluster
+2020/08/18 09:51:46 Fixed the missing field by adding apiVersion: kustomize.config.k8s.io/v1beta1
+Fixed the missing field by adding kind: Kustomization
+namespace/ack-system created
+deployment.apps/ack-s3-controller created
+Running aws sts assume-role --role-arn arn:aws:iam::1234567890121:role/Admin-k8s, --role-session-name tmp-role-1b779de5  --duration-seconds 900,
+Temporary credentials generated
+deployment.apps/ack-s3-controller env updated
+Added AWS Credentials to env vars map
+======================================================================================================
+To poke around your test manually:
+export KUBECONFIG=/Users/hausenbl/ACK/upstream/aws-controllers-k8s/scripts/../build/tmp-test-ccc3c7f1/kubeconfig
+kubectl get pods -A
+======================================================================================================
+bucket.s3.services.k8s.aws/ack-test-smoke-s3 created
+{
+  "Name": "ack-test-smoke-s3",
+  "CreationDate": "2020-08-18T08:52:04+00:00"
+}
+bucket.s3.services.k8s.aws "ack-test-smoke-s3" deleted
+smoke took 27 second(s)
+🥑 Deleting k8s cluster using "kind"
+Deleting cluster "test-ccc3c7f1" ...
 ```
+
+As you can see, in above case the end-to-end test (creating cluster, deploying
+ACK, applying custom resources, and tear-down) took less than 30 seconds. This
+is for the warmed caches case.
 
 !!! tip "Keeping the test cluster around"
     By default the script deletes the `kind` cluster. You can prevent this last
