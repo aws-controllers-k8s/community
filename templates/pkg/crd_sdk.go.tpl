@@ -14,6 +14,7 @@ import (
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
+	awsreq "github.com/aws/aws-sdk-go/aws/request"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -46,7 +47,13 @@ func (rm *resourceManager) sdkFind(
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
 		}
-		return nil, err
+
+		// If there are validation errors in constructed request
+		// treat it as NotFound
+		if _, ok := respErr.(awsreq.ErrInvalidParams); ok {
+			return nil, ackerr.NotFound
+		}
+		return nil, respErr
 	}
 
 	// Merge in the information we read from the API call above to the copy of
