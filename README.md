@@ -1,3 +1,6 @@
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/aws/aws-controllers-k8s)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-controllers-k8s)](https://goreportcard.com/report/github.com/aws/aws-controllers-k8s)
+
 # AWS Controllers for Kubernetes (ACK)
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
