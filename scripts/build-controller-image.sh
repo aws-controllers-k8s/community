@@ -4,7 +4,7 @@ set -E
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 SCRIPTS_DIR=$DIR
-DOCKERFILES_DIR=$DIR/../docker
+DOCKERFILE_PATH=$DIR/../Dockerfile
 BUILD_CONTEXT=$DIR/..
 QUIET=false
 OPTIND=1
@@ -56,7 +56,7 @@ fi
 
 DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
 : "${AWS_SERVICE_DOCKER_IMG:="$DEFAULT_AWS_SERVICE_DOCKER_IMG"}"
-: "${DOCKERFILE:="$DOCKERFILES_DIR/Dockerfile"}"
+: "${DOCKERFILE:="$DOCKERFILE_PATH"}"
 
 echo "Building '$AWS_SERVICE' controller docker image with tag: ${AWS_SERVICE_DOCKER_IMG}"
 
