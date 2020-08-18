@@ -1,8 +1,8 @@
 # Elastic Container Registry
 
-In the following we walk you through creating an AWS Elastic Container Registry using the ECR controller.
+The following walks you through creating an AWS Elastic Container Registry using the ECR controller.
 
-To use these example manifests you will need to have the ECR controller deployed with the correct IAM permissions to create an example ECR repo.
+To use this example you will need to have the ECR controller deployed with the correct IAM permissions to create an example ECR repo.
 During the development preview can follow the [development testing documentation](../../../dev-docs/testing.md) to build the ECR controller and deploy it to a Kubernetes cluster.
 
 ## Example Kubernetes manifests
