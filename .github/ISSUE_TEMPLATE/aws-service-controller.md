@@ -2,7 +2,7 @@
 name: AWS service controller
 about: Template for a new AWS service controller
 title: "[name] service controller"
-labels: ''
+labels: Service Controller
 assignees: ''
 
 ---
