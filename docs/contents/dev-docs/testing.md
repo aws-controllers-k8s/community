@@ -18,7 +18,7 @@ which in turn requires Docker.
 !!! warning "Footprint"
     When you run the `scripts/kind-build-test.sh` script the first time,
     the step that builds the container image for the target ACK service
-    controller can 40 or more minutes. This is because the container image
+    controller can take up to 40 or more minutes. This is because the container image
     contains a lot of dependencies. Once you successfully build the target
     image this base image layer is cached locally, and the build takes a much 
     shorter amount of time. We are aware of this (and the storage footprint,
@@ -53,7 +53,7 @@ To build the latest `ack-generate` binary, execute the following command:
 make build-ack-generate
 ```
 
-!!! note
+!!! note "One-off build"
     You only have to do this once, overall. In other words: unless we change
     something upstream in terms of the code generation process, this is 
     a one-off operation. Internally, the Makefile executes an `go build` here.
@@ -132,7 +132,7 @@ Next up, create the IAM role, adding the necessary trust relationship to the rol
 using the following commands:
 
 ```
-$ cat > trust-policy.json << EOF
+cat > trust-policy.json << EOF
 {
 	"Version": "2012-10-17",
 	"Statement": {
@@ -192,7 +192,7 @@ Phew that was a lot to set up, but good news: you're almost there.
 Before you proceed, make sure that you've done the IAM setup in the previous
 step.
 
-!!! warning
+!!! warning "IAM troubles?!"
     If you try the following command and you see an error message containing
     something along the line of `AWS_ROLE_ARN is not defined.` then you know
     that somewhere in the IAM setup you either left out a step or one of the
@@ -201,7 +201,7 @@ step.
 Now we're finally in the position to execute the end-to-end test:
 
 ```
-make kind-cluster SERVICE=$SERVICE
+make kind-test SERVICE=$SERVICE
 ```
 
 This provisions a Kubernetes cluster using `kind`, builds a container image with
@@ -267,9 +267,6 @@ As you can see, in above case the end-to-end test (creating cluster, deploying
 ACK, applying custom resources, and tear-down) took less than 30 seconds. This
 is for the warmed caches case.
 
-!!! tip "Keeping the test cluster around"
-    By default the script deletes the `kind` cluster. You can prevent this last
-    step from happening by usign `make kind-cluster-preserve SERVICE=$SERVICE`.
 
 ### Background
 
@@ -285,10 +282,8 @@ Linux environments.
 
 ## Clean up
 
-If you used the `make kind-cluster-preserve` command, the `kind` cluster (Docker
-containers) are still around after the test run. To clean up a `kind` cluster, 
-which includes all the container images and configuration files created by 
-the script specifically for said test cluster, execute:
+To clean up a `kind` cluster, including the container images and configuration 
+files created by the script specifically for said test cluster, execute:
 
 ```
 kind delete cluster --name $CLUSTER_NAME
