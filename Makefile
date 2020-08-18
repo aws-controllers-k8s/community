@@ -10,8 +10,8 @@ MOCKERY_BIN=$(shell which mockery || "./bin/mockery")
 # aws-sdk-go/private/model/api package is gated behind a build tag "codegen"...
 GO_TAGS=-tags codegen
 
-.PHONY: all build-ack-generate test clean-mocks mocks build-controller-image build-controller build-kind-cluster build-kind-cluster-preserve \
-        build-kind-cluster-functional kind-get-cluster-names delete-all-kind-clusters
+.PHONY: all build-ack-generate test clean-mocks mocks build-controller-image \
+	build-controller kind-test delete-all-kind-clusters
 
 all: test
 
@@ -30,17 +30,8 @@ build-controller-image:	## Build container image for SERVICE
 build-controller: build-ack-generate	## Generate controller code for SERVICE
 	./scripts/build-controller.sh $(SERVICE)
 
-kind-cluster: test	## Run tests in a local kind cluster for SERVICE
-	./scripts/kind-build-test.sh -s $(SERVICE)
-
-kind-cluster-preserve: test	## Run tests in a local kind cluster for SERVICE and preserve cluster
-	./scripts/kind-build-test.sh -s $(SERVICE) -p
-
-kind-cluster-functional: test	## Run functional tests for SERVICE with ROLE_ARN
-	./scripts/kind-build-test.sh -s $(SERVICE) -p -r $(ROLE_ARN)
-
-kind-get-cluster-names:	## Get local kind clusters
-	@kind get clusters
+kind-test: test	## Run functional tests for SERVICE with AWS_ROLE_ARN
+	./scripts/kind-build-test.sh -s $(SERVICE) -p -r $(AWS_ROLE_ARN)
 
 delete-all-kind-clusters:	## Delete all local kind clusters
 	@kind get clusters | \
