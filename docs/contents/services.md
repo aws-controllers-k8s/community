@@ -1,15 +1,13 @@
 ## Supported services
-The following services are currently supported by ACK. For information on how to install and use a service controller, see the [documentation](https://aws.github.io/aws-controllers-k8s/user-docs/install).
 
-|AWS Service|Status|Controller|AWS Documentation|
-|-----------|------|----------|-----------------|
-|[API Gateway V2](https://aws.amazon.com/api-gateway/)|Preview|`apigateway`|[docs link](https://docs.aws.amazon.com/apigateway)
-|[DynamoDB](https://aws.amazon.com/dynamodb/)|Preview|`dynamodb`|[docs link](https://docs.aws.amazon.com/dynamodb)|
-|[Amazon ECR](https://aws.amazon.com/ecr/)|Preview|`ecr`|[docs link](https://docs.aws.amazon.com/ecr)|
-|[S3](https://aws.amazon.com/s3/)|Preview|`s3`|[docs link](https://docs.aws.amazon.com/s3)|
-|[SQS](https://aws.amazon.com/sqs/)|Preview|`sqs`|[docs link](https://docs.aws.amazon.com/sqs)|
-|[SNS](https://aws.amazon.com/sns/)|Preview|`sns`|[docs link](https://docs.aws.amazon.com/sns)|
+The following services are currently supported by ACK and for details see the [Service Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/1):
 
+|AWS Service|Status|Controller|
+|-----------|------|----------|
+|Amazon [API Gateway V2](https://aws.amazon.com/api-gateway/)|`BUILD`|`apigateway`|
+|Amazon [DynamoDB](https://aws.amazon.com/dynamodb/)|`BUILD`|`dynamodb`|
+|Amazon [ECR](https://aws.amazon.com/ecr/)|`DEVELOPER PREVIEW`|[`ecr`](https://github.com/aws/aws-controllers-k8s/tree/main/services/ecr)|
+|Amazon [S3](https://aws.amazon.com/s3/)|`DEVELOPER PREVIEW`|[`s3`](https://github.com/aws/aws-controllers-k8s/tree/main/services/s3)|
+|Amazon [SQS](https://aws.amazon.com/sqs/)|`BUILD`|`sqs`|
+|Amazon [SNS](https://aws.amazon.com/sns/)|`BUILD`|`sns`|
 
-### Adding a service controller
-See our [contributors guide](/CONTRIBUTING.md) for information on adding a new service controller.
