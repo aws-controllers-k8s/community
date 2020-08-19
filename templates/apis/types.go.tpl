@@ -5,7 +5,7 @@ package {{ .APIVersion }}
 import (
 {{- end -}}
 {{- range $packagePath, $alias := .Imports }}
-    {{ if $alias -}}{{ $alias }} {{ end -}}"{{ $packagePath }}"
+	{{ if $alias -}}{{ $alias }} {{ end -}}"{{ $packagePath }}"
 {{ end -}}
 {{- if .Imports }}
 )

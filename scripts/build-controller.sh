@@ -130,3 +130,6 @@ echo "Generating RBAC manifests for $SERVICE"
 controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifacts:config=$config_output_dir/rbac
 
 popd 1>/dev/null
+
+echo "Running gofmt against generated code for $SERVICE"
+gofmt -w "services/$SERVICE"
