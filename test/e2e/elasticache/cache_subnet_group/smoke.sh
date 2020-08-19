@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ROOT_DIR="$THIS_DIR/../../.."
+ROOT_DIR="$THIS_DIR/../../../.."
 SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$SCRIPTS_DIR/lib/common.sh"
@@ -30,13 +30,12 @@ fi
 
 
 describe_subnet_json() {
-    jq_expr='.CacheSubnetGroups[] | select(.CacheSubnetGroupName | contains($CacheSubnetGroupName))'
-    aws elasticache describe-cache-subnet-groups --output json | jq -e --arg CacheSubnetGroupName "$aws_resource_name" "$jq_expr"
+    aws elasticache describe-cache-subnet-groups --cache-subnet-group-name "$aws_resource_name"  --output json >/dev/null 2>&1
 }
 
 # PRE-CHECKS
 describe_subnet_json
-if [ $? -ne 4 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $aws_resource_name to not exist in ${service_name}. Did previous test run cleanup?"
     exit 1
 fi
@@ -64,7 +63,7 @@ sleep 20
 
 debug_msg "checking subnet group $aws_resource_name created in ${service_name}"
 describe_subnet_json
-if [ $? -eq 4 ]; then
+if [[ $? -eq 255 || $? -eq 254 ]]; then
     echo "FAIL: expected $aws_resource_name to have been created in ${service_name}"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
@@ -76,7 +75,7 @@ assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 
 sleep 20
 
 describe_subnet_json
-if [ $? -ne 4 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $aws_resource_name to be deleted in ${service_name}"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
