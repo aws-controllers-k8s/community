@@ -6,13 +6,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
+	"github.com/aws/aws-sdk-go/aws/session"
 
-	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}/{{ .ServiceAlias }}iface"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
+	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}/{{ .ServiceAlias }}iface"
 )
 
 // +kubebuilder:rbac:groups={{ .ServiceAlias }}.services.k8s.aws,resources={{ ToLower .CRD.Plural }},verbs=get;list;watch;create;update;patch;delete

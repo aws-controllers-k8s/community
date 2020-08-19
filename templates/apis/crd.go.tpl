@@ -57,4 +57,4 @@ type {{ .CRD.Kind }}List struct {
 func init() {
 	SchemeBuilder.Register(&{{ .CRD.Kind }}{}, &{{ .CRD.Kind }}List{})
 }
-{{- end -}}
+{{ end -}}
