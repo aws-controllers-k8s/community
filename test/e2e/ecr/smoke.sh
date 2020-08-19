@@ -8,30 +8,44 @@ source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
 
+wait_seconds=5
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="ecr"
 ack_ctrl_pod_id=$( controller_pod_id "$service_name")
 debug_msg "executing test: $service_name/$test_name"
 
-repo_name="ack-test-smoke-$service_name"
-resource_name="repositories/$repo_name"
+# This smoke test creates and deletes a set of ECR repositories. It creates
+# more than 1 repository in order to ensure that the ReadMany code paths and
+# the associated generated code that do object lookups for a single object work
+# when >1 object are returned in various List operations.
 
 # PRE-CHECKS
 
-aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-if [[ $? -ne 255 && $? -ne 254 ]]; then
-    echo "FAIL: expected $repo_name to not exist in ECR. Did previous test run cleanup?"
-    exit 1
-fi
+for x in a b c; do
 
-if k8s_resource_exists "$resource_name"; then
-    echo "FAIL: expected $resource_name to not exist. Did previous test run cleanup?"
-    exit 1
-fi
+    repo_name="ack-test-smoke-$service_name-$x"
+    resource_name="repositories/$repo_name"
+
+    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
+    if [[ $? -ne 255 && $? -ne 254 ]]; then
+        echo "FAIL: expected $repo_name to not exist in ECR. Did previous test run cleanup?"
+        exit 1
+    fi
+
+    if k8s_resource_exists "$resource_name"; then
+        echo "FAIL: expected $resource_name to not exist. Did previous test run cleanup?"
+        exit 1
+    fi
+
+done
 
 # TEST ACTIONS and ASSERTIONS
 
-cat <<EOF | kubectl apply -f -
+for x in a b c; do
+
+    repo_name="ack-test-smoke-$service_name-$x"
+
+    cat <<EOF | kubectl apply -f -
 apiVersion: ecr.services.k8s.aws/v1alpha1
 kind: Repository
 metadata:
@@ -40,22 +54,38 @@ spec:
   repositoryName: $repo_name
 EOF
 
-sleep 5
+done
 
-debug_msg "checking repository $repo_name created in ECR"
-aws ecr describe-repositories --repository-names "$repo_name" --output table
-if [[ $? -eq 255 || $? -eq 254 ]]; then
-    echo "FAIL: expected $repo_name to have been created in ECR"
-    kubectl logs -n ack-system "$ack_ctrl_pod_id"
-    exit 1
-fi
+sleep $wait_seconds
 
-kubectl delete "$resource_name" 2>/dev/null
-assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
+for x in a b c; do
 
-aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-if [[ $? -ne 255 && $? -ne 254 ]]; then
-    echo "FAIL: expected $repo_name to be deleted in ECR"
-    kubectl logs -n ack-system "$ack_ctrl_pod_id"
-    exit 1
-fi
+    repo_name="ack-test-smoke-$service_name-$x"
+    resource_name="repositories/$repo_name"
+
+    debug_msg "checking repository $repo_name created in ECR"
+    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
+    if [[ $? -eq 255 || $? -eq 254 ]]; then
+        echo "FAIL: expected $repo_name to have been created in ECR"
+        kubectl logs -n ack-system "$ack_ctrl_pod_id"
+        exit 1
+    fi
+
+    kubectl delete "$resource_name" 2>/dev/null
+    assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
+
+done
+
+sleep $wait_seconds
+
+for x in a b c; do
+
+    repo_name="ack-test-smoke-$service_name-$x"
+
+    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
+    if [[ $? -ne 255 && $? -ne 254 ]]; then
+        echo "FAIL: expected $repo_name to be deleted in ECR"
+        kubectl logs -n ack-system "$ack_ctrl_pod_id"
+        exit 1
+    fi
+done
