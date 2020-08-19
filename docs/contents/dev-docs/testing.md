@@ -173,8 +173,7 @@ To generate the IAM role ARN, do:
 
 ```
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) && \
-AWS_ROLE_ARN=arn:aws:iam::$AWS_ACCOUNT_ID/$ACK_TEST_IAM_ROLE && \
-export $AWS_ROLE_ARN
+export AWS_ROLE_ARN=arn:aws:iam::$AWS_ACCOUNT_ID/$ACK_TEST_IAM_ROLE
 ```
 
 !!! info 
