@@ -889,6 +889,60 @@ func TestECRRepository(t *testing.T) {
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+
+	// Check that the DescribeRepositories output is filtered by the
+	// RepositoryName field of the CR's Spec, since there is no ReadOne
+	// operation for ECR and we have no yet implemented a heuristic that allows
+	// the DescribeRepositoriesInput.RepositoryNames filter from the CR's
+	// Spec.RepositoryName field.
+	expReadManyOutput := `
+	if len(resp.Repositories) == 0 {
+		return nil, ackerr.NotFound
+	}
+	found := false
+	for _, elem := range resp.Repositories {
+		if elem.CreatedAt != nil {
+			ko.Status.CreatedAt = &metav1.Time{*elem.CreatedAt}
+		}
+		if elem.ImageScanningConfiguration != nil {
+			f1 := &svcapitypes.ImageScanningConfiguration{}
+			if elem.ImageScanningConfiguration.ScanOnPush != nil {
+				f1.ScanOnPush = elem.ImageScanningConfiguration.ScanOnPush
+			}
+			ko.Spec.ImageScanningConfiguration = f1
+		}
+		if elem.ImageTagMutability != nil {
+			ko.Spec.ImageTagMutability = elem.ImageTagMutability
+		}
+		if elem.RegistryId != nil {
+			ko.Status.RegistryID = elem.RegistryId
+		}
+		if elem.RepositoryArn != nil {
+			if ko.Status.ACKResourceMetadata == nil {
+				ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+			}
+			tmpARN := ackv1alpha1.AWSResourceName(*elem.RepositoryArn)
+			ko.Status.ACKResourceMetadata.ARN = &tmpARN
+		}
+		if elem.RepositoryName != nil {
+			if ko.Spec.RepositoryName != nil {
+				if *elem.RepositoryName != *ko.Spec.RepositoryName {
+					continue
+				}
+			}
+			ko.Spec.RepositoryName = elem.RepositoryName
+		}
+		if elem.RepositoryUri != nil {
+			ko.Status.RepositoryURI = elem.RepositoryUri
+		}
+		found = true
+		break
+	}
+	if !found {
+		return nil, ackerr.NotFound
+	}
+`
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
 }
 
 func TestCodeDeployDeployment(t *testing.T) {
