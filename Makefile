@@ -1,6 +1,9 @@
 SHELL := /bin/bash # Use bash syntax
 GO111MODULE=on
 
+DOCKER_REPOSITORY ?= amazon/aws-controllers-k8s
+DOCKER_USERNAME ?= ""
+DOCKER_PASSWORD ?= ""
 PKGS=$(sort $(dir $(wildcard pkg/*/*/)))
 MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
@@ -26,6 +29,10 @@ clean-mocks:	## Remove mocks directory
 
 build-controller-image:	## Build container image for SERVICE
 	./scripts/build-controller-image.sh -s $(SERVICE)
+
+publish-controller-image:  ## docker push a container image for SERVICE
+	@echo $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
+	./scripts/publish-controller-image.sh -r $(DOCKER_REPOSITORY) -s $(SERVICE)
 
 build-controller: build-ack-generate	## Generate controller code for SERVICE
 	./scripts/build-controller.sh $(SERVICE)
