@@ -85,5 +85,8 @@ func (cfg *Config) Validate() error {
 	if cfg.AccountID == "" {
 		return errors.New("unable to start service controller as account ID is nil. Please pass --aws-account-id flag")
 	}
+	if cfg.Region == "" {
+		return errors.New("unable to start service controller as AWS region is nil. Please pass --aws-region flag")
+	}
 	return nil
 }
