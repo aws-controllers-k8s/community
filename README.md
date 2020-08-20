@@ -1,3 +1,17 @@
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/aws/aws-controllers-k8s/issues)
+![status is preview](https://img.shields.io/badge/status-preview-brightgreen?style=flat)
+![GitHub issues](https://img.shields.io/github/issues-raw/aws/aws-controllers-k8s?style=flat)
+![GitHub](https://img.shields.io/github/license/aws/aws-controllers-k8s?style=flat)
+
+
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/aws/aws-controllers-k8s)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-controllers-k8s)](https://goreportcard.com/report/github.com/aws/aws-controllers-k8s)
+![GitHub watchers](https://img.shields.io/github/watchers/aws/aws-controllers-k8s?style=social)
+![GitHub stars](https://img.shields.io/github/stars/aws/aws-controllers-k8s?style=social)
+![GitHub forks](https://img.shields.io/github/forks/aws/aws-controllers-k8s?style=social)
+
+
+
 # AWS Controllers for Kubernetes (ACK)
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
