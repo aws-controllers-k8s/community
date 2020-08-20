@@ -25,7 +25,7 @@ get_topic_attributes() {
 
 # PRE-CHECKS
 get_topic_attributes
-if [ $? -ne 255 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $topic_name to not exist in SNS. Did previous test run cleanup?"
     exit 1
 fi
@@ -50,7 +50,7 @@ sleep 20
 
 debug_msg "checking topic $topic_name created in SNS"
 get_topic_attributes
-if [ $? -eq 255 ]; then
+if [[ $? -eq 255 || $? -eq 254 ]]; then
     echo "FAIL: expected $topic_name to have been created in SNS"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
@@ -60,7 +60,7 @@ kubectl delete "$resource_name" 2>/dev/null
 assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
 
 get_topic_attributes
-if [ $? -ne 255 ]; then
+if [[ $? -ne 255 && $? -ne 254 ]]; then
     echo "FAIL: expected $topic_name to be deleted in SNS"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
