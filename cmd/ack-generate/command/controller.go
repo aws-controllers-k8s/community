@@ -114,7 +114,7 @@ func writeControllerMainGo(sh *model.Helper) error {
 
 	vars := &cmdtemplate.ControllerMainTemplateVars{
 		APIVersion:         latestAPIVersion,
-		ServiceAlias:       strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias:       sh.GetCleanServiceAlias(),
 		SnakeCasedCRDNames: snakeCasedCRDNames,
 	}
 
@@ -172,7 +172,7 @@ func writeResourcePackageRegistryGo(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.ResourceRegistryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := pkgtemplate.NewResourceRegistryGoTemplate(optTemplatesDir)
 	if err != nil {
@@ -194,7 +194,7 @@ func writeCRDResourceGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDResourceGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDResourceGoTemplate(optTemplatesDir)
@@ -217,7 +217,7 @@ func writeCRDIdentifiersGo(sh *model.Helper, crd *model.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDIdentifiersGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDIdentifiersGoTemplate(optTemplatesDir)
@@ -241,7 +241,7 @@ func writeCRDDescriptorGo(sh *model.Helper, crd *model.CRD) error {
 	vars := &pkgtemplate.CRDDescriptorGoTemplateVars{
 		APIVersion:   latestAPIVersion,
 		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDDescriptorGoTemplate(optTemplatesDir)
@@ -265,7 +265,7 @@ func writeCRDManagerFactoryGo(sh *model.Helper, crd *model.CRD) error {
 	vars := &pkgtemplate.CRDManagerFactoryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
 		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDManagerFactoryGoTemplate(optTemplatesDir)
@@ -289,7 +289,7 @@ func writeCRDManagerGo(sh *model.Helper, crd *model.CRD) error {
 	vars := &pkgtemplate.CRDManagerGoTemplateVars{
 		APIVersion:              latestAPIVersion,
 		APIGroup:                sh.GetAPIGroup(),
-		ServiceAlias:            strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias:            sh.GetCleanServiceAlias(),
 		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
 		CRD:                     crd,
 	}
@@ -314,7 +314,7 @@ func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
 	vars := &pkgtemplate.CRDSDKGoTemplateVars{
 		APIVersion:              latestAPIVersion,
 		APIGroup:                sh.GetAPIGroup(),
-		ServiceAlias:            strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias:            sh.GetCleanServiceAlias(),
 		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
 		CRD:                     crd,
 	}
@@ -370,7 +370,7 @@ func writeConfigDirs(sh *model.Helper) error {
 func writeConfigDefaultKustomizationYAML(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &configdefaulttemplate.ConfigDefaultKustomizationYAMLTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := configdefaulttemplate.NewConfigDefaultKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -391,7 +391,7 @@ func writeConfigDefaultKustomizationYAML(sh *model.Helper) error {
 func writeConfigControllerKustomizationYAML(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &configcontrollertemplate.ConfigControllerKustomizationYAMLTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := configcontrollertemplate.NewConfigControllerKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -412,7 +412,7 @@ func writeConfigControllerKustomizationYAML(sh *model.Helper) error {
 func writeConfigControllerDeploymentYAML(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &configcontrollertemplate.ConfigControllerDeploymentYAMLTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := configcontrollertemplate.NewConfigControllerDeploymentYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -433,7 +433,7 @@ func writeConfigControllerDeploymentYAML(sh *model.Helper) error {
 func writeConfigRBACKustomizationYAML(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &configrbactemplate.ConfigRBACKustomizationYAMLTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := configrbactemplate.NewConfigRBACKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -454,7 +454,7 @@ func writeConfigRBACKustomizationYAML(sh *model.Helper) error {
 func writeConfigRBACClusterRoleBindingYAML(sh *model.Helper) error {
 	var b bytes.Buffer
 	vars := &configrbactemplate.ConfigRBACClusterRoleBindingYAMLTemplateVars{
-		ServiceAlias: strings.ToLower(sh.GetServiceAlias()),
+		ServiceAlias: sh.GetCleanServiceAlias(),
 	}
 	tpl, err := configrbactemplate.NewConfigRBACClusterRoleBindingYAMLTemplate(optTemplatesDir)
 	if err != nil {

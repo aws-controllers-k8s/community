@@ -43,6 +43,11 @@ func (h *Helper) GetServiceAlias() string {
 	return awssdkmodel.ServiceID(h.sdkAPI)
 }
 
+func (h *Helper) GetCleanServiceAlias() string {
+	serviceAlias := strings.ToLower(h.GetServiceAlias())
+	return strings.Replace(serviceAlias, " ", "", -1)
+}
+
 func (h *Helper) GetServiceFullName() string {
 	if h.sdkAPI == nil {
 		return ""
@@ -51,8 +56,8 @@ func (h *Helper) GetServiceFullName() string {
 }
 
 func (h *Helper) GetAPIGroup() string {
-	serviceAlias := strings.ToLower(h.GetServiceAlias())
-	return fmt.Sprintf("%s.services.k8s.aws", serviceAlias)
+	cleanServiceAlias := h.GetCleanServiceAlias()
+	return fmt.Sprintf("%s.services.k8s.aws", cleanServiceAlias)
 }
 
 func (h *Helper) GetCRDNames() []names.Names {
