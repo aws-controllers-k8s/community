@@ -1,0 +1,68 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ack-controller-role
+rules:
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - platformapplications
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - platformapplications/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - platformendpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - platformendpoints/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - topics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - topics/status
+  verbs:
+  - get
+  - patch
+  - update
