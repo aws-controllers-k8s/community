@@ -1,4 +1,8 @@
 resources:
+  CacheSubnetGroup:
+    exceptions:
+      codes:
+        404: CacheSubnetGroupNotFoundFault
 ignore:
   operations:
     - DeleteSnapshot
