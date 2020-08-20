@@ -21,10 +21,16 @@ Instead of logging into the AWS console or using the `aws` CLI tool to interact 
 This means they can use the Kubernetes API to fully describe both their
 containerized applications, using Kubernetes resources like `Deployment` and `Service`, as well as any AWS managed services upon which those applications depend.
 
-## Getting Started
-To get started, [choose and install](https://aws.github.io/aws-controllers-k8s/user-docs/install/) the controllers for the AWS services you want to manage. Then, [configure permissions](https://aws.github.io/aws-controllers-k8s/user-docs/permissions/) and [define your first AWS resource](https://aws.github.io/aws-controllers-k8s/user-docs/usage/).
+## Getting started
 
-## Getting Help
-If you have feedback, questions, or suggestions please don't hesitate to submit an [issue](https://github.com/aws/aws-controllers-k8s/issues), a pull request or comment on an existing issue.
+Until we've graduated ACK [service controllers](https://aws.github.io/aws-controllers-k8s/services/) we ask you to [test-drive](https://aws.github.io/aws-controllers-k8s/dev-docs/testing/) them.
 
-You can also search our [mailing list](https://groups.google.com/forum/#!forum/aws-service-operator-user/) or talk with us on the #provider-aws channel on the Kubernetes Slack (https://kubernetes.slack.com/) community.
+
+## Getting help
+
+For help, please consider the following venues (in order):
+
+* [Search open issues](https://github.com/aws/aws-controllers-k8s/issues)
+* [File an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
+* Join our [mailing list](https://groups.google.com/forum/#!forum/aws-service-operator-user/).
+* Chat with us on the `#provider-aws` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.
