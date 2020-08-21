@@ -372,7 +372,7 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 }
 
 /**
-This method return the required input fields names for ReadOne operation which are present in ko.Status .
+This method returns the required fields names for ReadOneInput which are present in ko.Status .
 During initial creation of aws resource, ReadOne call should be ignored if validation error
 occurs from absence of these fields.
 
