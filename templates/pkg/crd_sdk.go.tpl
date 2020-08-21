@@ -4,6 +4,7 @@ package {{ .CRD.Names.Snake }}
 
 import (
 	"context"
+	"reflect"
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
 	{{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
@@ -13,6 +14,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-sdk-go/aws"
 	awsreq "github.com/aws/aws-sdk-go/aws/request"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
@@ -41,16 +43,31 @@ func (rm *resourceManager) sdkFind(
 	if err != nil {
 		return nil, err
 	}
+	//If the input implements validate method, invoke Validate() before making ReadOne call
+	inputType := reflect.TypeOf(input)
+	_, validateable := inputType.MethodByName("Validate")
+	if validateable {
+		err := input.Validate()
+		if err != nil {
+			if validationError, ok := err.(awsreq.ErrInvalidParams); ok {
+            	// In case of an input validation error, Ignore validationError only if it is exclusively caused by missing ko.Status fields.
+            	// This is because the aws resource is yet to be created.
+            	// * If the validation error is ignorable, return NotFoundException to avoid ReadOne call before Create call
+            	// * If the validation error cannot be ignored, return ValidationError.
+            	{{ GoCodeRequiredStatusFieldsForReadOneInput .CRD 0 }}
+            	validationHelper := ackmodel.ValidationHelper{}
+            	if validationHelper.IsValidationErrorIgnorable(requiredStatusFields, validationError) {
+            		return nil, ackerr.NotFound
+            	}
+            	return nil, validationError
+           	}
+		}
+	}
+
 {{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
-			return nil, ackerr.NotFound
-		}
-
-		// If there are validation errors in constructed request
-		// treat it as NotFound
-		if _, ok := respErr.(awsreq.ErrInvalidParams); ok {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr

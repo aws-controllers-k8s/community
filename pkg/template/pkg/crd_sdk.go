@@ -78,6 +78,9 @@ func NewCRDSDKGoTemplate(tplDir string) (*ttpl.Template, error) {
 		"Empty": func(subject string) bool {
 			return strings.TrimSpace(subject) == ""
 		},
+		"GoCodeRequiredStatusFieldsForReadOneInput": func(r *model.CRD, indentLevel int) string {
+			return r.RequiredStatusFieldsForReadOneInput(indentLevel)
+		},
 	})
 	if t, err = t.Parse(string(tplContents)); err != nil {
 		return nil, err

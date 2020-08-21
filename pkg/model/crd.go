@@ -371,6 +371,34 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	return "UNKNOWN"
 }
 
+/**
+This method return the required input fields names for ReadOne operation which are present in ko.Status .
+During initial creation of aws resource, ReadOne call should be ignored if validation error
+occurs from absence of these fields.
+
+Example output: requiredStatusFields := []string{"GetApiInput.ApiId"}
+*/
+func (r *CRD) RequiredStatusFieldsForReadOneInput(indentLevel int) string {
+	op := r.Ops.ReadOne
+	inputShape := op.InputRef.Shape
+	if inputShape == nil || len(inputShape.Required) == 0 {
+		return ""
+	}
+	requiredFields := inputShape.Required
+	requiredStatusFieldsStr := ""
+	for _, requiredField := range requiredFields {
+		_, found := r.StatusFields[requiredField]
+		if found {
+			requiredStatusFieldsStr += fmt.Sprintf("\"%s.%s\",", inputShape.ShapeName, requiredField)
+		}
+	}
+	if last := len(requiredStatusFieldsStr) - 1; last >= 0 && requiredStatusFieldsStr[last] == ',' {
+		requiredStatusFieldsStr = requiredStatusFieldsStr[:last]
+	}
+	indent := strings.Repeat("\t", indentLevel)
+	return fmt.Sprintf("%srequiredStatusFields := []string{%s}", indent, requiredStatusFieldsStr)
+}
+
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
 // from a CRD's fields.
 //
