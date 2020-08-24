@@ -15,7 +15,7 @@ service_name="s3"
 ack_ctrl_pod_id=$( controller_pod_id "s3")
 debug_msg "executing test: $service_name/$test_name"
 
-bucket_name="ack-test-smoke-$service_name"
+bucket_name="ack-test-smoke-$service_name-$AWS_ACCOUNT_ID"
 resource_name="buckets/$bucket_name"
 
 list_bucket_json() {
