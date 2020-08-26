@@ -6,5 +6,6 @@ resources:
 ignore:
   operations:
     - DeleteSnapshot
+    - ModifyCacheParameterGroup
   resource_names:
     - GlobalReplicationGroup
