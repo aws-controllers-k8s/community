@@ -111,7 +111,6 @@ type CRD struct {
 	// field. Note that there are no fields in StatusFields that are also in
 	// SpecFields.
 	StatusFields map[string]*CRDField
-	SDKMapper    *SDKMapper
 	// TypeImports is a map, keyed by an import string, with the map value
 	// being the import alias
 	TypeImports map[string]string
@@ -311,9 +310,8 @@ func (r *CRD) UnpackAttributes() {
 // IsPrimaryARNField returns true if the supplied field name is likely the resource's
 // ARN identifier field.
 func (r *CRD) IsPrimaryARNField(fieldName string) bool {
-	lowerName := strings.ToLower(fieldName)
-	lowerResName := strings.ToLower(r.Names.Original)
-	return lowerName == "arn" || lowerName == lowerResName+"arn"
+	return strings.EqualFold(fieldName, "arn") ||
+		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
 // ExceptionCode returns the name of the resource's Exception code for the
@@ -1971,8 +1969,6 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 		}
 		h.RemoveIgnoredOperations(&crdOps)
 		crd := newCRD(h, crdNames, crdOps)
-		sdkMapper := NewSDKMapper(crd)
-		crd.SDKMapper = sdkMapper
 
 		// OK, begin to gather the CRDFields that will go into the Spec struct.
 		// These fields are those members of the Create operation's Input
@@ -2029,12 +2025,9 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
 				continue
 			}
-			if strings.EqualFold(memberName, "arn") ||
-				strings.EqualFold(memberName, crdName+"arn") {
-				// Normalize primary resource ARN field in the returned output
-				// shape. We want to map this Shape into the
-				// Status.ACKResourceMetadata.ARN field
-				sdkMapper.SetPrimaryResourceARNField(createOp, memberName)
+			if crd.IsPrimaryARNField(memberName) {
+				// We automatically place the primary resource ARN value into
+				// the Status.ACKResourceMetadata.ARN field
 				continue
 			}
 			crd.AddStatusField(memberNames, memberShapeRef)
