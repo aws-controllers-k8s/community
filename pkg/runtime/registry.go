@@ -47,7 +47,7 @@ func (r *Registry) RegisterResourceManagerFactory(f types.AWSResourceManagerFact
 	r.resourceManagerFactories[f.ResourceDescriptor().GroupKind().String()] = f
 }
 
-// NewRegistry retuns a thread-safe Registry object
+// NewRegistry returns a thread-safe Registry object
 func NewRegistry() *Registry {
 	return &Registry{
 		resourceManagerFactories: map[string]types.AWSResourceManagerFactory{},
