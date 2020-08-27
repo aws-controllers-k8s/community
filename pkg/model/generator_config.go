@@ -24,7 +24,7 @@ import (
 type GeneratorConfig struct {
 	// Resources contains generator instructions for individual CRDs within an
 	// API
-	Resources map[string]ResourceGeneratorConfig `json:"resources"`
+	Resources map[string]ResourceConfig `json:"resources"`
 	// CRDs to ignore. ACK generator would skip these resources.
 	Ignore IgnoreSpec `json:"ignore"`
 }
@@ -43,9 +43,9 @@ type IgnoreSpec struct {
 	ShapeNames []string `json:"shape_names"`
 }
 
-// ResourceGeneratorConfig represents instructions to the ACK code generator
+// ResourceConfig represents instructions to the ACK code generator
 // for a particular CRD/resource on an AWS service API
-type ResourceGeneratorConfig struct {
+type ResourceConfig struct {
 	// NameField is the name of the Member of the Create Input shape that
 	// represents the name/string identifier field for the resource. If this
 	// isn't set, then the generator will look for a field called "Name" or
