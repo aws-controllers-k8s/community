@@ -24,7 +24,8 @@ import (
 	"github.com/spf13/cobra"
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 	cmdtemplate "github.com/aws/aws-controllers-k8s/pkg/template/cmd"
 	configcontrollertemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/controller"
 	configdefaulttemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/default"
@@ -76,12 +77,12 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if err := ensureSDKRepo(optCacheDir); err != nil {
 		return err
 	}
-	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkHelper := ackmodel.NewSDKHelper(sdkDir)
 	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
 		return err
 	}
-	sh, err := model.NewHelper(sdkAPI, optGeneratorConfigPath)
+	g, err := generate.New(sdkAPI, optGeneratorConfigPath)
 	if err != nil {
 		return err
 	}
@@ -90,31 +91,35 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeControllerMainGo(sh); err != nil {
+	crds, err := g.GetCRDs()
+	if err != nil {
 		return err
 	}
-	if err = writeResourcePackage(sh); err != nil {
+
+	if err = writeControllerMainGo(g, crds); err != nil {
 		return err
 	}
-	if err = writeConfigDirs(sh); err != nil {
+	if err = writeResourcePackage(g, crds); err != nil {
+		return err
+	}
+	if err = writeConfigDirs(g); err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeControllerMainGo(sh *model.Helper) error {
+func writeControllerMainGo(g *generate.Generator, crds []*ackmodel.CRD) error {
 	var b bytes.Buffer
-	crdsNames := sh.GetCRDNames()
 
 	// convert CRD names into snake_case to use for package import
 	snakeCasedCRDNames := make([]string, 0)
-	for _, crdName := range crdsNames {
-		snakeCasedCRDNames = append(snakeCasedCRDNames, crdName.Snake)
+	for _, crd := range crds {
+		snakeCasedCRDNames = append(snakeCasedCRDNames, crd.Names.Snake)
 	}
 
 	vars := &cmdtemplate.ControllerMainTemplateVars{
 		APIVersion:         latestAPIVersion,
-		ServiceAlias:       sh.GetCleanServiceAlias(),
+		ServiceAlias:       g.SDKAPI.GetCleanServiceAlias(),
 		SnakeCasedCRDNames: snakeCasedCRDNames,
 	}
 
@@ -134,11 +139,7 @@ func writeControllerMainGo(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeResourcePackage(sh *model.Helper) error {
-	crds, err := sh.GetCRDs()
-	if err != nil {
-		return err
-	}
+func writeResourcePackage(g *generate.Generator, crds []*ackmodel.CRD) error {
 	for _, crd := range crds {
 		pkgCRDResourcePath := filepath.Join(pkgResourcePath, crd.Names.Snake)
 		if !optDryRun {
@@ -146,33 +147,33 @@ func writeResourcePackage(sh *model.Helper) error {
 				return err
 			}
 		}
-		if err = writeCRDResourceGo(sh, crd); err != nil {
+		if err := writeCRDResourceGo(g, crd); err != nil {
 			return err
 		}
-		if err = writeCRDIdentifiersGo(sh, crd); err != nil {
+		if err := writeCRDIdentifiersGo(g, crd); err != nil {
 			return err
 		}
-		if err = writeCRDDescriptorGo(sh, crd); err != nil {
+		if err := writeCRDDescriptorGo(g, crd); err != nil {
 			return err
 		}
-		if err = writeCRDManagerFactoryGo(sh, crd); err != nil {
+		if err := writeCRDManagerFactoryGo(g, crd); err != nil {
 			return err
 		}
-		if err = writeCRDManagerGo(sh, crd); err != nil {
+		if err := writeCRDManagerGo(g, crd); err != nil {
 			return err
 		}
-		if err = writeCRDSDKGo(sh, crd); err != nil {
+		if err := writeCRDSDKGo(g, crd); err != nil {
 			return err
 		}
 	}
-	return writeResourcePackageRegistryGo(sh)
+	return writeResourcePackageRegistryGo(g)
 }
 
-func writeResourcePackageRegistryGo(sh *model.Helper) error {
+func writeResourcePackageRegistryGo(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.ResourceRegistryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := pkgtemplate.NewResourceRegistryGoTemplate(optTemplatesDir)
 	if err != nil {
@@ -190,11 +191,11 @@ func writeResourcePackageRegistryGo(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDResourceGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDResourceGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDResourceGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDResourceGoTemplate(optTemplatesDir)
@@ -213,11 +214,11 @@ func writeCRDResourceGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDIdentifiersGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDIdentifiersGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDIdentifiersGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDIdentifiersGoTemplate(optTemplatesDir)
@@ -236,12 +237,12 @@ func writeCRDIdentifiersGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDDescriptorGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDDescriptorGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDDescriptorGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		APIGroup:     g.SDKAPI.GetAPIGroup(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDDescriptorGoTemplate(optTemplatesDir)
@@ -260,12 +261,12 @@ func writeCRDDescriptorGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDManagerFactoryGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDManagerFactoryGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDManagerFactoryGoTemplateVars{
 		APIVersion:   latestAPIVersion,
-		APIGroup:     sh.GetAPIGroup(),
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		APIGroup:     g.SDKAPI.GetAPIGroup(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 		CRD:          crd,
 	}
 	tpl, err := pkgtemplate.NewCRDManagerFactoryGoTemplate(optTemplatesDir)
@@ -284,13 +285,13 @@ func writeCRDManagerFactoryGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDManagerGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDManagerGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDManagerGoTemplateVars{
 		APIVersion:              latestAPIVersion,
-		APIGroup:                sh.GetAPIGroup(),
-		ServiceAlias:            sh.GetCleanServiceAlias(),
-		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
+		APIGroup:                g.SDKAPI.GetAPIGroup(),
+		ServiceAlias:            g.SDKAPI.GetCleanServiceAlias(),
+		SDKAPIInterfaceTypeName: g.SDKAPI.GetSDKAPIInterfaceTypeName(),
 		CRD:                     crd,
 	}
 	tpl, err := pkgtemplate.NewCRDManagerGoTemplate(optTemplatesDir)
@@ -309,13 +310,13 @@ func writeCRDManagerGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
+func writeCRDSDKGo(g *generate.Generator, crd *ackmodel.CRD) error {
 	var b bytes.Buffer
 	vars := &pkgtemplate.CRDSDKGoTemplateVars{
 		APIVersion:              latestAPIVersion,
-		APIGroup:                sh.GetAPIGroup(),
-		ServiceAlias:            sh.GetCleanServiceAlias(),
-		SDKAPIInterfaceTypeName: sh.GetSDKAPIInterfaceTypeName(),
+		APIGroup:                g.SDKAPI.GetAPIGroup(),
+		ServiceAlias:            g.SDKAPI.GetCleanServiceAlias(),
+		SDKAPIInterfaceTypeName: g.SDKAPI.GetSDKAPIInterfaceTypeName(),
 		CRD:                     crd,
 	}
 	tpl, err := pkgtemplate.NewCRDSDKGoTemplate(optTemplatesDir)
@@ -334,7 +335,7 @@ func writeCRDSDKGo(sh *model.Helper, crd *model.CRD) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeConfigDirs(sh *model.Helper) error {
+func writeConfigDirs(g *generate.Generator) error {
 	configDefaultPath := filepath.Join(optControllerOutputPath, "config", "default")
 	configControllerPath := filepath.Join(optControllerOutputPath, "config", "controller")
 	configRBACPath := filepath.Join(optControllerOutputPath, "config", "rbac")
@@ -349,28 +350,28 @@ func writeConfigDirs(sh *model.Helper) error {
 			return err
 		}
 	}
-	if err := writeConfigDefaultKustomizationYAML(sh); err != nil {
+	if err := writeConfigDefaultKustomizationYAML(g); err != nil {
 		return err
 	}
-	if err := writeConfigControllerKustomizationYAML(sh); err != nil {
+	if err := writeConfigControllerKustomizationYAML(g); err != nil {
 		return err
 	}
-	if err := writeConfigControllerDeploymentYAML(sh); err != nil {
+	if err := writeConfigControllerDeploymentYAML(g); err != nil {
 		return err
 	}
-	if err := writeConfigRBACKustomizationYAML(sh); err != nil {
+	if err := writeConfigRBACKustomizationYAML(g); err != nil {
 		return err
 	}
-	if err := writeConfigRBACClusterRoleBindingYAML(sh); err != nil {
+	if err := writeConfigRBACClusterRoleBindingYAML(g); err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeConfigDefaultKustomizationYAML(sh *model.Helper) error {
+func writeConfigDefaultKustomizationYAML(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &configdefaulttemplate.ConfigDefaultKustomizationYAMLTemplateVars{
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := configdefaulttemplate.NewConfigDefaultKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -388,10 +389,10 @@ func writeConfigDefaultKustomizationYAML(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeConfigControllerKustomizationYAML(sh *model.Helper) error {
+func writeConfigControllerKustomizationYAML(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &configcontrollertemplate.ConfigControllerKustomizationYAMLTemplateVars{
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := configcontrollertemplate.NewConfigControllerKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -409,10 +410,10 @@ func writeConfigControllerKustomizationYAML(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeConfigControllerDeploymentYAML(sh *model.Helper) error {
+func writeConfigControllerDeploymentYAML(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &configcontrollertemplate.ConfigControllerDeploymentYAMLTemplateVars{
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := configcontrollertemplate.NewConfigControllerDeploymentYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -430,10 +431,10 @@ func writeConfigControllerDeploymentYAML(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeConfigRBACKustomizationYAML(sh *model.Helper) error {
+func writeConfigRBACKustomizationYAML(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &configrbactemplate.ConfigRBACKustomizationYAMLTemplateVars{
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := configrbactemplate.NewConfigRBACKustomizationYAMLTemplate(optTemplatesDir)
 	if err != nil {
@@ -451,10 +452,10 @@ func writeConfigRBACKustomizationYAML(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeConfigRBACClusterRoleBindingYAML(sh *model.Helper) error {
+func writeConfigRBACClusterRoleBindingYAML(g *generate.Generator) error {
 	var b bytes.Buffer
 	vars := &configrbactemplate.ConfigRBACClusterRoleBindingYAMLTemplateVars{
-		ServiceAlias: sh.GetCleanServiceAlias(),
+		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
 	}
 	tpl, err := configrbactemplate.NewConfigRBACClusterRoleBindingYAMLTemplate(optTemplatesDir)
 	if err != nil {

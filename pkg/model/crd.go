@@ -22,7 +22,9 @@ import (
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/gertd/go-pluralize"
 
+	ackgenconfig "github.com/aws/aws-controllers-k8s/pkg/generate/config"
 	"github.com/aws/aws-controllers-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
 type CRDOps struct {
@@ -57,13 +59,13 @@ func (ops CRDOps) IterOps() []*awssdkmodel.Operation {
 
 // CRDField represents a single field in the CRD's Spec or Status objects
 type CRDField struct {
-	CRD                  *CRD
-	Names                names.Names
-	GoType               string
-	GoTypeElem           string
-	GoTypeWithPkgName    string
-	ShapeRef             *awssdkmodel.ShapeRef
-	FieldGeneratorConfig *FieldGeneratorConfig
+	CRD               *CRD
+	Names             names.Names
+	GoType            string
+	GoTypeElem        string
+	GoTypeWithPkgName string
+	ShapeRef          *awssdkmodel.ShapeRef
+	FieldConfig       *ackgenconfig.FieldConfig
 }
 
 // newCRDField returns a pointer to a new CRDField object
@@ -71,7 +73,7 @@ func newCRDField(
 	crd *CRD,
 	fieldNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
-	generatorConfig *FieldGeneratorConfig,
+	cfg *ackgenconfig.FieldConfig,
 ) *CRDField {
 	var gte, gt, gtwp string
 	var shape *awssdkmodel.Shape
@@ -86,18 +88,20 @@ func newCRDField(
 		gtwp = "*string"
 	}
 	return &CRDField{
-		CRD:                  crd,
-		Names:                fieldNames,
-		ShapeRef:             shapeRef,
-		GoType:               gt,
-		GoTypeElem:           gte,
-		GoTypeWithPkgName:    gtwp,
-		FieldGeneratorConfig: generatorConfig,
+		CRD:               crd,
+		Names:             fieldNames,
+		ShapeRef:          shapeRef,
+		GoType:            gt,
+		GoTypeElem:        gte,
+		GoTypeWithPkgName: gtwp,
+		FieldConfig:       cfg,
 	}
 }
 
+// CRD describes a single top-level resource in an AWS service API
 type CRD struct {
-	helper *Helper
+	sdkAPI *SDKAPI
+	genCfg *ackgenconfig.Config
 	Names  names.Names
 	Kind   string
 	Plural string
@@ -168,26 +172,12 @@ func (r *CRD) InputFieldRename(
 	opID string,
 	origFieldName string,
 ) (string, bool) {
-	h := r.helper
-	if h.generatorConfig == nil {
+	if r.genCfg == nil {
 		return origFieldName, false
 	}
-	rConfig, ok := h.generatorConfig.Resources[r.Names.Original]
-	if !ok {
-		return origFieldName, false
-	}
-	if rConfig.Renames == nil {
-		return origFieldName, false
-	}
-	oRenames, ok := rConfig.Renames.Operations[opID]
-	if !ok {
-		return origFieldName, false
-	}
-	renamed, ok := oRenames.InputFields[origFieldName]
-	if !ok {
-		return origFieldName, false
-	}
-	return renamed, true
+	return r.genCfg.ResourceInputFieldRename(
+		r.Names.Original, opID, origFieldName,
+	)
 }
 
 func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
@@ -202,7 +192,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	if shape.Type == "structure" {
 		cleanNames := names.New(gte)
 		gte = cleanNames.Camel
-		if r.helper.HasConflictingTypeName(gte) {
+		if r.sdkAPI.HasConflictingTypeName(gte, r.genCfg) {
 			gte += "_SDK"
 		}
 		gt = "*" + gte
@@ -212,7 +202,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		mgte, mgt, _ := r.cleanGoType(shape.MemberRef.Shape)
 		cleanNames := names.New(mgte)
 		gte = cleanNames.Camel
-		if r.helper.HasConflictingTypeName(mgte) {
+		if r.sdkAPI.HasConflictingTypeName(mgte, r.genCfg) {
 			gte += "_SDK"
 		}
 
@@ -281,17 +271,17 @@ func (r *CRD) SpecFieldNames() []string {
 // schema'd fields to a raw `map[string]*string` for this resource (see SNS and
 // SQS APIs)
 func (r *CRD) UnpacksAttributesMap() bool {
-	return r.helper.UnpacksAttributesMap(r.Names.Original)
+	return r.genCfg.UnpacksAttributesMap(r.Names.Original)
 }
 
 // UnpackAttributes grabs instructions about fields that are represented in the
 // AWS API as a `map[string]*string` but are actually real, schema'd fields and
 // adds CRDField definitions for those fields.
 func (r *CRD) UnpackAttributes() {
-	if !r.helper.UnpacksAttributesMap(r.Names.Original) {
+	if !r.genCfg.UnpacksAttributesMap(r.Names.Original) {
 		return
 	}
-	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	for fieldName, fieldConfig := range attrMapConfig.Fields {
 		if r.IsPrimaryARNField(fieldName) {
 			// ignore since this is handled by Status.ACKResourceMetadata.ARN
@@ -320,8 +310,8 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 // a particular HTTP status code, we return that, otherwise we look through the
 // API model definitions looking for a match
 func (r *CRD) ExceptionCode(httpStatusCode int) string {
-	if r.helper.generatorConfig != nil {
-		resGenConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
+	if r.genCfg != nil {
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
 		if found && resGenConfig.Exceptions != nil {
 			for httpCode, excCode := range resGenConfig.Exceptions.Codes {
 				if httpCode == httpStatusCode {
@@ -476,7 +466,7 @@ func (r *CRD) GoCodeSetInput(
 		// attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
 		// attrMap["Policy"] = r.ko.Spec.Policy
 		// res.SetAttributes(attrMap)
-		attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+		attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 		out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 		sortedAttrFieldNames := []string{}
 		for fieldName := range attrMapConfig.Fields {
@@ -556,7 +546,7 @@ func (r *CRD) GoCodeSetInput(
 
 		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
-		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 			continue
 		}
 
@@ -765,8 +755,8 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 
 // NameField returns the name of the "Name" or string identifier field in the Spec
 func (r *CRD) NameField() string {
-	if r.helper.generatorConfig != nil {
-		rConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
+	if r.genCfg != nil {
+		rConfig, found := r.genCfg.Resources[r.Names.Original]
 		if found {
 			if rConfig.NameField != nil {
 				return *rConfig.NameField
@@ -779,7 +769,7 @@ func (r *CRD) NameField() string {
 		r.Names.Original + "Id",
 	}
 	for memberName := range r.SpecFields {
-		if inStrings(memberName, lookup) {
+		if util.InStrings(memberName, lookup) {
 			return memberName
 		}
 	}
@@ -807,7 +797,7 @@ func (r *CRD) goCodeSetInputForContainer(
 			for memberIndex, memberName := range shape.MemberNames() {
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
-				if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 					continue
 				}
 				cleanMemberNames := names.New(memberName)
@@ -995,7 +985,7 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 		goPkg = parts[0]
 		hadPkg = true
 	}
-	renames := r.helper.GetTypeRenames()
+	renames := r.sdkAPI.GetTypeRenames(r.genCfg)
 	altTypeName, renamed := renames[goTypeNoPkg]
 	if renamed {
 		goTypeNoPkg = altTypeName
@@ -1174,7 +1164,7 @@ func (r *CRD) GoCodeSetOutput(
 		}
 
 		memberShape := memberShapeRef.Shape
-		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 			continue
 		}
 
@@ -1409,7 +1399,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	for memberIndex, memberName := range elemShape.MemberNames() {
 		memberShapeRef := elemShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
-		if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 			continue
 		}
 		sourceAdaptedVarName := "elem." + memberName
@@ -1497,7 +1487,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 			//                  continue
 			//              }
 			//          }
-			if inStrings(memberName, matchFieldNames) {
+			if util.InStrings(memberName, matchFieldNames) {
 				out += fmt.Sprintf(
 					"%s\t\tif %s.%s != nil {\n",
 					indent,
@@ -1560,18 +1550,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 // names in the List operation's Output shape's element Shape that we should
 // check a corresponding value in the target Spec exists.
 func (r *CRD) listOpMatchFieldNames() []string {
-	res := []string{}
-	if r.helper.generatorConfig == nil {
-		return res
-	}
-	rConfig, found := r.helper.generatorConfig.Resources[r.Names.Original]
-	if !found {
-		return res
-	}
-	if rConfig.ListOperation == nil {
-		return res
-	}
-	return rConfig.ListOperation.MatchFields
+	return r.genCfg.ListOpMatchFieldNames(r.Names.Original)
 }
 
 // GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields
@@ -1632,7 +1611,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	)
 	out += fmt.Sprintf("%s}\n", indent)
 
-	attrMapConfig := r.helper.generatorConfig.Resources[r.Names.Original].UnpackAttributesMapConfig
+	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	sortedAttrFieldNames := []string{}
 	for fieldName := range attrMapConfig.Fields {
 		sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
@@ -1707,7 +1686,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
-				if r.helper.IsIgnoredShape(memberShape.ShapeName) {
+				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 					continue
 				}
 				cleanNames := names.New(memberName)
@@ -1894,7 +1873,7 @@ func (r *CRD) replacePkgName(
 	if strings.Contains(memberType, ".") {
 		pkgName := strings.Split(memberType, ".")[0]
 		typeName := strings.Split(memberType, ".")[1]
-		apiPkgName := r.helper.sdkAPI.PackageName()
+		apiPkgName := r.sdkAPI.API.PackageName()
 		if pkgName == apiPkgName {
 			memberType = replacePkgAlias + "." + typeName
 		} else {
@@ -1914,8 +1893,11 @@ func (r *CRD) replacePkgName(
 	return memberType
 }
 
-func newCRD(
-	helper *Helper,
+// NewCRD returns a pointer to a new `ackmodel.CRD` struct that describes a
+// single top-level resource in an AWS service API
+func NewCRD(
+	sdkAPI *SDKAPI,
+	genCfg *ackgenconfig.Config,
 	crdNames names.Names,
 	crdOps CRDOps,
 ) *CRD {
@@ -1923,7 +1905,8 @@ func newCRD(
 	kind := crdNames.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
-		helper:       helper,
+		sdkAPI:       sdkAPI,
+		genCfg:       genCfg,
 		Names:        crdNames,
 		Kind:         kind,
 		Plural:       plural,
@@ -1936,193 +1919,3 @@ func newCRD(
 var (
 	ErrNilShapePointer = errors.New("found nil Shape pointer")
 )
-
-func (h *Helper) GetCRDs() ([]*CRD, error) {
-	if h.crds != nil {
-		return h.crds, nil
-	}
-	crds := []*CRD{}
-
-	opMap := h.GetOperationMap()
-
-	createOps := (*opMap)[OpTypeCreate]
-	readOneOps := (*opMap)[OpTypeGet]
-	readManyOps := (*opMap)[OpTypeList]
-	updateOps := (*opMap)[OpTypeUpdate]
-	deleteOps := (*opMap)[OpTypeDelete]
-	getAttributesOps := (*opMap)[OpTypeGetAttributes]
-	setAttributesOps := (*opMap)[OpTypeSetAttributes]
-
-	for crdName, createOp := range createOps {
-		if h.IsIgnoredResource(crdName) {
-			continue
-		}
-		crdNames := names.New(crdName)
-		crdOps := CRDOps{
-			Create:        createOps[crdName],
-			ReadOne:       readOneOps[crdName],
-			ReadMany:      readManyOps[crdName],
-			Update:        updateOps[crdName],
-			Delete:        deleteOps[crdName],
-			GetAttributes: getAttributesOps[crdName],
-			SetAttributes: setAttributesOps[crdName],
-		}
-		h.RemoveIgnoredOperations(&crdOps)
-		crd := newCRD(h, crdNames, crdOps)
-
-		// OK, begin to gather the CRDFields that will go into the Spec struct.
-		// These fields are those members of the Create operation's Input
-		// Shape.
-		inputShape := createOp.InputRef.Shape
-		if inputShape == nil {
-			return nil, ErrNilShapePointer
-		}
-		for memberName, memberShapeRef := range inputShape.MemberRefs {
-			if memberShapeRef.Shape == nil {
-				return nil, ErrNilShapePointer
-			}
-			if h.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
-			renamedName, _ := crd.InputFieldRename(
-				createOp.Name, memberName,
-			)
-			memberNames := names.New(renamedName)
-			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
-				crd.UnpackAttributes()
-				continue
-			}
-			crd.AddSpecField(memberNames, memberShapeRef)
-		}
-
-		// Now process the fields that will go into the Status struct. We want
-		// fields that are in the Create operation's Output Shape but that are
-		// not in the Input Shape.
-		outputShape := createOp.OutputRef.Shape
-		if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
-			// We might be in a "wrapper" shape. Unwrap it to find the real object
-			// representation for the CRD's createOp. If there is a single member
-			// shape and that member shape is a structure, unwrap it.
-			for _, memberRef := range outputShape.MemberRefs {
-				if memberRef.Shape.Type == "structure" {
-					outputShape = memberRef.Shape
-				}
-			}
-		}
-		for memberName, memberShapeRef := range outputShape.MemberRefs {
-			if h.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
-			if memberShapeRef.Shape == nil {
-				return nil, ErrNilShapePointer
-			}
-			memberNames := names.New(memberName)
-			if _, found := crd.SpecFields[memberName]; found {
-				// We don't put fields that are already in the Spec struct into
-				// the Status struct
-				continue
-			}
-			if memberName == "Attributes" && h.UnpacksAttributesMap(crdName) {
-				continue
-			}
-			if crd.IsPrimaryARNField(memberName) {
-				// We automatically place the primary resource ARN value into
-				// the Status.ACKResourceMetadata.ARN field
-				continue
-			}
-			crd.AddStatusField(memberNames, memberShapeRef)
-		}
-
-		crds = append(crds, crd)
-	}
-	sort.Slice(crds, func(i, j int) bool {
-		return crds[i].Names.Camel < crds[j].Names.Camel
-	})
-	h.crds = crds
-	return crds, nil
-}
-
-// IsIgnoredResource returns true if Operation Name is configured to be ignored
-// in generator config for the AWS service
-func (h *Helper) IsIgnoredResource(resourceName string) bool {
-	if resourceName == "" {
-		return true
-	}
-	if h.generatorConfig != nil {
-		return inStrings(resourceName, h.generatorConfig.Ignore.ResourceNames)
-	}
-	return false
-}
-
-// RemoveIgnoredOperations updates CRDOps argument by setting those operations to nil
-// that are configured to be ignored in generator config for the AWS service
-func (h *Helper) RemoveIgnoredOperations(crdOps *CRDOps) {
-	if h.IsIgnoredOperation(crdOps.Create) {
-		crdOps.Create = nil
-	}
-	if h.IsIgnoredOperation(crdOps.ReadOne) {
-		crdOps.ReadOne = nil
-	}
-	if h.IsIgnoredOperation(crdOps.ReadMany) {
-		crdOps.ReadMany = nil
-	}
-	if h.IsIgnoredOperation(crdOps.Update) {
-		crdOps.Update = nil
-	}
-	if h.IsIgnoredOperation(crdOps.Delete) {
-		crdOps.Delete = nil
-	}
-	if h.IsIgnoredOperation(crdOps.GetAttributes) {
-		crdOps.GetAttributes = nil
-	}
-	if h.IsIgnoredOperation(crdOps.SetAttributes) {
-		crdOps.SetAttributes = nil
-	}
-}
-
-// IsIgnoredOperation returns true if Operation Name is configured to be ignored
-// in generator config for the AWS service
-func (h *Helper) IsIgnoredOperation(operation *awssdkmodel.Operation) bool {
-	if operation == nil {
-		return true
-	}
-	if h.generatorConfig != nil {
-		if inStrings(operation.Name, h.generatorConfig.Ignore.Operations) {
-			return true
-		}
-	}
-	return false
-}
-
-// UnpacksAttributeMap returns true if the underlying API has
-// Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
-// schema'd fields to a raw `map[string]*string` for this resource (see SNS and
-// SQS APIs)
-func (h *Helper) UnpacksAttributesMap(resourceName string) bool {
-	if h.generatorConfig != nil {
-		resGenConfig, found := h.generatorConfig.Resources[resourceName]
-		if found {
-			return resGenConfig.UnpackAttributesMapConfig != nil
-		}
-	}
-	return false
-}
-
-// GetOperationMap returns a map, keyed by the operation type and operation
-// ID/name, of aws-sdk-go private/model/api.Operation struct pointers
-func (h *Helper) GetOperationMap() *OperationMap {
-	if h.opMap != nil {
-		return h.opMap
-	}
-	// create an index of Operations by operation types and resource name
-	opMap := OperationMap{}
-	for opID, op := range h.sdkAPI.Operations {
-		opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
-		if _, found := opMap[opType]; !found {
-			opMap[opType] = map[string]*awssdkmodel.Operation{}
-		}
-		opMap[opType][resName] = op
-	}
-	h.opMap = &opMap
-	return &opMap
-}

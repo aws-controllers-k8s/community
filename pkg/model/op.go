@@ -41,7 +41,7 @@ const (
 
 type OperationMap map[OpType]map[string]*awssdkmodel.Operation
 
-// GetOpTypeAndResourceNameFromOpId guesses the resource name and type of
+// GetOpTypeAndResourceNameFromOpID guesses the resource name and type of
 // operation from the OperationID
 func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 	pluralize := pluralize.NewClient()

@@ -15,10 +15,15 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
+	ackgenconfig "github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	"github.com/aws/aws-controllers-k8s/pkg/names"
+	"github.com/aws/aws-controllers-k8s/pkg/util"
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 )
 
@@ -53,7 +58,7 @@ func NewSDKHelper(basePath string) *SDKHelper {
 }
 
 // API returns the aws-sdk-go API model for a supplied service alias
-func (h *SDKHelper) API(serviceAlias string) (*awssdkmodel.API, error) {
+func (h *SDKHelper) API(serviceAlias string) (*SDKAPI, error) {
 	modelPath, _, err := h.ModelAndDocsPath(serviceAlias)
 	if err != nil {
 		return nil, err
@@ -65,7 +70,14 @@ func (h *SDKHelper) API(serviceAlias string) (*awssdkmodel.API, error) {
 	// apis is a map, keyed by the service alias, of pointers to aws-sdk-go
 	// model API objects
 	for _, api := range apis {
-		return api, nil
+		// If we don't do this, we can end up with panic()'s like this:
+		// panic: assignment to entry in nil map
+		// when trying to execute Shape.GoType().
+		//
+		// Calling API.ServicePackageDoc() ends up resetting the API.imports
+		// unexported map variable...
+		_ = api.ServicePackageDoc()
+		return &SDKAPI{api, nil, nil}, nil
 	}
 	return nil, ErrServiceNotFound
 }
@@ -87,7 +99,7 @@ func (h *SDKHelper) ModelAndDocsPath(
 	return modelPath, docsPath, nil
 }
 
-// APIVersion returns the API version (e.g. "2012-10-03") for a service API
+// APIVersion returns the API version (e.h. "2012-10-03") for a service API
 func (h *SDKHelper) APIVersion(serviceAlias string) (string, error) {
 	apiPath := filepath.Join(h.basePath, "models", "apis", serviceAlias)
 	versionDirs, err := ioutil.ReadDir(apiPath)
@@ -109,4 +121,151 @@ func (h *SDKHelper) APIVersion(serviceAlias string) (string, error) {
 		return version, nil
 	}
 	return "", ErrNoValidVersionDirectory
+}
+
+// SDKAPI contains an API model for a single AWS service API
+type SDKAPI struct {
+	API *awssdkmodel.API
+	// A map of operation type and resource name to
+	// aws-sdk-go/private/model/api.Operation structs
+	opMap *OperationMap
+	// Map, keyed by original Shape GoTypeElem(), with the values being a
+	// renamed type name (due to conflicting names)
+	typeRenames map[string]string
+}
+
+// GetPayloads returns a slice of strings of Shape names representing input and
+// output request/response payloads
+func (a *SDKAPI) GetPayloads() []string {
+	res := []string{}
+	for _, op := range a.API.Operations {
+		res = append(res, op.InputRef.ShapeName)
+		res = append(res, op.OutputRef.ShapeName)
+	}
+	return res
+}
+
+// GetOperationMap returns a map, keyed by the operation type and operation
+// ID/name, of aws-sdk-go private/model/api.Operation struct pointers
+func (a *SDKAPI) GetOperationMap() *OperationMap {
+	if a.opMap != nil {
+		return a.opMap
+	}
+	// create an index of Operations by operation types and resource name
+	opMap := OperationMap{}
+	for opID, op := range a.API.Operations {
+		opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+		if _, found := opMap[opType]; !found {
+			opMap[opType] = map[string]*awssdkmodel.Operation{}
+		}
+		opMap[opType][resName] = op
+	}
+	a.opMap = &opMap
+	return &opMap
+}
+
+// CRDNames returns a slice of names structs for all top-level resources in the
+// API
+func (a *SDKAPI) CRDNames(cfg *ackgenconfig.Config) []names.Names {
+	opMap := a.GetOperationMap()
+	createOps := (*opMap)[OpTypeCreate]
+	crdNames := []names.Names{}
+	for crdName := range createOps {
+		if cfg.IsIgnoredResource(crdName) {
+			continue
+		}
+		crdNames = append(crdNames, names.New(crdName))
+	}
+	return crdNames
+}
+
+// GetTypeRenames returns a map of original type name to renamed name (some
+// type definition names conflict with generated names)
+func (a *SDKAPI) GetTypeRenames(cfg *ackgenconfig.Config) map[string]string {
+	if a.typeRenames != nil {
+		return a.typeRenames
+	}
+
+	trenames := map[string]string{}
+
+	payloads := a.GetPayloads()
+
+	for shapeName, shape := range a.API.Shapes {
+		if util.InStrings(shapeName, payloads) {
+			// Payloads are not type defs
+			continue
+		}
+		if shape.Type != "structure" {
+			continue
+		}
+		if shape.Exception {
+			// Neither are exceptions
+			continue
+		}
+		if cfg.IsIgnoredShape(shapeName) {
+			continue
+		}
+		tdefNames := names.New(shapeName)
+		if a.HasConflictingTypeName(shapeName, cfg) {
+			tdefNames.Camel += ConflictingNameSuffix
+			trenames[shapeName] = tdefNames.Camel
+		}
+	}
+	a.typeRenames = trenames
+	return trenames
+}
+
+// HasConflictingTypeName returns true if the supplied type name will conflict
+// with any generated type in the service's API package
+func (a *SDKAPI) HasConflictingTypeName(typeName string, cfg *ackgenconfig.Config) bool {
+	// First grab the set of CRD struct names and the names of their Spec and
+	// Status structs
+	cleanTypeName := names.New(typeName).Camel
+	crdNames := a.CRDNames(cfg)
+	crdResourceNames := []string{}
+	crdSpecNames := []string{}
+	crdStatusNames := []string{}
+
+	for _, crdName := range crdNames {
+		cleanResourceName := crdName.Camel
+		crdResourceNames = append(crdResourceNames, cleanResourceName)
+		crdSpecNames = append(crdSpecNames, cleanResourceName+"Spec")
+		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
+	}
+	return (util.InStrings(cleanTypeName, crdResourceNames) ||
+		util.InStrings(cleanTypeName, crdSpecNames) ||
+		util.InStrings(cleanTypeName, crdStatusNames))
+}
+
+func (a *SDKAPI) GetServiceAlias() string {
+	if a == nil || a.API == nil {
+		return ""
+	}
+	return awssdkmodel.ServiceID(a.API)
+}
+
+func (a *SDKAPI) GetCleanServiceAlias() string {
+	serviceAlias := strings.ToLower(a.GetServiceAlias())
+	return strings.Replace(serviceAlias, " ", "", -1)
+}
+
+func (a *SDKAPI) GetServiceFullName() string {
+	if a == nil || a.API == nil {
+		return ""
+	}
+	return a.API.Metadata.ServiceFullName
+}
+
+func (a *SDKAPI) GetAPIGroup() string {
+	cleanServiceAlias := a.GetCleanServiceAlias()
+	return fmt.Sprintf("%s.services.k8s.aws", cleanServiceAlias)
+}
+
+// GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
+// interface type name.
+func (a *SDKAPI) GetSDKAPIInterfaceTypeName() string {
+	if a == nil || a.API == nil {
+		return ""
+	}
+	return a.API.StructName()
 }

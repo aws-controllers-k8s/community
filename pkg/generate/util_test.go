@@ -11,15 +11,15 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model_test
+package generate_test
 
 import (
 	"sort"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
+	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
-func attrCamelNames(fields map[string]*model.CRDField) []string {
+func attrCamelNames(fields map[string]*ackmodel.CRDField) []string {
 	res := []string{}
 	for _, attr := range fields {
 		res = append(res, attr.Names.Camel)
@@ -28,10 +28,19 @@ func attrCamelNames(fields map[string]*model.CRDField) []string {
 	return res
 }
 
-func getCRDByName(name string, crds []*model.CRD) *model.CRD {
+func getCRDByName(name string, crds []*ackmodel.CRD) *ackmodel.CRD {
 	for _, c := range crds {
 		if c.Names.Original == name {
 			return c
+		}
+	}
+	return nil
+}
+
+func getTypeDefByName(name string, tdefs []*ackmodel.TypeDef) *ackmodel.TypeDef {
+	for _, td := range tdefs {
+		if td.Names.Original == name {
+			return td
 		}
 	}
 	return nil
