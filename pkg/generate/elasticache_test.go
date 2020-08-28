@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model_test
+package generate_test
 
 import (
 	"testing"
@@ -27,9 +27,9 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+	g := testutil.NewGeneratorForService(t, "elasticache")
 
-	crds, err := sh.GetCRDs()
+	crds, err := g.GetCRDs()
 	require.Nil(err)
 
 	crd := getCRDByName("CacheCluster", crds)
@@ -628,9 +628,9 @@ func TestElasticache_CacheCluster(t *testing.T) {
 func TestElasticache_Ignored_Operations(t *testing.T) {
 	require := require.New(t)
 
-	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+	g := testutil.NewGeneratorForService(t, "elasticache")
 
-	crds, err := sh.GetCRDs()
+	crds, err := g.GetCRDs()
 	require.Nil(err)
 
 	crd := getCRDByName("Snapshot", crds)
@@ -642,9 +642,9 @@ func TestElasticache_Ignored_Operations(t *testing.T) {
 func TestElasticache_Ignored_Resources(t *testing.T) {
 	require := require.New(t)
 
-	sh := testutil.NewSchemaHelperForService(t, "elasticache")
+	g := testutil.NewGeneratorForService(t, "elasticache")
 
-	crds, err := sh.GetCRDs()
+	crds, err := g.GetCRDs()
 	require.Nil(err)
 
 	crd := getCRDByName("GlobalReplicationGroup", crds)

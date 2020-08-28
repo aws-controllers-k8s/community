@@ -11,20 +11,23 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model
+package config
 
 import (
 	"io/ioutil"
 
+	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/ghodss/yaml"
+
+	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
-// GeneratorConfig represents instructions to the ACK code generator for a
-// particular AWS service API
-type GeneratorConfig struct {
+// Config represents instructions to the ACK code generator for a particular
+// AWS service API
+type Config struct {
 	// Resources contains generator instructions for individual CRDs within an
 	// API
-	Resources map[string]ResourceGeneratorConfig `json:"resources"`
+	Resources map[string]ResourceConfig `json:"resources"`
 	// CRDs to ignore. ACK generator would skip these resources.
 	Ignore IgnoreSpec `json:"ignore"`
 }
@@ -43,9 +46,9 @@ type IgnoreSpec struct {
 	ShapeNames []string `json:"shape_names"`
 }
 
-// ResourceGeneratorConfig represents instructions to the ACK code generator
+// ResourceConfig represents instructions to the ACK code generator
 // for a particular CRD/resource on an AWS service API
-type ResourceGeneratorConfig struct {
+type ResourceConfig struct {
 	// NameField is the name of the Member of the Create Input shape that
 	// represents the name/string identifier field for the resource. If this
 	// isn't set, then the generator will look for a field called "Name" or
@@ -111,7 +114,7 @@ type ResourceGeneratorConfig struct {
 // fields that are masquerading as raw key/value pairs.
 type UnpackAttributesMapConfig struct {
 	// Fields contains a map, keyed by the original Attribute Key, of
-	// FieldGeneratorConfig instructions for Attributes that should be
+	// FieldConfig instructions for Attributes that should be
 	// considered actual CRD fields.
 	//
 	// Some fields are ReadWrite -- i.e. the Kubernetes user has the ability to
@@ -127,13 +130,13 @@ type UnpackAttributesMapConfig struct {
 	// information that is constantly changing and does not represent
 	// information to the ACK service controller that is useful for determining
 	// observed versus desired state -- then do NOT list that attribute here.
-	Fields map[string]FieldGeneratorConfig `json:"fields"`
+	Fields map[string]FieldConfig `json:"fields"`
 }
 
-// FieldGeneratorConfig contains instructions to the code generator about how
+// FieldConfig contains instructions to the code generator about how
 // to interpret the value of an Attribute and how to map it to a CRD's Spec or
 // Status field
-type FieldGeneratorConfig struct {
+type FieldConfig struct {
 	// IsReadOnly indicates the field's value can not be set by a Kubernetes
 	// user; in other words, the field should go in the CR's Status struct
 	IsReadOnly bool `json:"is_read_only"`
@@ -181,12 +184,106 @@ type ListOperationConfig struct {
 	MatchFields []string `json:"match_fields"`
 }
 
-// NewGeneratorConfig returns a new GeneratorConfig object given a supplied
+// IsIgnoredOperation returns true if Operation Name is configured to be ignored
+// in generator config for the AWS service
+func (c *Config) IsIgnoredOperation(operation *awssdkmodel.Operation) bool {
+	if c == nil {
+		return false
+	}
+	if operation == nil {
+		return true
+	}
+	return util.InStrings(operation.Name, c.Ignore.Operations)
+}
+
+// UnpacksAttributesMap returns true if the underlying API has
+// Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
+// schema'd fields to a raw `map[string]*string` for this resource (see SNS and
+// SQS APIs)
+func (c *Config) UnpacksAttributesMap(resourceName string) bool {
+	if c == nil {
+		return false
+	}
+	resGenConfig, found := c.Resources[resourceName]
+	return found && resGenConfig.UnpackAttributesMapConfig != nil
+}
+
+// IsIgnoredShape returns true if the supplied shape name should be ignored by the
+// code generator, false otherwise
+func (c *Config) IsIgnoredShape(shapeName string) bool {
+	if c == nil || len(c.Ignore.ShapeNames) == 0 {
+		return false
+	}
+	return util.InStrings(shapeName, c.Ignore.ShapeNames)
+}
+
+// IsIgnoredResource returns true if Operation Name is configured to be ignored
+// in generator config for the AWS service
+func (c *Config) IsIgnoredResource(resourceName string) bool {
+	if resourceName == "" {
+		return true
+	}
+	if c == nil {
+		return false
+	}
+	return util.InStrings(resourceName, c.Ignore.ResourceNames)
+}
+
+// ResourceInputFieldRename returns the renamed field for a Resource, a
+// supplied Operation ID and original field name and whether or not a renamed
+// override field name was found
+func (c *Config) ResourceInputFieldRename(
+	resName string,
+	opID string,
+	origFieldName string,
+) (string, bool) {
+	if c == nil {
+		return origFieldName, false
+	}
+	rConfig, ok := c.Resources[resName]
+	if !ok {
+		return origFieldName, false
+	}
+	if rConfig.Renames == nil {
+		return origFieldName, false
+	}
+	oRenames, ok := rConfig.Renames.Operations[opID]
+	if !ok {
+		return origFieldName, false
+	}
+	renamed, ok := oRenames.InputFields[origFieldName]
+	if !ok {
+		return origFieldName, false
+	}
+	return renamed, true
+}
+
+// ListOpMatchFieldNames returns a slice of strings representing the field
+// names in the List operation's Output shape's element Shape that we should
+// check a corresponding value in the target Spec exists.
+func (c *Config) ListOpMatchFieldNames(
+	resName string,
+) []string {
+	res := []string{}
+	if c == nil {
+		return res
+	}
+	rConfig, found := c.Resources[resName]
+	if !found {
+		return res
+	}
+	if rConfig.ListOperation == nil {
+		return res
+	}
+	return rConfig.ListOperation.MatchFields
+}
+
+// New returns a new Config object given a supplied
 // path to a config file
-func NewGeneratorConfig(
+func New(
 	configPath string,
-) (*GeneratorConfig, error) {
-	gc := GeneratorConfig{}
+) (*Config, error) {
+	gc := Config{}
 	contents, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err

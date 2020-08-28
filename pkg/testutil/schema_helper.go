@@ -18,10 +18,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/aws/aws-controllers-k8s/pkg/generate"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
-func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper {
+func NewGeneratorForService(t *testing.T, serviceAlias string) *generate.Generator {
 	path := filepath.Clean("testdata")
 	sdkHelper := model.NewSDKHelper(path)
 	sdkAPI, err := sdkHelper.API(serviceAlias)
@@ -32,9 +33,9 @@ func NewSchemaHelperForService(t *testing.T, serviceAlias string) *model.Helper 
 	if _, err := os.Stat(generatorConfigPath); os.IsNotExist(err) {
 		generatorConfigPath = ""
 	}
-	h, err := model.NewHelper(sdkAPI, generatorConfigPath)
+	g, err := generate.New(sdkAPI, generatorConfigPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return h
+	return g
 }

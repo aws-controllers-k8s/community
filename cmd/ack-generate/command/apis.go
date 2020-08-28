@@ -23,6 +23,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
+	"github.com/aws/aws-controllers-k8s/pkg/generate"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 	template "github.com/aws/aws-controllers-k8s/pkg/template/apis"
 )
@@ -83,29 +84,29 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sh, err := model.NewHelper(sdkAPI, optGeneratorConfigPath)
+	g, err := generate.New(sdkAPI, optGeneratorConfigPath)
 	if err != nil {
 		return err
 	}
 
-	crds, err := sh.GetCRDs()
+	crds, err := g.GetCRDs()
 	if err != nil {
 		return err
 	}
-	typeDefs, typeImports, err := sh.GetTypeDefs()
+	typeDefs, typeImports, err := g.GetTypeDefs()
 	if err != nil {
 		return err
 	}
-	enumDefs, err := sh.GetEnumDefs()
+	enumDefs, err := g.GetEnumDefs()
 	if err != nil {
 		return err
 	}
 
-	if err = writeDocGo(sh); err != nil {
+	if err = writeDocGo(g); err != nil {
 		return err
 	}
 
-	if err = writeGroupVersionInfoGo(sh); err != nil {
+	if err = writeGroupVersionInfoGo(g); err != nil {
 		return err
 	}
 
@@ -125,9 +126,9 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeDocGo(sh *model.Helper) error {
+func writeDocGo(g *generate.Generator) error {
 	var b bytes.Buffer
-	apiGroup := sh.GetAPIGroup()
+	apiGroup := g.SDKAPI.GetAPIGroup()
 	vars := &template.DocTemplateVars{
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,
@@ -148,9 +149,9 @@ func writeDocGo(sh *model.Helper) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeGroupVersionInfoGo(sh *model.Helper) error {
+func writeGroupVersionInfoGo(g *generate.Generator) error {
 	var b bytes.Buffer
-	apiGroup := sh.GetAPIGroup()
+	apiGroup := g.SDKAPI.GetAPIGroup()
 	vars := &template.GroupVersionInfoTemplateVars{
 		APIVersion: optGenVersion,
 		APIGroup:   apiGroup,

@@ -11,13 +11,15 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model
+package util
 
-func (h *Helper) getPayloads() []string {
-	res := []string{}
-	for _, op := range h.sdkAPI.Operations {
-		res = append(res, op.InputRef.ShapeName)
-		res = append(res, op.OutputRef.ShapeName)
+// InStrings returns true if the subject string is contained in the supplied
+// slice of strings
+func InStrings(subject string, collection []string) bool {
+	for _, item := range collection {
+		if subject == item {
+			return true
+		}
 	}
-	return res
+	return false
 }

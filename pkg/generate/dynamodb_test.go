@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model_test
+package generate_test
 
 import (
 	"testing"
@@ -27,9 +27,9 @@ func TestDynamoDB_Table(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	sh := testutil.NewSchemaHelperForService(t, "dynamodb")
+	g := testutil.NewGeneratorForService(t, "dynamodb")
 
-	crds, err := sh.GetCRDs()
+	crds, err := g.GetCRDs()
 	require.Nil(err)
 
 	crd := getCRDByName("Table", crds)
