@@ -24,5 +24,5 @@ RUN  go build -a -o $work_dir/bin/controller $work_dir/services/$service_alias/c
 FROM amazonlinux:2
 ARG work_dir=/github.com/aws/aws-controllers-k8s
 WORKDIR /
-COPY --from=builder $work_dir/bin/controller /bin/.
+COPY --from=builder $work_dir/bin/controller LICENSE ATTRIBUTION.md /bin/.
 ENTRYPOINT ["/bin/controller"]
