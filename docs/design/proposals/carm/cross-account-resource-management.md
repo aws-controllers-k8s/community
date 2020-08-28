@@ -20,13 +20,13 @@ The proposed solution will solve the problem of cross account management within 
 
 Controllers will store AccountIDs and their associated IAM Role ARNs in a `ConfigMap` Kubernetes object. Cluster administrators will be responsible for administrating and updating the `ConfigMap`, and creating the target roles using the AWS Console/CLI. Controllers can reuse and existing IAM Role ARN if it matches the scope they need.
 
-To prevent unauthorized users from making any CRUD operations on resources in different AWS accounts, ACK will associate a unique Namespace to each AccountID, which will help administrators limit access to namespaces using K8s RBAC model, hence limit access to AccountIDs.
+To prevent unauthorized users from making any CRUD operations on resources in different AWS accounts, cluster administrators will be able to set an AWS Owner Account ID as an annotation on each namespace, which will be used by ACK Controllers to override the AWS Account ID that is used to create the resources in that namespace. This will help administrators limit access to namespaces using K8s RBAC model, hence limit access to AccountIDs.
 
 #### Design details
 
 ##### Namespace annotations
 
-To associate a namespace with a unique AWS account, ACK service controllers expect from cluster administrators to create namespaces with a specific annotation `services.k8s.aws/owner-account-id` e.g:
+Cluster admins will be able to specify an AWS account ID in the namespace annotations in order to override any CRs account IDs created in that namespace e.g.:
 
 ```yaml
 apiVersion: v1
@@ -34,13 +34,21 @@ kind: Namespace
 metadata:
   name: production-n1
   annotations:
-    services.k8s.aws/default-aws-region: "eu-west-1"
     services.k8s.aws/owner-account-id: "123456789012"
 ```
 
-Each time a new AWS resource object is updated, ACK service controllers will lookup the namespaces annotations and decide in which namespace the AWS object should be created.
+Each time a new AWS resource object is updated, ACK service controllers will lookup the namespaces annotations and decide in which AWS account the object should be created.
 
-In addition to the owner account id annotation, users can also specify a `services.k8s.aws/default-aws-region` annotation. This region will be used by default in case region annotation is missing in the CRDs specs.
+In addition to the owner account id annotation, users can also specify a `services.k8s.aws/default-region` annotation. This region will be used by default in case region annotation is missing in the CRDs specs.
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production-n1
+  annotations:
+    services.k8s.aws/default-region: "eu-west-1"
+```
 
 *//TODO(a-hilaly) address namespace/account-id conflict cases*
 
@@ -50,31 +58,57 @@ In addition to the owner account id annotation, users can also specify a `servic
 
 To determine within which region the resources should be created, ACK controllers will, in order, look for a region in the following sources: 
 
-- Resource region annotation `services.k8s.aws/aws-region`. If provided it will override the namespace default region annotation.
-- Namespace default region annotation `services.k8s.aws/default-aws-region`
-- If none of the two annotations are provided ACK will try to find a region from this sources: (see [cli user guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence)): Controller flags, Pod IRSA environment variables...
+- CR region annotation `services.k8s.aws/region`. If provided it will override the namespace default region annotation.
+- Namespace default region annotation `services.k8s.aws/default-region`
+- If none of the two annotations are provided ACK will try to find a region from these sources: (see [cli user guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence)): Controller flags, Pod IRSA environment variables...
 
 ##### Storing AWS Role ARNs
 
-AccountIDs and their associate AWS Role ARNs will be stored in a `ConfigMap` called "ack-carm-config-map". e.g:
+AccountIDs and their associate AWS Role ARNs will be stored in a `ConfigMap` called "ack-role-account-map". e.g:
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ack-carm-config-map
+  name: ack-role-account-map
   namespace: default
 data:
-  accounts: |
-    123456789012=arn:aws:iam::123456789012:root
-    454545454545=arn:aws:iam::454545454545:role/S3Access
+  accounts:
+    "123456789012": arn:aws:iam::123456789012:root
+    "454545454545": arn:aws:iam::454545454545:role/S3Access
 ```
+
+In ACK runtime, the reconciler will need to lookup the `ack-role-account-map` data content to query the value of a particular key. To realize that, the controllers will keep a cached version of the ConfigMap and frequently update it when changes are made by cluster admins.
+
+To do that we will use `SharedInformers` from the [k8s.io/client-go](https://godoc.org/k8s.io/client-go) `informer` package to watch for the `ack-role-account-map` ConfigMap updates then query for the newest version of the data. The same informer will help ACK service controllers query the `ack-role-account-map` data during startup.
 
 ##### IAM Account pivot
 
-When a matching namespace is found, ACK service controllers will search for the IAM Role ARN associated with the AccountID in the `ack-carm-config-map` ConfigMap, and pivot the session to create resources in a new AWS account.
+When a matching namespace is found, ACK service controllers will search for the IAM Role ARN associated with the AccountID in the `ack-role-account-map` ConfigMap, and pivot the session to create resources in a new AWS account.
 
 The pivot is done by using the [aws-sdk-go](https://github.com/aws/aws-sdk-go) `session` package. `session.NewSession()` function will load the AWS related environment variables (injected by Pod IRSA) and initialize the [token provider](https://github.com/aws/aws-sdk-go/blob/master/aws/session/session.go#L200-L218) function. Later the token provider function is executed when [`AssumeRoleProvider.Retrieve`](https://github.com/aws/aws-sdk-go/blob/master/aws/credentials/stscreds/assume_role_provider.go#L329) is called and [return a set of credentials](https://github.com/aws/aws-sdk-go/blob/master/aws/credentials/stscreds/assume_role_provider.go#L357-L362) to make pivoted api calls.
+
+```go
+    // getting the role ARN to assume
+    roleARN := getRoleARN()
+    
+    // NewSession will use POD IRSA credentials to make 
+    // the STS Assume Role API.
+    sess, err := session.NewSession()
+    if err != nil {
+        return ...
+    }
+
+    // create the credentials from AssumeRoleProvider to assume the role
+    creds := stscreds.NewCredentials(sess, roleArn)
+
+    // we can use the creds to create a new client with a pivoted session to either
+
+    // create service client value configured for credentials
+    svc := s3.New(sess, &aws.Config{Credentials: creds})
+
+    // or store the session object in the resourceManager ...
+```
 
 ##### sequence diagram
 
@@ -93,15 +127,20 @@ ACK service controllers reconcile loops will log every session account pivot usi
 
 ```golang
 func (r *reconciler) reconcile(req ctrlrt.Request) error {
-  ...
-
-  acctID := r.getOwnerAccountID(res)
-  r.log.WithValues(
-    "account_id", acctID,
     ...
-  )
 
-  ...
+    acctID := r.getOwnerAccountID(res)
+    region := r.getRegion(res)
+    accountRoleARN := getAccountIDRoleARN(...)
+
+    r.log.WithValues(
+        "account_id", acctID,
+        "region", region,
+        "account_arn", accountRoleARN,
+        ...
+    )
+
+    ...
 }
 ```
 
