@@ -11,16 +11,16 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
-	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/pkg/resource"
-	svctypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/apis/{{ .APIVersion }}"
+	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/pkg/resource"
+	svctypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/apis/{{ .APIVersion }}"
 
-	{{ $serviceAlias := .ServiceAlias }} {{range $crdName := .SnakeCasedCRDNames }}_ "github.com/aws/aws-controllers-k8s/services/{{ $serviceAlias }}/pkg/resource/{{ $crdName }}"
+	{{ $serviceIDClean := .ServiceIDClean }} {{range $crdName := .SnakeCasedCRDNames }}_ "github.com/aws/aws-controllers-k8s/services/{{ $serviceIDClean }}/pkg/resource/{{ $crdName }}"
 	{{end}}
 )
 
 var (
-	awsServiceAPIGroup = "{{ .ServiceAlias }}.services.k8s.aws"
-	awsServiceAlias    = "{{ .ServiceAlias }}"
+	awsServiceAPIGroup = "{{ .APIGroup }}"
+	awsServiceAlias    = "{{ .ServiceIDClean }}"
 	scheme             = runtime.NewScheme()
 	setupLog           = ctrlrt.Log.WithName("setup")
 )

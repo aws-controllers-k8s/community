@@ -8,7 +8,7 @@ import (
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
-	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceAlias }}/pkg/resource"
+	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/pkg/resource"
 )
 
 // resourceManagerFactory produces resourceManager objects. It implements the

@@ -1,4 +1,3 @@
-{{- define "crd" -}}
 {{- template "boilerplate" }}
 
 package {{ .APIVersion }}
@@ -57,4 +56,3 @@ type {{ .CRD.Kind }}List struct {
 func init() {
 	SchemeBuilder.Register(&{{ .CRD.Kind }}{}, &{{ .CRD.Kind }}List{})
 }
-{{ end -}}
