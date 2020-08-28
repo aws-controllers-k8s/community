@@ -5,6 +5,7 @@ through the steps to test ACK for the currently supported AWS services:
 
 - Amazon ECR
 - Amazon S3
+- Amazon SNS
 
 If you run into any problems when testing one of the above services,
 [raise an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
