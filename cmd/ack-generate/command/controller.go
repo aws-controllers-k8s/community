@@ -14,7 +14,6 @@
 package command
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -26,11 +25,6 @@ import (
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
-	cmdtemplate "github.com/aws/aws-controllers-k8s/pkg/template/cmd"
-	configcontrollertemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/controller"
-	configdefaulttemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/default"
-	configrbactemplate "github.com/aws/aws-controllers-k8s/pkg/template/config/rbac"
-	pkgtemplate "github.com/aws/aws-controllers-k8s/pkg/template/pkg"
 )
 
 var (
@@ -82,11 +76,13 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	g, err := generate.New(sdkAPI, optGeneratorConfigPath)
+	latestAPIVersion, err = getLatestAPIVersion()
 	if err != nil {
 		return err
 	}
-	latestAPIVersion, err = getLatestAPIVersion()
+	g, err := generate.New(
+		sdkAPI, latestAPIVersion, optGeneratorConfigPath, optTemplatesDir,
+	)
 	if err != nil {
 		return err
 	}
@@ -109,25 +105,8 @@ func generateController(cmd *cobra.Command, args []string) error {
 }
 
 func writeControllerMainGo(g *generate.Generator, crds []*ackmodel.CRD) error {
-	var b bytes.Buffer
-
-	// convert CRD names into snake_case to use for package import
-	snakeCasedCRDNames := make([]string, 0)
-	for _, crd := range crds {
-		snakeCasedCRDNames = append(snakeCasedCRDNames, crd.Names.Snake)
-	}
-
-	vars := &cmdtemplate.ControllerMainTemplateVars{
-		APIVersion:         latestAPIVersion,
-		ServiceAlias:       g.SDKAPI.GetCleanServiceAlias(),
-		SnakeCasedCRDNames: snakeCasedCRDNames,
-	}
-
-	tpl, err := cmdtemplate.NewControllerMainTemplate(optTemplatesDir)
+	b, err := g.GenerateCmdControllerMainFile()
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -140,6 +119,14 @@ func writeControllerMainGo(g *generate.Generator, crds []*ackmodel.CRD) error {
 }
 
 func writeResourcePackage(g *generate.Generator, crds []*ackmodel.CRD) error {
+	targets := []string{
+		"descriptor",
+		"identifiers",
+		"manager",
+		"manager_factory",
+		"resource",
+		"sdk",
+	}
 	for _, crd := range crds {
 		pkgCRDResourcePath := filepath.Join(pkgResourcePath, crd.Names.Snake)
 		if !optDryRun {
@@ -147,39 +134,28 @@ func writeResourcePackage(g *generate.Generator, crds []*ackmodel.CRD) error {
 				return err
 			}
 		}
-		if err := writeCRDResourceGo(g, crd); err != nil {
-			return err
-		}
-		if err := writeCRDIdentifiersGo(g, crd); err != nil {
-			return err
-		}
-		if err := writeCRDDescriptorGo(g, crd); err != nil {
-			return err
-		}
-		if err := writeCRDManagerFactoryGo(g, crd); err != nil {
-			return err
-		}
-		if err := writeCRDManagerGo(g, crd); err != nil {
-			return err
-		}
-		if err := writeCRDSDKGo(g, crd); err != nil {
-			return err
+		for _, target := range targets {
+			b, err := g.GenerateCRDResourcePackageFile(crd.Names.Original, target)
+			if err != nil {
+				return err
+			}
+			if optDryRun {
+				fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/" + target + ".go ======================================")
+				fmt.Println(strings.TrimSpace(b.String()))
+				return nil
+			}
+			path := filepath.Join(pkgResourcePath, crd.Names.Snake, target+".go")
+			if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
+				return err
+			}
 		}
 	}
 	return writeResourcePackageRegistryGo(g)
 }
 
 func writeResourcePackageRegistryGo(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.ResourceRegistryGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := pkgtemplate.NewResourceRegistryGoTemplate(optTemplatesDir)
+	b, err := g.GenerateResourceRegistryFile()
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -188,150 +164,6 @@ func writeResourcePackageRegistryGo(g *generate.Generator) error {
 		return nil
 	}
 	path := filepath.Join(pkgResourcePath, "registry.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDResourceGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDResourceGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-		CRD:          crd,
-	}
-	tpl, err := pkgtemplate.NewCRDResourceGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/resource.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "resource.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDIdentifiersGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDIdentifiersGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-		CRD:          crd,
-	}
-	tpl, err := pkgtemplate.NewCRDIdentifiersGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/identifiers.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "identifiers.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDDescriptorGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDDescriptorGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		APIGroup:     g.SDKAPI.GetAPIGroup(),
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-		CRD:          crd,
-	}
-	tpl, err := pkgtemplate.NewCRDDescriptorGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/descriptor.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "descriptor.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDManagerFactoryGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDManagerFactoryGoTemplateVars{
-		APIVersion:   latestAPIVersion,
-		APIGroup:     g.SDKAPI.GetAPIGroup(),
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-		CRD:          crd,
-	}
-	tpl, err := pkgtemplate.NewCRDManagerFactoryGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/manager_factory.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "manager_factory.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDManagerGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDManagerGoTemplateVars{
-		APIVersion:              latestAPIVersion,
-		APIGroup:                g.SDKAPI.GetAPIGroup(),
-		ServiceAlias:            g.SDKAPI.GetCleanServiceAlias(),
-		SDKAPIInterfaceTypeName: g.SDKAPI.GetSDKAPIInterfaceTypeName(),
-		CRD:                     crd,
-	}
-	tpl, err := pkgtemplate.NewCRDManagerGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/manager.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "manager.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDSDKGo(g *generate.Generator, crd *ackmodel.CRD) error {
-	var b bytes.Buffer
-	vars := &pkgtemplate.CRDSDKGoTemplateVars{
-		APIVersion:              latestAPIVersion,
-		APIGroup:                g.SDKAPI.GetAPIGroup(),
-		ServiceAlias:            g.SDKAPI.GetCleanServiceAlias(),
-		SDKAPIInterfaceTypeName: g.SDKAPI.GetSDKAPIInterfaceTypeName(),
-		CRD:                     crd,
-	}
-	tpl, err := pkgtemplate.NewCRDSDKGoTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/sdk.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, crd.Names.Snake, "sdk.go")
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
@@ -350,127 +182,29 @@ func writeConfigDirs(g *generate.Generator) error {
 			return err
 		}
 	}
-	if err := writeConfigDefaultKustomizationYAML(g); err != nil {
-		return err
+	targets := []string{
+		"controller/deployment",
+		"controller/kustomization",
+		"default/kustomization",
+		"rbac/cluster-role-binding",
+		"rbac/kustomization",
 	}
-	if err := writeConfigControllerKustomizationYAML(g); err != nil {
-		return err
-	}
-	if err := writeConfigControllerDeploymentYAML(g); err != nil {
-		return err
-	}
-	if err := writeConfigRBACKustomizationYAML(g); err != nil {
-		return err
-	}
-	if err := writeConfigRBACClusterRoleBindingYAML(g); err != nil {
-		return err
+	for _, target := range targets {
+		b, err := g.GenerateConfigYAMLFile(target)
+		if err != nil {
+			return err
+		}
+		if optDryRun {
+			fmt.Println("============================= config/" + target + ".yaml ======================================")
+			fmt.Println(strings.TrimSpace(b.String()))
+			return nil
+		}
+		path := filepath.Join(optControllerOutputPath, "config", target+".yaml")
+		if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
+			return err
+		}
 	}
 	return nil
-}
-
-func writeConfigDefaultKustomizationYAML(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &configdefaulttemplate.ConfigDefaultKustomizationYAMLTemplateVars{
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := configdefaulttemplate.NewConfigDefaultKustomizationYAMLTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= config/default/kustomization.yaml ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "config", "default", "kustomization.yaml")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeConfigControllerKustomizationYAML(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &configcontrollertemplate.ConfigControllerKustomizationYAMLTemplateVars{
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := configcontrollertemplate.NewConfigControllerKustomizationYAMLTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= config/controller/kustomization.yaml ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "config", "controller", "kustomization.yaml")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeConfigControllerDeploymentYAML(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &configcontrollertemplate.ConfigControllerDeploymentYAMLTemplateVars{
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := configcontrollertemplate.NewConfigControllerDeploymentYAMLTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= config/controller/deployment.yaml ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "config", "controller", "deployment.yaml")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeConfigRBACKustomizationYAML(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &configrbactemplate.ConfigRBACKustomizationYAMLTemplateVars{
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := configrbactemplate.NewConfigRBACKustomizationYAMLTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= config/rbac/kustomization.yaml ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "config", "rbac", "kustomization.yaml")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeConfigRBACClusterRoleBindingYAML(g *generate.Generator) error {
-	var b bytes.Buffer
-	vars := &configrbactemplate.ConfigRBACClusterRoleBindingYAMLTemplateVars{
-		ServiceAlias: g.SDKAPI.GetCleanServiceAlias(),
-	}
-	tpl, err := configrbactemplate.NewConfigRBACClusterRoleBindingYAMLTemplate(optTemplatesDir)
-	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= config/rbac/cluster-role-binding.yaml ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(optControllerOutputPath, "config", "rbac", "cluster-role-binding.yaml")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 // getLatestAPIVersion looks in a target output directory to determine what the

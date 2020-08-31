@@ -11,12 +11,12 @@ import (
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}"
-	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceAlias }}/{{ .ServiceAlias }}iface"
+	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
+	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}/{{ .ServiceIDClean }}iface"
 )
 
-// +kubebuilder:rbac:groups={{ .ServiceAlias }}.services.k8s.aws,resources={{ ToLower .CRD.Plural }},verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups={{ .ServiceAlias }}.services.k8s.aws,resources={{ ToLower .CRD.Plural }}/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups={{ .APIGroup }},resources={{ ToLower .CRD.Plural }},verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups={{ .APIGroup }},resources={{ ToLower .CRD.Plural }}/status,verbs=get;update;patch
 
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
@@ -126,7 +126,7 @@ func (rm *resourceManager) Delete(
 // name for the resource
 func (rm *resourceManager) ARNFromName(name string) string {
 	return fmt.Sprintf(
-		"arn:aws:{{ .ServiceAlias }}:%s:%s:%s",
+		"arn:aws:{{ .ServiceIDClean }}:%s:%s:%s",
 		rm.awsRegion,
 		rm.awsAccountID,
 		name,

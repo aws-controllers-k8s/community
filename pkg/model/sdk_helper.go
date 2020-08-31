@@ -237,16 +237,19 @@ func (a *SDKAPI) HasConflictingTypeName(typeName string, cfg *ackgenconfig.Confi
 		util.InStrings(cleanTypeName, crdStatusNames))
 }
 
-func (a *SDKAPI) GetServiceAlias() string {
+// ServiceID returns the exact `metadata.serviceId` attribute for the AWS
+// service APi's api-2.json file
+func (a *SDKAPI) ServiceID() string {
 	if a == nil || a.API == nil {
 		return ""
 	}
 	return awssdkmodel.ServiceID(a.API)
 }
 
-func (a *SDKAPI) GetCleanServiceAlias() string {
-	serviceAlias := strings.ToLower(a.GetServiceAlias())
-	return strings.Replace(serviceAlias, " ", "", -1)
+// ServiceIDClean returns a lowercased, whitespace-stripped ServiceID
+func (a *SDKAPI) ServiceIDClean() string {
+	serviceID := strings.ToLower(a.ServiceID())
+	return strings.Replace(serviceID, " ", "", -1)
 }
 
 func (a *SDKAPI) GetServiceFullName() string {
@@ -256,14 +259,16 @@ func (a *SDKAPI) GetServiceFullName() string {
 	return a.API.Metadata.ServiceFullName
 }
 
-func (a *SDKAPI) GetAPIGroup() string {
-	cleanServiceAlias := a.GetCleanServiceAlias()
-	return fmt.Sprintf("%s.services.k8s.aws", cleanServiceAlias)
+// APIGroup returns the normalized Kubernetes APIGroup for the AWS service API,
+// e.g. "sns.services.k8s.aws"
+func (a *SDKAPI) APIGroup() string {
+	serviceID := a.ServiceIDClean()
+	return fmt.Sprintf("%s.services.k8s.aws", serviceID)
 }
 
-// GetSDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
+// SDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
 // interface type name.
-func (a *SDKAPI) GetSDKAPIInterfaceTypeName() string {
+func (a *SDKAPI) SDKAPIInterfaceTypeName() string {
 	if a == nil || a.API == nil {
 		return ""
 	}

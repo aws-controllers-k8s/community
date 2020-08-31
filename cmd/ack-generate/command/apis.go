@@ -14,7 +14,6 @@
 package command
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -25,7 +24,6 @@ import (
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
-	template "github.com/aws/aws-controllers-k8s/pkg/template/apis"
 )
 
 type contentType int
@@ -84,7 +82,9 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	g, err := generate.New(sdkAPI, optGeneratorConfigPath)
+	g, err := generate.New(
+		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir,
+	)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	typeDefs, typeImports, err := g.GetTypeDefs()
+	typeDefs, _, err := g.GetTypeDefs()
 	if err != nil {
 		return err
 	}
@@ -110,16 +110,16 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = writeEnumsGo(enumDefs); err != nil {
+	if err = writeEnumsGo(g, enumDefs); err != nil {
 		return err
 	}
 
-	if err = writeTypesGo(typeImports, typeDefs); err != nil {
+	if err = writeTypesGo(g, typeDefs); err != nil {
 		return err
 	}
 
 	for _, crd := range crds {
-		if err = writeCRDGo(crd); err != nil {
+		if err = writeCRDGo(g, crd); err != nil {
 			return err
 		}
 	}
@@ -127,17 +127,8 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 }
 
 func writeDocGo(g *generate.Generator) error {
-	var b bytes.Buffer
-	apiGroup := g.SDKAPI.GetAPIGroup()
-	vars := &template.DocTemplateVars{
-		APIVersion: optGenVersion,
-		APIGroup:   apiGroup,
-	}
-	tpl, err := template.NewDocTemplate(optTemplatesDir)
+	b, err := g.GenerateAPIFile("doc")
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -150,17 +141,8 @@ func writeDocGo(g *generate.Generator) error {
 }
 
 func writeGroupVersionInfoGo(g *generate.Generator) error {
-	var b bytes.Buffer
-	apiGroup := g.SDKAPI.GetAPIGroup()
-	vars := &template.GroupVersionInfoTemplateVars{
-		APIVersion: optGenVersion,
-		APIGroup:   apiGroup,
-	}
-	tpl, err := template.NewGroupVersionInfoTemplate(optTemplatesDir)
+	b, err := g.GenerateAPIFile("groupversion_info")
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -173,21 +155,14 @@ func writeGroupVersionInfoGo(g *generate.Generator) error {
 }
 
 func writeEnumsGo(
+	g *generate.Generator,
 	enumDefs []*model.EnumDef,
 ) error {
 	if len(enumDefs) == 0 {
 		return nil
 	}
-	vars := &template.EnumsTemplateVars{
-		APIVersion: optGenVersion,
-		EnumDefs:   enumDefs,
-	}
-	var b bytes.Buffer
-	tpl, err := template.NewEnumsTemplate(optTemplatesDir)
+	b, err := g.GenerateAPIFile("enums")
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -200,20 +175,14 @@ func writeEnumsGo(
 }
 
 func writeTypesGo(
-	typeImports map[string]string,
+	g *generate.Generator,
 	typeDefs []*model.TypeDef,
 ) error {
-	vars := &template.TypesTemplateVars{
-		APIVersion: optGenVersion,
-		TypeDefs:   typeDefs,
-		Imports:    typeImports,
+	if len(typeDefs) == 0 {
+		return nil
 	}
-	var b bytes.Buffer
-	tpl, err := template.NewTypesTemplate(optTemplatesDir)
+	b, err := g.GenerateAPIFile("types")
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	if optDryRun {
@@ -225,17 +194,12 @@ func writeTypesGo(
 	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
-func writeCRDGo(crd *model.CRD) error {
-	vars := &template.CRDTemplateVars{
-		APIVersion: optGenVersion,
-		CRD:        crd,
-	}
-	var b bytes.Buffer
-	tpl, err := template.NewCRDTemplate(optTemplatesDir)
+func writeCRDGo(
+	g *generate.Generator,
+	crd *model.CRD,
+) error {
+	b, err := g.GenerateCRDFile(crd.Names.Original)
 	if err != nil {
-		return err
-	}
-	if err := tpl.Execute(&b, vars); err != nil {
 		return err
 	}
 	crdFileName := strcase.ToSnake(crd.Kind) + ".go"

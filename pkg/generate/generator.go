@@ -16,6 +16,7 @@ package generate
 import (
 	"sort"
 	"strings"
+	ttpl "text/template"
 
 	ackgenconfig "github.com/aws/aws-controllers-k8s/pkg/generate/config"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
@@ -26,11 +27,15 @@ import (
 // Generator creates the ACK service controller Kubernetes API types (CRDs) and
 // the service controller implementation/SDK linkage
 type Generator struct {
-	SDKAPI      *ackmodel.SDKAPI
-	crds        []*ackmodel.CRD
-	typeDefs    []*ackmodel.TypeDef
-	typeImports map[string]string
-	typeRenames map[string]string
+	SDKAPI           *ackmodel.SDKAPI
+	serviceAlias     string
+	apiVersion       string
+	templateBasePath string
+	templates        map[string]*ttpl.Template
+	crds             []*ackmodel.CRD
+	typeDefs         []*ackmodel.TypeDef
+	typeImports      map[string]string
+	typeRenames      map[string]string
 	// Instructions to the code generator how to handle the API and its
 	// resources
 	cfg *ackgenconfig.Config
@@ -167,25 +172,6 @@ func (g *Generator) RemoveIgnoredOperations(crdOps *ackmodel.CRDOps) {
 	if g.cfg.IsIgnoredOperation(crdOps.SetAttributes) {
 		crdOps.SetAttributes = nil
 	}
-}
-
-// New returns a new Generator struct for a supplied API model.
-// Optionally, pass a file path to a generator config file that can be used to
-// instruct the code generator how to handle the API properly
-func New(
-	SDKAPI *ackmodel.SDKAPI,
-	configPath string,
-) (*Generator, error) {
-	var gc *ackgenconfig.Config
-	var err error
-	if configPath != "" {
-		gc, err = ackgenconfig.New(configPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &Generator{SDKAPI, nil, nil, nil, nil, gc}, nil
 }
 
 // IsShapeUsedInCRDs returns true if the supplied shape name is a member of amy
@@ -363,4 +349,33 @@ func (g *Generator) GetEnumDefs() ([]*ackmodel.EnumDef, error) {
 		return edefs[i].Names.Camel < edefs[j].Names.Camel
 	})
 	return edefs, nil
+}
+
+// New returns a new Generator struct for a supplied API model.
+// Optionally, pass a file path to a generator config file that can be used to
+// instruct the code generator how to handle the API properly
+func New(
+	SDKAPI *ackmodel.SDKAPI,
+	apiVersion string,
+	configPath string,
+	templateBasePath string,
+) (*Generator, error) {
+	var gc *ackgenconfig.Config
+	var err error
+	if configPath != "" {
+		gc, err = ackgenconfig.New(configPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Generator{
+		SDKAPI: SDKAPI,
+		// TODO(jaypipes): Handle cases where service alias and service ID
+		// don't match (Step Functions)
+		serviceAlias:     SDKAPI.ServiceID(),
+		apiVersion:       apiVersion,
+		templateBasePath: templateBasePath,
+		cfg:              gc,
+	}, nil
 }
