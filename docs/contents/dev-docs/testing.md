@@ -30,6 +30,7 @@ installed and configured:
 
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+1. [kubernetes-sigs/controller-tools](https://github.com/kubernetes-sigs/controller-tools)
 1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) version 1
 1. [jq](https://github.com/stedolan/jq/wiki/Installation)
 1. `make`
@@ -84,6 +85,12 @@ The following outputs the generated code to the `services/$SERVICE` directory:
 ```
 make build-controller SERVICE=$SERVICE
 ```
+
+!!! bug "Handle `controller-gen: command not found`"
+    If you run into the `controller-gen: command not found` message when
+    executing `make build-controller` then you want to check if the
+    `controller-gen` binary is available in `$GOPATH/bin`, see also
+    [`#234`](https://github.com/aws/aws-controllers-k8s/issues/234).
 
 In addition to the ACK service controller code, above generates the
 custom resource definition (CRD) manifests as well as the necessary RBAC
