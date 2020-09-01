@@ -21,12 +21,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubernetes "k8s.io/client-go/kubernetes"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
+	ackrtcache "github.com/aws/aws-controllers-k8s/pkg/runtime/cache"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
@@ -38,11 +40,12 @@ import (
 // controller-runtime.Controller objects (each containing a single reconciler
 // object)s and sharing watch and informer queues across those controllers.
 type reconciler struct {
-	kc  client.Client
-	rmf acktypes.AWSResourceManagerFactory
-	rd  acktypes.AWSResourceDescriptor
-	log logr.Logger
-	cfg Config
+	kc    client.Client
+	rmf   acktypes.AWSResourceManagerFactory
+	rd    acktypes.AWSResourceDescriptor
+	log   logr.Logger
+	cfg   Config
+	cache ackrtcache.Caches
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
@@ -60,7 +63,13 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	if r.rmf == nil {
 		return ackerr.NilResourceManagerFactory
 	}
+	clusterConfig := mgr.GetConfig()
+	clientset, err := kubernetes.NewForConfig(clusterConfig)
+	if err != nil {
+		return err
+	}
 	r.kc = mgr.GetClient()
+	r.cache = ackrtcache.New(clientset, r.log)
 	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
@@ -335,12 +344,28 @@ func (r *reconciler) getOwnerAccountID(
 }
 
 // getRegion returns the AWS region that the given resource is in or should be
-// created in. If the Namespace has a region associated with it, that is used,
-// otherwise the region specified in the configuration is used.
+// created in. If the CR have a region associated with it, it is used. Otherwise
+// we look for the namespace associated region, if that is set we use it. Finally
+// if none of these annotations are set we use the use the region specified in the
+// configuration is used
 func (r *reconciler) getRegion(
 	res acktypes.AWSResource,
 ) ackv1alpha1.AWSRegion {
-	// TODO(jaypipes): Do the Namespace region lookup...
+	// look for region in CR metadata annotations
+	resAnnotations := res.MetaObject().GetAnnotations()
+	region, ok := resAnnotations[ackv1alpha1.AnnotationRegion]
+	if ok {
+		return ackv1alpha1.AWSRegion(region)
+	}
+
+	// look for default region in namespace metadata annotations
+	ns := res.MetaObject().GetNamespace()
+	defaultRegion, ok := r.cache.Namespaces.GetDefaultRegion(ns)
+	if ok {
+		return ackv1alpha1.AWSRegion(defaultRegion)
+	}
+
+	// use controller configuration region
 	return ackv1alpha1.AWSRegion(r.cfg.Region)
 }
 

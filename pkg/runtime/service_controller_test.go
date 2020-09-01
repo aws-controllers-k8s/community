@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	ctrlrtzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	ctrlmanager "sigs.k8s.io/controller-runtime/pkg/manager"
 	k8sscheme "sigs.k8s.io/controller-runtime/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -66,7 +68,7 @@ func (m *fakeManager) AddMetricsExtraHandler(path string, handler http.Handler) 
 func (m *fakeManager) AddHealthzCheck(name string, check healthz.Checker) error       { return nil }
 func (m *fakeManager) AddReadyzCheck(name string, check healthz.Checker) error        { return nil }
 func (m *fakeManager) Start(<-chan struct{}) error                                    { return nil }
-func (m *fakeManager) GetConfig() *rest.Config                                        { return nil }
+func (m *fakeManager) GetConfig() *rest.Config                                        { return &rest.Config{} }
 func (m *fakeManager) GetScheme() *runtime.Scheme                                     { return scheme }
 func (m *fakeManager) GetClient() client.Client                                       { return nil }
 func (m *fakeManager) GetFieldIndexer() client.FieldIndexer                           { return nil }
@@ -99,6 +101,12 @@ func TestServiceController(t *testing.T) {
 	sc := ackrt.NewServiceController("bookstore", "bookstore.services.k8s.aws")
 	require.NotNil(sc)
 
+	zapOptions := ctrlrtzap.Options{
+		Development: true,
+		Level:       zapcore.InfoLevel,
+	}
+	fakeLogger := ctrlrtzap.New(ctrlrtzap.UseFlagOptions(&zapOptions))
+	sc.WithLogger(fakeLogger)
 	sc.WithResourceManagerFactories(reg.GetResourceManagerFactories())
 
 	recons := sc.GetReconcilers()
