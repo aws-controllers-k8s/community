@@ -12,7 +12,7 @@ check_is_installed jq
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="s3"
-ack_ctrl_pod_id=$( controller_pod_id "s3")
+ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test: $service_name/$test_name"
 
 bucket_name="ack-test-smoke-$service_name-$AWS_ACCOUNT_ID"
@@ -65,3 +65,5 @@ if [ $? -ne 4 ]; then
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
 fi
+
+assert_pod_not_restarted $ack_ctrl_pod_id

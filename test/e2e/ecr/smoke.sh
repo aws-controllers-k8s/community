@@ -11,7 +11,7 @@ source "$SCRIPTS_DIR/lib/testutil.sh"
 wait_seconds=5
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="ecr"
-ack_ctrl_pod_id=$( controller_pod_id "$service_name")
+ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test: $service_name/$test_name"
 
 # This smoke test creates and deletes a set of ECR repositories. It creates
@@ -89,3 +89,5 @@ for x in a b c; do
         exit 1
     fi
 done
+
+assert_pod_not_restarted $ack_ctrl_pod_id
