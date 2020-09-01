@@ -46,14 +46,32 @@ debug_msg() {
 #
 # Usage:
 #
-#   echo controller_pod_id "ecr"
+#   echo controller_pod_id
 controller_pod_id() {
-    local __msg="$1"
-    if [ ! -n "$__msg" ]; then
-        echo "ERROR: controller_pod_id requires a single argument, the name of the service"
-        exit 127
-    fi
     kubectl get pods -n ack-system --field-selector="status.phase=Running" \
         --sort-by=.metadata.creationTimestamp \
         --output jsonpath='{.items[-1].metadata.name}'
+}
+
+# assert_pod_not_restarted ensures the supplied Pod has not been restarted
+# (being restarted indicates there was a panic/segfault in the controller code)
+#
+# Usage:
+#
+#   assert_pod_not_restarted controller_pod_id
+assert_pod_not_restarted() {
+    local __pod_id="$1"
+    if [ ! -n "$__pod_id" ]; then
+        echo "ERROR: assert_pod_not_restarted requires a single argument, the ID of the Pod to check"
+        exit 127
+    fi
+    local __ns="$2"
+    if [ ! -n "$__ns" ]; then
+        __ns="ack-system"
+    fi
+    restartCount=$( kubectl get pods -n "$__ns" "$__pod_id" --output jsonpath='{.status.containerStatuses[0].restartCount}' )
+    if [ "$restartCount" != "0" ]; then
+        echo "FAIL: Expected pod $__pod_id to not have been restarted but it has been restarted $restartCount times."
+        return 1
+    fi
 }
