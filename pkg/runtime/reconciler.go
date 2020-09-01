@@ -19,6 +19,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -87,6 +88,10 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	ctx := context.Background()
 	res, err := r.getAWSResource(ctx, req)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// resource wasn't found. just ignore these.
+			return nil
+		}
 		return err
 	}
 
@@ -209,6 +214,7 @@ func (r *reconciler) cleanup(
 	if err = rm.Delete(ctx, observed); err != nil {
 		return err
 	}
+	r.log.V(1).Info("reconciler.cleanup deleted resource")
 
 	// Now that external AWS service resources have been appropriately cleaned
 	// up, we remove the finalizer representing the CR is managed by ACK,
@@ -272,7 +278,7 @@ func (r *reconciler) getAWSResource(
 ) (acktypes.AWSResource, error) {
 	ro := r.rd.EmptyRuntimeObject()
 	if err := r.kc.Get(ctx, req.NamespacedName, ro); err != nil {
-		return nil, client.IgnoreNotFound(err)
+		return nil, err
 	}
 	return r.rd.ResourceFromRuntimeObject(ro), nil
 }
