@@ -359,6 +359,24 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	return "UNKNOWN"
 }
 
+// This method returns the required fields for ReadOneInput which are present in ko.Status .
+func (r *CRD) RequiredStatusFieldsForReadOneInput() []*CRDField {
+	var requiredStatusFields []*CRDField
+	op := r.Ops.ReadOne
+	inputShape := op.InputRef.Shape
+	if inputShape == nil || len(inputShape.Required) == 0 {
+		return requiredStatusFields
+	}
+	requiredFieldNames := inputShape.Required
+	for _, requiredFieldName := range requiredFieldNames {
+		koStatusField, found := r.StatusFields[requiredFieldName]
+		if found {
+			requiredStatusFields = append(requiredStatusFields, koStatusField)
+		}
+	}
+	return requiredStatusFields
+}
+
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
 // from a CRD's fields.
 //
@@ -447,6 +465,24 @@ func (r *CRD) GoCodeSetInput(
 
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
+
+	// During initial creation of aws resource, return NotFoundError if all the required Status fields are missing for ReadOne call.
+	// Status fields will be populated after object creation
+	if OpTypeGet == opType {
+		var requiredKoStatusFields = r.RequiredStatusFieldsForReadOneInput()
+		if len(requiredKoStatusFields) > 0 {
+			allRequiredKoStatusFieldsMissingComment := "// If all the requiredKoStatusFields are missing, AWS resource is not created yet. Return NotFound exception\n"
+			allRequiredKoStatusFieldMissingCondition := ""
+			for _, fieldName := range requiredKoStatusFields {
+				// Use '&&' because all the requiredStatusFields should be missing if object is not created yet
+				allRequiredKoStatusFieldMissingCondition += fmt.Sprintf("r.ko.Status.%s == nil &&", fieldName.Names.Camel)
+			}
+			allRequiredKoStatusFieldMissingCondition = strings.TrimSuffix(allRequiredKoStatusFieldMissingCondition, "&&")
+			out += fmt.Sprintf("%sif %s {\n", allRequiredKoStatusFieldsMissingComment, allRequiredKoStatusFieldMissingCondition)
+			out += "return nil, ackerr.NotFound\n"
+			out += "}\n"
+		}
+	}
 
 	// Some input shapes for APIs that use GetAttributes API calls don't have
 	// an Attributes member (example: all the Delete shapes...)
