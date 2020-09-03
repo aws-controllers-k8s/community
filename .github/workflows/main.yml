@@ -30,4 +30,4 @@ jobs:
       - name: Run a one-line script
         run: | 
           cd docs
-          mkdocs gh-deploy
+          mkdocs gh-deploy --force
