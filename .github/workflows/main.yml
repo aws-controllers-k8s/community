@@ -1,0 +1,29 @@
+# GCLINE@ 03SEP2020
+name: draft deploy to mkdocs
+
+# *should* run on new commit to main branch
+# currently, manual run button
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Person to greet'
+        required: true
+        default: 'Mona the Octocat'
+
+# workflow is 1+ jobs
+jobs:
+  # job is 1+ steps
+  # this job is *named* build
+  build:
+    # The type of runner that the job will run on
+    # can this be set to a docker registry image?
+    runs-on: polinux/mkdocs
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
