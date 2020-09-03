@@ -24,7 +24,9 @@ type ResourceMetadata struct {
 	// when it has verified that an "adopted" resource (a resource where the
 	// ARN annotation was set by the Kubernetes user on the CR) exists and
 	// matches the supplied CR's Spec field values.
-	ARN *AWSResourceName `json:"arn"`
+	//TODO(vijat@): Find a better strategy for resources that do not have ARN in CreateOutputResponse
+	// https://github.com/aws/aws-controllers-k8s/issues/270
+	ARN *AWSResourceName `json:"arn,omitempty"`
 	// OwnerAccountID is the AWS Account ID of the account that owns the
 	// backend AWS service API resource.
 	OwnerAccountID *AWSAccountID `json:"ownerAccountID"`
