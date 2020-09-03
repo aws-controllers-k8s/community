@@ -20,7 +20,7 @@ jobs:
     # can this be set to a docker registry image?
     runs-on: ubuntu-latest
     container: 
-      image: 'docker://polinux/mkdocs'
+      image: 'docker://squidfunk/mkdocs-material'
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
