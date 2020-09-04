@@ -38,7 +38,6 @@ type {{ .CRD.Kind }}Status struct {
 
 // {{ .CRD.Kind }} is the Schema for the {{ .CRD.Plural }} API
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 type {{ .CRD.Kind }} struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

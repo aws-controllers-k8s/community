@@ -85,7 +85,7 @@ func (d *resourceDescriptor) Diff(
 func (d *resourceDescriptor) UpdateCRStatus(
 	res acktypes.AWSResource,
 ) (bool, error) {
-	updated := true
+	updated := false
 	return updated, nil
 }
 
