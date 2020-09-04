@@ -17,6 +17,7 @@ import (
 	"errors"
 
 	flag "github.com/spf13/pflag"
+	"go.uber.org/zap/zapcore"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -28,6 +29,7 @@ const (
 	flagEnableDevLogging     = "enable-development-logging"
 	flagAWSAccountID         = "aws-account-id"
 	flagAWSRegion            = "aws-region"
+	flagLogLevel             = "log-level"
 )
 
 type Config struct {
@@ -37,6 +39,7 @@ type Config struct {
 	EnableDevelopmentLogging bool
 	AccountID                string
 	Region                   string
+	LogLevel                 string
 }
 
 func (cfg *Config) BindFlags() {
@@ -72,11 +75,26 @@ func (cfg *Config) BindFlags() {
 		"",
 		"The AWS Region in which the service controller will create its resources",
 	)
+	flag.StringVar(
+		&cfg.LogLevel, flagLogLevel,
+		"info",
+		"The log level. Default is info. We use logr interface which only supports info and debug level",
+	)
 }
 
 func (cfg *Config) SetupLogger() {
+	var lvl zapcore.LevelEnabler
+
+	switch cfg.LogLevel {
+	case "debug":
+		lvl = zapcore.DebugLevel
+	default:
+		lvl = zapcore.InfoLevel
+	}
+
 	zapOptions := zap.Options{
 		Development: cfg.EnableDevelopmentLogging,
+		Level:       lvl,
 	}
 	ctrlrt.SetLogger(zap.New(zap.UseFlagOptions(&zapOptions)))
 }
