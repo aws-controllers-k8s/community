@@ -30,6 +30,14 @@ type Config struct {
 	Resources map[string]ResourceConfig `json:"resources"`
 	// CRDs to ignore. ACK generator would skip these resources.
 	Ignore IgnoreSpec `json:"ignore"`
+	// Contains generator instructions for individual API operations.
+	Operations map[string]OperationConfig `json:"operations"`
+}
+
+// OperationConfig represents instructions to the ACK code generator to
+// specify the overriding values for API operation parameters
+type OperationConfig struct {
+	OverrideValues map[string]string `json:"override_values"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to
@@ -215,6 +223,18 @@ func (c *Config) IsIgnoredShape(shapeName string) bool {
 		return false
 	}
 	return util.InStrings(shapeName, c.Ignore.ShapeNames)
+}
+
+// OverrideValues gives list of member values to override.
+func (c *Config) OverrideValues(operationName string) (map[string]string, bool) {
+	if c == nil {
+		return nil, false
+	}
+	oConfig, ok := c.Operations[operationName]
+	if !ok {
+		return nil, false
+	}
+	return oConfig.OverrideValues, ok
 }
 
 // IsIgnoredResource returns true if Operation Name is configured to be ignored

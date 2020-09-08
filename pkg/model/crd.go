@@ -494,10 +494,32 @@ func (r *CRD) GoCodeSetInput(
 		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
 	}
 
+	opConfig, override := r.genCfg.OverrideValues(op.Name)
+
 	for memberIndex, memberName := range inputShape.MemberNames() {
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
 		}
+
+		if override {
+			value, ok := opConfig[memberName]
+			memberShapeRef, _ := inputShape.MemberRefs[memberName]
+			memberShape := memberShapeRef.Shape
+
+			if ok {
+				switch memberShape.Type {
+				case "boolean", "integer":
+				case "string":
+					value = "\"" + value + "\""
+				default:
+					panic("Member type not handled")
+				}
+
+				out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, memberName, value)
+				continue
+			}
+		}
+
 		if r.IsPrimaryARNField(memberName) {
 			// if ko.Status.ACKResourceMetadata != nil && ko.Status.ACKResourceMetadata.ARN != nil {
 			//     res.SetTopicArn(string(*ko.Status.ACKResourceMetadata.ARN))

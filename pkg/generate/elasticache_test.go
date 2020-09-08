@@ -650,3 +650,84 @@ func TestElasticache_Ignored_Resources(t *testing.T) {
 	crd := getCRDByName("GlobalReplicationGroup", crds)
 	require.Nil(crd)
 }
+
+func TestElasticache_Override_Values(t *testing.T)  {
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "elasticache")
+	crds, err := g.GetCRDs()
+
+	require.Nil(err)
+
+	crd := getCRDByName("ReplicationGroup", crds)
+	require.NotNil(crd)
+
+	expected := `
+	res.SetApplyImmediately(true)
+	if r.ko.Spec.AuthToken != nil {
+		res.SetAuthToken(*r.ko.Spec.AuthToken)
+	}
+	if r.ko.Spec.AutoMinorVersionUpgrade != nil {
+		res.SetAutoMinorVersionUpgrade(*r.ko.Spec.AutoMinorVersionUpgrade)
+	}
+	if r.ko.Spec.AutomaticFailoverEnabled != nil {
+		res.SetAutomaticFailoverEnabled(*r.ko.Spec.AutomaticFailoverEnabled)
+	}
+	if r.ko.Spec.CacheNodeType != nil {
+		res.SetCacheNodeType(*r.ko.Spec.CacheNodeType)
+	}
+	if r.ko.Spec.CacheParameterGroupName != nil {
+		res.SetCacheParameterGroupName(*r.ko.Spec.CacheParameterGroupName)
+	}
+	if r.ko.Spec.CacheSecurityGroupNames != nil {
+		f7 := []*string{}
+		for _, f7iter := range r.ko.Spec.CacheSecurityGroupNames {
+			var f7elem string
+			f7elem = *f7iter
+			f7 = append(f7, &f7elem)
+		}
+		res.SetCacheSecurityGroupNames(f7)
+	}
+	if r.ko.Spec.EngineVersion != nil {
+		res.SetEngineVersion(*r.ko.Spec.EngineVersion)
+	}
+	if r.ko.Spec.MultiAZEnabled != nil {
+		res.SetMultiAZEnabled(*r.ko.Spec.MultiAZEnabled)
+	}
+	if r.ko.Spec.NotificationTopicARN != nil {
+		res.SetNotificationTopicArn(*r.ko.Spec.NotificationTopicARN)
+	}
+	if r.ko.Spec.PreferredMaintenanceWindow != nil {
+		res.SetPreferredMaintenanceWindow(*r.ko.Spec.PreferredMaintenanceWindow)
+	}
+	if r.ko.Spec.PrimaryClusterID != nil {
+		res.SetPrimaryClusterId(*r.ko.Spec.PrimaryClusterID)
+	}
+	if r.ko.Spec.ReplicationGroupDescription != nil {
+		res.SetReplicationGroupDescription(*r.ko.Spec.ReplicationGroupDescription)
+	}
+	if r.ko.Spec.ReplicationGroupID != nil {
+		res.SetReplicationGroupId(*r.ko.Spec.ReplicationGroupID)
+	}
+	if r.ko.Spec.SecurityGroupIDs != nil {
+		f17 := []*string{}
+		for _, f17iter := range r.ko.Spec.SecurityGroupIDs {
+			var f17elem string
+			f17elem = *f17iter
+			f17 = append(f17, &f17elem)
+		}
+		res.SetSecurityGroupIds(f17)
+	}
+	if r.ko.Spec.SnapshotRetentionLimit != nil {
+		res.SetSnapshotRetentionLimit(*r.ko.Spec.SnapshotRetentionLimit)
+	}
+	if r.ko.Spec.SnapshotWindow != nil {
+		res.SetSnapshotWindow(*r.ko.Spec.SnapshotWindow)
+	}
+	if r.ko.Status.SnapshottingClusterID != nil {
+		res.SetSnapshottingClusterId(*r.ko.Status.SnapshottingClusterID)
+	}
+`
+	assert := assert.New(t)
+	assert.Equal(expected, crd.GoCodeSetInput(model.OpTypeUpdate, "r.ko", "res", 1))
+}
