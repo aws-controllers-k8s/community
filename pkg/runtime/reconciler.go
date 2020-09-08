@@ -208,7 +208,8 @@ func (r *reconciler) cleanup(
 	observed, err := rm.ReadOne(ctx, current)
 	if err != nil {
 		if err == ackerr.NotFound {
-			return nil
+			// If the aws resource is not found, remove finalizer
+			return r.setResourceUnmanaged(ctx, current)
 		}
 		return err
 	}
