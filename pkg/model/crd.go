@@ -359,6 +359,54 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	return "UNKNOWN"
 }
 
+// Return true if all the required status fields are missing from ReadOneInput. Else, return false
+// Sample Output:
+//if r.ko.Status.APIID == nil {
+//	return true
+//} else {
+//	return false
+//}
+func (r *CRD) GoCodeRequiredStatusFieldsMissingFromReadOneInput(koVarName string, indentLevel int) string {
+	out := ""
+	indent := strings.Repeat("\t", indentLevel)
+
+	var requiredKoStatusFields = r.RequiredStatusFieldsForReadOneInput()
+	if len(requiredKoStatusFields) > 0 {
+		allRequiredKoStatusFieldMissingCondition := ""
+		for _, fieldName := range requiredKoStatusFields {
+			// Use '&&' because all the requiredStatusFields should be missing if object is not created yet
+			allRequiredKoStatusFieldMissingCondition += fmt.Sprintf("%s.Status.%s == nil &&", koVarName, fieldName.Names.Camel)
+		}
+		allRequiredKoStatusFieldMissingCondition = strings.TrimSuffix(allRequiredKoStatusFieldMissingCondition, "&&")
+		out += fmt.Sprintf("%sif %s {\n", indent, allRequiredKoStatusFieldMissingCondition)
+		out += fmt.Sprintf("%s\treturn true\n", indent)
+		out += fmt.Sprintf("%s} else {\n", indent)
+		out += fmt.Sprintf("%s\treturn false\n", indent)
+		out += fmt.Sprintf("%s}", indent)
+	} else {
+		out += fmt.Sprintf("%sreturn false", indent)
+	}
+	return out
+}
+
+// This method returns the required fields for ReadOneInput which are present in ko.Status .
+func (r *CRD) RequiredStatusFieldsForReadOneInput() []*CRDField {
+	var requiredStatusFields []*CRDField
+	op := r.Ops.ReadOne
+	inputShape := op.InputRef.Shape
+	if inputShape == nil || len(inputShape.Required) == 0 {
+		return requiredStatusFields
+	}
+	requiredFieldNames := inputShape.Required
+	for _, requiredFieldName := range requiredFieldNames {
+		koStatusField, found := r.StatusFields[requiredFieldName]
+		if found {
+			requiredStatusFields = append(requiredStatusFields, koStatusField)
+		}
+	}
+	return requiredStatusFields
+}
+
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
 // from a CRD's fields.
 //
