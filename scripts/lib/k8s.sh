@@ -5,7 +5,25 @@ ensure_controller_gen() {
     # Need this version of controller-gen to allow dangerous types and float
     # type support
     go get sigs.k8s.io/controller-tools/cmd/controller-gen@4a903ddb7005459a7baf4777c67244a74c91083d
+  else
+    minimum_req_version="v0.3.1"
+    # Don't overide the existing version let the user decide.
+    if ! is_min_controller_gen_version "$minimum_req_version"; then
+        echo "Existing version of controller-gen "`controller-gen --version`", minimum required is $minimum_req_version"
+        exit 1
+    fi
   fi
+
+}
+
+is_min_controller_gen_version() {
+    currentver="$(controller-gen --version | cut -d' ' -f2)";
+    requiredver="$1";
+    if [ "$(printf '%s\n' "$requiredver" "$currentver" | sort -V | head -n1)" = "$requiredver" ]; then
+        return 0
+    else
+        return 1
+    fi;
 }
 
 # ensure_kubectl installs the kubectl binary if it isn't present on the system.
