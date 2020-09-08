@@ -9,6 +9,14 @@ MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
 MOCKERY_BIN=$(shell which mockery || "./bin/mockery")
 
+# Build ldflags
+VERSION ?= "v0.0.0"
+GITCOMMIT=$(shell git rev-parse HEAD)
+BUILDDATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+GO_LDFLAGS=-ldflags "-X main.version=$(VERSION) \
+			-X main.buildHash=$(GITCOMMIT) \
+			-X main.buildDate=$(BUILDDATE)"
+
 # We need to use the codegen tag when building and testing because the
 # aws-sdk-go/private/model/api package is gated behind a build tag "codegen"...
 GO_TAGS=-tags codegen
@@ -19,7 +27,7 @@ GO_TAGS=-tags codegen
 all: test
 
 build-ack-generate:	## Build ack-generate binary
-	go build ${GO_TAGS} -o bin/ack-generate cmd/ack-generate/main.go
+	go build ${GO_TAGS} ${GO_LDFLAGS} -o bin/ack-generate cmd/ack-generate/main.go
 
 test: | mocks	## Run code tests
 	go test ${GO_TAGS} ./...
