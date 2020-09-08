@@ -36,6 +36,13 @@ func (rm *resourceManager) sdkFind(
 	r *resource,
 ) (*resource, error) {
 {{- if .CRD.Ops.ReadOne }}
+	// If all the required status fields in the input shape are missing, AWS
+	// resource is not created yet. Return NotFound here to indicate
+	// to callers that the resource isn't yet created.
+	if rm.requiredStatusFieldsMissingFromReadOneInput(r) {
+		return nil, ackerr.NotFound
+	}
+
 	input, err := rm.newDescribeRequestPayload(r)
 	if err != nil {
 		return nil, err
@@ -101,6 +108,12 @@ func (rm *resourceManager) sdkFind(
 }
 
 {{- if .CRD.Ops.ReadOne }}
+func (rm *resourceManager) requiredStatusFieldsMissingFromReadOneInput(
+    r *resource,
+) bool {
+{{ GoCodeRequiredStatusFieldsMissingFromReadOneInput .CRD "r.ko" 1 }}
+}
+
 // newDescribeRequestPayload returns SDK-specific struct for the HTTP request
 // payload of the Describe API call for the resource
 func (rm *resourceManager) newDescribeRequestPayload(
