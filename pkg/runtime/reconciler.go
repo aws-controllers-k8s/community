@@ -98,11 +98,12 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
 
-	r.log.WithValues(
+	log := r.log.WithValues(
 		"account_id", acctID,
 		"region", region,
 		"kind", r.rd.GroupKind().String(),
 	)
+	log.V(1).Info("starting reconcilation")
 
 	rm, err := r.rmf.ManagerFor(r, acctID, region)
 	if err != nil {
@@ -163,7 +164,7 @@ func (r *reconciler) sync(
 			return nil
 		}
 		diff := r.rd.Diff(desired, latest)
-		r.log.V(2).Info(
+		r.log.V(1).Info(
 			"desired resource state has changed",
 			"diff", diff,
 			"arn", latest.Identifiers().ARN(),
@@ -190,7 +191,7 @@ func (r *reconciler) sync(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("patched CR status")
+	r.log.V(1).Info("patched CR status")
 	return err
 }
 
@@ -242,7 +243,7 @@ func (r *reconciler) setResourceManaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("reconciler marked resource as managed")
+	r.log.V(1).Info("reconciler marked resource as managed")
 	return nil
 }
 
@@ -266,7 +267,7 @@ func (r *reconciler) setResourceUnmanaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("reconciler removed resource from management")
+	r.log.V(1).Info("reconciler removed resource from management")
 	return nil
 }
 
