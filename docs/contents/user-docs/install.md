@@ -59,6 +59,5 @@ For example:
 kubectl apply -f https://github.com/aws/aws-controllers-k8s/releases/download/v0.0.1/services/s3/all-resources.yaml
 ```
 
-
-
-Once you've installed one or more ACKs, make sure to [configure permissions](../permissions), next.
+Once you've installed one or more ACK service controllers, make sure to
+[configure permissions](../authorization#configure-permissions), next.
