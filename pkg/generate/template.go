@@ -88,8 +88,11 @@ var (
 		"Empty": func(subject string) bool {
 			return strings.TrimSpace(subject) == ""
 		},
-		"GoCodeRequiredStatusFieldsMissingFromReadOneInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
-			return r.GoCodeRequiredStatusFieldsMissingFromReadOneInput(koVarName, indentLevel)
+		"GoCodeRequiredFieldsMissingFromReadOneInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
+			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeGet, koVarName, indentLevel)
+		},
+		"GoCodeRequiredFieldsMissingFromGetAttributesInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
+			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeGetAttributes, koVarName, indentLevel)
 		},
 	}
 )
