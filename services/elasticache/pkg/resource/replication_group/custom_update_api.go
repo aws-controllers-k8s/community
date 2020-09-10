@@ -34,7 +34,6 @@ func (rm *resourceManager) UpdateShardConfiguration(
 	}
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupShardConfigurationWithContext(ctx, input)
 	if respErr != nil {
-		fmt.Printf("Failed to ModifyReplicationGroupShardConfigurationWithContext, Error: %v\n", respErr)
 		return nil, respErr
 	}
 	return provideUpdatedResource(r, resp.ReplicationGroup)
@@ -46,47 +45,49 @@ func (rm *resourceManager) UpdateReplicaCount(
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 
+	var di *ackcompare.DiffItem
+
 	for _, diff := range diffReporter.Differences {
 		if diff.Path == "Spec.ReplicasPerNodeGroup" {
-			desired, err1 := strconv.Atoi(diff.ValueA)
-			latest, err2 := strconv.Atoi(diff.ValueB)
-
-			if err1 != nil || err2 != nil {
-				return nil, fmt.Errorf("UpdateReplicaCount failed: invalid values")
-			}
-
-			if latest < desired { // increase
-				fmt.Printf("Requesting Increase Replica Count. Old value: %v, New Value: %v\n", latest, desired)
-				input, err := rm.newIncreaseReplicaCountRequestPayload(r)
-				if err != nil {
-					fmt.Printf("Error occurred: %v\n", err)
-					return nil, err
-				}
-				resp, respErr := rm.sdkapi.IncreaseReplicaCountWithContext(ctx, input)
-				if respErr != nil {
-					fmt.Printf("Failed to IncreaseReplicaCountWithContext. Error: %v\n", respErr)
-					return nil, respErr
-				}
-				return provideUpdatedResource(r, resp.ReplicationGroup)
-			} else { // decrease
-				input, err := rm.newDecreaseReplicaCountRequestPayload(r)
-				fmt.Printf("Requesting Decrease Replica Count. Old value: %v, New Value: %v\n", latest, desired)
-				if err != nil {
-					fmt.Printf("Error occurred: %v\n", err)
-					return nil, err
-				}
-				resp, respErr := rm.sdkapi.DecreaseReplicaCountWithContext(ctx, input)
-				if respErr != nil {
-					fmt.Printf("Failed to DecreaseReplicaCountWithContext. Error: %v\n", respErr)
-					return nil, respErr
-				}
-				return provideUpdatedResource(r, resp.ReplicationGroup)
-			}
-
+			di = &diff
 			break
 		}
 	}
-	return nil, fmt.Errorf("UpdateReplicaCount failed")
+
+	if di == nil {
+		return nil, fmt.Errorf("expected different ReplicasPerNodeGroup.")
+	}
+
+	desired, err1 := strconv.Atoi(di.ValueA)
+	latest, err2 := strconv.Atoi(di.ValueB)
+
+	if err1 != nil || err2 != nil {
+		return nil, fmt.Errorf("UpdateReplicaCount failed: invalid values")
+	}
+
+	if latest < desired { // increase
+		fmt.Printf("Requesting Increase Replica Count. Old value: %v, New Value: %v\n", latest, desired)
+		input, err := rm.newIncreaseReplicaCountRequestPayload(r)
+		if err != nil {
+			return nil, err
+		}
+		resp, respErr := rm.sdkapi.IncreaseReplicaCountWithContext(ctx, input)
+		if respErr != nil {
+			return nil, respErr
+		}
+		return provideUpdatedResource(r, resp.ReplicationGroup)
+	}
+	// decrease
+	input, err := rm.newDecreaseReplicaCountRequestPayload(r)
+	fmt.Printf("Requesting Decrease Replica Count. Old value: %v, New Value: %v\n", latest, desired)
+	if err != nil {
+		return nil, err
+	}
+	resp, respErr := rm.sdkapi.DecreaseReplicaCountWithContext(ctx, input)
+	if respErr != nil {
+		return nil, respErr
+	}
+	return provideUpdatedResource(r, resp.ReplicationGroup)
 }
 
 // newUpdate(ShardConfiguration)RequestPayload returns an SDK-specific struct for the HTTP request
