@@ -19,6 +19,7 @@ import (
 	"context"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
@@ -599,10 +600,20 @@ func (rm *resourceManager) newCreateRequestPayload(
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	r *resource,
+	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	input, err := rm.newUpdateRequestPayload(r)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, diff := range diffReporter.Differences {
+		switch diff.Path {
+		case "Spec.NumNodeGroups":
+			return rm.UpdateShardConfiguration(ctx, r, diffReporter)
+		case "Spec.ReplicasPerNodeGroup":
+			return rm.UpdateReplicaCount(ctx, r, diffReporter)
+		}
 	}
 
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupWithContext(ctx, input)
