@@ -115,6 +115,8 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.Location = resp.Location
 	}
 
+	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
 

@@ -49,6 +49,7 @@ type BucketStatus struct {
 
 // Bucket is the Schema for the Buckets API
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type Bucket struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
