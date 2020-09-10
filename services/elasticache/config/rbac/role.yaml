@@ -1,0 +1,48 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ack-controller-role
+rules:
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - cachesubnetgroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - cachesubnetgroups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - replicationgroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - replicationgroups/status
+  verbs:
+  - get
+  - patch
+  - update
