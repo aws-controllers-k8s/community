@@ -3,7 +3,9 @@
 package mocks
 
 import (
+	compare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	mock "github.com/stretchr/testify/mock"
+
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	types "github.com/aws/aws-controllers-k8s/pkg/types"
@@ -17,14 +19,16 @@ type AWSResourceDescriptor struct {
 }
 
 // Diff provides a mock function with given fields: _a0, _a1
-func (_m *AWSResourceDescriptor) Diff(_a0 types.AWSResource, _a1 types.AWSResource) string {
+func (_m *AWSResourceDescriptor) Diff(_a0 types.AWSResource, _a1 types.AWSResource) *compare.Reporter {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(types.AWSResource, types.AWSResource) string); ok {
+	var r0 *compare.Reporter
+	if rf, ok := ret.Get(0).(func(types.AWSResource, types.AWSResource) *compare.Reporter); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*compare.Reporter)
+		}
 	}
 
 	return r0

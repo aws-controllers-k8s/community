@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
@@ -103,6 +104,7 @@ func (rm *resourceManager) Create(
 func (rm *resourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
+	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
 	r := rm.concreteResource(res)
 	if r.ko == nil {
