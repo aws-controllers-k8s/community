@@ -3,6 +3,14 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
+  ReplicationGroup:
+    custom_update_operations:
+      UpdateShardConfiguration:
+        diff_paths:
+          - Spec.NumNodeGroups
+      UpdateReplicaCount:
+        diff_paths:
+          - Spec.ReplicasPerNodeGroup
 operations:
   ModifyReplicationGroup:
     override_values:

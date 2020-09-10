@@ -12,6 +12,7 @@ import (
 {{- end }}
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
@@ -188,12 +189,25 @@ func (rm *resourceManager) newCreateRequestPayload(
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	r *resource,
+	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 {{- if .CRD.Ops.Update }}
 	input, err := rm.newUpdateRequestPayload(r)
 	if err != nil {
 		return nil, err
 	}
+
+{{ if .CRD.HasCustomUpdateOperations }}
+	for _, diff := range diffReporter.Differences {
+		switch diff.Path {
+	{{- range $diffPath, $customMethod := .CRD.GetCustomUpdateOperations }}
+		case "{{ $diffPath }}":
+			return rm.{{ $customMethod }}(ctx, r, diffReporter)
+	{{- end }}
+		}
+	}
+{{ end }}
+
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {

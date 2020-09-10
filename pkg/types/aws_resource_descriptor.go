@@ -14,6 +14,7 @@
 package types
 
 import (
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srt "k8s.io/apimachinery/pkg/runtime"
 )
@@ -37,11 +38,11 @@ type AWSResourceDescriptor interface {
 	// the same. In other words, the Equal() method should be called with the
 	// same concrete implementing AWSResource type
 	Equal(AWSResource, AWSResource) bool
-	// Diff returns a string representing the difference between two supplied
-	// AWSResources/ The underlying types of the two supplied AWSResources
-	// should be the same. In other words, the Diff() method should be called
-	// with the same concrete implementing AWSResource type
-	Diff(AWSResource, AWSResource) string
+	// Diff returns a Reporter which provides the difference between two supplied
+	// AWSResources. The underlying types of the two supplied AWSResources should
+	// be the same. In other words, the Diff() method should be called with the
+	// same concrete implementing AWSResource type
+	Diff(AWSResource, AWSResource) *ackcompare.Reporter
 	// UpdateCRStatus accepts an AWSResource object and changes the Status
 	// sub-object of the AWSResource's Kubernetes custom resource (CR) and
 	// returns whether any changes were made
