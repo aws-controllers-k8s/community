@@ -49,7 +49,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -66,7 +66,7 @@ func (rm *resourceManager) sdkFind(
 	// If any required fields in the input shape are missing, AWS resource is
 	// not created yet. Return NotFound here to indicate to callers that the
 	// resource isn't yet created.
-	if rm.requiredStatusFieldsMissingFromGetAttributesInput(r) {
+	if rm.requiredFieldsMissingFromGetAttributesInput(r) {
 		return nil, ackerr.NotFound
 	}
 
@@ -75,7 +75,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -184,7 +184,7 @@ func (rm *resourceManager) sdkCreate(
 		return nil, err
 	}
 {{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $createCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $createCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -196,7 +196,12 @@ func (rm *resourceManager) sdkCreate(
 	// custom set output from response
 	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -236,7 +241,7 @@ func (rm *resourceManager) sdkUpdate(
 {{ end }}
 
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}

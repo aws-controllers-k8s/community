@@ -43,6 +43,13 @@ func (rm *resourceManager) sdkFind(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
+	// If any required fields in the input shape are missing, AWS resource is
+	// not created yet. Return NotFound here to indicate to callers that the
+	// resource isn't yet created.
+	if rm.requiredFieldsMissingFromGetAttributesInput(r) {
+		return nil, ackerr.NotFound
+	}
+
 	input, err := rm.newGetAttributesRequestPayload(r)
 	if err != nil {
 		return nil, err
@@ -60,10 +67,6 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-
 	return &resource{ko}, nil
 }
 
@@ -75,6 +78,16 @@ func (rm *resourceManager) newListRequestPayload(
 	res := &svcsdk.ListPlatformApplicationsInput{}
 
 	return res, nil
+}
+
+// requiredFieldsMissingFromGetAtttributesInput returns true if there are any
+// fields for the GetAttributes Input shape that are required by not present in
+// the resource's Spec or Status
+func (rm *resourceManager) requiredFieldsMissingFromGetAttributesInput(
+	r *resource,
+) bool {
+	return (r.ko.Status.ACKResourceMetadata == nil || r.ko.Status.ACKResourceMetadata.ARN == nil)
+
 }
 
 // newGetAttributesRequestPayload returns SDK-specific struct for the HTTP
@@ -104,7 +117,7 @@ func (rm *resourceManager) sdkCreate(
 		return nil, err
 	}
 
-	_, respErr := rm.sdkapi.CreatePlatformApplicationWithContext(ctx, input)
+	resp, respErr := rm.sdkapi.CreatePlatformApplicationWithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -112,7 +125,20 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.PlatformApplicationArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.PlatformApplicationArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
+
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }

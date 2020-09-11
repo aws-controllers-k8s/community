@@ -165,11 +165,11 @@ func TestSQS_Queue(t *testing.T) {
 	// (and thus in the Spec fields). One of them is the resource's ARN which
 	// is handled specially.
 	expGetAttrsOutput := `
+	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
+	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 	}
-	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
-	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `

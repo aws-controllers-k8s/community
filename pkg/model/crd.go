@@ -454,6 +454,14 @@ func (r *CRD) goCodeRequiredFieldsMissingFromShape(
 	// corresponding resource Spec/Status values
 	missing := []string{}
 	for _, memberName := range shape.Required {
+		if r.IsPrimaryARNField(memberName) {
+			primaryARNCondition := fmt.Sprintf(
+				"(%s.Status.ACKResourceMetadata == nil || %s.Status.ACKResourceMetadata.ARN == nil)",
+				koVarName, koVarName,
+			)
+			missing = append(missing, primaryARNCondition)
+			continue
+		}
 		cleanMemberNames := names.New(memberName)
 		cleanMemberName := cleanMemberNames.Camel
 
@@ -1298,6 +1306,47 @@ func (r *CRD) GoCodeSetOutput(
 	// creating temporary variables, populating those temporary variables'
 	// fields with further-nested fields as needed
 	for memberIndex, memberName := range outputShape.MemberNames() {
+		sourceAdaptedVarName := sourceVarName + "." + memberName
+
+		// Handle the special case of ARN for primary resource identifier
+		if r.IsPrimaryARNField(memberName) {
+			// if ko.Status.ACKResourceMetadata == nil {
+			//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+			// }
+			out += fmt.Sprintf(
+				"%sif %s.ACKResourceMetadata == nil {\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf("%s}\n", indent)
+
+			// if resp.BookArn != nil {
+			//     ko.Status.ACKResourceMetadata.ARN = resp.BookArn
+			// }
+			out += fmt.Sprintf(
+				"%sif %s != nil {\n",
+				indent,
+				sourceAdaptedVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\tarn := ackv1alpha1.AWSResourceName(*%s)\n",
+				indent,
+				sourceAdaptedVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.ACKResourceMetadata.ARN = &arn\n",
+				indent,
+				targetVarName,
+			)
+			out += fmt.Sprintf("%s}\n", indent)
+			continue
+		}
+
 		memberShapeRef := outputShape.MemberRefs[memberName]
 		if memberShapeRef.Shape == nil {
 			// Technically this should not happen, so let's bail here if it
@@ -1322,42 +1371,6 @@ func (r *CRD) GoCodeSetOutput(
 			// to set the Status field values after getting a response via the
 			// aws-sdk-go for an API call...
 			continue
-		}
-
-		sourceAdaptedVarName := sourceVarName + "." + memberName
-
-		// Handle the special case of ARN for primary resource identifier
-		if r.IsPrimaryARNField(memberName) {
-			// if ko.Status.ACKResourceMetadata == nil {
-			//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-			// }
-			out += fmt.Sprintf(
-				"%sif %s.ACKResourceMetadata == nil {\n",
-				indent,
-				targetVarName,
-			)
-			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
-				indent,
-				targetVarName,
-			)
-			out += fmt.Sprintf("%s}\n", indent)
-
-			// if resp.BookArn != nil {
-			//     ko.Status.ACKResourceMetadata.ARN = resp.BookArn
-			// }
-			out += fmt.Sprintf(
-				"%sif %s == nil {\n",
-				indent,
-				sourceAdaptedVarName,
-			)
-			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata.ARN = %s\n",
-				indent,
-				targetVarName,
-				sourceAdaptedVarName,
-			)
-			out += fmt.Sprintf("%s}\n", indent)
 		}
 
 		// fieldVarName is the name of the variable that is used for temporary
@@ -1699,6 +1712,36 @@ func (r *CRD) listOpMatchFieldNames() []string {
 	return r.genCfg.ListOpMatchFieldNames(r.Names.Original)
 }
 
+// goCodeACKResourceMetadataGuardConstructor returns Go code representing a
+// nil-guard and constructor for an ACKResourceMetadata struct:
+//
+// if ko.Status.ACKResourceMetadata == nil {
+//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+// }
+func goCodeACKResourceMetadataGuardConstructor(
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "ko.Status" since that is the name of the "target variable" that the
+	// templates that call this method use.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	indent := strings.Repeat("\t", indentLevel)
+	out := fmt.Sprintf(
+		"%sif %s.ACKResourceMetadata == nil {\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf(
+		"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf("%s}\n", indent)
+	return out
+}
+
 // GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields
 // from the Output shape returned from a resource's GetAttributes operation.
 //
@@ -1742,21 +1785,8 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
 
-	// if ko.Status.ACKResourceMetadata == nil {
-	//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	// }
-	out += fmt.Sprintf(
-		"%sif %s.ACKResourceMetadata == nil {\n",
-		indent,
-		targetVarName,
-	)
-	out += fmt.Sprintf(
-		"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
-		indent,
-		targetVarName,
-	)
-	out += fmt.Sprintf("%s}\n", indent)
-
+	// did we output an ACKResourceMetadata guard and constructor snippet?
+	mdGuardOut := false
 	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	sortedAttrFieldNames := []string{}
 	for fieldName := range attrMapConfig.Fields {
@@ -1765,6 +1795,12 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	sort.Strings(sortedAttrFieldNames)
 	for _, fieldName := range sortedAttrFieldNames {
 		if r.IsPrimaryARNField(fieldName) {
+			if !mdGuardOut {
+				out += goCodeACKResourceMetadataGuardConstructor(
+					targetVarName, indentLevel,
+				)
+				mdGuardOut = true
+			}
 			out += fmt.Sprintf(
 				"%stmpARN := ackv1alpha1.AWSResourceName(*%s.Attributes[\"%s\"])\n",
 				indent,
@@ -1781,6 +1817,12 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 		fieldConfig := attrMapConfig.Fields[fieldName]
 		if fieldConfig.ContainsOwnerAccountID {
+			if !mdGuardOut {
+				out += goCodeACKResourceMetadataGuardConstructor(
+					targetVarName, indentLevel,
+				)
+				mdGuardOut = true
+			}
 			out += fmt.Sprintf(
 				"%stmpOwnerID := ackv1alpha1.AWSAccountID(*%s.Attributes[\"%s\"])\n",
 				indent,
