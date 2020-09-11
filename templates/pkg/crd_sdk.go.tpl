@@ -220,25 +220,24 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	rd *resource,	// desired
+	rl *resource,	// latest
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 {{- if .CRD.Ops.Update }}
-	input, err := rm.newUpdateRequestPayload(r)
+
+{{ $customMethod := .CRD.GetCustomImplementation .CRD.Ops.Update }}
+{{ if $customMethod }}
+	customResp, customRespErr := rm.{{ $customMethod }}(ctx, rd, rl, diffReporter)
+	if customResp != nil || customRespErr != nil {
+		return customResp, customRespErr
+	}
+{{ end }}
+
+	input, err := rm.newUpdateRequestPayload(rd)
 	if err != nil {
 		return nil, err
 	}
-
-{{ if .CRD.HasCustomUpdateOperations }}
-	for _, diff := range diffReporter.Differences {
-		switch diff.Path {
-	{{- range $diffPath, $customMethod := .CRD.GetCustomUpdateOperations }}
-		case "{{ $diffPath }}":
-			return rm.{{ $customMethod }}(ctx, r, diffReporter)
-	{{- end }}
-		}
-	}
-{{ end }}
 
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
@@ -247,7 +246,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+	ko := rd.ko.DeepCopy()
 {{ $setCode }}
 {{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Update }}
 	// custom set output from response

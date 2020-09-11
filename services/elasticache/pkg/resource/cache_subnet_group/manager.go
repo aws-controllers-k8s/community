@@ -98,23 +98,28 @@ func (rm *resourceManager) Create(
 	return created, nil
 }
 
-// Update attempts to mutate the supplied AWSResource in the backend AWS
+// Update attempts to mutate the supplied desired AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-mutated
-// resource. Note that implementers should NOT check to see if the latest
-// observed resource differs from the supplied desired state. The higher-level
-// reonciler determines whether or not the desired differs from the latest
-// observed and decides whether to call the resource manager's Update method
+// resource.
+// Note for specialized logic implementers can check to see how the latest
+// observed resource differs from the supplied desired state. The
+// higher-level reonciler determines whether or not the desired differs
+// from the latest observed and decides whether to call the resource
+// manager's Update method
 func (rm *resourceManager) Update(
 	ctx context.Context,
-	res acktypes.AWSResource,
+	resDesired acktypes.AWSResource, // desired
+	resLatest acktypes.AWSResource, // latest
 	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
-	r := rm.concreteResource(res)
-	if r.ko == nil {
+	rd := rm.concreteResource(resDesired)
+	rl := rm.concreteResource(resLatest)
+	if rd.ko == nil || rl.ko == nil {
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil CR object")
 	}
-	updated, err := rm.sdkUpdate(ctx, r, diffReporter)
+
+	updated, err := rm.sdkUpdate(ctx, rd, rl, diffReporter)
 	if err != nil {
 		return nil, err
 	}

@@ -23,12 +23,31 @@ import (
 	"strconv"
 )
 
-func (rm *resourceManager) UpdateShardConfiguration(
+// Implements specialized logic for replication group updates.
+func (rm *resourceManager) CustomModifyReplicationGroup(
 	ctx context.Context,
-	r *resource,
+	rd *resource, // desired
+	rl *resource, // latest
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-	input, err := rm.newUpdateShardConfigurationRequestPayload(r)
+	for _, diff := range diffReporter.Differences {
+		switch diff.Path {
+		case "Spec.NumNodeGroups":
+			return rm.updateShardConfiguration(ctx, rd, rl, diffReporter)
+		case "Spec.ReplicasPerNodeGroup":
+			return rm.updateReplicaCount(ctx, rd, rl, diffReporter)
+		}
+	}
+	return nil, nil
+}
+
+func (rm *resourceManager) updateShardConfiguration(
+	ctx context.Context,
+	rd *resource, // desired
+	rl *resource, // latest
+	diffReporter *ackcompare.Reporter,
+) (*resource, error) {
+	input, err := rm.newUpdateShardConfigurationRequestPayload(rd, rl)
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +55,13 @@ func (rm *resourceManager) UpdateShardConfiguration(
 	if respErr != nil {
 		return nil, respErr
 	}
-	return provideUpdatedResource(r, resp.ReplicationGroup)
+	return provideUpdatedResource(rd, resp.ReplicationGroup)
 }
 
-func (rm *resourceManager) UpdateReplicaCount(
+func (rm *resourceManager) updateReplicaCount(
 	ctx context.Context,
-	r *resource,
+	rd *resource, // desired
+	rl *resource, // latest
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 
@@ -67,7 +87,7 @@ func (rm *resourceManager) UpdateReplicaCount(
 
 	if latest < desired { // increase
 		fmt.Printf("Requesting Increase Replica Count. Old value: %v, New Value: %v\n", latest, desired)
-		input, err := rm.newIncreaseReplicaCountRequestPayload(r)
+		input, err := rm.newIncreaseReplicaCountRequestPayload(rd)
 		if err != nil {
 			return nil, err
 		}
@@ -75,10 +95,10 @@ func (rm *resourceManager) UpdateReplicaCount(
 		if respErr != nil {
 			return nil, respErr
 		}
-		return provideUpdatedResource(r, resp.ReplicationGroup)
+		return provideUpdatedResource(rd, resp.ReplicationGroup)
 	}
 	// decrease
-	input, err := rm.newDecreaseReplicaCountRequestPayload(r)
+	input, err := rm.newDecreaseReplicaCountRequestPayload(rd)
 	fmt.Printf("Requesting Decrease Replica Count. Old value: %v, New Value: %v\n", latest, desired)
 	if err != nil {
 		return nil, err
@@ -87,30 +107,32 @@ func (rm *resourceManager) UpdateReplicaCount(
 	if respErr != nil {
 		return nil, respErr
 	}
-	return provideUpdatedResource(r, resp.ReplicationGroup)
+	return provideUpdatedResource(rd, resp.ReplicationGroup)
 }
 
 // newUpdate(ShardConfiguration)RequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateShardConfigurationRequestPayload(
-	r *resource,
+	rd *resource, // desired
+	rl *resource, // latest
 ) (*svcsdk.ModifyReplicationGroupShardConfigurationInput, error) {
 	res := &svcsdk.ModifyReplicationGroupShardConfigurationInput{}
 
 	res.SetApplyImmediately(true)
-	if r.ko.Spec.ReplicationGroupID != nil {
-		res.SetReplicationGroupId(*r.ko.Spec.ReplicationGroupID)
+	if rd.ko.Spec.ReplicationGroupID != nil {
+		res.SetReplicationGroupId(*rd.ko.Spec.ReplicationGroupID)
 	}
-	if r.ko.Spec.NumNodeGroups != nil {
-		res.SetNodeGroupCount(*r.ko.Spec.NumNodeGroups)
+	if rd.ko.Spec.NumNodeGroups != nil {
+		res.SetNodeGroupCount(*rd.ko.Spec.NumNodeGroups)
 	}
 
 	nodegroupsToRetain := []*string{}
 
-	// TODO: optional -only if- NumNodeGroups increases shards
-	if r.ko.Spec.NodeGroupConfiguration != nil {
+	// TODO: 	optional -only if- NumNodeGroups increases shards
+	// 			refer 'rl' to find out
+	if rd.ko.Spec.NodeGroupConfiguration != nil {
 		f13 := []*svcsdk.ReshardingConfiguration{}
-		for _, f13iter := range r.ko.Spec.NodeGroupConfiguration {
+		for _, f13iter := range rd.ko.Spec.NodeGroupConfiguration {
 			f13elem := &svcsdk.ReshardingConfiguration{}
 			if f13iter.NodeGroupID != nil {
 				f13elem.SetNodeGroupId(*f13iter.NodeGroupID)
@@ -133,7 +155,8 @@ func (rm *resourceManager) newUpdateShardConfigurationRequestPayload(
 		res.SetReshardingConfiguration(f13)
 	}
 
-	// TODO: optional - only if -  NumNodeGroups decreases shards
+	// TODO: 	optional - only if -  NumNodeGroups decreases shards
+	//			refer 'rl' to find out
 	// res.SetNodeGroupsToRemove() or res.SetNodeGroupsToRetain()
 	res.SetNodeGroupsToRetain(nodegroupsToRetain)
 
