@@ -27,11 +27,11 @@ spec:
         - ./bin/controller
         args:
         - --aws-account-id
-        - "${AWS_ACCOUNT_ID}"
+        - "$(AWS_ACCOUNT_ID)"
         - --aws-region
-        - "${AWS_REGION}"
+        - "$(AWS_REGION)"
         - --enable-development-logging
-        - "${ACK_ENABLE_DEVELOPMENT_LOGGING}"
+        - "$(ACK_ENABLE_DEVELOPMENT_LOGGING)"
         image: controller:latest
         name: controller
         resources:

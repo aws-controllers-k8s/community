@@ -72,6 +72,16 @@ type ResourceConfig struct {
 	// Found and other common error types for primary resources, and thus we
 	// need these instructions.
 	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
+
+	// CustomUpdateOperations provides custom operations that depend upon the
+	// changes to the fields on custom resource.
+	// For APIs where resource Update method does not have all fields that
+	// are supported by resource Create method and remaining fields have
+	// specialized API methods.
+	// Maps custom operation name (key) to list of Resource fields paths (values)
+	// so that custom operation is invoked if field value changes.
+	CustomUpdateOperations map[string]CustomUpdateOperationConfig `json:"custom_update_operations,omitempty"`
+
 	// Renames identifies fields in Operations that should be renamed.
 	Renames *RenamesConfig `json:"renames,omitempty"`
 	// ListOperation contains instructions for the code generator to generate
@@ -84,6 +94,14 @@ type ResourceConfig struct {
 	// filter the results of these List operations from within the generated
 	// code in sdk.go's sdkFind().
 	ListOperation *ListOperationConfig `json:"list_operation,omitempty"`
+}
+
+// Custom resource fields paths list that map to custom operation
+type CustomUpdateOperationConfig struct {
+	// string paths to fields on the custom resource
+	// Example:
+	//  For field ReplicationGroup.Spec.ReplicasPerNodeGroup, the string value would be: Spec.ReplicasPerNodeGroup
+	DiffPaths []string `json:"diff_paths"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a

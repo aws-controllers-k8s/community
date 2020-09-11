@@ -15,7 +15,7 @@ package types
 
 import (
 	"context"
-
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 )
 
@@ -44,7 +44,8 @@ type AWSResourceManager interface {
 	// higher-level reonciler determines whether or not the desired differs
 	// from the latest observed and decides whether to call the resource
 	// manager's Update method
-	Update(context.Context, AWSResource) (AWSResource, error)
+	Update(context.Context, AWSResource, *ackcompare.Reporter) (AWSResource, error)
+
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
 	Delete(context.Context, AWSResource) error

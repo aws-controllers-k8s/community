@@ -19,6 +19,7 @@ import (
 	"context"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/s3"
@@ -115,6 +116,8 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.Location = resp.Location
 	}
 
+	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
 
@@ -165,6 +168,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	r *resource,
+	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	// TODO(jaypipes): Figure this out...
 	return nil, nil

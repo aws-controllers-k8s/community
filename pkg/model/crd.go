@@ -304,6 +304,36 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
+// HasCustomUpdateOperations returns true if the resource has custom update operations
+// specified in generator config
+func (r *CRD) HasCustomUpdateOperations() bool {
+	if r.genCfg != nil {
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.CustomUpdateOperations != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// GetCustomUpdateOperations returns map of diff path (as key) and custom operation (as value) on custom resource,
+// as specified in generator config
+func (r *CRD) GetCustomUpdateOperations() map[string]string {
+	var diffPathToCustomOperationMap map[string]string
+	if r.genCfg != nil {
+		diffPathToCustomOperationMap = make(map[string]string)
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.CustomUpdateOperations != nil {
+			for customOperation, fields := range resGenConfig.CustomUpdateOperations {
+				for _, diffPath := range fields.DiffPaths {
+					diffPathToCustomOperationMap[diffPath] = customOperation
+				}
+			}
+		}
+	}
+	return diffPathToCustomOperationMap
+}
+
 // ExceptionCode returns the name of the resource's Exception code for the
 // Exception having the exception code. If the generator config has
 // instructions for overriding the name of an exception code for a resource for

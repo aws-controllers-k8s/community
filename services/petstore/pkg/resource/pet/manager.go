@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
@@ -150,6 +151,7 @@ func (rm *resourceManager) newCreateRequestPayload(
 func (rm *resourceManager) Update(
 	ctx context.Context,
 	res acktypes.AWSResource,
+	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
 	r := rm.concreteResource(res)
 	if r.sdko == nil {
