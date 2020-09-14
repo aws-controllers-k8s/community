@@ -36,6 +36,7 @@ var (
 	buildDate              string
 	defaultCacheDir        string
 	optCacheDir            string
+	optRefreshCache        bool
 	defaultTemplatesDir    string
 	optTemplatesDir        string
 	defaultServicesDir     string
@@ -104,6 +105,9 @@ func init() {
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&optCacheDir, "cache-dir", defaultCacheDir, "Path to directory to store cached files (including clone'd aws-sdk-go repo)",
+	)
+	rootCmd.PersistentFlags().BoolVar(
+		&optRefreshCache, "refresh-cache", true, "If true, and aws-sdk-go repo is already cloned, will git pull the latest aws-sdk-go commit",
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&optGeneratorConfigPath, "generator-config-path", "", "Path to file containing instructions for code generation to use",
