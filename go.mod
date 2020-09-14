@@ -3,7 +3,7 @@ module github.com/aws/aws-controllers-k8s
 go 1.14
 
 require (
-	github.com/aws/aws-sdk-go v1.34.18
+	github.com/aws/aws-sdk-go v1.34.22
 	github.com/dlclark/regexp2 v1.2.0
 	// pin to v0.1.1 due to release problem with v0.1.2
 	github.com/gertd/go-pluralize v0.1.1
