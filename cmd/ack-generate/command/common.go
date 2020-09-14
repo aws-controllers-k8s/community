@@ -77,6 +77,12 @@ func ensureSDKRepo(cacheDir string) error {
 // returns the filepath to the clone'd repo
 func cloneSDKRepo(srcPath string) (string, error) {
 	clonePath := filepath.Join(srcPath, "aws-sdk-go")
+	if optRefreshCache {
+		if _, err := os.Stat(filepath.Join(clonePath, ".git")); !os.IsNotExist(err) {
+			cmd := exec.Command("git", "-C", clonePath, "pull")
+			return clonePath, cmd.Run()
+		}
+	}
 	if _, err := os.Stat(clonePath); os.IsNotExist(err) {
 		cmd := exec.Command("git", "clone", "--depth", "1", sdkRepoURL, clonePath)
 		return clonePath, cmd.Run()
