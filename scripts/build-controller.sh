@@ -70,8 +70,7 @@ from the root directory or install ack-generate using:
         exit 1;
     fi
 fi
-
-SERVICE="$1"
+SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.
