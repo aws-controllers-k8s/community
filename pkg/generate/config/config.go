@@ -161,6 +161,13 @@ type UnpackAttributesMapConfig struct {
 	// information to the ACK service controller that is useful for determining
 	// observed versus desired state -- then do NOT list that attribute here.
 	Fields map[string]FieldConfig `json:"fields"`
+	// SetAttributesSingleAttribute indicates that the SetAttributes API call
+	// doesn't actually set multiple attributes but rather must be called
+	// multiple times, once for each attribute that needs to change. See SNS
+	// SetTopicAttributes API call, which can be compared to the "normal" SNS
+	// SetPlatformApplicationAttributes API call which accepts multiple
+	// attributes and replaces the supplied attributes map key/values...
+	SetAttributesSingleAttribute bool `json:"set_attributes_single_attribute"`
 }
 
 // FieldConfig contains instructions to the code generator about how
@@ -236,6 +243,22 @@ func (c *Config) UnpacksAttributesMap(resourceName string) bool {
 	}
 	resGenConfig, found := c.Resources[resourceName]
 	return found && resGenConfig.UnpackAttributesMapConfig != nil
+}
+
+// SetAttributesSingleAttribute returns true if the supplied resource name has
+// a SetAttributes operation that only actually changes a single attribute at a
+// time. See: SNS SetTopicAttributes API call, which is entirely different from
+// the SNS SetPlatformApplicationAttributes API call, which sets multiple
+// attributes at once. :shrug:
+func (c *Config) SetAttributesSingleAttribute(resourceName string) bool {
+	if c == nil {
+		return false
+	}
+	resGenConfig, found := c.Resources[resourceName]
+	if !found || resGenConfig.UnpackAttributesMapConfig == nil {
+		return false
+	}
+	return resGenConfig.UnpackAttributesMapConfig.SetAttributesSingleAttribute
 }
 
 // IsIgnoredShape returns true if the supplied shape name should be ignored by the
