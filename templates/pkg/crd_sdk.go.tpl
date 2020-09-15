@@ -94,7 +94,6 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeSetReadManyOutput .CRD "resp" "ko" 1 }}
-{{ $setCustomOutputOperation := .CRD.GetCustomSetOutputOperation .CRD.Ops.ReadMany }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
@@ -107,9 +106,9 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
-{{ if $setCustomOutputOperation }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.ReadMany }}
 	// custom set output from response
-	rm.{{ $setCustomOutputOperation }}(r, resp, ko)
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
 	return &resource{ko}, nil
 {{- else }}
@@ -185,7 +184,6 @@ func (rm *resourceManager) sdkCreate(
 		return nil, err
 	}
 {{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
-{{ $setCustomOutputOperation := .CRD.GetCustomSetOutputOperation .CRD.Ops.Create }}
 	{{ if and .CRD.StatusFields ( not ( Empty $createCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
@@ -194,9 +192,9 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $createCode }}
-{{ if $setCustomOutputOperation }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Create }}
 	// custom set output from response
-	rm.{{ $setCustomOutputOperation }}(r, resp, ko)
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
 	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
@@ -238,7 +236,6 @@ func (rm *resourceManager) sdkUpdate(
 {{ end }}
 
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
-{{ $setCustomOutputOperation := .CRD.GetCustomSetOutputOperation .CRD.Ops.Update }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
@@ -247,9 +244,9 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
-{{ if $setCustomOutputOperation }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Update }}
 	// custom set output from response
-	rm.{{ $setCustomOutputOperation }}(r, resp, ko)
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
 	return &resource{ko}, nil
 {{- else }}

@@ -304,23 +304,23 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
-// GetCustomSetOutputOperation returns custom set output operation as string for
+// SetOutputCustomMethodName returns custom set output operation as *string for
 // given operation on custom resource, if specified in generator config
-func (r *CRD) GetCustomSetOutputOperation(
+func (r *CRD) SetOutputCustomMethodName(
 	// The operation to look for the Output shape
 	op *awssdkmodel.Operation,
-) string {
+) *string {
 	if op == nil {
-		return ""
+		return nil
 	}
 	if r.genCfg == nil {
-		return ""
+		return nil
 	}
 	resGenConfig, found := r.genCfg.Operations[op.Name]
 	if !found {
-		return ""
+		return nil
 	}
-	return resGenConfig.CustomSetOutputOperation
+	return &resGenConfig.SetOutputCustomMethodName
 }
 
 // HasCustomUpdateOperations returns true if the resource has custom update operations

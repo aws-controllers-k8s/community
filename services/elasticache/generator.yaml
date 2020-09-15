@@ -13,11 +13,11 @@ resources:
           - Spec.ReplicasPerNodeGroup
 operations:
   DescribeReplicationGroups:
-    custom_set_output_operation: CustomDescribeReplicationGroupsSetOutput
+    set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
   CreateReplicationGroup:
-    custom_set_output_operation: CustomCreateReplicationGroupSetOutput
+    set_output_custom_method_name: CustomCreateReplicationGroupSetOutput
   ModifyReplicationGroup:
-    custom_set_output_operation: CustomModifyReplicationGroupSetOutput
+    set_output_custom_method_name: CustomModifyReplicationGroupSetOutput
     override_values:
       ApplyImmediately: true
 ignore:
