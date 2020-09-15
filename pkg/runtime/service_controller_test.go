@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -28,12 +29,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	ctrlmanager "sigs.k8s.io/controller-runtime/pkg/manager"
+	k8sscheme "sigs.k8s.io/controller-runtime/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 
 	mocks "github.com/aws/aws-controllers-k8s/mocks/pkg/types"
-	bookstoretypes "github.com/aws/aws-controllers-k8s/services/bookstore/apis/v1alpha1"
 )
 
 var (
@@ -41,9 +42,20 @@ var (
 )
 
 func init() {
+	groupVersion := schema.GroupVersion{Group: "bookstore.services.k8s.aws", Version: "v1alpha1"}
+	schemeBuilder := &k8sscheme.Builder{GroupVersion: groupVersion}
+	schemeBuilder.Register(&fakeBook{})
+
+	_ = schemeBuilder.AddToScheme(scheme)
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = bookstoretypes.AddToScheme(scheme)
 }
+
+type fakeBook struct{}
+
+func (b *fakeBook) GetObjectKind() schema.ObjectKind { return nil }
+func (b *fakeBook) DeepCopy() *fakeBook              { return nil }
+func (b *fakeBook) DeepCopyInto(*fakeBook)           {}
+func (b *fakeBook) DeepCopyObject() runtime.Object   { return nil }
 
 type fakeManager struct{}
 
@@ -71,11 +83,11 @@ func TestServiceController(t *testing.T) {
 	rd.On("GroupKind").Return(
 		&metav1.GroupKind{
 			Group: "bookstore.services.k8s.aws",
-			Kind:  "Book",
+			Kind:  "fakeBook",
 		},
 	)
 	rd.On("EmptyRuntimeObject").Return(
-		&bookstoretypes.Book{},
+		&fakeBook{},
 	)
 
 	rmf := &mocks.AWSResourceManagerFactory{}
@@ -103,12 +115,12 @@ func TestServiceController(t *testing.T) {
 	recons = sc.GetReconcilers()
 	require.NotEmpty(recons)
 
-	foundBookRecon := false
+	foundfakeBookRecon := false
 	for _, recon := range recons {
-		if recon.GroupKind().String() == "Book.bookstore.services.k8s.aws" {
-			foundBookRecon = true
+		if recon.GroupKind().String() == "fakeBook.bookstore.services.k8s.aws" {
+			foundfakeBookRecon = true
 		}
 	}
-	require.True(foundBookRecon)
+	require.True(foundfakeBookRecon)
 	rd.AssertCalled(t, "EmptyRuntimeObject")
 }

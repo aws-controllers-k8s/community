@@ -16,7 +16,7 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
 : "${ACK_GENERATE_CONFIG_PATH:=""}"
-: "${K8S_RBAC_ROLE_NAME:="ack-controller-role"}"
+: "${K8S_RBAC_ROLE_NAME:="ack-controller"}"
 
 USAGE="
 Usage:

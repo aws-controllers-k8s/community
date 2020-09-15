@@ -304,6 +304,36 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
+// HasCustomUpdateOperations returns true if the resource has custom update operations
+// specified in generator config
+func (r *CRD) HasCustomUpdateOperations() bool {
+	if r.genCfg != nil {
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.CustomUpdateOperations != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// GetCustomUpdateOperations returns map of diff path (as key) and custom operation (as value) on custom resource,
+// as specified in generator config
+func (r *CRD) GetCustomUpdateOperations() map[string]string {
+	var diffPathToCustomOperationMap map[string]string
+	if r.genCfg != nil {
+		diffPathToCustomOperationMap = make(map[string]string)
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.CustomUpdateOperations != nil {
+			for customOperation, fields := range resGenConfig.CustomUpdateOperations {
+				for _, diffPath := range fields.DiffPaths {
+					diffPathToCustomOperationMap[diffPath] = customOperation
+				}
+			}
+		}
+	}
+	return diffPathToCustomOperationMap
+}
+
 // ExceptionCode returns the name of the resource's Exception code for the
 // Exception having the exception code. If the generator config has
 // instructions for overriding the name of an exception code for a resource for
@@ -359,52 +389,79 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	return "UNKNOWN"
 }
 
-// Return true if all the required status fields are missing from ReadOneInput. Else, return false
+// GoCodeRequiredFieldsMissingFromShape returns Go code that contains a
+// condition checking that the required fields in the supplied Shape have a
+// non-nil value in the corresponding CR's Spec or Status substruct.
+//
 // Sample Output:
-//if r.ko.Status.APIID == nil {
-//	return true
-//} else {
-//	return false
-//}
-func (r *CRD) GoCodeRequiredStatusFieldsMissingFromReadOneInput(koVarName string, indentLevel int) string {
-	out := ""
-	indent := strings.Repeat("\t", indentLevel)
-
-	var requiredKoStatusFields = r.RequiredStatusFieldsForReadOneInput()
-	if len(requiredKoStatusFields) > 0 {
-		allRequiredKoStatusFieldMissingCondition := ""
-		for _, fieldName := range requiredKoStatusFields {
-			// Use '&&' because all the requiredStatusFields should be missing if object is not created yet
-			allRequiredKoStatusFieldMissingCondition += fmt.Sprintf("%s.Status.%s == nil &&", koVarName, fieldName.Names.Camel)
-		}
-		allRequiredKoStatusFieldMissingCondition = strings.TrimSuffix(allRequiredKoStatusFieldMissingCondition, "&&")
-		out += fmt.Sprintf("%sif %s {\n", indent, allRequiredKoStatusFieldMissingCondition)
-		out += fmt.Sprintf("%s\treturn true\n", indent)
-		out += fmt.Sprintf("%s} else {\n", indent)
-		out += fmt.Sprintf("%s\treturn false\n", indent)
-		out += fmt.Sprintf("%s}", indent)
-	} else {
-		out += fmt.Sprintf("%sreturn false", indent)
+//
+// return r.ko.Spec.APIID == nil || r.ko.Status.RouteID != nil
+func (r *CRD) GoCodeRequiredFieldsMissingFromShape(
+	opType OpType,
+	koVarName string,
+	indentLevel int,
+) string {
+	var op *awssdkmodel.Operation
+	switch opType {
+	case OpTypeGet:
+		op = r.Ops.ReadOne
+	case OpTypeGetAttributes:
+		op = r.Ops.GetAttributes
+	default:
+		return ""
 	}
-	return out
+
+	shape := op.InputRef.Shape
+	return r.goCodeRequiredFieldsMissingFromShape(
+		koVarName,
+		indentLevel,
+		shape,
+	)
 }
 
-// This method returns the required fields for ReadOneInput which are present in ko.Status .
-func (r *CRD) RequiredStatusFieldsForReadOneInput() []*CRDField {
-	var requiredStatusFields []*CRDField
-	op := r.Ops.ReadOne
-	inputShape := op.InputRef.Shape
-	if inputShape == nil || len(inputShape.Required) == 0 {
-		return requiredStatusFields
+func (r *CRD) goCodeRequiredFieldsMissingFromShape(
+	koVarName string,
+	indentLevel int,
+	shape *awssdkmodel.Shape,
+) string {
+	indent := strings.Repeat("\t", indentLevel)
+	if shape == nil || len(shape.Required) == 0 {
+		return fmt.Sprintf("%sreturn false", indent)
 	}
-	requiredFieldNames := inputShape.Required
-	for _, requiredFieldName := range requiredFieldNames {
-		koStatusField, found := r.StatusFields[requiredFieldName]
+
+	// Loop over the required member fields in the shape and identify whether
+	// the field exists in either the Status or the Spec of the resource and
+	// generate an if condition checking for all required fields having non-nil
+	// corresponding resource Spec/Status values
+	missing := []string{}
+	for _, memberName := range shape.Required {
+		cleanMemberNames := names.New(memberName)
+		cleanMemberName := cleanMemberNames.Camel
+
+		resVarPath := koVarName
+		_, found := r.SpecFields[memberName]
 		if found {
-			requiredStatusFields = append(requiredStatusFields, koStatusField)
+			resVarPath = resVarPath + ".Spec." + cleanMemberName
+		} else {
+			_, found = r.StatusFields[memberName]
+			if !found {
+				// If it isn't in our spec/status fields, we have a problem!
+				msg := fmt.Sprintf(
+					"GENERATION FAILURE! there's a required field %s in "+
+						"Shape %s that isn't in either the CR's Spec or "+
+						"Status structs!",
+					memberName, shape.ShapeName,
+				)
+				panic(msg)
+			}
+			resVarPath = resVarPath + ".Status." + cleanMemberName
 		}
+		missing = append(missing, fmt.Sprintf("%s == nil", resVarPath))
 	}
-	return requiredStatusFields
+	// Use '||' because if any of the required fields are missing the object
+	// is not created yet
+	missingCondition := strings.Join(missing, " || ")
+	return fmt.Sprintf("%sreturn %s\n", indent, missingCondition)
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields

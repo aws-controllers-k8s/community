@@ -163,14 +163,14 @@ func (r *reconciler) sync(
 		if r.rd.Equal(desired, latest) {
 			return nil
 		}
-		diff := r.rd.Diff(desired, latest)
+		diffReporter := r.rd.Diff(desired, latest)
 		r.log.V(1).Info(
 			"desired resource state has changed",
-			"diff", diff,
+			"diff", diffReporter.String(),
 			"arn", latest.Identifiers().ARN(),
 			"is_adopted", isAdopted,
 		)
-		latest, err = rm.Update(ctx, desired)
+		latest, err = rm.Update(ctx, desired, diffReporter)
 		if err != nil {
 			return err
 		}

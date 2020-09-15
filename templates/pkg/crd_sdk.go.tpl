@@ -12,6 +12,7 @@ import (
 {{- end }}
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
@@ -36,10 +37,10 @@ func (rm *resourceManager) sdkFind(
 	r *resource,
 ) (*resource, error) {
 {{- if .CRD.Ops.ReadOne }}
-	// If all the required status fields in the input shape are missing, AWS
-	// resource is not created yet. Return NotFound here to indicate
-	// to callers that the resource isn't yet created.
-	if rm.requiredStatusFieldsMissingFromReadOneInput(r) {
+	// If any required fields in the input shape are missing, AWS resource is
+	// not created yet. Return NotFound here to indicate to callers that the
+	// resource isn't yet created.
+	if rm.requiredFieldsMissingFromReadOneInput(r) {
 		return nil, ackerr.NotFound
 	}
 
@@ -62,6 +63,13 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode }}
 	return &resource{ko}, nil
 {{- else if .CRD.Ops.GetAttributes }}
+	// If any required fields in the input shape are missing, AWS resource is
+	// not created yet. Return NotFound here to indicate to callers that the
+	// resource isn't yet created.
+	if rm.requiredStatusFieldsMissingFromGetAttributesInput(r) {
+		return nil, ackerr.NotFound
+	}
+
 	input, err := rm.newGetAttributesRequestPayload(r)
 	if err != nil {
 		return nil, err
@@ -100,18 +108,21 @@ func (rm *resourceManager) sdkFind(
 {{ $setCode }}
 	return &resource{ko}, nil
 {{- else }}
-    // Believe it or not, there are API resources that can be created but there
-    // is no read operation. Point in case: RDS' CreateDBInstanceReadReplica
-    // has no corresponding read operation that I know of...
+	// Believe it or not, there are API resources that can be created but there
+	// is no read operation. Point in case: RDS' CreateDBInstanceReadReplica
+	// has no corresponding read operation that I know of...
 	return nil, ackerr.NotImplemented
 {{- end }}
 }
 
 {{- if .CRD.Ops.ReadOne }}
-func (rm *resourceManager) requiredStatusFieldsMissingFromReadOneInput(
-    r *resource,
+// requiredFieldsMissingFromReadOneInput returns true if there are any fields
+// for the ReadOne Input shape that are required by not present in the
+// resource's Spec or Status
+func (rm *resourceManager) requiredFieldsMissingFromReadOneInput(
+	r *resource,
 ) bool {
-{{ GoCodeRequiredStatusFieldsMissingFromReadOneInput .CRD "r.ko" 1 }}
+{{ GoCodeRequiredFieldsMissingFromReadOneInput .CRD "r.ko" 1 }}
 }
 
 // newDescribeRequestPayload returns SDK-specific struct for the HTTP request
@@ -138,6 +149,15 @@ func (rm *resourceManager) newListRequestPayload(
 {{- end }}
 
 {{- if .CRD.Ops.GetAttributes }}
+// requiredFieldsMissingFromGetAtttributesInput returns true if there are any
+// fields for the GetAttributes Input shape that are required by not present in
+// the resource's Spec or Status
+func (rm *resourceManager) requiredFieldsMissingFromGetAttributesInput(
+	r *resource,
+) bool {
+{{ GoCodeRequiredFieldsMissingFromGetAttributesInput .CRD "r.ko" 1 }}
+}
+
 // newGetAttributesRequestPayload returns SDK-specific struct for the HTTP
 // request payload of the GetAttributes API call for the resource
 func (rm *resourceManager) newGetAttributesRequestPayload(
@@ -188,12 +208,25 @@ func (rm *resourceManager) newCreateRequestPayload(
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	r *resource,
+	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 {{- if .CRD.Ops.Update }}
 	input, err := rm.newUpdateRequestPayload(r)
 	if err != nil {
 		return nil, err
 	}
+
+{{ if .CRD.HasCustomUpdateOperations }}
+	for _, diff := range diffReporter.Differences {
+		switch diff.Path {
+	{{- range $diffPath, $customMethod := .CRD.GetCustomUpdateOperations }}
+		case "{{ $diffPath }}":
+			return rm.{{ $customMethod }}(ctx, r, diffReporter)
+	{{- end }}
+		}
+	}
+{{ end }}
+
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {

@@ -16,6 +16,7 @@
 package topic
 
 import (
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -78,18 +79,19 @@ func (d *resourceDescriptor) Equal(
 	return cmp.Equal(ac.ko, bc.ko, opts)
 }
 
-// Diff returns a string representing the difference between two supplied
+// Diff returns a Reporter which provides the difference between two supplied
 // AWSResources. The underlying types of the two supplied AWSResources should
 // be the same. In other words, the Diff() method should be called with the
 // same concrete implementing AWSResource type
 func (d *resourceDescriptor) Diff(
 	a acktypes.AWSResource,
 	b acktypes.AWSResource,
-) string {
+) *ackcompare.Reporter {
 	ac := a.(*resource)
 	bc := b.(*resource)
-	opts := cmpopts.EquateEmpty()
-	return cmp.Diff(ac.ko, bc.ko, opts)
+	var diffReporter ackcompare.Reporter
+	cmp.Equal(ac.ko, bc.ko, cmp.Reporter(&diffReporter), cmp.AllowUnexported(svcapitypes.Topic{}))
+	return &diffReporter
 }
 
 // UpdateCRStatus accepts an AWSResource object and changes the Status
@@ -98,7 +100,7 @@ func (d *resourceDescriptor) Diff(
 func (d *resourceDescriptor) UpdateCRStatus(
 	res acktypes.AWSResource,
 ) (bool, error) {
-	updated := false
+	updated := true
 	return updated, nil
 }
 
