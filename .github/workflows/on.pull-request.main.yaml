@@ -21,3 +21,27 @@ jobs:
         run: ./scripts/install_mockery.sh
       - name: make test
         run: make test
+
+  build-controllers:
+    name: build service
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+         - s3
+         - ecr
+         - sns
+         - sqs
+         - elasticache
+         - dynamodb
+         - apigatewayv2
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+      - name: build service controller
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make build-controller SERVICE=$SERVICE
+        env:
+          SERVICE: ${{ matrix.service }}
