@@ -12,7 +12,12 @@ resources:
         diff_paths:
           - Spec.ReplicasPerNodeGroup
 operations:
+  DescribeReplicationGroups:
+    custom_set_output_operation: CustomDescribeReplicationGroupsSetOutput
+  CreateReplicationGroup:
+    custom_set_output_operation: CustomCreateReplicationGroupSetOutput
   ModifyReplicationGroup:
+    custom_set_output_operation: CustomModifyReplicationGroupSetOutput
     override_values:
       ApplyImmediately: true
 ignore:

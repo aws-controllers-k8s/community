@@ -38,6 +38,8 @@ type Config struct {
 // specify the overriding values for API operation parameters
 type OperationConfig struct {
 	OverrideValues map[string]string `json:"override_values"`
+	// CustomSetOutputOperation provides custom operation to process operation's output shape.
+	CustomSetOutputOperation string `json:"custom_set_output_operation,omitempty"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to

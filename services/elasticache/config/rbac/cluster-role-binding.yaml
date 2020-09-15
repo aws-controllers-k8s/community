@@ -5,7 +5,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: ack-controller-role
+  name: ack-controller
 subjects:
 - kind: ServiceAccount
   name: default

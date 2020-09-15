@@ -244,6 +244,9 @@ func (rm *resourceManager) sdkFind(
 		return nil, ackerr.NotFound
 	}
 
+	// custom set output from response
+	rm.CustomDescribeReplicationGroupsSetOutput(r, resp, ko)
+
 	return &resource{ko}, nil
 }
 
@@ -424,6 +427,9 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ReplicationGroup.Status != nil {
 		ko.Status.Status = resp.ReplicationGroup.Status
 	}
+
+	// custom set output from response
+	rm.CustomCreateReplicationGroupSetOutput(r, resp, ko)
 
 	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
@@ -768,6 +774,9 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ReplicationGroup.Status != nil {
 		ko.Status.Status = resp.ReplicationGroup.Status
 	}
+
+	// custom set output from response
+	rm.CustomModifyReplicationGroupSetOutput(r, resp, ko)
 
 	return &resource{ko}, nil
 }
