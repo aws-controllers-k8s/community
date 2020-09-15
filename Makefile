@@ -8,6 +8,7 @@ PKGS=$(sort $(dir $(wildcard pkg/*/*/)))
 MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
 MOCKERY_BIN=$(shell which mockery || "./bin/mockery")
+AWS_SERVICE=$(shell echo $(SERVICE) | tr '[:upper:]' '[:lower:]')
 
 # Build ldflags
 VERSION ?= "v0.0.0"
@@ -36,17 +37,17 @@ clean-mocks:	## Remove mocks directory
 	rm -rf mocks
 
 build-controller-image:	## Build container image for SERVICE
-	./scripts/build-controller-image.sh -s $(SERVICE)
+	./scripts/build-controller-image.sh -s $(AWS_SERVICE)
 
 publish-controller-image:  ## docker push a container image for SERVICE
 	@echo $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
-	./scripts/publish-controller-image.sh -r $(DOCKER_REPOSITORY) -s $(SERVICE)
+	./scripts/publish-controller-image.sh -r $(DOCKER_REPOSITORY) -s $(AWS_SERVICE)
 
 build-controller: build-ack-generate	## Generate controller code for SERVICE
-	./scripts/build-controller.sh $(SERVICE)
+	./scripts/build-controller.sh $(AWS_SERVICE)
 
 kind-test: test	## Run functional tests for SERVICE with AWS_ROLE_ARN
-	./scripts/kind-build-test.sh -s $(SERVICE) -p -r $(AWS_ROLE_ARN)
+	./scripts/kind-build-test.sh -s $(AWS_SERVICE) -p -r $(AWS_ROLE_ARN)
 
 delete-all-kind-clusters:	## Delete all local kind clusters
 	@kind get clusters | \
