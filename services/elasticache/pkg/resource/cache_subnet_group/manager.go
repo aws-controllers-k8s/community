@@ -108,18 +108,17 @@ func (rm *resourceManager) Create(
 // manager's Update method
 func (rm *resourceManager) Update(
 	ctx context.Context,
-	resDesired acktypes.AWSResource, // desired
-	resLatest acktypes.AWSResource, // latest
+	resDesired acktypes.AWSResource,
+	resLatest acktypes.AWSResource,
 	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
-	rd := rm.concreteResource(resDesired)
-	rl := rm.concreteResource(resLatest)
-	if rd.ko == nil || rl.ko == nil {
+	desired := rm.concreteResource(resDesired)
+	latest := rm.concreteResource(resLatest)
+	if desired.ko == nil || latest.ko == nil {
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil CR object")
 	}
-
-	updated, err := rm.sdkUpdate(ctx, rd, rl, diffReporter)
+	updated, err := rm.sdkUpdate(ctx, desired, latest, diffReporter)
 	if err != nil {
 		return nil, err
 	}
