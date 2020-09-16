@@ -85,8 +85,8 @@ ensure_service_controller_running() {
 # otherwise. An optional second parameter overrides the Kubernetes namespace
 # argument
 k8s_resource_exists() {
-    local __res_name="$1"
-    local __namespace="$2"
+    local __res_name=${1:-}
+    local __namespace=${2:-}
     local __args=""
     if [ -n "$__namespace" ]; then
         __args="$__args-n $__namespace"
