@@ -21,5 +21,5 @@ require (
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v0.18.2
 	sigs.k8s.io/controller-runtime v0.6.0
-	sigs.k8s.io/controller-tools v0.3.1-0.20200716001835-4a903ddb7005 // indirect
+	sigs.k8s.io/controller-tools v0.4.0 // indirect
 )
