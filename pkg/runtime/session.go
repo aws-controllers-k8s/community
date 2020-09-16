@@ -13,16 +13,22 @@
 
 package runtime
 
-import "github.com/aws/aws-sdk-go/aws/session"
+import (
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/session"
+)
 
-func NewSession() (*session.Session, error) {
-	// NOTE(jaypipes): session.NewSession() is needed for the STS::AssumeRole
-	// stuff we will need to do...
-	sess, err := session.NewSession()
+func NewSession(region ackv1alpha1.AWSRegion) (*session.Session, error) {
+	awsCfg := aws.Config{
+		Region:              aws.String(string(region)),
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
+	}
+	sess, err := session.NewSession(&awsCfg)
 	if err != nil {
 		return nil, err
 	}
-	// TODO(jaypipes): Handling all common region endpoint, throttling
-	// configuration, TLS, etc
+	// TODO(jaypipes): Handle throttling
 	return sess, nil
 }

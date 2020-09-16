@@ -159,7 +159,7 @@ func newResourceManager(
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
-	sess, err := ackrt.NewSession()
+	sess, err := ackrt.NewSession(region)
 	if err != nil {
 		return nil, err
 	}
