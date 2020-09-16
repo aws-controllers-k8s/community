@@ -46,12 +46,13 @@ type APIStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions  []*ackv1alpha1.Condition `json:"conditions"`
-	APIEndpoint *string                  `json:"apiEndpoint,omitempty"`
-	APIID       *string                  `json:"apiID,omitempty"`
-	CreatedDate *metav1.Time             `json:"createdDate,omitempty"`
-	ImportInfo  []*string                `json:"importInfo,omitempty"`
-	Warnings    []*string                `json:"warnings,omitempty"`
+	Conditions        []*ackv1alpha1.Condition `json:"conditions"`
+	APIEndpoint       *string                  `json:"apiEndpoint,omitempty"`
+	APIGatewayManaged *bool                    `json:"apiGatewayManaged,omitempty"`
+	APIID             *string                  `json:"apiID,omitempty"`
+	CreatedDate       *metav1.Time             `json:"createdDate,omitempty"`
+	ImportInfo        []*string                `json:"importInfo,omitempty"`
+	Warnings          []*string                `json:"warnings,omitempty"`
 }
 
 // API is the Schema for the APIS API

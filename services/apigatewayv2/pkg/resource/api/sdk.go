@@ -70,6 +70,9 @@ func (rm *resourceManager) sdkFind(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -77,22 +80,22 @@ func (rm *resourceManager) sdkFind(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f8 := []*string{}
+		for _, f8iter := range resp.ImportInfo {
+			var f8elem string
+			f8elem = *f8iter
+			f8 = append(f8, &f8elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f8
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f14 := []*string{}
+		for _, f14iter := range resp.Warnings {
+			var f14elem string
+			f14elem = *f14iter
+			f14 = append(f14, &f14elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f14
 	}
 
 	return &resource{ko}, nil
@@ -154,6 +157,9 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -161,22 +167,22 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f8 := []*string{}
+		for _, f8iter := range resp.ImportInfo {
+			var f8elem string
+			f8elem = *f8iter
+			f8 = append(f8, &f8elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f8
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f14 := []*string{}
+		for _, f14iter := range resp.Warnings {
+			var f14elem string
+			f14elem = *f14iter
+			f14 = append(f14, &f14elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f14
 	}
 
 	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
@@ -303,6 +309,9 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -310,22 +319,22 @@ func (rm *resourceManager) sdkUpdate(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f8 := []*string{}
+		for _, f8iter := range resp.ImportInfo {
+			var f8elem string
+			f8elem = *f8iter
+			f8 = append(f8, &f8elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f8
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f14 := []*string{}
+		for _, f14iter := range resp.Warnings {
+			var f14elem string
+			f14elem = *f14iter
+			f14 = append(f14, &f14elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f14
 	}
 
 	return &resource{ko}, nil

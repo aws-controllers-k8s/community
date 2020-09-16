@@ -50,6 +50,8 @@ spec:
               type: string
             integrationMethod:
               type: string
+            integrationSubtype:
+              type: string
             integrationType:
               type: string
             integrationURI:

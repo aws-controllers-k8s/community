@@ -156,6 +156,9 @@ func (rm *resourceManager) newCreateRequestPayload(
 	if r.ko.Spec.AuthorizerCredentialsARN != nil {
 		res.SetAuthorizerCredentialsArn(*r.ko.Spec.AuthorizerCredentialsARN)
 	}
+	if r.ko.Spec.AuthorizerPayloadFormatVersion != nil {
+		res.SetAuthorizerPayloadFormatVersion(*r.ko.Spec.AuthorizerPayloadFormatVersion)
+	}
 	if r.ko.Spec.AuthorizerResultTtlInSeconds != nil {
 		res.SetAuthorizerResultTtlInSeconds(*r.ko.Spec.AuthorizerResultTtlInSeconds)
 	}
@@ -165,33 +168,36 @@ func (rm *resourceManager) newCreateRequestPayload(
 	if r.ko.Spec.AuthorizerURI != nil {
 		res.SetAuthorizerUri(*r.ko.Spec.AuthorizerURI)
 	}
+	if r.ko.Spec.EnableSimpleResponses != nil {
+		res.SetEnableSimpleResponses(*r.ko.Spec.EnableSimpleResponses)
+	}
 	if r.ko.Spec.IDentitySource != nil {
-		f5 := []*string{}
-		for _, f5iter := range r.ko.Spec.IDentitySource {
-			var f5elem string
-			f5elem = *f5iter
-			f5 = append(f5, &f5elem)
+		f7 := []*string{}
+		for _, f7iter := range r.ko.Spec.IDentitySource {
+			var f7elem string
+			f7elem = *f7iter
+			f7 = append(f7, &f7elem)
 		}
-		res.SetIdentitySource(f5)
+		res.SetIdentitySource(f7)
 	}
 	if r.ko.Spec.IDentityValidationExpression != nil {
 		res.SetIdentityValidationExpression(*r.ko.Spec.IDentityValidationExpression)
 	}
 	if r.ko.Spec.JWTConfiguration != nil {
-		f7 := &svcsdk.JWTConfiguration{}
+		f9 := &svcsdk.JWTConfiguration{}
 		if r.ko.Spec.JWTConfiguration.Audience != nil {
-			f7f0 := []*string{}
-			for _, f7f0iter := range r.ko.Spec.JWTConfiguration.Audience {
-				var f7f0elem string
-				f7f0elem = *f7f0iter
-				f7f0 = append(f7f0, &f7f0elem)
+			f9f0 := []*string{}
+			for _, f9f0iter := range r.ko.Spec.JWTConfiguration.Audience {
+				var f9f0elem string
+				f9f0elem = *f9f0iter
+				f9f0 = append(f9f0, &f9f0elem)
 			}
-			f7.SetAudience(f7f0)
+			f9.SetAudience(f9f0)
 		}
 		if r.ko.Spec.JWTConfiguration.Issuer != nil {
-			f7.SetIssuer(*r.ko.Spec.JWTConfiguration.Issuer)
+			f9.SetIssuer(*r.ko.Spec.JWTConfiguration.Issuer)
 		}
-		res.SetJwtConfiguration(f7)
+		res.SetJwtConfiguration(f9)
 	}
 	if r.ko.Spec.Name != nil {
 		res.SetName(*r.ko.Spec.Name)
@@ -243,6 +249,9 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	if r.ko.Status.AuthorizerID != nil {
 		res.SetAuthorizerId(*r.ko.Status.AuthorizerID)
 	}
+	if r.ko.Spec.AuthorizerPayloadFormatVersion != nil {
+		res.SetAuthorizerPayloadFormatVersion(*r.ko.Spec.AuthorizerPayloadFormatVersion)
+	}
 	if r.ko.Spec.AuthorizerResultTtlInSeconds != nil {
 		res.SetAuthorizerResultTtlInSeconds(*r.ko.Spec.AuthorizerResultTtlInSeconds)
 	}
@@ -252,33 +261,36 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	if r.ko.Spec.AuthorizerURI != nil {
 		res.SetAuthorizerUri(*r.ko.Spec.AuthorizerURI)
 	}
+	if r.ko.Spec.EnableSimpleResponses != nil {
+		res.SetEnableSimpleResponses(*r.ko.Spec.EnableSimpleResponses)
+	}
 	if r.ko.Spec.IDentitySource != nil {
-		f6 := []*string{}
-		for _, f6iter := range r.ko.Spec.IDentitySource {
-			var f6elem string
-			f6elem = *f6iter
-			f6 = append(f6, &f6elem)
+		f8 := []*string{}
+		for _, f8iter := range r.ko.Spec.IDentitySource {
+			var f8elem string
+			f8elem = *f8iter
+			f8 = append(f8, &f8elem)
 		}
-		res.SetIdentitySource(f6)
+		res.SetIdentitySource(f8)
 	}
 	if r.ko.Spec.IDentityValidationExpression != nil {
 		res.SetIdentityValidationExpression(*r.ko.Spec.IDentityValidationExpression)
 	}
 	if r.ko.Spec.JWTConfiguration != nil {
-		f8 := &svcsdk.JWTConfiguration{}
+		f10 := &svcsdk.JWTConfiguration{}
 		if r.ko.Spec.JWTConfiguration.Audience != nil {
-			f8f0 := []*string{}
-			for _, f8f0iter := range r.ko.Spec.JWTConfiguration.Audience {
-				var f8f0elem string
-				f8f0elem = *f8f0iter
-				f8f0 = append(f8f0, &f8f0elem)
+			f10f0 := []*string{}
+			for _, f10f0iter := range r.ko.Spec.JWTConfiguration.Audience {
+				var f10f0elem string
+				f10f0elem = *f10f0iter
+				f10f0 = append(f10f0, &f10f0elem)
 			}
-			f8.SetAudience(f8f0)
+			f10.SetAudience(f10f0)
 		}
 		if r.ko.Spec.JWTConfiguration.Issuer != nil {
-			f8.SetIssuer(*r.ko.Spec.JWTConfiguration.Issuer)
+			f10.SetIssuer(*r.ko.Spec.JWTConfiguration.Issuer)
 		}
-		res.SetJwtConfiguration(f8)
+		res.SetJwtConfiguration(f10)
 	}
 	if r.ko.Spec.Name != nil {
 		res.SetName(*r.ko.Spec.Name)

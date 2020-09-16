@@ -112,6 +112,8 @@ spec:
               type: object
             apiEndpoint:
               type: string
+            apiGatewayManaged:
+              type: boolean
             apiID:
               type: string
             conditions:

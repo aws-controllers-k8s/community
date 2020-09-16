@@ -357,6 +357,11 @@ func (in *APIStatus) DeepCopyInto(out *APIStatus) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.APIGatewayManaged != nil {
+		in, out := &in.APIGatewayManaged, &out.APIGatewayManaged
+		*out = new(bool)
+		**out = **in
+	}
 	if in.APIID != nil {
 		in, out := &in.APIID, &out.APIID
 		*out = new(string)
@@ -406,6 +411,11 @@ func (in *API_SDK) DeepCopyInto(out *API_SDK) {
 	if in.APIEndpoint != nil {
 		in, out := &in.APIEndpoint, &out.APIEndpoint
 		*out = new(string)
+		**out = **in
+	}
+	if in.APIGatewayManaged != nil {
+		in, out := &in.APIGatewayManaged, &out.APIGatewayManaged
+		*out = new(bool)
 		**out = **in
 	}
 	if in.APIID != nil {
@@ -603,6 +613,11 @@ func (in *AuthorizerSpec) DeepCopyInto(out *AuthorizerSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.AuthorizerPayloadFormatVersion != nil {
+		in, out := &in.AuthorizerPayloadFormatVersion, &out.AuthorizerPayloadFormatVersion
+		*out = new(string)
+		**out = **in
+	}
 	if in.AuthorizerResultTtlInSeconds != nil {
 		in, out := &in.AuthorizerResultTtlInSeconds, &out.AuthorizerResultTtlInSeconds
 		*out = new(int64)
@@ -616,6 +631,11 @@ func (in *AuthorizerSpec) DeepCopyInto(out *AuthorizerSpec) {
 	if in.AuthorizerURI != nil {
 		in, out := &in.AuthorizerURI, &out.AuthorizerURI
 		*out = new(string)
+		**out = **in
+	}
+	if in.EnableSimpleResponses != nil {
+		in, out := &in.EnableSimpleResponses, &out.EnableSimpleResponses
+		*out = new(bool)
 		**out = **in
 	}
 	if in.IDentitySource != nil {
@@ -705,6 +725,11 @@ func (in *Authorizer_SDK) DeepCopyInto(out *Authorizer_SDK) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.AuthorizerPayloadFormatVersion != nil {
+		in, out := &in.AuthorizerPayloadFormatVersion, &out.AuthorizerPayloadFormatVersion
+		*out = new(string)
+		**out = **in
+	}
 	if in.AuthorizerResultTtlInSeconds != nil {
 		in, out := &in.AuthorizerResultTtlInSeconds, &out.AuthorizerResultTtlInSeconds
 		*out = new(int64)
@@ -718,6 +743,11 @@ func (in *Authorizer_SDK) DeepCopyInto(out *Authorizer_SDK) {
 	if in.AuthorizerURI != nil {
 		in, out := &in.AuthorizerURI, &out.AuthorizerURI
 		*out = new(string)
+		**out = **in
+	}
+	if in.EnableSimpleResponses != nil {
+		in, out := &in.EnableSimpleResponses, &out.EnableSimpleResponses
+		*out = new(bool)
 		**out = **in
 	}
 	if in.IDentitySource != nil {
@@ -1593,6 +1623,11 @@ func (in *IntegrationSpec) DeepCopyInto(out *IntegrationSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.IntegrationSubtype != nil {
+		in, out := &in.IntegrationSubtype, &out.IntegrationSubtype
+		*out = new(string)
+		**out = **in
+	}
 	if in.IntegrationType != nil {
 		in, out := &in.IntegrationType, &out.IntegrationType
 		*out = new(string)
@@ -1761,6 +1796,11 @@ func (in *Integration_SDK) DeepCopyInto(out *Integration_SDK) {
 	}
 	if in.IntegrationResponseSelectionExpression != nil {
 		in, out := &in.IntegrationResponseSelectionExpression, &out.IntegrationResponseSelectionExpression
+		*out = new(string)
+		**out = **in
+	}
+	if in.IntegrationSubtype != nil {
+		in, out := &in.IntegrationSubtype, &out.IntegrationSubtype
 		*out = new(string)
 		**out = **in
 	}

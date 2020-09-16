@@ -40,6 +40,8 @@ spec:
               type: string
             authorizerCredentialsARN:
               type: string
+            authorizerPayloadFormatVersion:
+              type: string
             authorizerResultTtlInSeconds:
               format: int64
               type: integer
@@ -47,6 +49,8 @@ spec:
               type: string
             authorizerURI:
               type: string
+            enableSimpleResponses:
+              type: boolean
             identitySource:
               items:
                 type: string
