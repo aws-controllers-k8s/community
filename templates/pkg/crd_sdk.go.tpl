@@ -106,6 +106,10 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.ReadMany }}
+	// custom set output from response
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
+{{ end }}
 	return &resource{ko}, nil
 {{- else }}
 	// Believe it or not, there are API resources that can be created but there
@@ -188,6 +192,10 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $createCode }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Create }}
+	// custom set output from response
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
+{{ end }}
 	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
@@ -236,6 +244,10 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Update }}
+	// custom set output from response
+	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
+{{ end }}
 	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Figure this out...

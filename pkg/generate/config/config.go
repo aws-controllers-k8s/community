@@ -38,6 +38,10 @@ type Config struct {
 // specify the overriding values for API operation parameters
 type OperationConfig struct {
 	OverrideValues map[string]string `json:"override_values"`
+	// SetOutputCustomMethodName provides the name of the custom method on the
+	// `resourceManager` struct that will set fields on a `resource` struct
+	// depending on the output of the operation.
+	SetOutputCustomMethodName string `json:"set_output_custom_method_name,omitempty"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to
