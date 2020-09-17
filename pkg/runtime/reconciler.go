@@ -98,12 +98,12 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
 
-	log := r.log.WithValues(
+	r.log = r.log.WithValues(
 		"account_id", acctID,
 		"region", region,
 		"kind", r.rd.GroupKind().String(),
 	)
-	log.V(1).Info("starting reconcilation")
+	r.log.V(1).Info("starting reconcilation")
 
 	rm, err := r.rmf.ManagerFor(r, acctID, region)
 	if err != nil {
@@ -153,7 +153,7 @@ func (r *reconciler) sync(
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info(
+		r.log.V(0).Info(
 			"reconciler.sync created new resource",
 			"arn", latest.Identifiers().ARN(),
 		)
@@ -174,7 +174,7 @@ func (r *reconciler) sync(
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info("reconciler.sync updated resource")
+		r.log.V(0).Info("reconciler.sync updated resource")
 	}
 	changedStatus, err := r.rd.UpdateCRStatus(latest)
 	if err != nil {
@@ -216,7 +216,7 @@ func (r *reconciler) cleanup(
 	if err = rm.Delete(ctx, observed); err != nil {
 		return err
 	}
-	r.log.V(1).Info("reconciler.cleanup deleted resource")
+	r.log.V(0).Info("reconciler.cleanup deleted resource")
 
 	// Now that external AWS service resources have been appropriately cleaned
 	// up, we remove the finalizer representing the CR is managed by ACK,

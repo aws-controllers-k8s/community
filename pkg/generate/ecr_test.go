@@ -176,6 +176,13 @@ func TestECRRepository(t *testing.T) {
 	if resp.Repository.RegistryId != nil {
 		ko.Status.RegistryID = resp.Repository.RegistryId
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.Repository.RepositoryArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.Repository.RepositoryUri != nil {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 	}

@@ -431,6 +431,13 @@ func TestDynamoDB_Table(t *testing.T) {
 		}
 		ko.Status.SSEDescription = f14
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.Table.TableArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.Table.TableArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.Table.TableId != nil {
 		ko.Status.TableID = resp.Table.TableId
 	}

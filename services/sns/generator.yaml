@@ -1,6 +1,7 @@
 resources:
   Topic:
     unpack_attributes_map:
+      set_attributes_single_attribute: true
       fields:
         DeliveryPolicy:
         DisplayName:

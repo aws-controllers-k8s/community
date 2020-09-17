@@ -378,6 +378,13 @@ func TestRDS_DBInstance(t *testing.T) {
 	if resp.DBInstance.CACertificateIdentifier != nil {
 		ko.Status.CACertificateIdentifier = resp.DBInstance.CACertificateIdentifier
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.DBInstance.DBInstanceArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.DBInstance.DBInstanceArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.DBInstance.DBInstanceStatus != nil {
 		ko.Status.DBInstanceStatus = resp.DBInstance.DBInstanceStatus
 	}

@@ -49,7 +49,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -66,7 +66,7 @@ func (rm *resourceManager) sdkFind(
 	// If any required fields in the input shape are missing, AWS resource is
 	// not created yet. Return NotFound here to indicate to callers that the
 	// resource isn't yet created.
-	if rm.requiredStatusFieldsMissingFromGetAttributesInput(r) {
+	if rm.requiredFieldsMissingFromGetAttributesInput(r) {
 		return nil, ackerr.NotFound
 	}
 
@@ -75,7 +75,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 {{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -184,7 +184,7 @@ func (rm *resourceManager) sdkCreate(
 		return nil, err
 	}
 {{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $createCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $createCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -196,7 +196,12 @@ func (rm *resourceManager) sdkCreate(
 	// custom set output from response
 	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -236,7 +241,7 @@ func (rm *resourceManager) sdkUpdate(
 {{ end }}
 
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
-	{{ if and .CRD.StatusFields ( not ( Empty $setCode ) ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -248,6 +253,37 @@ func (rm *resourceManager) sdkUpdate(
 	// custom set output from response
 	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
 {{ end }}
+	return &resource{ko}, nil
+{{- else if .CRD.Ops.SetAttributes }}
+	// If any required fields in the input shape are missing, AWS resource is
+	// not created yet. And sdkUpdate should never be called if this is the
+	// case, and it's an error in the generated code if it is...
+	if rm.requiredFieldsMissingFromSetAttributesInput(r) {
+		panic("Required field in SetAttributes input shape missing!")
+	}
+
+	input, err := rm.newSetAttributesRequestPayload(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE(jaypipes): SetAttributes calls return a response but they don't
+	// contain any useful information. Instead, below, we'll be returning a
+	// DeepCopy of the supplied desired state, which should be fine because
+	// that desired state has been constructed from a call to GetAttributes...
+	_, respErr := rm.sdkapi.{{ .CRD.Ops.SetAttributes.Name }}WithContext(ctx, input)
+	if respErr != nil {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
+			// Technically, this means someone deleted the backend resource in
+			// between the time we got a result back from sdkFind() and here...
+			return nil, ackerr.NotFound
+		}
+		return nil, respErr
+	}
+
+	// Merge in the information we read from the API call above to the copy of
+	// the original Kubernetes object we passed to the function
+	ko := r.ko.DeepCopy()
 	return &resource{ko}, nil
 {{- else }}
 	// TODO(jaypipes): Figure this out...
@@ -266,6 +302,27 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	return res, nil
 }
 {{ end }}
+
+{{- if .CRD.Ops.SetAttributes }}
+// requiredFieldsMissingFromSetAtttributesInput returns true if there are any
+// fields for the SetAttributes Input shape that are required by not present in
+// the resource's Spec or Status
+func (rm *resourceManager) requiredFieldsMissingFromSetAttributesInput(
+	r *resource,
+) bool {
+{{ GoCodeRequiredFieldsMissingFromSetAttributesInput .CRD "r.ko" 1 }}
+}
+
+// newSetAttributesRequestPayload returns SDK-specific struct for the HTTP
+// request payload of the SetAttributes API call for the resource
+func (rm *resourceManager) newSetAttributesRequestPayload(
+	r *resource,
+) (*svcsdk.{{ .CRD.Ops.SetAttributes.InputRef.Shape.ShapeName }}, error) {
+	res := &svcsdk.{{ .CRD.Ops.SetAttributes.InputRef.Shape.ShapeName }}{}
+{{ GoCodeSetAttributesSetInput .CRD "r.ko" "res" 1 }}
+	return res, nil
+}
+{{- end }}
 
 // sdkDelete deletes the supplied resource in the backend AWS service API
 func (rm *resourceManager) sdkDelete(

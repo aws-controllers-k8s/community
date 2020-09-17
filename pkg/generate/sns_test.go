@@ -14,6 +14,7 @@
 package generate_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -169,8 +170,17 @@ func TestSNS_Topic(t *testing.T) {
 	// None of the fields in the Topic resource's CreateTopicInput shape are
 	// returned in the CreateTopicOutput shape, so none of them return any Go
 	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member
+	// Shape member. However, the returned output shape DOES include the
+	// Topic's ARN field (TopicArn), which we should be storing in the
+	// ACKResourceMetadata.ARN standardized field
 	expCreateOutput := `
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.TopicArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.TopicArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
 
@@ -193,14 +203,32 @@ func TestSNS_Topic(t *testing.T) {
 	// (and thus in the Spec fields). Two of them are the tesource's ARN and
 	// AWS Owner account ID, both of which are handled specially.
 	expGetAttrsOutput := `
+	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 	}
-	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
 	tmpOwnerID := ackv1alpha1.AWSAccountID(*resp.Attributes["Owner"])
 	ko.Status.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["TopicArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
+
+	// The Go code for checking the GetTopicAttributes Input shape's required
+	// fields needs to return false when any required field is missing in the
+	// corresponding Spec or Status. The GetTopicAttributesInput shape has a
+	// required TopicArn field which corresponds to the resource's ARN which is
+	// stored in ACKMetadata.ARN, so the primary resource ARN field if
+	// condition is a bit special.
+	expReqFieldsInShape := `
+	return (ko.Status.ACKResourceMetadata == nil || ko.Status.ACKResourceMetadata.ARN == nil)
+`
+	assert.Equal(
+		strings.TrimSpace(expReqFieldsInShape),
+		strings.TrimSpace(
+			crd.GoCodeRequiredFieldsMissingFromShape(
+				model.OpTypeGetAttributes, "ko", 1,
+			),
+		),
+	)
 }

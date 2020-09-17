@@ -254,6 +254,13 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
 
 	expCreateOutput := `
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.CacheCluster.ARN != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.CacheCluster.ARN)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.CacheCluster.AtRestEncryptionEnabled != nil {
 		ko.Status.AtRestEncryptionEnabled = resp.CacheCluster.AtRestEncryptionEnabled
 	}
@@ -651,7 +658,7 @@ func TestElasticache_Ignored_Resources(t *testing.T) {
 	require.Nil(crd)
 }
 
-func TestElasticache_Override_Values(t *testing.T)  {
+func TestElasticache_Override_Values(t *testing.T) {
 	require := require.New(t)
 
 	g := testutil.NewGeneratorForService(t, "elasticache")

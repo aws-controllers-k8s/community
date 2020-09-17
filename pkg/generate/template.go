@@ -67,6 +67,9 @@ var (
 		"GoCodeGetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeGetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
 		},
+		"GoCodeSetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return r.GoCodeSetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
+		},
 		"GoCodeGetAttributesSetOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeGetAttributesSetOutput(sourceVarName, targetVarName, indentLevel)
 		},
@@ -93,6 +96,9 @@ var (
 		},
 		"GoCodeRequiredFieldsMissingFromGetAttributesInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
 			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeGetAttributes, koVarName, indentLevel)
+		},
+		"GoCodeRequiredFieldsMissingFromSetAttributesInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
+			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeSetAttributes, koVarName, indentLevel)
 		},
 	}
 )
