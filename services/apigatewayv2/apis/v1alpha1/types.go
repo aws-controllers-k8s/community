@@ -28,11 +28,13 @@ type APIMapping_SDK struct {
 
 type API_SDK struct {
 	APIEndpoint               *string            `json:"apiEndpoint,omitempty"`
+	APIGatewayManaged         *bool              `json:"apiGatewayManaged,omitempty"`
 	APIID                     *string            `json:"apiID,omitempty"`
 	APIKeySelectionExpression *string            `json:"apiKeySelectionExpression,omitempty"`
 	CorsConfiguration         *Cors              `json:"corsConfiguration,omitempty"`
 	CreatedDate               *metav1.Time       `json:"createdDate,omitempty"`
 	Description               *string            `json:"description,omitempty"`
+	DisableExecuteAPIEndpoint *bool              `json:"disableExecuteAPIEndpoint,omitempty"`
 	DisableSchemaValidation   *bool              `json:"disableSchemaValidation,omitempty"`
 	ImportInfo                []*string          `json:"importInfo,omitempty"`
 	Name                      *string            `json:"name,omitempty"`
@@ -49,15 +51,17 @@ type AccessLogSettings struct {
 }
 
 type Authorizer_SDK struct {
-	AuthorizerCredentialsARN     *string           `json:"authorizerCredentialsARN,omitempty"`
-	AuthorizerID                 *string           `json:"authorizerID,omitempty"`
-	AuthorizerResultTtlInSeconds *int64            `json:"authorizerResultTtlInSeconds,omitempty"`
-	AuthorizerType               *string           `json:"authorizerType,omitempty"`
-	AuthorizerURI                *string           `json:"authorizerURI,omitempty"`
-	IDentitySource               []*string         `json:"identitySource,omitempty"`
-	IDentityValidationExpression *string           `json:"identityValidationExpression,omitempty"`
-	JWTConfiguration             *JWTConfiguration `json:"jwtConfiguration,omitempty"`
-	Name                         *string           `json:"name,omitempty"`
+	AuthorizerCredentialsARN       *string           `json:"authorizerCredentialsARN,omitempty"`
+	AuthorizerID                   *string           `json:"authorizerID,omitempty"`
+	AuthorizerPayloadFormatVersion *string           `json:"authorizerPayloadFormatVersion,omitempty"`
+	AuthorizerResultTtlInSeconds   *int64            `json:"authorizerResultTtlInSeconds,omitempty"`
+	AuthorizerType                 *string           `json:"authorizerType,omitempty"`
+	AuthorizerURI                  *string           `json:"authorizerURI,omitempty"`
+	EnableSimpleResponses          *bool             `json:"enableSimpleResponses,omitempty"`
+	IDentitySource                 []*string         `json:"identitySource,omitempty"`
+	IDentityValidationExpression   *string           `json:"identityValidationExpression,omitempty"`
+	JWTConfiguration               *JWTConfiguration `json:"jwtConfiguration,omitempty"`
+	Name                           *string           `json:"name,omitempty"`
 }
 
 type Cors struct {
@@ -94,6 +98,7 @@ type DomainName_SDK struct {
 	APIMappingSelectionExpression *string                    `json:"apiMappingSelectionExpression,omitempty"`
 	DomainName                    *string                    `json:"domainName,omitempty"`
 	DomainNameConfigurations      []*DomainNameConfiguration `json:"domainNameConfigurations,omitempty"`
+	MutualTLSAuthentication       *MutualTLSAuthentication   `json:"mutualTLSAuthentication,omitempty"`
 	Tags                          map[string]*string         `json:"tags,omitempty"`
 }
 
@@ -116,6 +121,7 @@ type Integration_SDK struct {
 	IntegrationID                          *string            `json:"integrationID,omitempty"`
 	IntegrationMethod                      *string            `json:"integrationMethod,omitempty"`
 	IntegrationResponseSelectionExpression *string            `json:"integrationResponseSelectionExpression,omitempty"`
+	IntegrationSubtype                     *string            `json:"integrationSubtype,omitempty"`
 	IntegrationType                        *string            `json:"integrationType,omitempty"`
 	IntegrationURI                         *string            `json:"integrationURI,omitempty"`
 	PassthroughBehavior                    *string            `json:"passthroughBehavior,omitempty"`
@@ -138,6 +144,17 @@ type Model_SDK struct {
 	ModelID     *string `json:"modelID,omitempty"`
 	Name        *string `json:"name,omitempty"`
 	Schema      *string `json:"schema,omitempty"`
+}
+
+type MutualTLSAuthentication struct {
+	TruststoreURI      *string   `json:"truststoreURI,omitempty"`
+	TruststoreVersion  *string   `json:"truststoreVersion,omitempty"`
+	TruststoreWarnings []*string `json:"truststoreWarnings,omitempty"`
+}
+
+type MutualTLSAuthenticationInput struct {
+	TruststoreURI     *string `json:"truststoreURI,omitempty"`
+	TruststoreVersion *string `json:"truststoreVersion,omitempty"`
 }
 
 type ParameterConstraints struct {

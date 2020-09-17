@@ -70,6 +70,9 @@ func (rm *resourceManager) sdkFind(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -77,22 +80,22 @@ func (rm *resourceManager) sdkFind(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f9 := []*string{}
+		for _, f9iter := range resp.ImportInfo {
+			var f9elem string
+			f9elem = *f9iter
+			f9 = append(f9, &f9elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f9
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f15 := []*string{}
+		for _, f15iter := range resp.Warnings {
+			var f15elem string
+			f15elem = *f15iter
+			f15 = append(f15, &f15elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f15
 	}
 
 	return &resource{ko}, nil
@@ -154,6 +157,9 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -161,25 +167,30 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f9 := []*string{}
+		for _, f9iter := range resp.ImportInfo {
+			var f9elem string
+			f9elem = *f9iter
+			f9 = append(f9, &f9elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f9
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f15 := []*string{}
+		for _, f15iter := range resp.Warnings {
+			var f15elem string
+			f15elem = *f15iter
+			f15 = append(f15, &f15elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f15
 	}
 
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -246,6 +257,9 @@ func (rm *resourceManager) newCreateRequestPayload(
 	if r.ko.Spec.Description != nil {
 		res.SetDescription(*r.ko.Spec.Description)
 	}
+	if r.ko.Spec.DisableExecuteAPIEndpoint != nil {
+		res.SetDisableExecuteApiEndpoint(*r.ko.Spec.DisableExecuteAPIEndpoint)
+	}
 	if r.ko.Spec.DisableSchemaValidation != nil {
 		res.SetDisableSchemaValidation(*r.ko.Spec.DisableSchemaValidation)
 	}
@@ -262,13 +276,13 @@ func (rm *resourceManager) newCreateRequestPayload(
 		res.SetRouteSelectionExpression(*r.ko.Spec.RouteSelectionExpression)
 	}
 	if r.ko.Spec.Tags != nil {
-		f9 := map[string]*string{}
-		for f9key, f9valiter := range r.ko.Spec.Tags {
-			var f9val string
-			f9val = *f9valiter
-			f9[f9key] = &f9val
+		f10 := map[string]*string{}
+		for f10key, f10valiter := range r.ko.Spec.Tags {
+			var f10val string
+			f10val = *f10valiter
+			f10[f10key] = &f10val
 		}
-		res.SetTags(f9)
+		res.SetTags(f10)
 	}
 	if r.ko.Spec.Target != nil {
 		res.SetTarget(*r.ko.Spec.Target)
@@ -303,6 +317,9 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ApiEndpoint != nil {
 		ko.Status.APIEndpoint = resp.ApiEndpoint
 	}
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
@@ -310,22 +327,22 @@ func (rm *resourceManager) sdkUpdate(
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
 	if resp.ImportInfo != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.ImportInfo {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
+		f9 := []*string{}
+		for _, f9iter := range resp.ImportInfo {
+			var f9elem string
+			f9elem = *f9iter
+			f9 = append(f9, &f9elem)
 		}
-		ko.Status.ImportInfo = f7
+		ko.Status.ImportInfo = f9
 	}
 	if resp.Warnings != nil {
-		f13 := []*string{}
-		for _, f13iter := range resp.Warnings {
-			var f13elem string
-			f13elem = *f13iter
-			f13 = append(f13, &f13elem)
+		f15 := []*string{}
+		for _, f15iter := range resp.Warnings {
+			var f15elem string
+			f15elem = *f15iter
+			f15 = append(f15, &f15elem)
 		}
-		ko.Status.Warnings = f13
+		ko.Status.Warnings = f15
 	}
 
 	return &resource{ko}, nil
@@ -395,6 +412,9 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	}
 	if r.ko.Spec.Description != nil {
 		res.SetDescription(*r.ko.Spec.Description)
+	}
+	if r.ko.Spec.DisableExecuteAPIEndpoint != nil {
+		res.SetDisableExecuteApiEndpoint(*r.ko.Spec.DisableExecuteAPIEndpoint)
 	}
 	if r.ko.Spec.DisableSchemaValidation != nil {
 		res.SetDisableSchemaValidation(*r.ko.Spec.DisableSchemaValidation)

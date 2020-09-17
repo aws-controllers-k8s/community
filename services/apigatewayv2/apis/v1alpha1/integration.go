@@ -29,6 +29,7 @@ type IntegrationSpec struct {
 	CredentialsARN              *string            `json:"credentialsARN,omitempty"`
 	Description                 *string            `json:"description,omitempty"`
 	IntegrationMethod           *string            `json:"integrationMethod,omitempty"`
+	IntegrationSubtype          *string            `json:"integrationSubtype,omitempty"`
 	IntegrationType             *string            `json:"integrationType,omitempty"`
 	IntegrationURI              *string            `json:"integrationURI,omitempty"`
 	PassthroughBehavior         *string            `json:"passthroughBehavior,omitempty"`
