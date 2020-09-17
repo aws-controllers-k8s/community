@@ -5,7 +5,7 @@ ARG service_alias
 ARG work_dir=/github.com/aws/aws-controllers-k8s
 WORKDIR $work_dir
 # For building Go Module required
-ENV GOPROXY=direct
+ENV GOPROXY=https://proxy.golang.org,direct
 ENV GO111MODULE=on
 ENV GOARCH=amd64
 ENV GOOS=linux
