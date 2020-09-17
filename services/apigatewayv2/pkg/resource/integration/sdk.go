@@ -150,7 +150,12 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.IntegrationResponseSelectionExpression = resp.IntegrationResponseSelectionExpression
 	}
 
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -183,6 +188,9 @@ func (rm *resourceManager) newCreateRequestPayload(
 	if r.ko.Spec.IntegrationMethod != nil {
 		res.SetIntegrationMethod(*r.ko.Spec.IntegrationMethod)
 	}
+	if r.ko.Spec.IntegrationSubtype != nil {
+		res.SetIntegrationSubtype(*r.ko.Spec.IntegrationSubtype)
+	}
 	if r.ko.Spec.IntegrationType != nil {
 		res.SetIntegrationType(*r.ko.Spec.IntegrationType)
 	}
@@ -196,22 +204,22 @@ func (rm *resourceManager) newCreateRequestPayload(
 		res.SetPayloadFormatVersion(*r.ko.Spec.PayloadFormatVersion)
 	}
 	if r.ko.Spec.RequestParameters != nil {
-		f11 := map[string]*string{}
-		for f11key, f11valiter := range r.ko.Spec.RequestParameters {
-			var f11val string
-			f11val = *f11valiter
-			f11[f11key] = &f11val
-		}
-		res.SetRequestParameters(f11)
-	}
-	if r.ko.Spec.RequestTemplates != nil {
 		f12 := map[string]*string{}
-		for f12key, f12valiter := range r.ko.Spec.RequestTemplates {
+		for f12key, f12valiter := range r.ko.Spec.RequestParameters {
 			var f12val string
 			f12val = *f12valiter
 			f12[f12key] = &f12val
 		}
-		res.SetRequestTemplates(f12)
+		res.SetRequestParameters(f12)
+	}
+	if r.ko.Spec.RequestTemplates != nil {
+		f13 := map[string]*string{}
+		for f13key, f13valiter := range r.ko.Spec.RequestTemplates {
+			var f13val string
+			f13val = *f13valiter
+			f13[f13key] = &f13val
+		}
+		res.SetRequestTemplates(f13)
 	}
 	if r.ko.Spec.TemplateSelectionExpression != nil {
 		res.SetTemplateSelectionExpression(*r.ko.Spec.TemplateSelectionExpression)
@@ -220,11 +228,11 @@ func (rm *resourceManager) newCreateRequestPayload(
 		res.SetTimeoutInMillis(*r.ko.Spec.TimeoutInMillis)
 	}
 	if r.ko.Spec.TLSConfig != nil {
-		f15 := &svcsdk.TlsConfigInput{}
+		f16 := &svcsdk.TlsConfigInput{}
 		if r.ko.Spec.TLSConfig.ServerNameToVerify != nil {
-			f15.SetServerNameToVerify(*r.ko.Spec.TLSConfig.ServerNameToVerify)
+			f16.SetServerNameToVerify(*r.ko.Spec.TLSConfig.ServerNameToVerify)
 		}
-		res.SetTlsConfig(f15)
+		res.SetTlsConfig(f16)
 	}
 
 	return res, nil
@@ -294,6 +302,9 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	if r.ko.Spec.IntegrationMethod != nil {
 		res.SetIntegrationMethod(*r.ko.Spec.IntegrationMethod)
 	}
+	if r.ko.Spec.IntegrationSubtype != nil {
+		res.SetIntegrationSubtype(*r.ko.Spec.IntegrationSubtype)
+	}
 	if r.ko.Spec.IntegrationType != nil {
 		res.SetIntegrationType(*r.ko.Spec.IntegrationType)
 	}
@@ -307,22 +318,22 @@ func (rm *resourceManager) newUpdateRequestPayload(
 		res.SetPayloadFormatVersion(*r.ko.Spec.PayloadFormatVersion)
 	}
 	if r.ko.Spec.RequestParameters != nil {
-		f12 := map[string]*string{}
-		for f12key, f12valiter := range r.ko.Spec.RequestParameters {
-			var f12val string
-			f12val = *f12valiter
-			f12[f12key] = &f12val
-		}
-		res.SetRequestParameters(f12)
-	}
-	if r.ko.Spec.RequestTemplates != nil {
 		f13 := map[string]*string{}
-		for f13key, f13valiter := range r.ko.Spec.RequestTemplates {
+		for f13key, f13valiter := range r.ko.Spec.RequestParameters {
 			var f13val string
 			f13val = *f13valiter
 			f13[f13key] = &f13val
 		}
-		res.SetRequestTemplates(f13)
+		res.SetRequestParameters(f13)
+	}
+	if r.ko.Spec.RequestTemplates != nil {
+		f14 := map[string]*string{}
+		for f14key, f14valiter := range r.ko.Spec.RequestTemplates {
+			var f14val string
+			f14val = *f14valiter
+			f14[f14key] = &f14val
+		}
+		res.SetRequestTemplates(f14)
 	}
 	if r.ko.Spec.TemplateSelectionExpression != nil {
 		res.SetTemplateSelectionExpression(*r.ko.Spec.TemplateSelectionExpression)
@@ -331,11 +342,11 @@ func (rm *resourceManager) newUpdateRequestPayload(
 		res.SetTimeoutInMillis(*r.ko.Spec.TimeoutInMillis)
 	}
 	if r.ko.Spec.TLSConfig != nil {
-		f16 := &svcsdk.TlsConfigInput{}
+		f17 := &svcsdk.TlsConfigInput{}
 		if r.ko.Spec.TLSConfig.ServerNameToVerify != nil {
-			f16.SetServerNameToVerify(*r.ko.Spec.TLSConfig.ServerNameToVerify)
+			f17.SetServerNameToVerify(*r.ko.Spec.TLSConfig.ServerNameToVerify)
 		}
-		res.SetTlsConfig(f16)
+		res.SetTlsConfig(f17)
 	}
 
 	return res, nil

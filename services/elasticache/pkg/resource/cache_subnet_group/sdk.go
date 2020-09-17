@@ -142,6 +142,13 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.CacheSubnetGroup.ARN != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.CacheSubnetGroup.ARN)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.CacheSubnetGroup.Subnets != nil {
 		f3 := []*svcapitypes.Subnet{}
 		for _, f3iter := range resp.CacheSubnetGroup.Subnets {
@@ -164,7 +171,12 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.VPCID = resp.CacheSubnetGroup.VpcId
 	}
 
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -215,6 +227,13 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.CacheSubnetGroup.ARN != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.CacheSubnetGroup.ARN)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.CacheSubnetGroup.Subnets != nil {
 		f3 := []*svcapitypes.Subnet{}
 		for _, f3iter := range resp.CacheSubnetGroup.Subnets {

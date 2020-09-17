@@ -22,9 +22,10 @@ import (
 
 // DomainNameSpec defines the desired state of DomainName
 type DomainNameSpec struct {
-	DomainName               *string                    `json:"domainName,omitempty"`
-	DomainNameConfigurations []*DomainNameConfiguration `json:"domainNameConfigurations,omitempty"`
-	Tags                     map[string]*string         `json:"tags,omitempty"`
+	DomainName               *string                       `json:"domainName,omitempty"`
+	DomainNameConfigurations []*DomainNameConfiguration    `json:"domainNameConfigurations,omitempty"`
+	MutualTLSAuthentication  *MutualTLSAuthenticationInput `json:"mutualTLSAuthentication,omitempty"`
+	Tags                     map[string]*string            `json:"tags,omitempty"`
 }
 
 // DomainNameStatus defines the observed state of DomainName
