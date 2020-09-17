@@ -793,7 +793,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	// custom set output from response
-	rm.CustomModifyReplicationGroupSetOutput(r, resp, ko)
+	rm.CustomModifyReplicationGroupSetOutput(desired, resp, ko)
 
 	return &resource{ko}, nil
 }

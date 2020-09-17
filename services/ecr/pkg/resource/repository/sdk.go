@@ -231,7 +231,8 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	desired *resource,
+	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	// TODO(jaypipes): Figure this out...
