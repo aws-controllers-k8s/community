@@ -198,17 +198,18 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	desired *resource,
+	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	// If any required fields in the input shape are missing, AWS resource is
 	// not created yet. And sdkUpdate should never be called if this is the
 	// case, and it's an error in the generated code if it is...
-	if rm.requiredFieldsMissingFromSetAttributesInput(r) {
+	if rm.requiredFieldsMissingFromSetAttributesInput(desired) {
 		panic("Required field in SetAttributes input shape missing!")
 	}
 
-	input, err := rm.newSetAttributesRequestPayload(r)
+	input, err := rm.newSetAttributesRequestPayload(desired)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +230,7 @@ func (rm *resourceManager) sdkUpdate(
 
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+	ko := desired.ko.DeepCopy()
 	return &resource{ko}, nil
 }
 

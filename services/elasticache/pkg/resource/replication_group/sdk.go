@@ -617,21 +617,19 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	desired *resource,
+	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-	input, err := rm.newUpdateRequestPayload(r)
-	if err != nil {
-		return nil, err
+
+	customResp, customRespErr := rm.CustomModifyReplicationGroup(ctx, desired, latest, diffReporter)
+	if customResp != nil || customRespErr != nil {
+		return customResp, customRespErr
 	}
 
-	for _, diff := range diffReporter.Differences {
-		switch diff.Path {
-		case "Spec.NumNodeGroups":
-			return rm.UpdateShardConfiguration(ctx, r, diffReporter)
-		case "Spec.ReplicasPerNodeGroup":
-			return rm.UpdateReplicaCount(ctx, r, diffReporter)
-		}
+	input, err := rm.newUpdateRequestPayload(desired)
+	if err != nil {
+		return nil, err
 	}
 
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupWithContext(ctx, input)
@@ -640,7 +638,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+	ko := desired.ko.DeepCopy()
 
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
@@ -795,7 +793,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	// custom set output from response
-	rm.CustomModifyReplicationGroupSetOutput(r, resp, ko)
+	rm.CustomModifyReplicationGroupSetOutput(desired, resp, ko)
 
 	return &resource{ko}, nil
 }

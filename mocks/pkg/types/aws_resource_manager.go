@@ -91,13 +91,13 @@ func (_m *AWSResourceManager) ReadOne(_a0 context.Context, _a1 types.AWSResource
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: _a0, _a1, _a2
-func (_m *AWSResourceManager) Update(_a0 context.Context, _a1 types.AWSResource, _a2 *compare.Reporter) (types.AWSResource, error) {
-	ret := _m.Called(_a0, _a1, _a2)
+// Update provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *AWSResourceManager) Update(_a0 context.Context, _a1 types.AWSResource, _a2 types.AWSResource, _a3 *compare.Reporter) (types.AWSResource, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
 
 	var r0 types.AWSResource
-	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource, *compare.Reporter) types.AWSResource); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AWSResource, types.AWSResource, *compare.Reporter) types.AWSResource); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResource)
@@ -105,8 +105,8 @@ func (_m *AWSResourceManager) Update(_a0 context.Context, _a1 types.AWSResource,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, types.AWSResource, *compare.Reporter) error); ok {
-		r1 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AWSResource, types.AWSResource, *compare.Reporter) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3)
 	} else {
 		r1 = ret.Error(1)
 	}

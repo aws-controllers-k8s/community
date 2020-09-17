@@ -178,10 +178,12 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	desired *resource,
+	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-	input, err := rm.newUpdateRequestPayload(r)
+
+	input, err := rm.newUpdateRequestPayload(desired)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +194,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+	ko := desired.ko.DeepCopy()
 
 	if resp.ModelId != nil {
 		ko.Status.ModelID = resp.ModelId

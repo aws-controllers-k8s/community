@@ -313,6 +313,7 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
+
 // SetOutputCustomMethodName returns custom set output operation as *string for
 // given operation on custom resource, if specified in generator config
 func (r *CRD) SetOutputCustomMethodName(
@@ -332,34 +333,22 @@ func (r *CRD) SetOutputCustomMethodName(
 	return &resGenConfig.SetOutputCustomMethodName
 }
 
-// HasCustomUpdateOperations returns true if the resource has custom update operations
-// specified in generator config
-func (r *CRD) HasCustomUpdateOperations() bool {
-	if r.genCfg != nil {
-		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
-		if found && resGenConfig.CustomUpdateOperations != nil {
-			return true
-		}
+// GetCustomImplementation returns custom implementation method name for the
+// supplied operation as specified in generator config
+func (r *CRD) GetCustomImplementation(
+// The type of operation
+	op *awssdkmodel.Operation,
+) string {
+	if op == nil || r.genCfg == nil {
+		return ""
 	}
-	return false
-}
 
-// GetCustomUpdateOperations returns map of diff path (as key) and custom operation (as value) on custom resource,
-// as specified in generator config
-func (r *CRD) GetCustomUpdateOperations() map[string]string {
-	var diffPathToCustomOperationMap map[string]string
-	if r.genCfg != nil {
-		diffPathToCustomOperationMap = make(map[string]string)
-		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
-		if found && resGenConfig.CustomUpdateOperations != nil {
-			for customOperation, fields := range resGenConfig.CustomUpdateOperations {
-				for _, diffPath := range fields.DiffPaths {
-					diffPathToCustomOperationMap[diffPath] = customOperation
-				}
-			}
-		}
+	operationConfig, found := r.genCfg.Operations[op.Name]
+	if !found {
+		return ""
 	}
-	return diffPathToCustomOperationMap
+
+	return operationConfig.CustomImplementation
 }
 
 // ExceptionCode returns the name of the resource's Exception code for the

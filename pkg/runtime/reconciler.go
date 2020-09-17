@@ -170,7 +170,7 @@ func (r *reconciler) sync(
 			"arn", latest.Identifiers().ARN(),
 			"is_adopted", isAdopted,
 		)
-		latest, err = rm.Update(ctx, desired, diffReporter)
+		latest, err = rm.Update(ctx, desired, latest, diffReporter)
 		if err != nil {
 			return err
 		}
