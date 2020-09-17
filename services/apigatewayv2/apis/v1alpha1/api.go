@@ -26,6 +26,7 @@ type APISpec struct {
 	CorsConfiguration         *Cors              `json:"corsConfiguration,omitempty"`
 	CredentialsARN            *string            `json:"credentialsARN,omitempty"`
 	Description               *string            `json:"description,omitempty"`
+	DisableExecuteAPIEndpoint *bool              `json:"disableExecuteAPIEndpoint,omitempty"`
 	DisableSchemaValidation   *bool              `json:"disableSchemaValidation,omitempty"`
 	Name                      *string            `json:"name,omitempty"`
 	ProtocolType              *string            `json:"protocolType,omitempty"`

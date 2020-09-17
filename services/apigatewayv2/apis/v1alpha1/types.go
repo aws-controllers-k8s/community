@@ -34,6 +34,7 @@ type API_SDK struct {
 	CorsConfiguration         *Cors              `json:"corsConfiguration,omitempty"`
 	CreatedDate               *metav1.Time       `json:"createdDate,omitempty"`
 	Description               *string            `json:"description,omitempty"`
+	DisableExecuteAPIEndpoint *bool              `json:"disableExecuteAPIEndpoint,omitempty"`
 	DisableSchemaValidation   *bool              `json:"disableSchemaValidation,omitempty"`
 	ImportInfo                []*string          `json:"importInfo,omitempty"`
 	Name                      *string            `json:"name,omitempty"`
@@ -97,6 +98,7 @@ type DomainName_SDK struct {
 	APIMappingSelectionExpression *string                    `json:"apiMappingSelectionExpression,omitempty"`
 	DomainName                    *string                    `json:"domainName,omitempty"`
 	DomainNameConfigurations      []*DomainNameConfiguration `json:"domainNameConfigurations,omitempty"`
+	MutualTLSAuthentication       *MutualTLSAuthentication   `json:"mutualTLSAuthentication,omitempty"`
 	Tags                          map[string]*string         `json:"tags,omitempty"`
 }
 
@@ -142,6 +144,17 @@ type Model_SDK struct {
 	ModelID     *string `json:"modelID,omitempty"`
 	Name        *string `json:"name,omitempty"`
 	Schema      *string `json:"schema,omitempty"`
+}
+
+type MutualTLSAuthentication struct {
+	TruststoreURI      *string   `json:"truststoreURI,omitempty"`
+	TruststoreVersion  *string   `json:"truststoreVersion,omitempty"`
+	TruststoreWarnings []*string `json:"truststoreWarnings,omitempty"`
+}
+
+type MutualTLSAuthenticationInput struct {
+	TruststoreURI     *string `json:"truststoreURI,omitempty"`
+	TruststoreVersion *string `json:"truststoreVersion,omitempty"`
 }
 
 type ParameterConstraints struct {

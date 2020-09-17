@@ -131,7 +131,12 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.APIMappingSelectionExpression = resp.ApiMappingSelectionExpression
 	}
 
-	ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{OwnerAccountID: &rm.awsAccountID}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
@@ -181,14 +186,24 @@ func (rm *resourceManager) newCreateRequestPayload(
 		}
 		res.SetDomainNameConfigurations(f1)
 	}
-	if r.ko.Spec.Tags != nil {
-		f2 := map[string]*string{}
-		for f2key, f2valiter := range r.ko.Spec.Tags {
-			var f2val string
-			f2val = *f2valiter
-			f2[f2key] = &f2val
+	if r.ko.Spec.MutualTLSAuthentication != nil {
+		f2 := &svcsdk.MutualTlsAuthenticationInput{}
+		if r.ko.Spec.MutualTLSAuthentication.TruststoreURI != nil {
+			f2.SetTruststoreUri(*r.ko.Spec.MutualTLSAuthentication.TruststoreURI)
 		}
-		res.SetTags(f2)
+		if r.ko.Spec.MutualTLSAuthentication.TruststoreVersion != nil {
+			f2.SetTruststoreVersion(*r.ko.Spec.MutualTLSAuthentication.TruststoreVersion)
+		}
+		res.SetMutualTlsAuthentication(f2)
+	}
+	if r.ko.Spec.Tags != nil {
+		f3 := map[string]*string{}
+		for f3key, f3valiter := range r.ko.Spec.Tags {
+			var f3val string
+			f3val = *f3valiter
+			f3[f3key] = &f3val
+		}
+		res.SetTags(f3)
 	}
 
 	return res, nil
@@ -265,6 +280,16 @@ func (rm *resourceManager) newUpdateRequestPayload(
 			f1 = append(f1, f1elem)
 		}
 		res.SetDomainNameConfigurations(f1)
+	}
+	if r.ko.Spec.MutualTLSAuthentication != nil {
+		f2 := &svcsdk.MutualTlsAuthenticationInput{}
+		if r.ko.Spec.MutualTLSAuthentication.TruststoreURI != nil {
+			f2.SetTruststoreUri(*r.ko.Spec.MutualTLSAuthentication.TruststoreURI)
+		}
+		if r.ko.Spec.MutualTLSAuthentication.TruststoreVersion != nil {
+			f2.SetTruststoreVersion(*r.ko.Spec.MutualTLSAuthentication.TruststoreVersion)
+		}
+		res.SetMutualTlsAuthentication(f2)
 	}
 
 	return res, nil
