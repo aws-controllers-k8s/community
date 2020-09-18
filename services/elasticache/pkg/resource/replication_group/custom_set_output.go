@@ -55,11 +55,4 @@ func (rm *resourceManager) customSetOutput(
 	ko *svcapitypes.ReplicationGroup,
 ) {
 	// TODO: custom code
-	if ko.Status.NodeGroups != nil {
-		for _, nodegroup := range ko.Status.NodeGroups {
-			membersCount := int64(len(nodegroup.NodeGroupMembers))
-			ko.Spec.ReplicasPerNodeGroup = &membersCount
-			break
-		}
-	}
 }
