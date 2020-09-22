@@ -82,6 +82,9 @@ func (rm *resourceManager) sdkFind(
 	if resp.DeploymentStatusMessage != nil {
 		ko.Status.DeploymentStatusMessage = resp.DeploymentStatusMessage
 	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
 
 	return &resource{ko}, nil
 }
@@ -161,6 +164,9 @@ func (rm *resourceManager) sdkCreate(
 	if resp.DeploymentStatusMessage != nil {
 		ko.Status.DeploymentStatusMessage = resp.DeploymentStatusMessage
 	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
 
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
@@ -228,6 +234,9 @@ func (rm *resourceManager) sdkUpdate(
 	}
 	if resp.DeploymentStatusMessage != nil {
 		ko.Status.DeploymentStatusMessage = resp.DeploymentStatusMessage
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
 	}
 
 	return &resource{ko}, nil

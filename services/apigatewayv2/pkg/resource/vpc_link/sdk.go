@@ -70,6 +70,36 @@ func (rm *resourceManager) sdkFind(
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
 	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.SecurityGroupIds != nil {
+		f2 := []*string{}
+		for _, f2iter := range resp.SecurityGroupIds {
+			var f2elem string
+			f2elem = *f2iter
+			f2 = append(f2, &f2elem)
+		}
+		ko.Spec.SecurityGroupIDs = f2
+	}
+	if resp.SubnetIds != nil {
+		f3 := []*string{}
+		for _, f3iter := range resp.SubnetIds {
+			var f3elem string
+			f3elem = *f3iter
+			f3 = append(f3, &f3elem)
+		}
+		ko.Spec.SubnetIDs = f3
+	}
+	if resp.Tags != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.Tags {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.Tags = f4
+	}
 	if resp.VpcLinkId != nil {
 		ko.Status.VPCLinkID = resp.VpcLinkId
 	}
@@ -141,6 +171,36 @@ func (rm *resourceManager) sdkCreate(
 
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.SecurityGroupIds != nil {
+		f2 := []*string{}
+		for _, f2iter := range resp.SecurityGroupIds {
+			var f2elem string
+			f2elem = *f2iter
+			f2 = append(f2, &f2elem)
+		}
+		ko.Spec.SecurityGroupIDs = f2
+	}
+	if resp.SubnetIds != nil {
+		f3 := []*string{}
+		for _, f3iter := range resp.SubnetIds {
+			var f3elem string
+			f3elem = *f3iter
+			f3 = append(f3, &f3elem)
+		}
+		ko.Spec.SubnetIDs = f3
+	}
+	if resp.Tags != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.Tags {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.Tags = f4
 	}
 	if resp.VpcLinkId != nil {
 		ko.Status.VPCLinkID = resp.VpcLinkId
@@ -230,6 +290,36 @@ func (rm *resourceManager) sdkUpdate(
 
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.SecurityGroupIds != nil {
+		f2 := []*string{}
+		for _, f2iter := range resp.SecurityGroupIds {
+			var f2elem string
+			f2elem = *f2iter
+			f2 = append(f2, &f2elem)
+		}
+		ko.Spec.SecurityGroupIDs = f2
+	}
+	if resp.SubnetIds != nil {
+		f3 := []*string{}
+		for _, f3iter := range resp.SubnetIds {
+			var f3elem string
+			f3elem = *f3iter
+			f3 = append(f3, &f3elem)
+		}
+		ko.Spec.SubnetIDs = f3
+	}
+	if resp.Tags != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.Tags {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.Tags = f4
 	}
 	if resp.VpcLinkId != nil {
 		ko.Status.VPCLinkID = resp.VpcLinkId

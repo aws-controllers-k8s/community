@@ -182,7 +182,7 @@ func TestSNS_Topic(t *testing.T) {
 		ko.Status.ACKResourceMetadata.ARN = &arn
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
 
 	// The input shape for the GetAttributes operation has a single TopicArn
 	// field. This field represents the ARN of the primary resource (the Topic
