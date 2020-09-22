@@ -173,6 +173,16 @@ func TestECRRepository(t *testing.T) {
 	if resp.Repository.CreatedAt != nil {
 		ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
 	}
+	if resp.Repository.ImageScanningConfiguration != nil {
+		f1 := &svcapitypes.ImageScanningConfiguration{}
+		if resp.Repository.ImageScanningConfiguration.ScanOnPush != nil {
+			f1.ScanOnPush = resp.Repository.ImageScanningConfiguration.ScanOnPush
+		}
+		ko.Spec.ImageScanningConfiguration = f1
+	}
+	if resp.Repository.ImageTagMutability != nil {
+		ko.Spec.ImageTagMutability = resp.Repository.ImageTagMutability
+	}
 	if resp.Repository.RegistryId != nil {
 		ko.Status.RegistryID = resp.Repository.RegistryId
 	}
@@ -183,11 +193,14 @@ func TestECRRepository(t *testing.T) {
 		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
 		ko.Status.ACKResourceMetadata.ARN = &arn
 	}
+	if resp.Repository.RepositoryName != nil {
+		ko.Spec.RepositoryName = resp.Repository.RepositoryName
+	}
 	if resp.Repository.RepositoryUri != nil {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
 
 	// Check that the DescribeRepositories output is filtered by the
 	// RepositoryName field of the CR's Spec, since there is no ReadOne

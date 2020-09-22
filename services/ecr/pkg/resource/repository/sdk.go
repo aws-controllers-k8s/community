@@ -155,6 +155,26 @@ func (rm *resourceManager) sdkCreate(
 	if resp.Repository.CreatedAt != nil {
 		ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
 	}
+	if resp.Repository.EncryptionConfiguration != nil {
+		f1 := &svcapitypes.EncryptionConfiguration{}
+		if resp.Repository.EncryptionConfiguration.EncryptionType != nil {
+			f1.EncryptionType = resp.Repository.EncryptionConfiguration.EncryptionType
+		}
+		if resp.Repository.EncryptionConfiguration.KmsKey != nil {
+			f1.KMSKey = resp.Repository.EncryptionConfiguration.KmsKey
+		}
+		ko.Spec.EncryptionConfiguration = f1
+	}
+	if resp.Repository.ImageScanningConfiguration != nil {
+		f2 := &svcapitypes.ImageScanningConfiguration{}
+		if resp.Repository.ImageScanningConfiguration.ScanOnPush != nil {
+			f2.ScanOnPush = resp.Repository.ImageScanningConfiguration.ScanOnPush
+		}
+		ko.Spec.ImageScanningConfiguration = f2
+	}
+	if resp.Repository.ImageTagMutability != nil {
+		ko.Spec.ImageTagMutability = resp.Repository.ImageTagMutability
+	}
 	if resp.Repository.RegistryId != nil {
 		ko.Status.RegistryID = resp.Repository.RegistryId
 	}
@@ -164,6 +184,9 @@ func (rm *resourceManager) sdkCreate(
 	if resp.Repository.RepositoryArn != nil {
 		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
 		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
+	if resp.Repository.RepositoryName != nil {
+		ko.Spec.RepositoryName = resp.Repository.RepositoryName
 	}
 	if resp.Repository.RepositoryUri != nil {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri

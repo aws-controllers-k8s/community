@@ -290,6 +290,9 @@ func (rm *resourceManager) sdkCreate(
 		arn := ackv1alpha1.AWSResourceName(*resp.ReplicationGroup.ARN)
 		ko.Status.ACKResourceMetadata.ARN = &arn
 	}
+	if resp.ReplicationGroup.AtRestEncryptionEnabled != nil {
+		ko.Spec.AtRestEncryptionEnabled = resp.ReplicationGroup.AtRestEncryptionEnabled
+	}
 	if resp.ReplicationGroup.AuthTokenEnabled != nil {
 		ko.Status.AuthTokenEnabled = resp.ReplicationGroup.AuthTokenEnabled
 	}
@@ -298,6 +301,9 @@ func (rm *resourceManager) sdkCreate(
 	}
 	if resp.ReplicationGroup.AutomaticFailover != nil {
 		ko.Status.AutomaticFailover = resp.ReplicationGroup.AutomaticFailover
+	}
+	if resp.ReplicationGroup.CacheNodeType != nil {
+		ko.Spec.CacheNodeType = resp.ReplicationGroup.CacheNodeType
 	}
 	if resp.ReplicationGroup.ClusterEnabled != nil {
 		ko.Status.ClusterEnabled = resp.ReplicationGroup.ClusterEnabled
@@ -324,6 +330,9 @@ func (rm *resourceManager) sdkCreate(
 			f9.GlobalReplicationGroupMemberRole = resp.ReplicationGroup.GlobalReplicationGroupInfo.GlobalReplicationGroupMemberRole
 		}
 		ko.Status.GlobalReplicationGroupInfo = f9
+	}
+	if resp.ReplicationGroup.KmsKeyId != nil {
+		ko.Spec.KMSKeyID = resp.ReplicationGroup.KmsKeyId
 	}
 	if resp.ReplicationGroup.MemberClusters != nil {
 		f11 := []*string{}
@@ -428,11 +437,23 @@ func (rm *resourceManager) sdkCreate(
 		}
 		ko.Status.PendingModifiedValues = f14
 	}
+	if resp.ReplicationGroup.ReplicationGroupId != nil {
+		ko.Spec.ReplicationGroupID = resp.ReplicationGroup.ReplicationGroupId
+	}
+	if resp.ReplicationGroup.SnapshotRetentionLimit != nil {
+		ko.Spec.SnapshotRetentionLimit = resp.ReplicationGroup.SnapshotRetentionLimit
+	}
+	if resp.ReplicationGroup.SnapshotWindow != nil {
+		ko.Spec.SnapshotWindow = resp.ReplicationGroup.SnapshotWindow
+	}
 	if resp.ReplicationGroup.SnapshottingClusterId != nil {
 		ko.Status.SnapshottingClusterID = resp.ReplicationGroup.SnapshottingClusterId
 	}
 	if resp.ReplicationGroup.Status != nil {
 		ko.Status.Status = resp.ReplicationGroup.Status
+	}
+	if resp.ReplicationGroup.TransitEncryptionEnabled != nil {
+		ko.Spec.TransitEncryptionEnabled = resp.ReplicationGroup.TransitEncryptionEnabled
 	}
 
 	// custom set output from response
@@ -647,6 +668,9 @@ func (rm *resourceManager) sdkUpdate(
 		arn := ackv1alpha1.AWSResourceName(*resp.ReplicationGroup.ARN)
 		ko.Status.ACKResourceMetadata.ARN = &arn
 	}
+	if resp.ReplicationGroup.AtRestEncryptionEnabled != nil {
+		ko.Spec.AtRestEncryptionEnabled = resp.ReplicationGroup.AtRestEncryptionEnabled
+	}
 	if resp.ReplicationGroup.AuthTokenEnabled != nil {
 		ko.Status.AuthTokenEnabled = resp.ReplicationGroup.AuthTokenEnabled
 	}
@@ -655,6 +679,9 @@ func (rm *resourceManager) sdkUpdate(
 	}
 	if resp.ReplicationGroup.AutomaticFailover != nil {
 		ko.Status.AutomaticFailover = resp.ReplicationGroup.AutomaticFailover
+	}
+	if resp.ReplicationGroup.CacheNodeType != nil {
+		ko.Spec.CacheNodeType = resp.ReplicationGroup.CacheNodeType
 	}
 	if resp.ReplicationGroup.ClusterEnabled != nil {
 		ko.Status.ClusterEnabled = resp.ReplicationGroup.ClusterEnabled
@@ -681,6 +708,9 @@ func (rm *resourceManager) sdkUpdate(
 			f9.GlobalReplicationGroupMemberRole = resp.ReplicationGroup.GlobalReplicationGroupInfo.GlobalReplicationGroupMemberRole
 		}
 		ko.Status.GlobalReplicationGroupInfo = f9
+	}
+	if resp.ReplicationGroup.KmsKeyId != nil {
+		ko.Spec.KMSKeyID = resp.ReplicationGroup.KmsKeyId
 	}
 	if resp.ReplicationGroup.MemberClusters != nil {
 		f11 := []*string{}
@@ -785,11 +815,23 @@ func (rm *resourceManager) sdkUpdate(
 		}
 		ko.Status.PendingModifiedValues = f14
 	}
+	if resp.ReplicationGroup.ReplicationGroupId != nil {
+		ko.Spec.ReplicationGroupID = resp.ReplicationGroup.ReplicationGroupId
+	}
+	if resp.ReplicationGroup.SnapshotRetentionLimit != nil {
+		ko.Spec.SnapshotRetentionLimit = resp.ReplicationGroup.SnapshotRetentionLimit
+	}
+	if resp.ReplicationGroup.SnapshotWindow != nil {
+		ko.Spec.SnapshotWindow = resp.ReplicationGroup.SnapshotWindow
+	}
 	if resp.ReplicationGroup.SnapshottingClusterId != nil {
 		ko.Status.SnapshottingClusterID = resp.ReplicationGroup.SnapshottingClusterId
 	}
 	if resp.ReplicationGroup.Status != nil {
 		ko.Status.Status = resp.ReplicationGroup.Status
+	}
+	if resp.ReplicationGroup.TransitEncryptionEnabled != nil {
+		ko.Spec.TransitEncryptionEnabled = resp.ReplicationGroup.TransitEncryptionEnabled
 	}
 
 	// custom set output from response

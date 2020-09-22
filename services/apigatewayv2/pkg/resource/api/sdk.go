@@ -76,8 +76,66 @@ func (rm *resourceManager) sdkFind(
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
+	if resp.ApiKeySelectionExpression != nil {
+		ko.Spec.APIKeySelectionExpression = resp.ApiKeySelectionExpression
+	}
+	if resp.CorsConfiguration != nil {
+		f4 := &svcapitypes.Cors{}
+		if resp.CorsConfiguration.AllowCredentials != nil {
+			f4.AllowCredentials = resp.CorsConfiguration.AllowCredentials
+		}
+		if resp.CorsConfiguration.AllowHeaders != nil {
+			f4f1 := []*string{}
+			for _, f4f1iter := range resp.CorsConfiguration.AllowHeaders {
+				var f4f1elem string
+				f4f1elem = *f4f1iter
+				f4f1 = append(f4f1, &f4f1elem)
+			}
+			f4.AllowHeaders = f4f1
+		}
+		if resp.CorsConfiguration.AllowMethods != nil {
+			f4f2 := []*string{}
+			for _, f4f2iter := range resp.CorsConfiguration.AllowMethods {
+				var f4f2elem string
+				f4f2elem = *f4f2iter
+				f4f2 = append(f4f2, &f4f2elem)
+			}
+			f4.AllowMethods = f4f2
+		}
+		if resp.CorsConfiguration.AllowOrigins != nil {
+			f4f3 := []*string{}
+			for _, f4f3iter := range resp.CorsConfiguration.AllowOrigins {
+				var f4f3elem string
+				f4f3elem = *f4f3iter
+				f4f3 = append(f4f3, &f4f3elem)
+			}
+			f4.AllowOrigins = f4f3
+		}
+		if resp.CorsConfiguration.ExposeHeaders != nil {
+			f4f4 := []*string{}
+			for _, f4f4iter := range resp.CorsConfiguration.ExposeHeaders {
+				var f4f4elem string
+				f4f4elem = *f4f4iter
+				f4f4 = append(f4f4, &f4f4elem)
+			}
+			f4.ExposeHeaders = f4f4
+		}
+		if resp.CorsConfiguration.MaxAge != nil {
+			f4.MaxAge = resp.CorsConfiguration.MaxAge
+		}
+		ko.Spec.CorsConfiguration = f4
+	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
+	if resp.DisableExecuteApiEndpoint != nil {
+		ko.Spec.DisableExecuteAPIEndpoint = resp.DisableExecuteApiEndpoint
+	}
+	if resp.DisableSchemaValidation != nil {
+		ko.Spec.DisableSchemaValidation = resp.DisableSchemaValidation
 	}
 	if resp.ImportInfo != nil {
 		f9 := []*string{}
@@ -87,6 +145,27 @@ func (rm *resourceManager) sdkFind(
 			f9 = append(f9, &f9elem)
 		}
 		ko.Status.ImportInfo = f9
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.ProtocolType != nil {
+		ko.Spec.ProtocolType = resp.ProtocolType
+	}
+	if resp.RouteSelectionExpression != nil {
+		ko.Spec.RouteSelectionExpression = resp.RouteSelectionExpression
+	}
+	if resp.Tags != nil {
+		f13 := map[string]*string{}
+		for f13key, f13valiter := range resp.Tags {
+			var f13val string
+			f13val = *f13valiter
+			f13[f13key] = &f13val
+		}
+		ko.Spec.Tags = f13
+	}
+	if resp.Version != nil {
+		ko.Spec.Version = resp.Version
 	}
 	if resp.Warnings != nil {
 		f15 := []*string{}
@@ -163,8 +242,66 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
+	if resp.ApiKeySelectionExpression != nil {
+		ko.Spec.APIKeySelectionExpression = resp.ApiKeySelectionExpression
+	}
+	if resp.CorsConfiguration != nil {
+		f4 := &svcapitypes.Cors{}
+		if resp.CorsConfiguration.AllowCredentials != nil {
+			f4.AllowCredentials = resp.CorsConfiguration.AllowCredentials
+		}
+		if resp.CorsConfiguration.AllowHeaders != nil {
+			f4f1 := []*string{}
+			for _, f4f1iter := range resp.CorsConfiguration.AllowHeaders {
+				var f4f1elem string
+				f4f1elem = *f4f1iter
+				f4f1 = append(f4f1, &f4f1elem)
+			}
+			f4.AllowHeaders = f4f1
+		}
+		if resp.CorsConfiguration.AllowMethods != nil {
+			f4f2 := []*string{}
+			for _, f4f2iter := range resp.CorsConfiguration.AllowMethods {
+				var f4f2elem string
+				f4f2elem = *f4f2iter
+				f4f2 = append(f4f2, &f4f2elem)
+			}
+			f4.AllowMethods = f4f2
+		}
+		if resp.CorsConfiguration.AllowOrigins != nil {
+			f4f3 := []*string{}
+			for _, f4f3iter := range resp.CorsConfiguration.AllowOrigins {
+				var f4f3elem string
+				f4f3elem = *f4f3iter
+				f4f3 = append(f4f3, &f4f3elem)
+			}
+			f4.AllowOrigins = f4f3
+		}
+		if resp.CorsConfiguration.ExposeHeaders != nil {
+			f4f4 := []*string{}
+			for _, f4f4iter := range resp.CorsConfiguration.ExposeHeaders {
+				var f4f4elem string
+				f4f4elem = *f4f4iter
+				f4f4 = append(f4f4, &f4f4elem)
+			}
+			f4.ExposeHeaders = f4f4
+		}
+		if resp.CorsConfiguration.MaxAge != nil {
+			f4.MaxAge = resp.CorsConfiguration.MaxAge
+		}
+		ko.Spec.CorsConfiguration = f4
+	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
+	if resp.DisableExecuteApiEndpoint != nil {
+		ko.Spec.DisableExecuteAPIEndpoint = resp.DisableExecuteApiEndpoint
+	}
+	if resp.DisableSchemaValidation != nil {
+		ko.Spec.DisableSchemaValidation = resp.DisableSchemaValidation
 	}
 	if resp.ImportInfo != nil {
 		f9 := []*string{}
@@ -174,6 +311,27 @@ func (rm *resourceManager) sdkCreate(
 			f9 = append(f9, &f9elem)
 		}
 		ko.Status.ImportInfo = f9
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.ProtocolType != nil {
+		ko.Spec.ProtocolType = resp.ProtocolType
+	}
+	if resp.RouteSelectionExpression != nil {
+		ko.Spec.RouteSelectionExpression = resp.RouteSelectionExpression
+	}
+	if resp.Tags != nil {
+		f13 := map[string]*string{}
+		for f13key, f13valiter := range resp.Tags {
+			var f13val string
+			f13val = *f13valiter
+			f13[f13key] = &f13val
+		}
+		ko.Spec.Tags = f13
+	}
+	if resp.Version != nil {
+		ko.Spec.Version = resp.Version
 	}
 	if resp.Warnings != nil {
 		f15 := []*string{}
@@ -325,8 +483,66 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ApiId != nil {
 		ko.Status.APIID = resp.ApiId
 	}
+	if resp.ApiKeySelectionExpression != nil {
+		ko.Spec.APIKeySelectionExpression = resp.ApiKeySelectionExpression
+	}
+	if resp.CorsConfiguration != nil {
+		f4 := &svcapitypes.Cors{}
+		if resp.CorsConfiguration.AllowCredentials != nil {
+			f4.AllowCredentials = resp.CorsConfiguration.AllowCredentials
+		}
+		if resp.CorsConfiguration.AllowHeaders != nil {
+			f4f1 := []*string{}
+			for _, f4f1iter := range resp.CorsConfiguration.AllowHeaders {
+				var f4f1elem string
+				f4f1elem = *f4f1iter
+				f4f1 = append(f4f1, &f4f1elem)
+			}
+			f4.AllowHeaders = f4f1
+		}
+		if resp.CorsConfiguration.AllowMethods != nil {
+			f4f2 := []*string{}
+			for _, f4f2iter := range resp.CorsConfiguration.AllowMethods {
+				var f4f2elem string
+				f4f2elem = *f4f2iter
+				f4f2 = append(f4f2, &f4f2elem)
+			}
+			f4.AllowMethods = f4f2
+		}
+		if resp.CorsConfiguration.AllowOrigins != nil {
+			f4f3 := []*string{}
+			for _, f4f3iter := range resp.CorsConfiguration.AllowOrigins {
+				var f4f3elem string
+				f4f3elem = *f4f3iter
+				f4f3 = append(f4f3, &f4f3elem)
+			}
+			f4.AllowOrigins = f4f3
+		}
+		if resp.CorsConfiguration.ExposeHeaders != nil {
+			f4f4 := []*string{}
+			for _, f4f4iter := range resp.CorsConfiguration.ExposeHeaders {
+				var f4f4elem string
+				f4f4elem = *f4f4iter
+				f4f4 = append(f4f4, &f4f4elem)
+			}
+			f4.ExposeHeaders = f4f4
+		}
+		if resp.CorsConfiguration.MaxAge != nil {
+			f4.MaxAge = resp.CorsConfiguration.MaxAge
+		}
+		ko.Spec.CorsConfiguration = f4
+	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
+	if resp.DisableExecuteApiEndpoint != nil {
+		ko.Spec.DisableExecuteAPIEndpoint = resp.DisableExecuteApiEndpoint
+	}
+	if resp.DisableSchemaValidation != nil {
+		ko.Spec.DisableSchemaValidation = resp.DisableSchemaValidation
 	}
 	if resp.ImportInfo != nil {
 		f9 := []*string{}
@@ -336,6 +552,27 @@ func (rm *resourceManager) sdkUpdate(
 			f9 = append(f9, &f9elem)
 		}
 		ko.Status.ImportInfo = f9
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.ProtocolType != nil {
+		ko.Spec.ProtocolType = resp.ProtocolType
+	}
+	if resp.RouteSelectionExpression != nil {
+		ko.Spec.RouteSelectionExpression = resp.RouteSelectionExpression
+	}
+	if resp.Tags != nil {
+		f13 := map[string]*string{}
+		for f13key, f13valiter := range resp.Tags {
+			var f13val string
+			f13val = *f13valiter
+			f13[f13key] = &f13val
+		}
+		ko.Spec.Tags = f13
+	}
+	if resp.Version != nil {
+		ko.Spec.Version = resp.Version
 	}
 	if resp.Warnings != nil {
 		f15 := []*string{}

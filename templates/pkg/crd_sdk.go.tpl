@@ -48,7 +48,7 @@ func (rm *resourceManager) sdkFind(
 	if err != nil {
 		return nil, err
 	}
-{{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko.Status" 1 }}
+{{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko" 1 }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
@@ -183,7 +183,7 @@ func (rm *resourceManager) sdkCreate(
 	if err != nil {
 		return nil, err
 	}
-{{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko.Status" 1 }}
+{{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko" 1 }}
 	{{ if not ( Empty $createCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr
@@ -239,7 +239,7 @@ func (rm *resourceManager) sdkUpdate(
 		return nil, err
 	}
 
-{{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko.Status" 1 }}
+{{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko" 1 }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
 	if respErr != nil {
 		return nil, respErr

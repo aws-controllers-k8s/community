@@ -67,8 +67,35 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if resp.ContentHandlingStrategy != nil {
+		ko.Spec.ContentHandlingStrategy = resp.ContentHandlingStrategy
+	}
 	if resp.IntegrationResponseId != nil {
 		ko.Status.IntegrationResponseID = resp.IntegrationResponseId
+	}
+	if resp.IntegrationResponseKey != nil {
+		ko.Spec.IntegrationResponseKey = resp.IntegrationResponseKey
+	}
+	if resp.ResponseParameters != nil {
+		f3 := map[string]*string{}
+		for f3key, f3valiter := range resp.ResponseParameters {
+			var f3val string
+			f3val = *f3valiter
+			f3[f3key] = &f3val
+		}
+		ko.Spec.ResponseParameters = f3
+	}
+	if resp.ResponseTemplates != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.ResponseTemplates {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.ResponseTemplates = f4
+	}
+	if resp.TemplateSelectionExpression != nil {
+		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
 	}
 
 	return &resource{ko}, nil
@@ -140,8 +167,35 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if resp.ContentHandlingStrategy != nil {
+		ko.Spec.ContentHandlingStrategy = resp.ContentHandlingStrategy
+	}
 	if resp.IntegrationResponseId != nil {
 		ko.Status.IntegrationResponseID = resp.IntegrationResponseId
+	}
+	if resp.IntegrationResponseKey != nil {
+		ko.Spec.IntegrationResponseKey = resp.IntegrationResponseKey
+	}
+	if resp.ResponseParameters != nil {
+		f3 := map[string]*string{}
+		for f3key, f3valiter := range resp.ResponseParameters {
+			var f3val string
+			f3val = *f3valiter
+			f3[f3key] = &f3val
+		}
+		ko.Spec.ResponseParameters = f3
+	}
+	if resp.ResponseTemplates != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.ResponseTemplates {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.ResponseTemplates = f4
+	}
+	if resp.TemplateSelectionExpression != nil {
+		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
 	}
 
 	if ko.Status.ACKResourceMetadata == nil {
@@ -220,8 +274,35 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := desired.ko.DeepCopy()
 
+	if resp.ContentHandlingStrategy != nil {
+		ko.Spec.ContentHandlingStrategy = resp.ContentHandlingStrategy
+	}
 	if resp.IntegrationResponseId != nil {
 		ko.Status.IntegrationResponseID = resp.IntegrationResponseId
+	}
+	if resp.IntegrationResponseKey != nil {
+		ko.Spec.IntegrationResponseKey = resp.IntegrationResponseKey
+	}
+	if resp.ResponseParameters != nil {
+		f3 := map[string]*string{}
+		for f3key, f3valiter := range resp.ResponseParameters {
+			var f3val string
+			f3val = *f3valiter
+			f3[f3key] = &f3val
+		}
+		ko.Spec.ResponseParameters = f3
+	}
+	if resp.ResponseTemplates != nil {
+		f4 := map[string]*string{}
+		for f4key, f4valiter := range resp.ResponseTemplates {
+			var f4val string
+			f4val = *f4valiter
+			f4[f4key] = &f4val
+		}
+		ko.Spec.ResponseTemplates = f4
+	}
+	if resp.TemplateSelectionExpression != nil {
+		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
 	}
 
 	return &resource{ko}, nil

@@ -492,6 +492,9 @@ func TestEC2_LaunchTemplate(t *testing.T) {
 	if resp.LaunchTemplate.LaunchTemplateId != nil {
 		ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
 	}
+	if resp.LaunchTemplate.LaunchTemplateName != nil {
+		ko.Spec.LaunchTemplateName = resp.LaunchTemplate.LaunchTemplateName
+	}
 	if resp.LaunchTemplate.Tags != nil {
 		f6 := []*svcapitypes.Tag{}
 		for _, f6iter := range resp.LaunchTemplate.Tags {
@@ -507,7 +510,7 @@ func TestEC2_LaunchTemplate(t *testing.T) {
 		ko.Status.Tags = f6
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
 
 	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
 	//
