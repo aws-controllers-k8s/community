@@ -431,14 +431,6 @@ func TestRDS_DBInstance(t *testing.T) {
 		}
 		ko.Status.DBParameterGroups = f14
 	}
-	if resp.DBInstance.DBSecurityGroups != nil {
-		f15 := []*string{}
-		for _, f15iter := range resp.DBInstance.DBSecurityGroups {
-			var f15elem string
-			f15 = append(f15, f15elem)
-		}
-		ko.Spec.DBSecurityGroups = f15
-	}
 	if resp.DBInstance.DBSubnetGroup != nil {
 		f16 := &svcapitypes.DBSubnetGroup_SDK{}
 		if resp.DBInstance.DBSubnetGroup.DBSubnetGroupArn != nil {
@@ -875,14 +867,6 @@ func TestRDS_DBInstance(t *testing.T) {
 				f14 = append(f14, f14elem)
 			}
 			ko.Status.DBParameterGroups = f14
-		}
-		if elem.DBSecurityGroups != nil {
-			f15 := []*string{}
-			for _, f15iter := range elem.DBSecurityGroups {
-				var f15elem string
-				f15 = append(f15, f15elem)
-			}
-			ko.Spec.DBSecurityGroups = f15
 		}
 		if elem.DBSubnetGroup != nil {
 			f16 := &svcapitypes.DBSubnetGroup_SDK{}
