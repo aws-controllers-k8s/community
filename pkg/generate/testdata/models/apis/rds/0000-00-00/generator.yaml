@@ -1,0 +1,3 @@
+ignore:
+  shape_names:
+    - DBSecurityGroupMembershipList
