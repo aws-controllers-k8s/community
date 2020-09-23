@@ -80,7 +80,14 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	sdkHelper := model.NewSDKHelper(sdkDir)
 	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
-		return err
+		newSvcAlias, err := FallBackFindServiceID(sdkDir, svcAlias)
+		if err != nil {
+			return err
+		}
+		sdkAPI, err = sdkHelper.API(newSvcAlias) // retry with serviceID
+		if err != nil {
+			return err
+		}
 	}
 	g, err := generate.New(
 		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir,
