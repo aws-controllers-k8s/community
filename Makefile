@@ -1,4 +1,6 @@
 SHELL := /bin/bash # Use bash syntax
+
+# Set up variables
 GO111MODULE=on
 
 DOCKER_REPOSITORY ?= amazon/aws-controllers-k8s
