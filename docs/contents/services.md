@@ -4,7 +4,7 @@ The following services are currently supported by ACK and for details see the [S
 
 |AWS Service|Status|Controller|
 |-----------|------|----------|
-|Amazon [API Gateway V2](https://aws.amazon.com/api-gateway/)|`BUILD`|`apigateway`|
+|Amazon [API Gateway V2](https://aws.amazon.com/api-gateway/)|`DEVELOPER PREVIEW`|`apigateway`|
 |Amazon [DynamoDB](https://aws.amazon.com/dynamodb/)|`BUILD`|`dynamodb`|
 |Amazon [ECR](https://aws.amazon.com/ecr/)|`DEVELOPER PREVIEW`|[`ecr`](https://github.com/aws/aws-controllers-k8s/tree/main/services/ecr)|
 |Amazon [S3](https://aws.amazon.com/s3/)|`DEVELOPER PREVIEW`|[`s3`](https://github.com/aws/aws-controllers-k8s/tree/main/services/s3)|
