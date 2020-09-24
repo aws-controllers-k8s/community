@@ -9,14 +9,17 @@ set -Eo pipefail
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
-MOCKERY_RELEASE_URL="https://github.com/vektra/mockery/releases/download/v2.1.0/mockery_2.1.0_Linux_x86_64.tar.gz"
 
+OS=$(uname -s)
+ARCH=$(uname -m)
+VERSION=1.1.2
+MOCKERY_RELEASE_URL="https://github.com/vektra/mockery/releases/download/v${VERSION}/mockery_${VERSION}_${OS}_${ARCH}.tar.gz"
 source "$SCRIPTS_DIR/lib/common.sh"
 
 if ! is_installed mockery; then
     mkdir -p $BIN_DIR
     cd $BIN_DIR
-    wget -q $MOCKERY_RELEASE_URL -O mockery.tar.gz
+    wget -q --no-check-certificate --content-disposition $MOCKERY_RELEASE_URL -O mockery.tar.gz
     tar -xvf mockery.tar.gz
     export PATH="$PATH:$BIN_DIR"
 fi
