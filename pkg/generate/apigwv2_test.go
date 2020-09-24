@@ -222,6 +222,16 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
+	if resp.RouteId != nil {
+		ko.Status.RouteID = resp.RouteId
+	}
+`
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
+
+	expReadOneOutput := `
+	if resp.ApiGatewayManaged != nil {
+		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	}
 	if resp.ApiKeyRequired != nil {
 		ko.Spec.APIKeyRequired = resp.ApiKeyRequired
 	}
@@ -279,7 +289,7 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 		ko.Spec.Target = resp.Target
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, true))
+	assert.Equal(expReadOneOutput, crd.GoCodeSetOutput(model.OpTypeGet, "resp", "ko", 1, true))
 
 	expRequiredFieldsCode := `
 	return r.ko.Spec.APIID == nil || r.ko.Status.RouteID == nil
