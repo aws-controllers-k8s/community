@@ -183,57 +183,8 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	if resp.AuthorizerCredentialsArn != nil {
-		ko.Spec.AuthorizerCredentialsARN = resp.AuthorizerCredentialsArn
-	}
 	if resp.AuthorizerId != nil {
 		ko.Status.AuthorizerID = resp.AuthorizerId
-	}
-	if resp.AuthorizerPayloadFormatVersion != nil {
-		ko.Spec.AuthorizerPayloadFormatVersion = resp.AuthorizerPayloadFormatVersion
-	}
-	if resp.AuthorizerResultTtlInSeconds != nil {
-		ko.Spec.AuthorizerResultTtlInSeconds = resp.AuthorizerResultTtlInSeconds
-	}
-	if resp.AuthorizerType != nil {
-		ko.Spec.AuthorizerType = resp.AuthorizerType
-	}
-	if resp.AuthorizerUri != nil {
-		ko.Spec.AuthorizerURI = resp.AuthorizerUri
-	}
-	if resp.EnableSimpleResponses != nil {
-		ko.Spec.EnableSimpleResponses = resp.EnableSimpleResponses
-	}
-	if resp.IdentitySource != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.IdentitySource {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
-		}
-		ko.Spec.IDentitySource = f7
-	}
-	if resp.IdentityValidationExpression != nil {
-		ko.Spec.IDentityValidationExpression = resp.IdentityValidationExpression
-	}
-	if resp.JwtConfiguration != nil {
-		f9 := &svcapitypes.JWTConfiguration{}
-		if resp.JwtConfiguration.Audience != nil {
-			f9f0 := []*string{}
-			for _, f9f0iter := range resp.JwtConfiguration.Audience {
-				var f9f0elem string
-				f9f0elem = *f9f0iter
-				f9f0 = append(f9f0, &f9f0elem)
-			}
-			f9.Audience = f9f0
-		}
-		if resp.JwtConfiguration.Issuer != nil {
-			f9.Issuer = resp.JwtConfiguration.Issuer
-		}
-		ko.Spec.JWTConfiguration = f9
-	}
-	if resp.Name != nil {
-		ko.Spec.Name = resp.Name
 	}
 
 	if ko.Status.ACKResourceMetadata == nil {
@@ -331,57 +282,8 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := desired.ko.DeepCopy()
 
-	if resp.AuthorizerCredentialsArn != nil {
-		ko.Spec.AuthorizerCredentialsARN = resp.AuthorizerCredentialsArn
-	}
 	if resp.AuthorizerId != nil {
 		ko.Status.AuthorizerID = resp.AuthorizerId
-	}
-	if resp.AuthorizerPayloadFormatVersion != nil {
-		ko.Spec.AuthorizerPayloadFormatVersion = resp.AuthorizerPayloadFormatVersion
-	}
-	if resp.AuthorizerResultTtlInSeconds != nil {
-		ko.Spec.AuthorizerResultTtlInSeconds = resp.AuthorizerResultTtlInSeconds
-	}
-	if resp.AuthorizerType != nil {
-		ko.Spec.AuthorizerType = resp.AuthorizerType
-	}
-	if resp.AuthorizerUri != nil {
-		ko.Spec.AuthorizerURI = resp.AuthorizerUri
-	}
-	if resp.EnableSimpleResponses != nil {
-		ko.Spec.EnableSimpleResponses = resp.EnableSimpleResponses
-	}
-	if resp.IdentitySource != nil {
-		f7 := []*string{}
-		for _, f7iter := range resp.IdentitySource {
-			var f7elem string
-			f7elem = *f7iter
-			f7 = append(f7, &f7elem)
-		}
-		ko.Spec.IDentitySource = f7
-	}
-	if resp.IdentityValidationExpression != nil {
-		ko.Spec.IDentityValidationExpression = resp.IdentityValidationExpression
-	}
-	if resp.JwtConfiguration != nil {
-		f9 := &svcapitypes.JWTConfiguration{}
-		if resp.JwtConfiguration.Audience != nil {
-			f9f0 := []*string{}
-			for _, f9f0iter := range resp.JwtConfiguration.Audience {
-				var f9f0elem string
-				f9f0elem = *f9f0iter
-				f9f0 = append(f9f0, &f9f0elem)
-			}
-			f9.Audience = f9f0
-		}
-		if resp.JwtConfiguration.Issuer != nil {
-			f9.Issuer = resp.JwtConfiguration.Issuer
-		}
-		ko.Spec.JWTConfiguration = f9
-	}
-	if resp.Name != nil {
-		ko.Spec.Name = resp.Name
 	}
 
 	return &resource{ko}, nil

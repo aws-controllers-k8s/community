@@ -270,20 +270,11 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	if resp.CacheCluster.AuthTokenLastModifiedDate != nil {
 		ko.Status.AuthTokenLastModifiedDate = &metav1.Time{*resp.CacheCluster.AuthTokenLastModifiedDate}
 	}
-	if resp.CacheCluster.AutoMinorVersionUpgrade != nil {
-		ko.Spec.AutoMinorVersionUpgrade = resp.CacheCluster.AutoMinorVersionUpgrade
-	}
 	if resp.CacheCluster.CacheClusterCreateTime != nil {
 		ko.Status.CacheClusterCreateTime = &metav1.Time{*resp.CacheCluster.CacheClusterCreateTime}
 	}
-	if resp.CacheCluster.CacheClusterId != nil {
-		ko.Spec.CacheClusterID = resp.CacheCluster.CacheClusterId
-	}
 	if resp.CacheCluster.CacheClusterStatus != nil {
 		ko.Status.CacheClusterStatus = resp.CacheCluster.CacheClusterStatus
-	}
-	if resp.CacheCluster.CacheNodeType != nil {
-		ko.Spec.CacheNodeType = resp.CacheCluster.CacheNodeType
 	}
 	if resp.CacheCluster.CacheNodes != nil {
 		f9 := []*svcapitypes.CacheNode{}
@@ -354,9 +345,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		}
 		ko.Status.CacheSecurityGroups = f11
 	}
-	if resp.CacheCluster.CacheSubnetGroupName != nil {
-		ko.Spec.CacheSubnetGroupName = resp.CacheCluster.CacheSubnetGroupName
-	}
 	if resp.CacheCluster.ClientDownloadLandingPage != nil {
 		ko.Status.ClientDownloadLandingPage = resp.CacheCluster.ClientDownloadLandingPage
 	}
@@ -370,12 +358,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		}
 		ko.Status.ConfigurationEndpoint = f14
 	}
-	if resp.CacheCluster.Engine != nil {
-		ko.Spec.Engine = resp.CacheCluster.Engine
-	}
-	if resp.CacheCluster.EngineVersion != nil {
-		ko.Spec.EngineVersion = resp.CacheCluster.EngineVersion
-	}
 	if resp.CacheCluster.NotificationConfiguration != nil {
 		f17 := &svcapitypes.NotificationConfiguration{}
 		if resp.CacheCluster.NotificationConfiguration.TopicArn != nil {
@@ -385,9 +367,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 			f17.TopicStatus = resp.CacheCluster.NotificationConfiguration.TopicStatus
 		}
 		ko.Status.NotificationConfiguration = f17
-	}
-	if resp.CacheCluster.NumCacheNodes != nil {
-		ko.Spec.NumCacheNodes = resp.CacheCluster.NumCacheNodes
 	}
 	if resp.CacheCluster.PendingModifiedValues != nil {
 		f19 := &svcapitypes.PendingModifiedValues{}
@@ -414,15 +393,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		}
 		ko.Status.PendingModifiedValues = f19
 	}
-	if resp.CacheCluster.PreferredAvailabilityZone != nil {
-		ko.Spec.PreferredAvailabilityZone = resp.CacheCluster.PreferredAvailabilityZone
-	}
-	if resp.CacheCluster.PreferredMaintenanceWindow != nil {
-		ko.Spec.PreferredMaintenanceWindow = resp.CacheCluster.PreferredMaintenanceWindow
-	}
-	if resp.CacheCluster.ReplicationGroupId != nil {
-		ko.Spec.ReplicationGroupID = resp.CacheCluster.ReplicationGroupId
-	}
 	if resp.CacheCluster.SecurityGroups != nil {
 		f23 := []*svcapitypes.SecurityGroupMembership{}
 		for _, f23iter := range resp.CacheCluster.SecurityGroups {
@@ -437,17 +407,11 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		}
 		ko.Status.SecurityGroups = f23
 	}
-	if resp.CacheCluster.SnapshotRetentionLimit != nil {
-		ko.Spec.SnapshotRetentionLimit = resp.CacheCluster.SnapshotRetentionLimit
-	}
-	if resp.CacheCluster.SnapshotWindow != nil {
-		ko.Spec.SnapshotWindow = resp.CacheCluster.SnapshotWindow
-	}
 	if resp.CacheCluster.TransitEncryptionEnabled != nil {
 		ko.Status.TransitEncryptionEnabled = resp.CacheCluster.TransitEncryptionEnabled
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// Elasticache doesn't have a ReadOne operation; only a List/ReadMany
 	// operation. Let's verify that the construction of the
@@ -665,7 +629,7 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }
 
 func TestElasticache_Ignored_Operations(t *testing.T) {

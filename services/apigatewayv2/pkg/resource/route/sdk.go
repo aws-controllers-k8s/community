@@ -193,61 +193,8 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
-	if resp.ApiKeyRequired != nil {
-		ko.Spec.APIKeyRequired = resp.ApiKeyRequired
-	}
-	if resp.AuthorizationScopes != nil {
-		f2 := []*string{}
-		for _, f2iter := range resp.AuthorizationScopes {
-			var f2elem string
-			f2elem = *f2iter
-			f2 = append(f2, &f2elem)
-		}
-		ko.Spec.AuthorizationScopes = f2
-	}
-	if resp.AuthorizationType != nil {
-		ko.Spec.AuthorizationType = resp.AuthorizationType
-	}
-	if resp.AuthorizerId != nil {
-		ko.Spec.AuthorizerID = resp.AuthorizerId
-	}
-	if resp.ModelSelectionExpression != nil {
-		ko.Spec.ModelSelectionExpression = resp.ModelSelectionExpression
-	}
-	if resp.OperationName != nil {
-		ko.Spec.OperationName = resp.OperationName
-	}
-	if resp.RequestModels != nil {
-		f7 := map[string]*string{}
-		for f7key, f7valiter := range resp.RequestModels {
-			var f7val string
-			f7val = *f7valiter
-			f7[f7key] = &f7val
-		}
-		ko.Spec.RequestModels = f7
-	}
-	if resp.RequestParameters != nil {
-		f8 := map[string]*svcapitypes.ParameterConstraints{}
-		for f8key, f8valiter := range resp.RequestParameters {
-			f8val := &svcapitypes.ParameterConstraints{}
-			if f8valiter.Required != nil {
-				f8val.Required = f8valiter.Required
-			}
-			f8[f8key] = f8val
-		}
-		ko.Spec.RequestParameters = f8
-	}
 	if resp.RouteId != nil {
 		ko.Status.RouteID = resp.RouteId
-	}
-	if resp.RouteKey != nil {
-		ko.Spec.RouteKey = resp.RouteKey
-	}
-	if resp.RouteResponseSelectionExpression != nil {
-		ko.Spec.RouteResponseSelectionExpression = resp.RouteResponseSelectionExpression
-	}
-	if resp.Target != nil {
-		ko.Spec.Target = resp.Target
 	}
 
 	if ko.Status.ACKResourceMetadata == nil {
@@ -352,61 +299,8 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
-	if resp.ApiKeyRequired != nil {
-		ko.Spec.APIKeyRequired = resp.ApiKeyRequired
-	}
-	if resp.AuthorizationScopes != nil {
-		f2 := []*string{}
-		for _, f2iter := range resp.AuthorizationScopes {
-			var f2elem string
-			f2elem = *f2iter
-			f2 = append(f2, &f2elem)
-		}
-		ko.Spec.AuthorizationScopes = f2
-	}
-	if resp.AuthorizationType != nil {
-		ko.Spec.AuthorizationType = resp.AuthorizationType
-	}
-	if resp.AuthorizerId != nil {
-		ko.Spec.AuthorizerID = resp.AuthorizerId
-	}
-	if resp.ModelSelectionExpression != nil {
-		ko.Spec.ModelSelectionExpression = resp.ModelSelectionExpression
-	}
-	if resp.OperationName != nil {
-		ko.Spec.OperationName = resp.OperationName
-	}
-	if resp.RequestModels != nil {
-		f7 := map[string]*string{}
-		for f7key, f7valiter := range resp.RequestModels {
-			var f7val string
-			f7val = *f7valiter
-			f7[f7key] = &f7val
-		}
-		ko.Spec.RequestModels = f7
-	}
-	if resp.RequestParameters != nil {
-		f8 := map[string]*svcapitypes.ParameterConstraints{}
-		for f8key, f8valiter := range resp.RequestParameters {
-			f8val := &svcapitypes.ParameterConstraints{}
-			if f8valiter.Required != nil {
-				f8val.Required = f8valiter.Required
-			}
-			f8[f8key] = f8val
-		}
-		ko.Spec.RequestParameters = f8
-	}
 	if resp.RouteId != nil {
 		ko.Status.RouteID = resp.RouteId
-	}
-	if resp.RouteKey != nil {
-		ko.Spec.RouteKey = resp.RouteKey
-	}
-	if resp.RouteResponseSelectionExpression != nil {
-		ko.Spec.RouteResponseSelectionExpression = resp.RouteResponseSelectionExpression
-	}
-	if resp.Target != nil {
-		ko.Spec.Target = resp.Target
 	}
 
 	return &resource{ko}, nil

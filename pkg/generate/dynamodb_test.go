@@ -591,5 +591,5 @@ func TestDynamoDB_Table(t *testing.T) {
 		ko.Status.TableStatus = resp.Table.TableStatus
 	}
 `
-	assert.Equal(expReadOneOutput, crd.GoCodeSetOutput(model.OpTypeGet, "resp", "ko", 1))
+	assert.Equal(expReadOneOutput, crd.GoCodeSetOutput(model.OpTypeGet, "resp", "ko", 1, true))
 }

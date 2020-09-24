@@ -146,7 +146,7 @@ func TestSQS_Queue(t *testing.T) {
 		ko.Status.QueueURL = resp.QueueUrl
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// The input shape for the GetAttributes operation technically has two
 	// fields in it: an AttributeNames list of attribute keys to file

@@ -143,17 +143,8 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	if resp.ApiId != nil {
-		ko.Spec.APIID = resp.ApiId
-	}
 	if resp.ApiMappingId != nil {
 		ko.Status.APIMappingID = resp.ApiMappingId
-	}
-	if resp.ApiMappingKey != nil {
-		ko.Spec.APIMappingKey = resp.ApiMappingKey
-	}
-	if resp.Stage != nil {
-		ko.Spec.Stage = resp.Stage
 	}
 
 	if ko.Status.ACKResourceMetadata == nil {
@@ -211,17 +202,8 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := desired.ko.DeepCopy()
 
-	if resp.ApiId != nil {
-		ko.Spec.APIID = resp.ApiId
-	}
 	if resp.ApiMappingId != nil {
 		ko.Status.APIMappingID = resp.ApiMappingId
-	}
-	if resp.ApiMappingKey != nil {
-		ko.Spec.APIMappingKey = resp.ApiMappingKey
-	}
-	if resp.Stage != nil {
-		ko.Spec.Stage = resp.Stage
 	}
 
 	return &resource{ko}, nil

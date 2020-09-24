@@ -1407,8 +1407,10 @@ func (r *CRD) goCodeSetInputForScalar(
 	return out
 }
 
-// GoCodeSetOutput returns the Go code that sets a CRD's Status field value to
+// GoCodeSetOutput returns the Go code that sets a CRD's field value to
 // the value of an output shape's member fields.
+// Status fields are always updated. Update of Spec fields depends on
+// 'performSpecUpdate' parameter
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -1466,6 +1468,8 @@ func (r *CRD) GoCodeSetOutput(
 	targetVarName string,
 	// Number of levels of indentation to use
 	indentLevel int,
+	// boolean to indicate whether Spec fields should be updated from opTypeOutput
+	performSpecUpdate bool,
 ) string {
 	var op *awssdkmodel.Operation
 	switch opType {
@@ -1577,6 +1581,9 @@ func (r *CRD) GoCodeSetOutput(
 		crdField, found = r.SpecFields[memberName]
 		if found {
 			targetAdaptedVarName += ".Spec"
+			if !performSpecUpdate {
+				continue
+			}
 		} else {
 			crdField, found = r.StatusFields[memberName]
 			if !found {

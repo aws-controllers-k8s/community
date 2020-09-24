@@ -130,7 +130,7 @@ func TestS3_Bucket(t *testing.T) {
 		ko.Status.Location = resp.Location
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	expDeleteInput := `
 	if r.ko.Spec.Name != nil {
@@ -160,5 +160,5 @@ func TestS3_Bucket(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

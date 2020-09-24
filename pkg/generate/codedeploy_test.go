@@ -96,7 +96,7 @@ func TestCodeDeploy_Deployment(t *testing.T) {
 		ko.Status.DeploymentID = resp.DeploymentId
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	expStatusFieldCamel := []string{
 		// All of the fields in the Deployment resource's CreateDeploymentInput

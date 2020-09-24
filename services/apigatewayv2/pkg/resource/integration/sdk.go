@@ -207,75 +207,11 @@ func (rm *resourceManager) sdkCreate(
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
-	if resp.ConnectionId != nil {
-		ko.Spec.ConnectionID = resp.ConnectionId
-	}
-	if resp.ConnectionType != nil {
-		ko.Spec.ConnectionType = resp.ConnectionType
-	}
-	if resp.ContentHandlingStrategy != nil {
-		ko.Spec.ContentHandlingStrategy = resp.ContentHandlingStrategy
-	}
-	if resp.CredentialsArn != nil {
-		ko.Spec.CredentialsARN = resp.CredentialsArn
-	}
-	if resp.Description != nil {
-		ko.Spec.Description = resp.Description
-	}
 	if resp.IntegrationId != nil {
 		ko.Status.IntegrationID = resp.IntegrationId
 	}
-	if resp.IntegrationMethod != nil {
-		ko.Spec.IntegrationMethod = resp.IntegrationMethod
-	}
 	if resp.IntegrationResponseSelectionExpression != nil {
 		ko.Status.IntegrationResponseSelectionExpression = resp.IntegrationResponseSelectionExpression
-	}
-	if resp.IntegrationSubtype != nil {
-		ko.Spec.IntegrationSubtype = resp.IntegrationSubtype
-	}
-	if resp.IntegrationType != nil {
-		ko.Spec.IntegrationType = resp.IntegrationType
-	}
-	if resp.IntegrationUri != nil {
-		ko.Spec.IntegrationURI = resp.IntegrationUri
-	}
-	if resp.PassthroughBehavior != nil {
-		ko.Spec.PassthroughBehavior = resp.PassthroughBehavior
-	}
-	if resp.PayloadFormatVersion != nil {
-		ko.Spec.PayloadFormatVersion = resp.PayloadFormatVersion
-	}
-	if resp.RequestParameters != nil {
-		f14 := map[string]*string{}
-		for f14key, f14valiter := range resp.RequestParameters {
-			var f14val string
-			f14val = *f14valiter
-			f14[f14key] = &f14val
-		}
-		ko.Spec.RequestParameters = f14
-	}
-	if resp.RequestTemplates != nil {
-		f15 := map[string]*string{}
-		for f15key, f15valiter := range resp.RequestTemplates {
-			var f15val string
-			f15val = *f15valiter
-			f15[f15key] = &f15val
-		}
-		ko.Spec.RequestTemplates = f15
-	}
-	if resp.TemplateSelectionExpression != nil {
-		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
-	}
-	if resp.TimeoutInMillis != nil {
-		ko.Spec.TimeoutInMillis = resp.TimeoutInMillis
-	}
-	if resp.TlsConfig != nil {
-		f18 := &svcapitypes.TLSConfigInput{}
-		if resp.TlsConfig.ServerNameToVerify != nil {
-			f18.ServerNameToVerify = resp.TlsConfig.ServerNameToVerify
-		}
-		ko.Spec.TLSConfig = f18
 	}
 
 	if ko.Status.ACKResourceMetadata == nil {
@@ -391,75 +327,11 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
-	if resp.ConnectionId != nil {
-		ko.Spec.ConnectionID = resp.ConnectionId
-	}
-	if resp.ConnectionType != nil {
-		ko.Spec.ConnectionType = resp.ConnectionType
-	}
-	if resp.ContentHandlingStrategy != nil {
-		ko.Spec.ContentHandlingStrategy = resp.ContentHandlingStrategy
-	}
-	if resp.CredentialsArn != nil {
-		ko.Spec.CredentialsARN = resp.CredentialsArn
-	}
-	if resp.Description != nil {
-		ko.Spec.Description = resp.Description
-	}
 	if resp.IntegrationId != nil {
 		ko.Status.IntegrationID = resp.IntegrationId
 	}
-	if resp.IntegrationMethod != nil {
-		ko.Spec.IntegrationMethod = resp.IntegrationMethod
-	}
 	if resp.IntegrationResponseSelectionExpression != nil {
 		ko.Status.IntegrationResponseSelectionExpression = resp.IntegrationResponseSelectionExpression
-	}
-	if resp.IntegrationSubtype != nil {
-		ko.Spec.IntegrationSubtype = resp.IntegrationSubtype
-	}
-	if resp.IntegrationType != nil {
-		ko.Spec.IntegrationType = resp.IntegrationType
-	}
-	if resp.IntegrationUri != nil {
-		ko.Spec.IntegrationURI = resp.IntegrationUri
-	}
-	if resp.PassthroughBehavior != nil {
-		ko.Spec.PassthroughBehavior = resp.PassthroughBehavior
-	}
-	if resp.PayloadFormatVersion != nil {
-		ko.Spec.PayloadFormatVersion = resp.PayloadFormatVersion
-	}
-	if resp.RequestParameters != nil {
-		f14 := map[string]*string{}
-		for f14key, f14valiter := range resp.RequestParameters {
-			var f14val string
-			f14val = *f14valiter
-			f14[f14key] = &f14val
-		}
-		ko.Spec.RequestParameters = f14
-	}
-	if resp.RequestTemplates != nil {
-		f15 := map[string]*string{}
-		for f15key, f15valiter := range resp.RequestTemplates {
-			var f15val string
-			f15val = *f15valiter
-			f15[f15key] = &f15val
-		}
-		ko.Spec.RequestTemplates = f15
-	}
-	if resp.TemplateSelectionExpression != nil {
-		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
-	}
-	if resp.TimeoutInMillis != nil {
-		ko.Spec.TimeoutInMillis = resp.TimeoutInMillis
-	}
-	if resp.TlsConfig != nil {
-		f18 := &svcapitypes.TLSConfigInput{}
-		if resp.TlsConfig.ServerNameToVerify != nil {
-			f18.ServerNameToVerify = resp.TlsConfig.ServerNameToVerify
-		}
-		ko.Spec.TLSConfig = f18
 	}
 
 	return &resource{ko}, nil

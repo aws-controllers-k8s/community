@@ -279,7 +279,7 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 		ko.Spec.Target = resp.Target
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, true))
 
 	expRequiredFieldsCode := `
 	return r.ko.Spec.APIID == nil || r.ko.Status.RouteID == nil
