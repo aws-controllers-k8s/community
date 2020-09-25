@@ -15,9 +15,13 @@ package command
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -74,18 +78,43 @@ func ensureSDKRepo(cacheDir string) error {
 }
 
 // cloneSDKRepo git clone's the aws-sdk-go source repo into the cache and
-// returns the filepath to the clone'd repo
+// returns the filepath to the clone'd repo. If the aws-sdk-go repository
+// already exists in the cache, it will checkout the current sdk-go version
+// mentionned in 'go.mod' file.
 func cloneSDKRepo(srcPath string) (string, error) {
+	sdkVersion, err := getSDKVersion()
+	if err != nil {
+		return "", err
+	}
 	clonePath := filepath.Join(srcPath, "aws-sdk-go")
 	if optRefreshCache {
 		if _, err := os.Stat(filepath.Join(clonePath, ".git")); !os.IsNotExist(err) {
-			cmd := exec.Command("git", "-C", clonePath, "pull")
+			cmd := exec.Command("git", "-C", clonePath, "checkout", "tags/"+sdkVersion)
 			return clonePath, cmd.Run()
 		}
 	}
 	if _, err := os.Stat(clonePath); os.IsNotExist(err) {
-		cmd := exec.Command("git", "clone", "--depth", "1", sdkRepoURL, clonePath)
+		cmd := exec.Command("git", "clone", "-b", sdkVersion, sdkRepoURL, clonePath)
 		return clonePath, cmd.Run()
 	}
 	return clonePath, nil
+}
+
+// getSDKVersion parses the go.mod file and returns aws-sdk-go version
+func getSDKVersion() (string, error) {
+	b, err := ioutil.ReadFile("./go.mod")
+	if err != nil {
+		return "", err
+	}
+	goMod, err := modfile.Parse("", b, nil)
+	if err != nil {
+		return "", err
+	}
+	sdkModule := strings.TrimPrefix(sdkRepoURL, "https://")
+	for _, require := range goMod.Require {
+		if require.Mod.Path == sdkModule {
+			return require.Mod.Version, nil
+		}
+	}
+	return "", fmt.Errorf("couldn't find %s in the go.mod require block", sdkModule)
 }
