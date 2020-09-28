@@ -151,7 +151,7 @@ cat > trust-policy.json << EOF
 		"Action": "sts:AssumeRole"
 	}
 }
-EOF 
+EOF
 ```
 
 Using above trust policy, we can now create the IAM role:
