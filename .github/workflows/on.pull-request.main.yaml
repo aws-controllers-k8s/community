@@ -45,3 +45,37 @@ jobs:
           make build-controller SERVICE=$SERVICE
         env:
           SERVICE: ${{ matrix.service }}
+
+  test-controllers:
+    name: test controllers
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+         - s3
+         - ecr
+         - sns
+         - sqs
+         - elasticache
+         - dynamodb
+         - apigatewayv2
+    runs-on: self-hosted
+    steps:
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+      - name: checkout code
+        uses: actions/checkout@v2
+      - name: execute e2e tests
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          export ACK_TEST_IAM_ROLE=Admin-K8s
+          export ACK_TEST_PRINCIPAL_ARN=$(aws sts get-caller-identity --query 'Arn' --output text)
+          export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+          export AWS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
+          make build-controller SERVICE=$SERVICE
+          make kind-test SERVICE=$SERVICE
+        env:
+          SERVICE: ${{ matrix.service }}
