@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -82,11 +83,24 @@ func ensureSDKRepo(cacheDir string) error {
 // already exists in the cache, it will checkout the current sdk-go version
 // mentionned in 'go.mod' file.
 func cloneSDKRepo(srcPath string) (string, error) {
+	clonePath := filepath.Join(srcPath, "aws-sdk-go")
+
+	// since early versions of ack-generate used to clone aws-sdk-go repo using
+	// 'git clone --depth 1', right now 'git checkout' doesn't run successfully
+	// on those repositories. To solve this issue, we temporarilly add this code
+	// to delete old cache versions.
+	// TODO(hilalymh) remove this block Q1 2021
+	if _, err := os.Stat(clonePath); !os.IsNotExist(err) {
+		err := removeOldRepoCache(clonePath)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	sdkVersion, err := getSDKVersion()
 	if err != nil {
 		return "", err
 	}
-	clonePath := filepath.Join(srcPath, "aws-sdk-go")
 	if optRefreshCache {
 		if _, err := os.Stat(filepath.Join(clonePath, ".git")); !os.IsNotExist(err) {
 			cmd := exec.Command("git", "-C", clonePath, "checkout", "tags/"+sdkVersion)
@@ -98,6 +112,26 @@ func cloneSDKRepo(srcPath string) (string, error) {
 		return clonePath, cmd.Run()
 	}
 	return clonePath, nil
+}
+
+// removeOldRepoCache deletes old aws-sdk-go repositories. It deletes a
+// repository if the number of commits is equal to 0
+func removeOldRepoCache(repoDir string) error {
+	b, err := exec.Command("git", "-C", repoDir, "rev-list", "--count", "HEAD").Output()
+	if err != nil {
+		return err
+	}
+	count, err := strconv.Atoi(strings.TrimSuffix(string(b), "\n"))
+	if err != nil {
+		return err
+	}
+	if count == 1 {
+		err := os.RemoveAll(repoDir)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // getSDKVersion parses the go.mod file and returns aws-sdk-go version
