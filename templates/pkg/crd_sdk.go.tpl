@@ -224,7 +224,9 @@ func (rm *resourceManager) sdkUpdate(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-{{- if .CRD.Ops.Update }}
+{{- if .CRD.CustomUpdateMethodName }}
+    return rm.{{ .CRD.CustomUpdateMethodName }}(ctx, desired, latest, diffReporter)
+{{- else if .CRD.Ops.Update }}
 
 {{ $customMethod := .CRD.GetCustomImplementation .CRD.Ops.Update }}
 {{ if $customMethod }}

@@ -37,8 +37,8 @@ type Config struct {
 // OperationConfig represents instructions to the ACK code generator to
 // specify the overriding values for API operation parameters and its custom implementation.
 type OperationConfig struct {
-	CustomImplementation string `json:"custom_implementation,omitempty"`
-	OverrideValues map[string]string `json:"override_values"`
+	CustomImplementation string            `json:"custom_implementation,omitempty"`
+	OverrideValues       map[string]string `json:"override_values"`
 	// SetOutputCustomMethodName provides the name of the custom method on the
 	// `resourceManager` struct that will set fields on a `resource` struct
 	// depending on the output of the operation.
@@ -90,6 +90,17 @@ type ResourceConfig struct {
 	// filter the results of these List operations from within the generated
 	// code in sdk.go's sdkFind().
 	ListOperation *ListOperationConfig `json:"list_operation,omitempty"`
+	// UpdateOperation contains instructions for the code generator to generate
+	// Go code for the update operation for the resource. For some APIs, the
+	// way that a resource's attributes are updated after creation is, well,
+	// very odd. Some APIs have separate API calls for each attribute or set of
+	// related attributes of the resource. For example, the ECR API has
+	// separate API calls for PutImageScanningConfiguration,
+	// PutImageTagMutability, PutLifecyclePolicy and SetRepositoryPolicy. FOr
+	// these APIs, we basically need to revert to custom code because there's
+	// very little consistency to the APIs that we can use to instruct the code
+	// generator :(
+	UpdateOperation *UpdateOperationConfig `json:"update_operation,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -203,6 +214,15 @@ type ListOperationConfig struct {
 	// MatchFields lists the names of fields in the Shape of the
 	// list element in the List Operation's Output shape.
 	MatchFields []string `json:"match_fields"`
+}
+
+// UpdateOperationConfig contains instructions for the code generator to handle
+// Update operations for service APIs that have resources that have
+// difficult-to-standardize update operations.
+type UpdateOperationConfig struct {
+	// CustomMethodName is a string for the method name to replace the
+	// sdkUpdate() method implementation for this resource
+	CustomMethodName string `json:"custom_method_name"`
 }
 
 // IsIgnoredOperation returns true if Operation Name is configured to be ignored

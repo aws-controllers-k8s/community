@@ -1134,6 +1134,22 @@ func (r *CRD) NameField() string {
 	return "???"
 }
 
+// CustomUpdateMethodName returns the name of the custom resourceManager method
+// for updating the resource state, if any has been specified in the generator
+// config
+func (r *CRD) CustomUpdateMethodName() string {
+	if r.genCfg == nil {
+		return ""
+	}
+	rConfig, found := r.genCfg.Resources[r.Names.Original]
+	if found {
+		if rConfig.UpdateOperation != nil {
+			return rConfig.UpdateOperation.CustomMethodName
+		}
+	}
+	return ""
+}
+
 func (r *CRD) goCodeSetInputForContainer(
 	// The name of the SDK Input shape member we're outputting for
 	targetFieldName string,

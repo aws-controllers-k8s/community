@@ -48,9 +48,24 @@ debug_msg() {
 #
 #   echo controller_pod_id
 controller_pod_id() {
-    kubectl get pods -n ack-system --field-selector="status.phase=Running" \
-        --sort-by=.metadata.creationTimestamp \
-        --output jsonpath='{.items[-1].metadata.name}'
+    local x=0
+    while true; do
+        pod_id=$( kubectl get pods -n ack-system --field-selector="status.phase=Running" \
+            --sort-by=.metadata.creationTimestamp \
+            --output jsonpath='{.items[-1].metadata.name}' 2>/dev/null )
+        if [[ $? -eq 0 ]]; then
+            break
+        else
+            if [[ $x -gt 2 ]]; then
+                echo "FAIL: Could not get ACK service controller Pod ID"
+                exit 1
+            else
+                x=$(( x + 1 ))
+                sleep 2
+            fi
+        fi
+    done
+    echo "$pod_id"
 }
 
 # assert_pod_not_restarted ensures the supplied Pod has not been restarted
