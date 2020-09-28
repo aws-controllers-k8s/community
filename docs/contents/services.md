@@ -9,7 +9,7 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 | AWS Service | Release Status | Controller |
 |------------ | -------------- | ---------- |
 |Amazon [API Gateway V2](https://aws.amazon.com/api-gateway/)|`DEVELOPER PREVIEW`|[`apigatewayv2`](https://github.com/aws/aws-controllers-k8s/tree/main/services/apigatewayv2)|
-|Amazon [DynamoDB](https://aws.amazon.com/dynamodb/)|`BUILD`|`dynamodb`|
+|Amazon [DynamoDB](https://aws.amazon.com/dynamodb/)|`DEVELOPER PREVIEW`|[`dynamodb`](https://github.com/aws/aws-controllers-k8s/tree/main/services/dynamodb)|
 |Amazon [ECR](https://aws.amazon.com/ecr/)|`DEVELOPER PREVIEW`|[`ecr`](https://github.com/aws/aws-controllers-k8s/tree/main/services/ecr)|
 |Amazon [S3](https://aws.amazon.com/s3/)|`DEVELOPER PREVIEW`|[`s3`](https://github.com/aws/aws-controllers-k8s/tree/main/services/s3)|
 |Amazon [SQS](https://aws.amazon.com/sqs/)|`BUILD`|`sqs`|

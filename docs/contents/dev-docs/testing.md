@@ -7,6 +7,7 @@ through the steps to test ACK for the currently supported AWS services:
 - Amazon S3
 - Amazon SNS
 - Amazon API Gateway V2
+- Amazon DynamoDB
 
 If you run into any problems when testing one of the above services,
 [raise an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
@@ -275,6 +276,12 @@ As you can see, in above case the end-to-end test (creating cluster, deploying
 ACK, applying custom resources, and tear-down) took less than 30 seconds. This
 is for the warmed caches case.
 
+#### Repeat for other services
+
+We have end-to-end tests for all services listed in the `DEVELOPER-PREVIEW`,
+`BETA` and `GA` release statuses in our [service listing](../services)
+document. Simply replace your `SERVICE` environment variable with the name of a
+supported service and re-run the IAM and test steps outlined above.
 
 ### Background
 
