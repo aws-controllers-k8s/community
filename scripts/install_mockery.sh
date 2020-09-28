@@ -12,7 +12,7 @@ BIN_DIR="$ROOT_DIR/bin"
 
 OS=$(uname -s)
 ARCH=$(uname -m)
-VERSION=1.1.2
+VERSION=2.2.2
 MOCKERY_RELEASE_URL="https://github.com/vektra/mockery/releases/download/v${VERSION}/mockery_${VERSION}_${OS}_${ARCH}.tar.gz"
 source "$SCRIPTS_DIR/lib/common.sh"
 
