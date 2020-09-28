@@ -47,9 +47,10 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   appName,
-	Short: appShortDesc,
-	Long:  appLongDesc,
+	Use:          appName,
+	Short:        appShortDesc,
+	Long:         appLongDesc,
+	SilenceUsage: true,
 }
 
 func init() {
@@ -123,7 +124,6 @@ func Execute(v string, bh string, bd string) {
 	buildDate = bd
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
