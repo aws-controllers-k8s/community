@@ -104,7 +104,7 @@ func (c *AccountCache) GetAccountRoleARN(accountID string) (string, bool) {
 	c.RLock()
 	defer c.RUnlock()
 	roleARN, ok := c.roleARNs[accountID]
-	return roleARN, ok
+	return roleARN, ok && roleARN != ""
 }
 
 // updateAccountRoleData updates the CARM map. This function is thread safe.
