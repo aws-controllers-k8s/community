@@ -313,7 +313,6 @@ func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
 
-
 // SetOutputCustomMethodName returns custom set output operation as *string for
 // given operation on custom resource, if specified in generator config
 func (r *CRD) SetOutputCustomMethodName(
@@ -336,7 +335,7 @@ func (r *CRD) SetOutputCustomMethodName(
 // GetCustomImplementation returns custom implementation method name for the
 // supplied operation as specified in generator config
 func (r *CRD) GetCustomImplementation(
-// The type of operation
+	// The type of operation
 	op *awssdkmodel.Operation,
 ) string {
 	if op == nil || r.genCfg == nil {
@@ -1408,8 +1407,10 @@ func (r *CRD) goCodeSetInputForScalar(
 	return out
 }
 
-// GoCodeSetOutput returns the Go code that sets a CRD's Status field value to
+// GoCodeSetOutput returns the Go code that sets a CRD's field value to
 // the value of an output shape's member fields.
+// Status fields are always updated. Update of Spec fields depends on
+// 'performSpecUpdate' parameter
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -1467,6 +1468,8 @@ func (r *CRD) GoCodeSetOutput(
 	targetVarName string,
 	// Number of levels of indentation to use
 	indentLevel int,
+	// boolean to indicate whether Spec fields should be updated from opTypeOutput
+	performSpecUpdate bool,
 ) string {
 	var op *awssdkmodel.Operation
 	switch opType {
@@ -1511,6 +1514,7 @@ func (r *CRD) GoCodeSetOutput(
 	// creating temporary variables, populating those temporary variables'
 	// fields with further-nested fields as needed
 	for memberIndex, memberName := range outputShape.MemberNames() {
+		//TODO: (vijat@) should these field be renamed before looking them up in spec?
 		sourceAdaptedVarName := sourceVarName + "." + memberName
 
 		// Handle the special case of ARN for primary resource identifier
@@ -1519,12 +1523,12 @@ func (r *CRD) GoCodeSetOutput(
 			//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 			// }
 			out += fmt.Sprintf(
-				"%sif %s.ACKResourceMetadata == nil {\n",
+				"%sif %s.Status.ACKResourceMetadata == nil {\n",
 				indent,
 				targetVarName,
 			)
 			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+				"%s\t%s.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
 				indent,
 				targetVarName,
 			)
@@ -1544,7 +1548,7 @@ func (r *CRD) GoCodeSetOutput(
 				sourceAdaptedVarName,
 			)
 			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata.ARN = &arn\n",
+				"%s\t%s.Status.ACKResourceMetadata.ARN = &arn\n",
 				indent,
 				targetVarName,
 			)
@@ -1552,8 +1556,8 @@ func (r *CRD) GoCodeSetOutput(
 			continue
 		}
 
-		memberShapeRef := outputShape.MemberRefs[memberName]
-		if memberShapeRef.Shape == nil {
+		sourceMemberShapeRef := outputShape.MemberRefs[memberName]
+		if sourceMemberShapeRef.Shape == nil {
 			// Technically this should not happen, so let's bail here if it
 			// does...
 			msg := fmt.Sprintf(
@@ -1563,21 +1567,32 @@ func (r *CRD) GoCodeSetOutput(
 			panic(msg)
 		}
 
-		memberShape := memberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
+		sourceMemberShape := sourceMemberShapeRef.Shape
+		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
 			continue
 		}
 
-		statusField, found := r.StatusFields[memberName]
-		if !found {
-			// Note that not all fields in the output shape will be in the
-			// Status fields collection of the CRD. If a same-named field is in
-			// the Spec, then that's where it stays. This function is only here
-			// to set the Status field values after getting a response via the
-			// aws-sdk-go for an API call...
-			continue
+		// Determine whether the input shape's field is in the Spec or the
+		// Status struct and set the source variable appropriately.
+		var crdField *CRDField
+		var found bool
+		var targetMemberShapeRef *awssdkmodel.ShapeRef
+		targetAdaptedVarName := targetVarName
+		crdField, found = r.SpecFields[memberName]
+		if found {
+			targetAdaptedVarName += ".Spec"
+			if !performSpecUpdate {
+				continue
+			}
+		} else {
+			crdField, found = r.StatusFields[memberName]
+			if !found {
+				// TODO(jaypipes): check generator config for exceptions?
+				continue
+			}
+			targetAdaptedVarName += ".Status"
 		}
-
+		targetMemberShapeRef = crdField.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
 		// storage of complex member field values
 		//
@@ -1610,36 +1625,38 @@ func (r *CRD) GoCodeSetOutput(
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		switch memberShape.Type {
+
+		switch sourceMemberShape.Type {
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorK8sType(
 					memberVarName,
-					memberShape,
+					targetMemberShapeRef.Shape,
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForContainer(
-					statusField.Names.Camel,
+					crdField.Names.Camel,
 					memberVarName,
+					targetMemberShapeRef,
 					sourceAdaptedVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForScalar(
-					statusField.Names.Camel,
-					targetVarName,
+					crdField.Names.Camel,
+					targetAdaptedVarName,
 					memberVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+1,
 				)
 			}
 		default:
 			out += r.goCodeSetOutputForScalar(
-				statusField.Names.Camel,
-				targetVarName,
+				crdField.Names.Camel,
+				targetAdaptedVarName,
 				sourceAdaptedVarName,
-				memberShapeRef,
+				sourceMemberShapeRef,
 				indentLevel+1,
 			)
 		}
@@ -1720,7 +1737,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	indent := strings.Repeat("\t", indentLevel)
 
 	listShapeName := ""
-	var elemShape *awssdkmodel.Shape
+	var sourceElemShape *awssdkmodel.Shape
 
 	// Find the element in the output shape that contains the list of
 	// resources. This heuristic is simplistic (just look for the field with a
@@ -1729,7 +1746,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	for memberName, memberShapeRef := range outputShape.MemberRefs {
 		if memberShapeRef.Shape.Type == "list" {
 			listShapeName = memberName
-			elemShape = memberShapeRef.Shape.MemberRef.Shape
+			sourceElemShape = memberShapeRef.Shape.MemberRef.Shape
 			break
 		}
 	}
@@ -1760,10 +1777,10 @@ func (r *CRD) goCodeSetOutputReadMany(
 		"%sfor _, elem := range %s.%s {\n",
 		indent, sourceVarName, listShapeName,
 	)
-	for memberIndex, memberName := range elemShape.MemberNames() {
-		memberShapeRef := elemShape.MemberRefs[memberName]
-		memberShape := memberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
+	for memberIndex, memberName := range sourceElemShape.MemberNames() {
+		sourceMemberShapeRef := sourceElemShape.MemberRefs[memberName]
+		sourceMemberShape := sourceMemberShapeRef.Shape
+		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
 			continue
 		}
 		sourceAdaptedVarName := "elem." + memberName
@@ -1806,6 +1823,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 		// Status struct and set the source variable appropriately.
 		var crdField *CRDField
 		var found bool
+		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
 		crdField, found = r.SpecFields[memberName]
 		if found {
@@ -1818,30 +1836,32 @@ func (r *CRD) goCodeSetOutputReadMany(
 			}
 			targetAdaptedVarName += ".Status"
 		}
+		targetMemberShapeRef = crdField.ShapeRef
 		out += fmt.Sprintf(
 			"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		switch memberShape.Type {
+		switch sourceMemberShape.Type {
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorK8sType(
 					memberVarName,
-					memberShape,
+					targetMemberShapeRef.Shape,
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForContainer(
 					crdField.Names.Camel,
 					memberVarName,
+					targetMemberShapeRef,
 					sourceAdaptedVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForScalar(
 					crdField.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+2,
 				)
 			}
@@ -1880,7 +1900,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 				crdField.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
-				memberShapeRef,
+				sourceMemberShapeRef,
 				indentLevel+2,
 			)
 		}
@@ -2062,22 +2082,29 @@ func (r *CRD) goCodeSetOutputForContainer(
 	targetFieldName string,
 	// The variable name that we want to set a value to
 	targetVarName string,
+	// Shape Ref of the target struct field
+	targetShapeRef *awssdkmodel.ShapeRef,
 	// The struct or struct field that we access our source value from
 	sourceVarName string,
-	// ShapeRef of the struct field
-	shapeRef *awssdkmodel.ShapeRef,
+	// ShapeRef of the source struct field
+	sourceShapeRef *awssdkmodel.ShapeRef,
 	indentLevel int,
 ) string {
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
-	shape := shapeRef.Shape
+	sourceShape := sourceShapeRef.Shape
+	targetShape := targetShapeRef.Shape
 
-	switch shape.Type {
+	switch sourceShape.Type {
 	case "structure":
 		{
-			for memberIndex, memberName := range shape.MemberNames() {
+			for memberIndex, memberName := range sourceShape.MemberNames() {
+				targetMemberShapeRef := targetShape.MemberRefs[memberName]
+				if targetMemberShapeRef == nil {
+					continue
+				}
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
-				memberShapeRef := shape.MemberRefs[memberName]
+				memberShapeRef := sourceShape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
 				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 					continue
@@ -2092,12 +2119,13 @@ func (r *CRD) goCodeSetOutputForContainer(
 					{
 						out += r.goCodeVarEmptyConstructorK8sType(
 							memberVarName,
-							memberShape,
+							targetMemberShapeRef.Shape,
 							indentLevel+1,
 						)
 						out += r.goCodeSetOutputForContainer(
 							cleanNames.Camel,
 							memberVarName,
+							targetMemberShapeRef,
 							sourceAdaptedVarName,
 							memberShapeRef,
 							indentLevel+1,
@@ -2133,7 +2161,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//		f0elem0 := &string{}
 			out += r.goCodeVarEmptyConstructorK8sType(
 				elemVarName,
-				shape.MemberRef.Shape,
+				targetShape.MemberRef.Shape,
 				indentLevel+1,
 			)
 			//  f0elem0 = *f0iter0
@@ -2142,18 +2170,19 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//
 			//  f0elem0.SetMyField(*f0iter0)
 			containerFieldName := ""
-			if shape.MemberRef.Shape.Type == "structure" {
+			if sourceShape.MemberRef.Shape.Type == "structure" {
 				containerFieldName = targetFieldName
 			}
 			out += r.goCodeSetOutputForContainer(
 				containerFieldName,
 				elemVarName,
+				&targetShape.MemberRef,
 				iterVarName,
-				&shape.MemberRef,
+				&sourceShape.MemberRef,
 				indentLevel+1,
 			)
 			addressOfVar := ""
-			switch shape.MemberRef.Shape.Type {
+			switch sourceShape.MemberRef.Shape.Type {
 			case "structure", "list", "map":
 				break
 			default:
@@ -2173,23 +2202,24 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//		f0elem := string{}
 			out += r.goCodeVarEmptyConstructorK8sType(
 				valVarName,
-				shape.ValueRef.Shape,
+				targetShape.ValueRef.Shape,
 				indentLevel+1,
 			)
 			//  f0val = *f0valiter
 			containerFieldName := ""
-			if shape.ValueRef.Shape.Type == "structure" {
+			if sourceShape.ValueRef.Shape.Type == "structure" {
 				containerFieldName = targetFieldName
 			}
 			out += r.goCodeSetOutputForContainer(
 				containerFieldName,
 				valVarName,
+				&targetShape.ValueRef,
 				valIterVarName,
-				&shape.ValueRef,
+				&sourceShape.ValueRef,
 				indentLevel+1,
 			)
 			addressOfVar := ""
-			switch shape.ValueRef.Shape.Type {
+			switch sourceShape.ValueRef.Shape.Type {
 			case "structure", "list", "map":
 				break
 			default:
@@ -2204,7 +2234,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 			targetFieldName,
 			targetVarName,
 			sourceVarName,
-			shapeRef,
+			sourceShapeRef,
 			indentLevel,
 		)
 	}

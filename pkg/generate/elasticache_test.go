@@ -411,7 +411,7 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		ko.Status.TransitEncryptionEnabled = resp.CacheCluster.TransitEncryptionEnabled
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// Elasticache doesn't have a ReadOne operation; only a List/ReadMany
 	// operation. Let's verify that the construction of the
@@ -629,7 +629,7 @@ func TestElasticache_CacheCluster(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }
 
 func TestElasticache_Ignored_Operations(t *testing.T) {

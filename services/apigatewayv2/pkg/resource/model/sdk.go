@@ -67,8 +67,20 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if resp.ContentType != nil {
+		ko.Spec.ContentType = resp.ContentType
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
+	}
 	if resp.ModelId != nil {
 		ko.Status.ModelID = resp.ModelId
+	}
+	if resp.Name != nil {
+		ko.Spec.Name = resp.Name
+	}
+	if resp.Schema != nil {
+		ko.Spec.Schema = resp.Schema
 	}
 
 	return &resource{ko}, nil

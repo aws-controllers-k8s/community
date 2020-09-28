@@ -187,7 +187,7 @@ func TestECRRepository(t *testing.T) {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// Check that the DescribeRepositories output is filtered by the
 	// RepositoryName field of the CR's Spec, since there is no ReadOne
@@ -241,5 +241,5 @@ func TestECRRepository(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

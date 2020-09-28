@@ -67,17 +67,102 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if resp.AccessLogSettings != nil {
+		f0 := &svcapitypes.AccessLogSettings{}
+		if resp.AccessLogSettings.DestinationArn != nil {
+			f0.DestinationARN = resp.AccessLogSettings.DestinationArn
+		}
+		if resp.AccessLogSettings.Format != nil {
+			f0.Format = resp.AccessLogSettings.Format
+		}
+		ko.Spec.AccessLogSettings = f0
+	}
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
 	}
+	if resp.AutoDeploy != nil {
+		ko.Spec.AutoDeploy = resp.AutoDeploy
+	}
+	if resp.ClientCertificateId != nil {
+		ko.Spec.ClientCertificateID = resp.ClientCertificateId
+	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	}
+	if resp.DefaultRouteSettings != nil {
+		f5 := &svcapitypes.RouteSettings{}
+		if resp.DefaultRouteSettings.DataTraceEnabled != nil {
+			f5.DataTraceEnabled = resp.DefaultRouteSettings.DataTraceEnabled
+		}
+		if resp.DefaultRouteSettings.DetailedMetricsEnabled != nil {
+			f5.DetailedMetricsEnabled = resp.DefaultRouteSettings.DetailedMetricsEnabled
+		}
+		if resp.DefaultRouteSettings.LoggingLevel != nil {
+			f5.LoggingLevel = resp.DefaultRouteSettings.LoggingLevel
+		}
+		if resp.DefaultRouteSettings.ThrottlingBurstLimit != nil {
+			f5.ThrottlingBurstLimit = resp.DefaultRouteSettings.ThrottlingBurstLimit
+		}
+		if resp.DefaultRouteSettings.ThrottlingRateLimit != nil {
+			f5.ThrottlingRateLimit = resp.DefaultRouteSettings.ThrottlingRateLimit
+		}
+		ko.Spec.DefaultRouteSettings = f5
+	}
+	if resp.DeploymentId != nil {
+		ko.Spec.DeploymentID = resp.DeploymentId
+	}
+	if resp.Description != nil {
+		ko.Spec.Description = resp.Description
 	}
 	if resp.LastDeploymentStatusMessage != nil {
 		ko.Status.LastDeploymentStatusMessage = resp.LastDeploymentStatusMessage
 	}
 	if resp.LastUpdatedDate != nil {
 		ko.Status.LastUpdatedDate = &metav1.Time{*resp.LastUpdatedDate}
+	}
+	if resp.RouteSettings != nil {
+		f10 := map[string]*svcapitypes.RouteSettings{}
+		for f10key, f10valiter := range resp.RouteSettings {
+			f10val := &svcapitypes.RouteSettings{}
+			if f10valiter.DataTraceEnabled != nil {
+				f10val.DataTraceEnabled = f10valiter.DataTraceEnabled
+			}
+			if f10valiter.DetailedMetricsEnabled != nil {
+				f10val.DetailedMetricsEnabled = f10valiter.DetailedMetricsEnabled
+			}
+			if f10valiter.LoggingLevel != nil {
+				f10val.LoggingLevel = f10valiter.LoggingLevel
+			}
+			if f10valiter.ThrottlingBurstLimit != nil {
+				f10val.ThrottlingBurstLimit = f10valiter.ThrottlingBurstLimit
+			}
+			if f10valiter.ThrottlingRateLimit != nil {
+				f10val.ThrottlingRateLimit = f10valiter.ThrottlingRateLimit
+			}
+			f10[f10key] = f10val
+		}
+		ko.Spec.RouteSettings = f10
+	}
+	if resp.StageName != nil {
+		ko.Spec.StageName = resp.StageName
+	}
+	if resp.StageVariables != nil {
+		f12 := map[string]*string{}
+		for f12key, f12valiter := range resp.StageVariables {
+			var f12val string
+			f12val = *f12valiter
+			f12[f12key] = &f12val
+		}
+		ko.Spec.StageVariables = f12
+	}
+	if resp.Tags != nil {
+		f13 := map[string]*string{}
+		for f13key, f13valiter := range resp.Tags {
+			var f13val string
+			f13val = *f13valiter
+			f13[f13key] = &f13val
+		}
+		ko.Spec.Tags = f13
 	}
 
 	return &resource{ko}, nil

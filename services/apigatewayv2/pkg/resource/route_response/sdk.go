@@ -67,8 +67,34 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	if resp.ModelSelectionExpression != nil {
+		ko.Spec.ModelSelectionExpression = resp.ModelSelectionExpression
+	}
+	if resp.ResponseModels != nil {
+		f1 := map[string]*string{}
+		for f1key, f1valiter := range resp.ResponseModels {
+			var f1val string
+			f1val = *f1valiter
+			f1[f1key] = &f1val
+		}
+		ko.Spec.ResponseModels = f1
+	}
+	if resp.ResponseParameters != nil {
+		f2 := map[string]*svcapitypes.ParameterConstraints{}
+		for f2key, f2valiter := range resp.ResponseParameters {
+			f2val := &svcapitypes.ParameterConstraints{}
+			if f2valiter.Required != nil {
+				f2val.Required = f2valiter.Required
+			}
+			f2[f2key] = f2val
+		}
+		ko.Spec.ResponseParameters = f2
+	}
 	if resp.RouteResponseId != nil {
 		ko.Status.RouteResponseID = resp.RouteResponseId
+	}
+	if resp.RouteResponseKey != nil {
+		ko.Spec.RouteResponseKey = resp.RouteResponseKey
 	}
 
 	return &resource{ko}, nil
