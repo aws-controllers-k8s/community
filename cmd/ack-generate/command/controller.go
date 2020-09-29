@@ -60,17 +60,6 @@ func generateController(cmd *cobra.Command, args []string) error {
 		optControllerOutputPath = filepath.Join(optServicesDir, svcAlias)
 	}
 
-	if !optDryRun {
-		cmdControllerPath = filepath.Join(optControllerOutputPath, "cmd", "controller")
-		if _, err := ensureDir(cmdControllerPath); err != nil {
-			return err
-		}
-		pkgResourcePath = filepath.Join(optControllerOutputPath, "pkg", "resource")
-		if _, err := ensureDir(pkgResourcePath); err != nil {
-			return err
-		}
-	}
-
 	if err := ensureSDKRepo(optCacheDir); err != nil {
 		return err
 	}
@@ -83,7 +72,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 		}
 		sdkAPI, err = sdkHelper.API(newSvcAlias) // retry with serviceID
 		if err != nil {
-			return err
+			return fmt.Errorf("service %s not found", svcAlias)
 		}
 	}
 	latestAPIVersion, err = getLatestAPIVersion()
@@ -102,6 +91,16 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if !optDryRun {
+		cmdControllerPath = filepath.Join(optControllerOutputPath, "cmd", "controller")
+		if _, err := ensureDir(cmdControllerPath); err != nil {
+			return err
+		}
+		pkgResourcePath = filepath.Join(optControllerOutputPath, "pkg", "resource")
+		if _, err := ensureDir(pkgResourcePath); err != nil {
+			return err
+		}
+	}
 	if err = writeControllerMainGo(g, crds); err != nil {
 		return err
 	}
