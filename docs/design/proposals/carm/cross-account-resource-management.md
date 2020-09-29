@@ -73,9 +73,8 @@ metadata:
   name: ack-role-account-map
   namespace: default
 data:
-  accounts:
-    "123456789012": arn:aws:iam::123456789012:root
-    "454545454545": arn:aws:iam::454545454545:role/S3Access
+  "123456789012": arn:aws:iam::123456789012:root
+  "454545454545": arn:aws:iam::454545454545:role/S3Access
 ```
 
 In ACK runtime, the reconciler will need to lookup the `ack-role-account-map` data content to query the value of a particular key. To realize that, the controllers will keep a cached version of the ConfigMap and frequently update it when changes are made by cluster admins.

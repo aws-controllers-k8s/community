@@ -70,6 +70,7 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	}
 	r.kc = mgr.GetClient()
 	r.cache = ackrtcache.New(clientset, r.log)
+	r.cache.Run()
 	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
@@ -106,14 +107,20 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
+	roleARN := r.getRoleARN(acctID)
+	sess, err := NewSession(region, roleARN)
+	if err != nil {
+		return err
+	}
 
 	r.log.WithValues(
-		"account_id", acctID,
+		"account", acctID,
+		"role", roleARN,
 		"region", region,
 		"kind", r.rd.GroupKind().String(),
 	).V(1).Info("starting reconcilation")
 
-	rm, err := r.rmf.ManagerFor(r, acctID, region)
+	rm, err := r.rmf.ManagerFor(r, sess, acctID, region)
 	if err != nil {
 		return err
 	}
@@ -336,10 +343,32 @@ func (r *reconciler) getOwnerAccountID(
 	if acctID != nil {
 		return *acctID
 	}
-	// OK, it's a new resource. Look for an override account ID annotation,
-	// which indicates a cross-account resource request
-	// TODO(jaypipes)
+
+	// look for owner account id in the CR annotations
+	annotations := res.MetaObject().GetAnnotations()
+	accID, ok := annotations[ackv1alpha1.AnnotationOwnerAccountID]
+	if ok {
+		return ackv1alpha1.AWSAccountID(accID)
+	}
+
+	// look for owner account id in the namespace annotations
+	namespace := res.MetaObject().GetNamespace()
+	accID, ok = r.cache.Namespaces.GetOwnerAccountID(namespace)
+	if ok {
+		return ackv1alpha1.AWSAccountID(accID)
+	}
+
+	// use controller configuration
 	return ackv1alpha1.AWSAccountID(r.cfg.AccountID)
+}
+
+// getRoleARN return the Role ARN that should be assumed in order to manage
+// the resources.
+func (r *reconciler) getRoleARN(
+	acctID ackv1alpha1.AWSAccountID,
+) ackv1alpha1.AWSResourceName {
+	roleARN, _ := r.cache.Accounts.GetAccountRoleARN(string(acctID))
+	return ackv1alpha1.AWSResourceName(roleARN)
 }
 
 // getRegion returns the AWS region that the given resource is in or should be

@@ -20,6 +20,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
+	"github.com/aws/aws-sdk-go/aws/session"
 
 	svcresource "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource"
 )
@@ -42,6 +43,7 @@ func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescri
 // supplied AWS account
 func (f *resourceManagerFactory) ManagerFor(
 	rr acktypes.AWSResourceReconciler,
+	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (acktypes.AWSResourceManager, error) {
@@ -56,7 +58,7 @@ func (f *resourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newResourceManager(rr, id, region)
+	rm, err := newResourceManager(rr, sess, id, region)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,6 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
-	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 
@@ -156,13 +155,10 @@ func (rm *resourceManager) ARNFromName(name string) string {
 // acktypes.AWSResourceManager
 func newResourceManager(
 	rr acktypes.AWSResourceReconciler,
+	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
-	sess, err := ackrt.NewSession(region)
-	if err != nil {
-		return nil, err
-	}
 	return &resourceManager{
 		rr:           rr,
 		awsAccountID: id,

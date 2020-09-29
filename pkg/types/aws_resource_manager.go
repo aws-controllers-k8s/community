@@ -15,8 +15,11 @@ package types
 
 import (
 	"context"
-	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+
+	"github.com/aws/aws-sdk-go/aws/session"
+
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 )
 
 // AWSResourceManager is responsible for providing a consistent way to perform
@@ -45,7 +48,7 @@ type AWSResourceManager interface {
 	// higher-level reonciler determines whether or not the desired differs
 	// from the latest observed and decides whether to call the resource
 	// manager's Update method
-	Update(context.Context, /*desired*/ AWSResource, /*latest*/ AWSResource, *ackcompare.Reporter) (AWSResource, error)
+	Update(context.Context, /* desired */ AWSResource, /* latest */ AWSResource, *ackcompare.Reporter) (AWSResource, error)
 
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
@@ -69,6 +72,7 @@ type AWSResourceManagerFactory interface {
 	// behalf of a particular AWS account and in a specific AWS region
 	ManagerFor(
 		AWSResourceReconciler,
+		*session.Session,
 		ackv1alpha1.AWSAccountID,
 		ackv1alpha1.AWSRegion,
 	) (AWSResourceManager, error)
