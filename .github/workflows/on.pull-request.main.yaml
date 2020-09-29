@@ -68,6 +68,8 @@ jobs:
         id: go
       - name: checkout code
         uses: actions/checkout@v2
+      - name: install mockery
+        run: ./scripts/install_mockery.sh
       - name: execute e2e tests
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
@@ -77,5 +79,6 @@ jobs:
           export AWS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
           make build-controller SERVICE=$SERVICE
           make kind-test SERVICE=$SERVICE
+          make delete-all-kind-clusters
         env:
           SERVICE: ${{ matrix.service }}
