@@ -107,12 +107,11 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
 
-	r.log = r.log.WithValues(
+	r.log.WithValues(
 		"account_id", acctID,
 		"region", region,
 		"kind", r.rd.GroupKind().String(),
-	)
-	r.log.V(1).Info("starting reconcilation")
+	).V(1).Info("starting reconcilation")
 
 	rm, err := r.rmf.ManagerFor(r, acctID, region)
 	if err != nil {
