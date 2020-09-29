@@ -5,6 +5,8 @@ ROOT_DIR="$THIS_DIR/../../.."
 SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/aws.sh"
+source "$SCRIPTS_DIR/lib/aws/ecr.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
 
@@ -26,8 +28,7 @@ for x in a b c; do
     repo_name="ack-test-smoke-$service_name-$x"
     resource_name="repositories/$repo_name"
 
-    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-    if [[ $? -ne 255 && $? -ne 254 ]]; then
+    if ecr_repo_exists "$repo_name"; then
         echo "FAIL: expected $repo_name to not exist in ECR. Did previous test run cleanup?"
         exit 1
     fi
@@ -64,8 +65,7 @@ for x in a b c; do
     resource_name="repositories/$repo_name"
 
     debug_msg "checking repository $repo_name created in ECR"
-    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-    if [[ $? -eq 255 || $? -eq 254 ]]; then
+    if ! ecr_repo_exists "$repo_name"; then
         echo "FAIL: expected $repo_name to have been created in ECR"
         kubectl logs -n ack-system "$ack_ctrl_pod_id"
         exit 1
@@ -82,8 +82,7 @@ for x in a b c; do
 
     repo_name="ack-test-smoke-$service_name-$x"
 
-    aws ecr describe-repositories --repository-names "$repo_name" --output json >/dev/null 2>&1
-    if [[ $? -ne 255 && $? -ne 254 ]]; then
+    if ecr_repo_exists "$repo_name"; then
         echo "FAIL: expected $repo_name to be deleted in ECR"
         kubectl logs -n ack-system "$ack_ctrl_pod_id"
         exit 1

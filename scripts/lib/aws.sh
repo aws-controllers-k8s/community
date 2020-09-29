@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+DEFAULT_AWS_CLI_VERSION="2.0.52"
+
 check_aws_credentials() {
     aws sts get-caller-identity --query "Account" ||
         ( echo "No AWS credentials found. Please run \`aws configure\` to set up the CLI for your credentials." && exit 1)
@@ -72,4 +74,28 @@ generate_aws_temp_creds() {
 aws_account_id() {
     JSON=$(aws sts get-caller-identity --output json || exit 1)
     echo "${JSON}" | jq --raw-output ".Account"
+}
+
+# daws() executes the AWS Python CLI tool from a Docker container.
+#
+# Instead of relying on developers having a particular version of the AWS
+# Python CLI tool, this method allows a specific version of the CLI tool to be
+# executed within a Docker container.
+#
+# You call the daws function just like you were calling the `aws` CLI tool.
+#
+# Usage:
+#
+#   daws SERVICE COMMAND [OPTIONS]
+#
+# Example:
+#
+#   daws ecr describe-repositories --repository-name my-repo
+#
+# To use a specific version of the AWS CLI, set the ACK_AWS_CLI_IMAGE_VERSION
+# environment variable, otherwise the value of DEFAULT_AWS_CLI_VERSION is used.
+daws() {
+    aws_cli_img_version=${ACK_AWS_CLI_IMAGE_VERSION:-$DEFAULT_AWS_CLI_VERSION}
+    aws_cli_img="amazon/aws-cli:$aws_cli_img_version"
+    docker run --rm -it -v ~/.aws:/root/.aws "$aws_cli_img" "$@"
 }
