@@ -17,31 +17,17 @@ on:
     paths:
       - 'docs/**'
 
-# workflow is 1+ jobs
 jobs:
-  # job is 1+ steps
-  # this job is *named* build
   build:
-    # The type of runner that the job will run on
-    # aka the docker host
+    name: Deploy docs
     runs-on: ubuntu-latest
-    
-    # specify docker container
-    # using mkdocs container with material theme
-    container: 
-      image: 'docker://squidfunk/mkdocs-material'
-
-    # first step in first job
     steps:
-      # first action in first step in first job
-      # calls a "composite action" - in fact another job in a public repo
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: checkout main branch
+      - name: Checkout master
         uses: actions/checkout@v2
 
-      # second action in first step in first job
-      # Runs a single command using the runners shell
-      - name: build and deploy with mkdocs
-        run: | 
-          cd docs
-          mkdocs gh-deploy --force
+      - name: Deploy docs
+        uses: mhausenblas/mkdocs-deploy-gh-pages@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_DOMAIN: optionaldomain.com
+          CONFIG_FILE: docs/mkdocs.yml
