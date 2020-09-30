@@ -274,6 +274,15 @@ func (r *CRD) UnpacksAttributesMap() bool {
 	return r.genCfg.UnpacksAttributesMap(r.Names.Original)
 }
 
+// SetAttributesSingleAttribute returns true if the supplied resource name has
+// a SetAttributes operation that only actually changes a single attribute at a
+// time. See: SNS SetTopicAttributes API call, which is entirely different from
+// the SNS SetPlatformApplicationAttributes API call, which sets multiple
+// attributes at once. :shrug:
+func (r *CRD) SetAttributesSingleAttribute() bool {
+	return r.genCfg.SetAttributesSingleAttribute(r.Names.Original)
+}
+
 // UnpackAttributes grabs instructions about fields that are represented in the
 // AWS API as a `map[string]*string` but are actually real, schema'd fields and
 // adds CRDField definitions for those fields.
@@ -302,6 +311,43 @@ func (r *CRD) UnpackAttributes() {
 func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 	return strings.EqualFold(fieldName, "arn") ||
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
+}
+
+// SetOutputCustomMethodName returns custom set output operation as *string for
+// given operation on custom resource, if specified in generator config
+func (r *CRD) SetOutputCustomMethodName(
+	// The operation to look for the Output shape
+	op *awssdkmodel.Operation,
+) *string {
+	if op == nil {
+		return nil
+	}
+	if r.genCfg == nil {
+		return nil
+	}
+	resGenConfig, found := r.genCfg.Operations[op.Name]
+	if !found {
+		return nil
+	}
+	return &resGenConfig.SetOutputCustomMethodName
+}
+
+// GetCustomImplementation returns custom implementation method name for the
+// supplied operation as specified in generator config
+func (r *CRD) GetCustomImplementation(
+	// The type of operation
+	op *awssdkmodel.Operation,
+) string {
+	if op == nil || r.genCfg == nil {
+		return ""
+	}
+
+	operationConfig, found := r.genCfg.Operations[op.Name]
+	if !found {
+		return ""
+	}
+
+	return operationConfig.CustomImplementation
 }
 
 // ExceptionCode returns the name of the resource's Exception code for the
@@ -357,6 +403,105 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 		}
 	}
 	return "UNKNOWN"
+}
+
+// GoCodeRequiredFieldsMissingFromShape returns Go code that contains a
+// condition checking that the required fields in the supplied Shape have a
+// non-nil value in the corresponding CR's Spec or Status substruct.
+//
+// Sample Output:
+//
+// return r.ko.Spec.APIID == nil || r.ko.Status.RouteID != nil
+func (r *CRD) GoCodeRequiredFieldsMissingFromShape(
+	opType OpType,
+	koVarName string,
+	indentLevel int,
+) string {
+	var op *awssdkmodel.Operation
+	switch opType {
+	case OpTypeGet:
+		op = r.Ops.ReadOne
+	case OpTypeGetAttributes:
+		op = r.Ops.GetAttributes
+	case OpTypeSetAttributes:
+		op = r.Ops.SetAttributes
+	default:
+		return ""
+	}
+
+	shape := op.InputRef.Shape
+	return r.goCodeRequiredFieldsMissingFromShape(
+		koVarName,
+		indentLevel,
+		shape,
+	)
+}
+
+func (r *CRD) goCodeRequiredFieldsMissingFromShape(
+	koVarName string,
+	indentLevel int,
+	shape *awssdkmodel.Shape,
+) string {
+	indent := strings.Repeat("\t", indentLevel)
+	if shape == nil || len(shape.Required) == 0 {
+		return fmt.Sprintf("%sreturn false", indent)
+	}
+
+	// Loop over the required member fields in the shape and identify whether
+	// the field exists in either the Status or the Spec of the resource and
+	// generate an if condition checking for all required fields having non-nil
+	// corresponding resource Spec/Status values
+	missing := []string{}
+	for _, memberName := range shape.Required {
+		if r.UnpacksAttributesMap() {
+			// We set the Attributes field specially... depending on whether
+			// the SetAttributes API call uses the batch or single attribute
+			// flavor
+			if r.SetAttributesSingleAttribute() {
+				if memberName == "AttributeName" || memberName == "AttributeValue" {
+					continue
+				}
+			} else {
+				if memberName == "Attributes" {
+					continue
+				}
+			}
+		}
+		if r.IsPrimaryARNField(memberName) {
+			primaryARNCondition := fmt.Sprintf(
+				"(%s.Status.ACKResourceMetadata == nil || %s.Status.ACKResourceMetadata.ARN == nil)",
+				koVarName, koVarName,
+			)
+			missing = append(missing, primaryARNCondition)
+			continue
+		}
+		cleanMemberNames := names.New(memberName)
+		cleanMemberName := cleanMemberNames.Camel
+
+		resVarPath := koVarName
+		_, found := r.SpecFields[memberName]
+		if found {
+			resVarPath = resVarPath + ".Spec." + cleanMemberName
+		} else {
+			_, found = r.StatusFields[memberName]
+			if !found {
+				// If it isn't in our spec/status fields, we have a problem!
+				msg := fmt.Sprintf(
+					"GENERATION FAILURE! there's a required field %s in "+
+						"Shape %s that isn't in either the CR's Spec or "+
+						"Status structs!",
+					memberName, shape.ShapeName,
+				)
+				panic(msg)
+			}
+			resVarPath = resVarPath + ".Status." + cleanMemberName
+		}
+		missing = append(missing, fmt.Sprintf("%s == nil", resVarPath))
+	}
+	// Use '||' because if any of the required fields are missing the object
+	// is not created yet
+	missingCondition := strings.Join(missing, " || ")
+	return fmt.Sprintf("%sreturn %s\n", indent, missingCondition)
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
@@ -494,10 +639,32 @@ func (r *CRD) GoCodeSetInput(
 		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
 	}
 
+	opConfig, override := r.genCfg.OverrideValues(op.Name)
+
 	for memberIndex, memberName := range inputShape.MemberNames() {
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
 		}
+
+		if override {
+			value, ok := opConfig[memberName]
+			memberShapeRef, _ := inputShape.MemberRefs[memberName]
+			memberShape := memberShapeRef.Shape
+
+			if ok {
+				switch memberShape.Type {
+				case "boolean", "integer":
+				case "string":
+					value = "\"" + value + "\""
+				default:
+					panic("Member type not handled")
+				}
+
+				out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, memberName, value)
+				continue
+			}
+		}
+
 		if r.IsPrimaryARNField(memberName) {
 			// if ko.Status.ACKResourceMetadata != nil && ko.Status.ACKResourceMetadata.ARN != nil {
 			//     res.SetTopicArn(string(*ko.Status.ACKResourceMetadata.ARN))
@@ -686,6 +853,11 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 	if inputShape == nil {
 		return ""
 	}
+	if !r.UnpacksAttributesMap() {
+		// This is a bug in the code generation if this occurs...
+		msg := fmt.Sprintf("called GoCodeGetAttributesSetInput for a resource '%s' that doesn't unpack attributes map", r.Names.Original)
+		panic(msg)
+	}
 
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
@@ -719,6 +891,192 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 			continue
 		}
 
+		cleanMemberNames := names.New(memberName)
+		cleanMemberName := cleanMemberNames.Camel
+
+		sourceVarPath := sourceVarName
+		field, found := r.SpecFields[memberName]
+		if found {
+			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+		} else {
+			field, found = r.StatusFields[memberName]
+			if !found {
+				// If it isn't in our spec/status fields, just ignore it
+				continue
+			}
+			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+		}
+		out += fmt.Sprintf(
+			"%sif %s != nil {\n",
+			indent, sourceVarPath,
+		)
+		out += r.goCodeSetInputForScalar(
+			memberName,
+			targetVarName,
+			inputShape.Type,
+			sourceVarPath,
+			field.ShapeRef,
+			indentLevel+1,
+		)
+		out += fmt.Sprintf(
+			"%s}\n", indent,
+		)
+	}
+	return out
+}
+
+// GoCodeSetAttributesSetInput returns the Go code that sets the Input shape for a
+// resource's SetAttributes operation.
+//
+// Unfortunately, the AWS SetAttributes API operations (even within the *same*
+// API) are inconsistent regarding whether the SetAttributes sets a batch of
+// attributes or a single attribute. We need to construct the method
+// differently depending on this behaviour. For example, the SNS
+// SetTopicAttributes API call actually only allows the caller to set a single
+// attribute, which needs to be specified in an AttributeName and
+// AttributeValue field in the Input shape. On the other hand, the SNS
+// SetPlatformApplicationAttributes API call's Input shape has an Attributes
+// field which is a map[string]string containing all the attribute key/value
+// pairs to replace. Your guess is as good as mine as to why these APIs are
+// different.
+//
+// The returned code looks something like this:
+//
+// attrMap := map[string]*string{}
+// if r.ko.Spec.DeliveryPolicy != nil {
+//     attrMap["DeliveryPolicy"] = r.ko.Spec.DeliveryPolicy
+// }
+// if r.ko.Spec.DisplayName != nil {
+//     attrMap["DisplayName"} = r.ko.Spec.DisplayName
+// }
+// if r.ko.Spec.KMSMasterKeyID != nil {
+//     attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
+// }
+// if r.ko.Spec.Policy != nil {
+//     attrMap["Policy"] = r.ko.Spec.Policy
+// }
+// res.SetAttributes(attrMap)
+func (r *CRD) GoCodeSetAttributesSetInput(
+	// String representing the name of the variable that we will grab the Input
+	// shape from. This will likely be "r.ko" since in the templates that call
+	// this method, the "source variable" is the CRD struct which is used to
+	// populate the target variable, which is the Input shape
+	sourceVarName string,
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "res" since that is the name of the "target variable" that the
+	// templates that call this method use for the Input shape.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	op := r.Ops.SetAttributes
+	if op == nil {
+		return ""
+	}
+	inputShape := op.InputRef.Shape
+	if inputShape == nil {
+		return ""
+	}
+	if !r.UnpacksAttributesMap() {
+		// This is a bug in the code generation if this occurs...
+		msg := fmt.Sprintf("called GoCodeSetAttributesSetInput for a resource '%s' that doesn't unpack attributes map", r.Names.Original)
+		panic(msg)
+	}
+
+	if r.SetAttributesSingleAttribute() {
+		// TODO(jaypipes): For now, because these APIs require *multiple* calls
+		// to the backend, one for each attribute being set, we'll go ahead and
+		// rely on the CustomOperation functionality to write code for these...
+		return ""
+	}
+
+	out := "\n"
+	indent := strings.Repeat("\t", indentLevel)
+
+	for _, memberName := range inputShape.MemberNames() {
+		if r.IsPrimaryARNField(memberName) {
+			// if ko.Status.ACKResourceMetadata != nil && ko.Status.ACKResourceMetadata.ARN != nil {
+			//     res.SetTopicArn(string(*ko.Status.ACKResourceMetadata.ARN))
+			// } else {
+			//     res.SetTopicArn(rm.ARNFromName(*ko.Spec.Name))
+			// }
+			out += fmt.Sprintf(
+				"%sif %s.Status.ACKResourceMetadata != nil && %s.Status.ACKResourceMetadata.ARN != nil {\n",
+				indent, sourceVarName, sourceVarName,
+			)
+			out += fmt.Sprintf(
+				"%s\t%s.Set%s(string(*%s.Status.ACKResourceMetadata.ARN))\n",
+				indent, targetVarName, memberName, sourceVarName,
+			)
+			out += fmt.Sprintf(
+				"%s} else {\n", indent,
+			)
+			nameField := r.NameField()
+			out += fmt.Sprintf(
+				"%s\t%s.Set%s(rm.ARNFromName(*%s.Spec.%s))\n",
+				indent, targetVarName, memberName, sourceVarName, nameField,
+			)
+			out += fmt.Sprintf(
+				"%s}\n", indent,
+			)
+			continue
+		}
+		if memberName == "Attributes" {
+			// For APIs that use a pattern of a parameter called "Attributes" that
+			// is of type `map[string]*string` to represent real, schema'd fields,
+			// we need to set the input shape's "Attributes" member field to the
+			// re-constructed, packed set of fields.
+			//
+			// Therefore, we output here something like this (example from SNS
+			// Topic's Attributes map):
+			//
+			// attrMap := map[string]*string{}
+			// if r.ko.Spec.DeliveryPolicy != nil {
+			//     attrMap["DeliveryPolicy"] = r.ko.Spec.DeliveryPolicy
+			// }
+			// if r.ko.Spec.DisplayName != nil {
+			//     attrMap["DisplayName"} = r.ko.Spec.DisplayName
+			// }
+			// if r.ko.Spec.KMSMasterKeyID != nil {
+			//     attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
+			// }
+			// if r.ko.Spec.Policy != nil {
+			//     attrMap["Policy"] = r.ko.Spec.Policy
+			// }
+			// res.SetAttributes(attrMap)
+			attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+			out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
+			sortedAttrFieldNames := []string{}
+			for fieldName := range attrMapConfig.Fields {
+				sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+			}
+			sort.Strings(sortedAttrFieldNames)
+			for _, fieldName := range sortedAttrFieldNames {
+				fieldConfig := attrMapConfig.Fields[fieldName]
+				fieldNames := names.New(fieldName)
+				if !fieldConfig.IsReadOnly {
+					sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+					out += fmt.Sprintf(
+						"%sif %s != nil {\n",
+						indent, sourceAdaptedVarName,
+					)
+					out += fmt.Sprintf(
+						"%s\tattrMap[\"%s\"] = %s\n",
+						indent, fieldName, sourceAdaptedVarName,
+					)
+					out += fmt.Sprintf(
+						"%s}\n", indent,
+					)
+				}
+			}
+			out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
+			continue
+		}
+
+		// Handle setting any other Input shape fields that are not the ARN
+		// field or the Attributes unpacked map. The field value may come from
+		// either the Spec or the Status fields.
 		cleanMemberNames := names.New(memberName)
 		cleanMemberName := cleanMemberNames.Camel
 
@@ -1049,8 +1407,10 @@ func (r *CRD) goCodeSetInputForScalar(
 	return out
 }
 
-// GoCodeSetOutput returns the Go code that sets a CRD's Status field value to
+// GoCodeSetOutput returns the Go code that sets a CRD's field value to
 // the value of an output shape's member fields.
+// Status fields are always updated. Update of Spec fields depends on
+// 'performSpecUpdate' parameter
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -1108,6 +1468,8 @@ func (r *CRD) GoCodeSetOutput(
 	targetVarName string,
 	// Number of levels of indentation to use
 	indentLevel int,
+	// boolean to indicate whether Spec fields should be updated from opTypeOutput
+	performSpecUpdate bool,
 ) string {
 	var op *awssdkmodel.Operation
 	switch opType {
@@ -1152,32 +1514,7 @@ func (r *CRD) GoCodeSetOutput(
 	// creating temporary variables, populating those temporary variables'
 	// fields with further-nested fields as needed
 	for memberIndex, memberName := range outputShape.MemberNames() {
-		memberShapeRef := outputShape.MemberRefs[memberName]
-		if memberShapeRef.Shape == nil {
-			// Technically this should not happen, so let's bail here if it
-			// does...
-			msg := fmt.Sprintf(
-				"expected .Shape to not be nil for ShapeRef of memberName %s",
-				memberName,
-			)
-			panic(msg)
-		}
-
-		memberShape := memberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
-			continue
-		}
-
-		statusField, found := r.StatusFields[memberName]
-		if !found {
-			// Note that not all fields in the output shape will be in the
-			// Status fields collection of the CRD. If a same-named field is in
-			// the Spec, then that's where it stays. This function is only here
-			// to set the Status field values after getting a response via the
-			// aws-sdk-go for an API call...
-			continue
-		}
-
+		//TODO: (vijat@) should these field be renamed before looking them up in spec?
 		sourceAdaptedVarName := sourceVarName + "." + memberName
 
 		// Handle the special case of ARN for primary resource identifier
@@ -1186,12 +1523,12 @@ func (r *CRD) GoCodeSetOutput(
 			//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 			// }
 			out += fmt.Sprintf(
-				"%sif %s.ACKResourceMetadata == nil {\n",
+				"%sif %s.Status.ACKResourceMetadata == nil {\n",
 				indent,
 				targetVarName,
 			)
 			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+				"%s\t%s.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
 				indent,
 				targetVarName,
 			)
@@ -1201,19 +1538,61 @@ func (r *CRD) GoCodeSetOutput(
 			//     ko.Status.ACKResourceMetadata.ARN = resp.BookArn
 			// }
 			out += fmt.Sprintf(
-				"%sif %s == nil {\n",
+				"%sif %s != nil {\n",
 				indent,
 				sourceAdaptedVarName,
 			)
 			out += fmt.Sprintf(
-				"%s\t%s.ACKResourceMetadata.ARN = %s\n",
+				"%s\tarn := ackv1alpha1.AWSResourceName(*%s)\n",
 				indent,
-				targetVarName,
 				sourceAdaptedVarName,
 			)
+			out += fmt.Sprintf(
+				"%s\t%s.Status.ACKResourceMetadata.ARN = &arn\n",
+				indent,
+				targetVarName,
+			)
 			out += fmt.Sprintf("%s}\n", indent)
+			continue
 		}
 
+		sourceMemberShapeRef := outputShape.MemberRefs[memberName]
+		if sourceMemberShapeRef.Shape == nil {
+			// Technically this should not happen, so let's bail here if it
+			// does...
+			msg := fmt.Sprintf(
+				"expected .Shape to not be nil for ShapeRef of memberName %s",
+				memberName,
+			)
+			panic(msg)
+		}
+
+		sourceMemberShape := sourceMemberShapeRef.Shape
+		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
+			continue
+		}
+
+		// Determine whether the input shape's field is in the Spec or the
+		// Status struct and set the source variable appropriately.
+		var crdField *CRDField
+		var found bool
+		var targetMemberShapeRef *awssdkmodel.ShapeRef
+		targetAdaptedVarName := targetVarName
+		crdField, found = r.SpecFields[memberName]
+		if found {
+			targetAdaptedVarName += ".Spec"
+			if !performSpecUpdate {
+				continue
+			}
+		} else {
+			crdField, found = r.StatusFields[memberName]
+			if !found {
+				// TODO(jaypipes): check generator config for exceptions?
+				continue
+			}
+			targetAdaptedVarName += ".Status"
+		}
+		targetMemberShapeRef = crdField.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
 		// storage of complex member field values
 		//
@@ -1246,36 +1625,38 @@ func (r *CRD) GoCodeSetOutput(
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		switch memberShape.Type {
+
+		switch sourceMemberShape.Type {
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorK8sType(
 					memberVarName,
-					memberShape,
+					targetMemberShapeRef.Shape,
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForContainer(
-					statusField.Names.Camel,
+					crdField.Names.Camel,
 					memberVarName,
+					targetMemberShapeRef,
 					sourceAdaptedVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForScalar(
-					statusField.Names.Camel,
-					targetVarName,
+					crdField.Names.Camel,
+					targetAdaptedVarName,
 					memberVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+1,
 				)
 			}
 		default:
 			out += r.goCodeSetOutputForScalar(
-				statusField.Names.Camel,
-				targetVarName,
+				crdField.Names.Camel,
+				targetAdaptedVarName,
 				sourceAdaptedVarName,
-				memberShapeRef,
+				sourceMemberShapeRef,
 				indentLevel+1,
 			)
 		}
@@ -1356,7 +1737,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	indent := strings.Repeat("\t", indentLevel)
 
 	listShapeName := ""
-	var elemShape *awssdkmodel.Shape
+	var sourceElemShape *awssdkmodel.Shape
 
 	// Find the element in the output shape that contains the list of
 	// resources. This heuristic is simplistic (just look for the field with a
@@ -1365,7 +1746,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	for memberName, memberShapeRef := range outputShape.MemberRefs {
 		if memberShapeRef.Shape.Type == "list" {
 			listShapeName = memberName
-			elemShape = memberShapeRef.Shape.MemberRef.Shape
+			sourceElemShape = memberShapeRef.Shape.MemberRef.Shape
 			break
 		}
 	}
@@ -1396,10 +1777,10 @@ func (r *CRD) goCodeSetOutputReadMany(
 		"%sfor _, elem := range %s.%s {\n",
 		indent, sourceVarName, listShapeName,
 	)
-	for memberIndex, memberName := range elemShape.MemberNames() {
-		memberShapeRef := elemShape.MemberRefs[memberName]
-		memberShape := memberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
+	for memberIndex, memberName := range sourceElemShape.MemberNames() {
+		sourceMemberShapeRef := sourceElemShape.MemberRefs[memberName]
+		sourceMemberShape := sourceMemberShapeRef.Shape
+		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
 			continue
 		}
 		sourceAdaptedVarName := "elem." + memberName
@@ -1442,6 +1823,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 		// Status struct and set the source variable appropriately.
 		var crdField *CRDField
 		var found bool
+		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
 		crdField, found = r.SpecFields[memberName]
 		if found {
@@ -1454,30 +1836,32 @@ func (r *CRD) goCodeSetOutputReadMany(
 			}
 			targetAdaptedVarName += ".Status"
 		}
+		targetMemberShapeRef = crdField.ShapeRef
 		out += fmt.Sprintf(
 			"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
-		switch memberShape.Type {
+		switch sourceMemberShape.Type {
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
 				out += r.goCodeVarEmptyConstructorK8sType(
 					memberVarName,
-					memberShape,
+					targetMemberShapeRef.Shape,
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForContainer(
 					crdField.Names.Camel,
 					memberVarName,
+					targetMemberShapeRef,
 					sourceAdaptedVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForScalar(
 					crdField.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
-					memberShapeRef,
+					sourceMemberShapeRef,
 					indentLevel+2,
 				)
 			}
@@ -1516,7 +1900,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 				crdField.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
-				memberShapeRef,
+				sourceMemberShapeRef,
 				indentLevel+2,
 			)
 		}
@@ -1551,6 +1935,36 @@ func (r *CRD) goCodeSetOutputReadMany(
 // check a corresponding value in the target Spec exists.
 func (r *CRD) listOpMatchFieldNames() []string {
 	return r.genCfg.ListOpMatchFieldNames(r.Names.Original)
+}
+
+// goCodeACKResourceMetadataGuardConstructor returns Go code representing a
+// nil-guard and constructor for an ACKResourceMetadata struct:
+//
+// if ko.Status.ACKResourceMetadata == nil {
+//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+// }
+func goCodeACKResourceMetadataGuardConstructor(
+	// String representing the name of the variable that we will be **setting**
+	// with values we get from the Output shape. This will likely be
+	// "ko.Status" since that is the name of the "target variable" that the
+	// templates that call this method use.
+	targetVarName string,
+	// Number of levels of indentation to use
+	indentLevel int,
+) string {
+	indent := strings.Repeat("\t", indentLevel)
+	out := fmt.Sprintf(
+		"%sif %s.ACKResourceMetadata == nil {\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf(
+		"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
+		indent,
+		targetVarName,
+	)
+	out += fmt.Sprintf("%s}\n", indent)
+	return out
 }
 
 // GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields
@@ -1596,21 +2010,8 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
 
-	// if ko.Status.ACKResourceMetadata == nil {
-	//     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	// }
-	out += fmt.Sprintf(
-		"%sif %s.ACKResourceMetadata == nil {\n",
-		indent,
-		targetVarName,
-	)
-	out += fmt.Sprintf(
-		"%s\t%s.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}\n",
-		indent,
-		targetVarName,
-	)
-	out += fmt.Sprintf("%s}\n", indent)
-
+	// did we output an ACKResourceMetadata guard and constructor snippet?
+	mdGuardOut := false
 	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	sortedAttrFieldNames := []string{}
 	for fieldName := range attrMapConfig.Fields {
@@ -1619,6 +2020,12 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	sort.Strings(sortedAttrFieldNames)
 	for _, fieldName := range sortedAttrFieldNames {
 		if r.IsPrimaryARNField(fieldName) {
+			if !mdGuardOut {
+				out += goCodeACKResourceMetadataGuardConstructor(
+					targetVarName, indentLevel,
+				)
+				mdGuardOut = true
+			}
 			out += fmt.Sprintf(
 				"%stmpARN := ackv1alpha1.AWSResourceName(*%s.Attributes[\"%s\"])\n",
 				indent,
@@ -1635,6 +2042,12 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 		fieldConfig := attrMapConfig.Fields[fieldName]
 		if fieldConfig.ContainsOwnerAccountID {
+			if !mdGuardOut {
+				out += goCodeACKResourceMetadataGuardConstructor(
+					targetVarName, indentLevel,
+				)
+				mdGuardOut = true
+			}
 			out += fmt.Sprintf(
 				"%stmpOwnerID := ackv1alpha1.AWSAccountID(*%s.Attributes[\"%s\"])\n",
 				indent,
@@ -1669,22 +2082,29 @@ func (r *CRD) goCodeSetOutputForContainer(
 	targetFieldName string,
 	// The variable name that we want to set a value to
 	targetVarName string,
+	// Shape Ref of the target struct field
+	targetShapeRef *awssdkmodel.ShapeRef,
 	// The struct or struct field that we access our source value from
 	sourceVarName string,
-	// ShapeRef of the struct field
-	shapeRef *awssdkmodel.ShapeRef,
+	// ShapeRef of the source struct field
+	sourceShapeRef *awssdkmodel.ShapeRef,
 	indentLevel int,
 ) string {
 	out := ""
 	indent := strings.Repeat("\t", indentLevel)
-	shape := shapeRef.Shape
+	sourceShape := sourceShapeRef.Shape
+	targetShape := targetShapeRef.Shape
 
-	switch shape.Type {
+	switch sourceShape.Type {
 	case "structure":
 		{
-			for memberIndex, memberName := range shape.MemberNames() {
+			for memberIndex, memberName := range sourceShape.MemberNames() {
+				targetMemberShapeRef := targetShape.MemberRefs[memberName]
+				if targetMemberShapeRef == nil {
+					continue
+				}
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
-				memberShapeRef := shape.MemberRefs[memberName]
+				memberShapeRef := sourceShape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
 				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
 					continue
@@ -1699,12 +2119,13 @@ func (r *CRD) goCodeSetOutputForContainer(
 					{
 						out += r.goCodeVarEmptyConstructorK8sType(
 							memberVarName,
-							memberShape,
+							targetMemberShapeRef.Shape,
 							indentLevel+1,
 						)
 						out += r.goCodeSetOutputForContainer(
 							cleanNames.Camel,
 							memberVarName,
+							targetMemberShapeRef,
 							sourceAdaptedVarName,
 							memberShapeRef,
 							indentLevel+1,
@@ -1740,7 +2161,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//		f0elem0 := &string{}
 			out += r.goCodeVarEmptyConstructorK8sType(
 				elemVarName,
-				shape.MemberRef.Shape,
+				targetShape.MemberRef.Shape,
 				indentLevel+1,
 			)
 			//  f0elem0 = *f0iter0
@@ -1749,18 +2170,19 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//
 			//  f0elem0.SetMyField(*f0iter0)
 			containerFieldName := ""
-			if shape.MemberRef.Shape.Type == "structure" {
+			if sourceShape.MemberRef.Shape.Type == "structure" {
 				containerFieldName = targetFieldName
 			}
 			out += r.goCodeSetOutputForContainer(
 				containerFieldName,
 				elemVarName,
+				&targetShape.MemberRef,
 				iterVarName,
-				&shape.MemberRef,
+				&sourceShape.MemberRef,
 				indentLevel+1,
 			)
 			addressOfVar := ""
-			switch shape.MemberRef.Shape.Type {
+			switch sourceShape.MemberRef.Shape.Type {
 			case "structure", "list", "map":
 				break
 			default:
@@ -1780,23 +2202,24 @@ func (r *CRD) goCodeSetOutputForContainer(
 			//		f0elem := string{}
 			out += r.goCodeVarEmptyConstructorK8sType(
 				valVarName,
-				shape.ValueRef.Shape,
+				targetShape.ValueRef.Shape,
 				indentLevel+1,
 			)
 			//  f0val = *f0valiter
 			containerFieldName := ""
-			if shape.ValueRef.Shape.Type == "structure" {
+			if sourceShape.ValueRef.Shape.Type == "structure" {
 				containerFieldName = targetFieldName
 			}
 			out += r.goCodeSetOutputForContainer(
 				containerFieldName,
 				valVarName,
+				&targetShape.ValueRef,
 				valIterVarName,
-				&shape.ValueRef,
+				&sourceShape.ValueRef,
 				indentLevel+1,
 			)
 			addressOfVar := ""
-			switch shape.ValueRef.Shape.Type {
+			switch sourceShape.ValueRef.Shape.Type {
 			case "structure", "list", "map":
 				break
 			default:
@@ -1811,7 +2234,7 @@ func (r *CRD) goCodeSetOutputForContainer(
 			targetFieldName,
 			targetVarName,
 			sourceVarName,
-			shapeRef,
+			sourceShapeRef,
 			indentLevel,
 		)
 	}

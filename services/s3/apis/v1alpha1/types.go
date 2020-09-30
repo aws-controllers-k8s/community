@@ -24,7 +24,8 @@ type AccessControlPolicy struct {
 }
 
 type AnalyticsS3BucketDestination struct {
-	Bucket *string `json:"bucket,omitempty"`
+	Bucket          *string `json:"bucket,omitempty"`
+	BucketAccountID *string `json:"bucketAccountID,omitempty"`
 }
 
 type Bucket_SDK struct {
@@ -41,7 +42,8 @@ type DeleteMarkerEntry struct {
 }
 
 type Destination struct {
-	Bucket *string `json:"bucket,omitempty"`
+	Account *string `json:"account,omitempty"`
+	Bucket  *string `json:"bucket,omitempty"`
 }
 
 type Grantee struct {
@@ -55,7 +57,8 @@ type Initiator struct {
 }
 
 type InventoryS3BucketDestination struct {
-	Bucket *string `json:"bucket,omitempty"`
+	AccountID *string `json:"accountID,omitempty"`
+	Bucket    *string `json:"bucket,omitempty"`
 }
 
 type LifecycleRule struct {

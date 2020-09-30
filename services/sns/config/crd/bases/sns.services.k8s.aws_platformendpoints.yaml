@@ -15,6 +15,8 @@ spec:
     plural: platformendpoints
     singular: platformendpoint
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: PlatformEndpoint is the Schema for the PlatformEndpoints API
@@ -54,20 +56,20 @@ spec:
                 constructed ARN for the resource
               properties:
                 arn:
-                  description: ARN is the Amazon Resource Name for the resource. This
-                    is a globally-unique identifier and is set only by the ACK service
-                    controller once the controller has orchestrated the creation of
-                    the resource OR when it has verified that an "adopted" resource
+                  description: 'ARN is the Amazon Resource Name for the resource.
+                    This is a globally-unique identifier and is set only by the ACK
+                    service controller once the controller has orchestrated the creation
+                    of the resource OR when it has verified that an "adopted" resource
                     (a resource where the ARN annotation was set by the Kubernetes
-                    user on the CR) exists and matches the supplied CR's Spec field
-                    values.
+                    user on the CR) exists and matches the supplied CR''s Spec field
+                    values. TODO(vijat@): Find a better strategy for resources that
+                    do not have ARN in CreateOutputResponse https://github.com/aws/aws-controllers-k8s/issues/270'
                   type: string
                 ownerAccountID:
                   description: OwnerAccountID is the AWS Account ID of the account
                     that owns the backend AWS service API resource.
                   type: string
               required:
-              - arn
               - ownerAccountID
               type: object
             conditions:

@@ -30,6 +30,19 @@ type Config struct {
 	Resources map[string]ResourceConfig `json:"resources"`
 	// CRDs to ignore. ACK generator would skip these resources.
 	Ignore IgnoreSpec `json:"ignore"`
+	// Contains generator instructions for individual API operations.
+	Operations map[string]OperationConfig `json:"operations"`
+}
+
+// OperationConfig represents instructions to the ACK code generator to
+// specify the overriding values for API operation parameters and its custom implementation.
+type OperationConfig struct {
+	CustomImplementation string `json:"custom_implementation,omitempty"`
+	OverrideValues map[string]string `json:"override_values"`
+	// SetOutputCustomMethodName provides the name of the custom method on the
+	// `resourceManager` struct that will set fields on a `resource` struct
+	// depending on the output of the operation.
+	SetOutputCustomMethodName string `json:"set_output_custom_method_name,omitempty"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to
@@ -64,6 +77,7 @@ type ResourceConfig struct {
 	// Found and other common error types for primary resources, and thus we
 	// need these instructions.
 	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
+
 	// Renames identifies fields in Operations that should be renamed.
 	Renames *RenamesConfig `json:"renames,omitempty"`
 	// ListOperation contains instructions for the code generator to generate
@@ -131,6 +145,13 @@ type UnpackAttributesMapConfig struct {
 	// information to the ACK service controller that is useful for determining
 	// observed versus desired state -- then do NOT list that attribute here.
 	Fields map[string]FieldConfig `json:"fields"`
+	// SetAttributesSingleAttribute indicates that the SetAttributes API call
+	// doesn't actually set multiple attributes but rather must be called
+	// multiple times, once for each attribute that needs to change. See SNS
+	// SetTopicAttributes API call, which can be compared to the "normal" SNS
+	// SetPlatformApplicationAttributes API call which accepts multiple
+	// attributes and replaces the supplied attributes map key/values...
+	SetAttributesSingleAttribute bool `json:"set_attributes_single_attribute"`
 }
 
 // FieldConfig contains instructions to the code generator about how
@@ -208,6 +229,22 @@ func (c *Config) UnpacksAttributesMap(resourceName string) bool {
 	return found && resGenConfig.UnpackAttributesMapConfig != nil
 }
 
+// SetAttributesSingleAttribute returns true if the supplied resource name has
+// a SetAttributes operation that only actually changes a single attribute at a
+// time. See: SNS SetTopicAttributes API call, which is entirely different from
+// the SNS SetPlatformApplicationAttributes API call, which sets multiple
+// attributes at once. :shrug:
+func (c *Config) SetAttributesSingleAttribute(resourceName string) bool {
+	if c == nil {
+		return false
+	}
+	resGenConfig, found := c.Resources[resourceName]
+	if !found || resGenConfig.UnpackAttributesMapConfig == nil {
+		return false
+	}
+	return resGenConfig.UnpackAttributesMapConfig.SetAttributesSingleAttribute
+}
+
 // IsIgnoredShape returns true if the supplied shape name should be ignored by the
 // code generator, false otherwise
 func (c *Config) IsIgnoredShape(shapeName string) bool {
@@ -215,6 +252,18 @@ func (c *Config) IsIgnoredShape(shapeName string) bool {
 		return false
 	}
 	return util.InStrings(shapeName, c.Ignore.ShapeNames)
+}
+
+// OverrideValues gives list of member values to override.
+func (c *Config) OverrideValues(operationName string) (map[string]string, bool) {
+	if c == nil {
+		return nil, false
+	}
+	oConfig, ok := c.Operations[operationName]
+	if !ok {
+		return nil, false
+	}
+	return oConfig.OverrideValues, ok
 }
 
 // IsIgnoredResource returns true if Operation Name is configured to be ignored

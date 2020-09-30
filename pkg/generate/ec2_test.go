@@ -507,7 +507,7 @@ func TestEC2_LaunchTemplate(t *testing.T) {
 		ko.Status.Tags = f6
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
 	//

@@ -1,4 +1,11 @@
 resources:
+operations:
+  ModifyReplicationGroup:
+    override_values:
+      ApplyImmediately: true
+  ModifyCacheCluster:
+    override_values:
+      ApplyImmediately: true
 ignore:
   operations:
     - DeleteSnapshot

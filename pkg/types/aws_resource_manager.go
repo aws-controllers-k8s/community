@@ -16,7 +16,10 @@ package types
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 )
 
 // AWSResourceManager is responsible for providing a consistent way to perform
@@ -37,14 +40,16 @@ type AWSResourceManager interface {
 	// service API, returning an AWSResource representing the newly-created
 	// resource
 	Create(context.Context, AWSResource) (AWSResource, error)
-	// Update attempts to mutate the supplied AWSResource in the backend AWS
+	// Update attempts to mutate the supplied desired AWSResource in the backend AWS
 	// service API, returning an AWSResource representing the newly-mutated
-	// resource. Note that implementers should NOT check to see if the latest
+	// resource.
+	// Note for specialized logic implementers can check to see how the latest
 	// observed resource differs from the supplied desired state. The
 	// higher-level reonciler determines whether or not the desired differs
 	// from the latest observed and decides whether to call the resource
 	// manager's Update method
-	Update(context.Context, AWSResource) (AWSResource, error)
+	Update(context.Context, /* desired */ AWSResource, /* latest */ AWSResource, *ackcompare.Reporter) (AWSResource, error)
+
 	// Delete attempts to destroy the supplied AWSResource in the backend AWS
 	// service API.
 	Delete(context.Context, AWSResource) error
@@ -67,6 +72,7 @@ type AWSResourceManagerFactory interface {
 	// behalf of a particular AWS account and in a specific AWS region
 	ManagerFor(
 		AWSResourceReconciler,
+		*session.Session,
 		ackv1alpha1.AWSAccountID,
 		ackv1alpha1.AWSRegion,
 	) (AWSResourceManager, error)

@@ -17,38 +17,53 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
-	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 
-	"github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource"
-	_ "github.com/aws/aws-controllers-k8s/services/bookstore/pkg/resource/book"
+	mocks "github.com/aws/aws-controllers-k8s/mocks/pkg/types"
 )
-
-func newBookResource() acktypes.AWSResource {
-	rmfs := resource.GetManagerFactories()
-	var rd acktypes.AWSResourceDescriptor
-	for _, rmf := range rmfs {
-		if rmf.ResourceDescriptor().GroupKind().String() == "Book.bookstore.services.k8s.aws" {
-			rd = rmf.ResourceDescriptor()
-		}
-	}
-	if rd == nil {
-		panic("expected to find Book resource manager")
-	}
-	return rd.ResourceFromRuntimeObject(rd.EmptyRuntimeObject())
-}
 
 func TestIsAdopted(t *testing.T) {
 	require := require.New(t)
 
-	res := newBookResource()
+	res := &mocks.AWSResource{}
+	res.On("MetaObject").Return(&metav1.ObjectMeta{
+		Annotations: map[string]string{
+			ackv1alpha1.AnnotationARN: "arn:aws:lambda:eu-west-1:0123456789010:function:mylambdafunction-7UXYMW16MLXP",
+		},
+	})
+	require.True(ackrt.IsAdopted(res))
+
+	res = &mocks.AWSResource{}
+	res.On("MetaObject").Return(&metav1.ObjectMeta{})
 	require.False(ackrt.IsAdopted(res))
 }
 
 func TestIsSynced(t *testing.T) {
 	require := require.New(t)
 
-	res := newBookResource()
+	res := &mocks.AWSResource{}
+	res.On("Conditions").Return([]*ackv1alpha1.Condition{
+		&ackv1alpha1.Condition{
+			Type:   ackv1alpha1.ConditionTypeResourceSynced,
+			Status: corev1.ConditionTrue,
+		},
+	})
+	require.True(ackrt.IsSynced(res))
+
+	res = &mocks.AWSResource{}
+	res.On("Conditions").Return([]*ackv1alpha1.Condition{
+		&ackv1alpha1.Condition{
+			Type:   ackv1alpha1.ConditionTypeResourceSynced,
+			Status: corev1.ConditionUnknown,
+		},
+		&ackv1alpha1.Condition{
+			Type:   ackv1alpha1.ConditionTypeResourceSynced,
+			Status: corev1.ConditionFalse,
+		},
+	})
 	require.False(ackrt.IsSynced(res))
 }

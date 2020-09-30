@@ -25,7 +25,7 @@ const (
 	// CR, that means the user expects the ACK service controller to create the
 	// backend AWS service API resource.
 	AnnotationARN = AnnotationPrefix + "arn"
-	// AnnotationOwnerAccountID is an annotation whoe value is the identifier
+	// AnnotationOwnerAccountID is an annotation whose value is the identifier
 	// for the AWS account to which the resource belongs.  If this annotation
 	// is set on a CR, the Kubernetes user is indicating that the ACK service
 	// controller should create/patch/delete the resource in the specified AWS
@@ -36,4 +36,20 @@ const (
 	// TODO(jaypipes): Link to documentation on cross-account resource
 	// management
 	AnnotationOwnerAccountID = AnnotationPrefix + "owner-account-id"
+	// AnnotationRegion is an annotation whose value is the identifier for the
+	// the AWS region in which the resources should be created. If this annotation
+	// is set on a CR metadata, that means the user is indicating to the ACK service
+	// controller that the CR should be created on specific region. ACK service
+	// controller will not override the resource region if this annotation is set.
+	AnnotationRegion = AnnotationPrefix + "region"
+	// AnnotationDefaultRegion is an annotation whose value is the identifier
+	// for the default AWS region in which resources should be created. If this
+	// annotation is set on a namespace, the Kubernetes user is indicating that
+	// the ACK service controller should set the regions in which the resource
+	// should be created, if a region annotation is not set on the CR metadata.
+	// If this annotation - and AnnotationRegion - are not set, ACK service
+	// controllers look for controller binary flags and environment variables
+	// injected by POD IRSA, to decide in which region the resources should be
+	// created.
+	AnnotationDefaultRegion = AnnotationPrefix + "default-region"
 )

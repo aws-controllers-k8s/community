@@ -39,7 +39,7 @@ func (r *Registry) GetResourceManagerFactories() []types.AWSResourceManagerFacto
 	return res
 }
 
-// RegisterManagerFactory registers a resource manager factory with the
+// RegisterResourceManagerFactory registers a resource manager factory with the
 // package's registry
 func (r *Registry) RegisterResourceManagerFactory(f types.AWSResourceManagerFactory) {
 	r.Lock()

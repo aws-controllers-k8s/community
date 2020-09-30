@@ -14,6 +14,7 @@
 package generate_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -145,7 +146,7 @@ func TestSQS_Queue(t *testing.T) {
 		ko.Status.QueueURL = resp.QueueUrl
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// The input shape for the GetAttributes operation technically has two
 	// fields in it: an AttributeNames list of attribute keys to file
@@ -164,13 +165,22 @@ func TestSQS_Queue(t *testing.T) {
 	// (and thus in the Spec fields). One of them is the resource's ARN which
 	// is handled specially.
 	expGetAttrsOutput := `
+	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
+	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 	}
-	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
-	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
+
+	expRequiredFieldsCode := `
+	return r.ko.Status.QueueURL == nil
+`
+	gotCode := crd.GoCodeRequiredFieldsMissingFromShape(model.OpTypeGetAttributes, "r.ko", 1)
+	assert.Equal(
+		strings.TrimSpace(expRequiredFieldsCode),
+		strings.TrimSpace(gotCode),
+	)
 }

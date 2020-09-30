@@ -27,8 +27,8 @@ assert_equal() {
 # message. If the indentation level argument is missing, we look for the
 # existence of an environs variable called "indent_level" and use that
 debug_msg() {
-    local __msg="$1"
-    local __indent_level="$2"
+    local __msg=${1:-}
+    local __indent_level=${2:-}
     local __debug="${DEBUG:-""}"
     local __debug_prefix="${DEBUG_PREFIX:-$DEFAULT_DEBUG_PREFIX}"
     if [ ! -n "$__debug" ]; then
@@ -65,7 +65,7 @@ assert_pod_not_restarted() {
         echo "ERROR: assert_pod_not_restarted requires a single argument, the ID of the Pod to check"
         exit 127
     fi
-    local __ns="$2"
+    local __ns=${2:-}
     if [ ! -n "$__ns" ]; then
         __ns="ack-system"
     fi

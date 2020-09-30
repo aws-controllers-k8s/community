@@ -20,8 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const debugHeader = `
-Date: %s
+const debugHeader = `Date: %s
 Build: %s
 Version: %s
 Git Hash: %s

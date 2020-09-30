@@ -47,6 +47,7 @@ type RepositoryStatus struct {
 
 // Repository is the Schema for the Repositories API
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
 
@@ -97,22 +97,27 @@ func (rm *resourceManager) Create(
 	return created, nil
 }
 
-// Update attempts to mutate the supplied AWSResource in the backend AWS
+// Update attempts to mutate the supplied desired AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-mutated
-// resource. Note that implementers should NOT check to see if the latest
-// observed resource differs from the supplied desired state. The higher-level
-// reonciler determines whether or not the desired differs from the latest
-// observed and decides whether to call the resource manager's Update method
+// resource.
+// Note for specialized logic implementers can check to see how the latest
+// observed resource differs from the supplied desired state. The
+// higher-level reonciler determines whether or not the desired differs
+// from the latest observed and decides whether to call the resource
+// manager's Update method
 func (rm *resourceManager) Update(
 	ctx context.Context,
-	res acktypes.AWSResource,
+	resDesired acktypes.AWSResource,
+	resLatest acktypes.AWSResource,
+	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
-	r := rm.concreteResource(res)
-	if r.ko == nil {
+	desired := rm.concreteResource(resDesired)
+	latest := rm.concreteResource(resLatest)
+	if desired.ko == nil || latest.ko == nil {
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil CR object")
 	}
-	updated, err := rm.sdkUpdate(ctx, r)
+	updated, err := rm.sdkUpdate(ctx, desired, latest, diffReporter)
 	if err != nil {
 		return nil, err
 	}
@@ -150,13 +155,10 @@ func (rm *resourceManager) ARNFromName(name string) string {
 // acktypes.AWSResourceManager
 func newResourceManager(
 	rr acktypes.AWSResourceReconciler,
+	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
-	sess, err := ackrt.NewSession()
-	if err != nil {
-		return nil, err
-	}
 	return &resourceManager{
 		rr:           rr,
 		awsAccountID: id,

@@ -16,11 +16,10 @@ package generate_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRDS_DBInstance(t *testing.T) {
@@ -378,6 +377,13 @@ func TestRDS_DBInstance(t *testing.T) {
 	if resp.DBInstance.CACertificateIdentifier != nil {
 		ko.Status.CACertificateIdentifier = resp.DBInstance.CACertificateIdentifier
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.DBInstance.DBInstanceArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.DBInstance.DBInstanceArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.DBInstance.DBInstanceStatus != nil {
 		ko.Status.DBInstanceStatus = resp.DBInstance.DBInstanceStatus
 	}
@@ -670,7 +676,7 @@ func TestRDS_DBInstance(t *testing.T) {
 		ko.Status.VPCSecurityGroups = f57
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// This asserts that the fields of the Spec and Status structs of the
 	// target variable are constructed with cleaned, renamed-friendly names
@@ -754,20 +760,6 @@ func TestRDS_DBInstance(t *testing.T) {
 				f14 = append(f14, f14elem)
 			}
 			ko.Status.DBParameterGroups = f14
-		}
-		if elem.DBSecurityGroups != nil {
-			f15 := []*svcapitypes.DBSecurityGroupMembership{}
-			for _, f15iter := range elem.DBSecurityGroups {
-				f15elem := &svcapitypes.DBSecurityGroupMembership{}
-				if f15iter.DBSecurityGroupName != nil {
-					f15elem.DBSecurityGroupName = f15iter.DBSecurityGroupName
-				}
-				if f15iter.Status != nil {
-					f15elem.Status = f15iter.Status
-				}
-				f15 = append(f15, f15elem)
-			}
-			ko.Spec.DBSecurityGroups = f15
 		}
 		if elem.DBSubnetGroup != nil {
 			f16 := &svcapitypes.DBSubnetGroup_SDK{}
@@ -1127,5 +1119,5 @@ func TestRDS_DBInstance(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

@@ -3,9 +3,20 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
+operations:
+  DescribeReplicationGroups:
+    set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
+  CreateReplicationGroup:
+    set_output_custom_method_name: CustomCreateReplicationGroupSetOutput
+  ModifyReplicationGroup:
+    custom_implementation: CustomModifyReplicationGroup
+    set_output_custom_method_name: CustomModifyReplicationGroupSetOutput
+    override_values:
+      ApplyImmediately: true
 ignore:
-  operations:
-    - DeleteSnapshot
-    - ModifyCacheParameterGroup
   resource_names:
     - GlobalReplicationGroup
+    - CacheCluster
+    - CacheParameterGroup
+    - CacheSecurityGroup
+    - Snapshot

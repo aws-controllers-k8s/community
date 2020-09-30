@@ -176,11 +176,18 @@ func TestECRRepository(t *testing.T) {
 	if resp.Repository.RegistryId != nil {
 		ko.Status.RegistryID = resp.Repository.RegistryId
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.Repository.RepositoryArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.Repository.RepositoryUri != nil {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 	}
 `
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko.Status", 1))
+	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// Check that the DescribeRepositories output is filtered by the
 	// RepositoryName field of the CR's Spec, since there is no ReadOne
@@ -234,5 +241,5 @@ func TestECRRepository(t *testing.T) {
 		return nil, ackerr.NotFound
 	}
 `
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1))
+	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

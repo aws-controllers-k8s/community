@@ -30,7 +30,7 @@ Options:
 "
 
 # Process our input arguments
-while getopts "rs:i:" opt; do
+while getopts "r:s:i:" opt; do
   case ${opt} in
     q ) # Build image quietly
         QUIET=true

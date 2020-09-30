@@ -21,12 +21,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubernetes "k8s.io/client-go/kubernetes"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
+	ackrtcache "github.com/aws/aws-controllers-k8s/pkg/runtime/cache"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
@@ -38,11 +40,12 @@ import (
 // controller-runtime.Controller objects (each containing a single reconciler
 // object)s and sharing watch and informer queues across those controllers.
 type reconciler struct {
-	kc  client.Client
-	rmf acktypes.AWSResourceManagerFactory
-	rd  acktypes.AWSResourceDescriptor
-	log logr.Logger
-	cfg Config
+	kc    client.Client
+	rmf   acktypes.AWSResourceManagerFactory
+	rd    acktypes.AWSResourceDescriptor
+	log   logr.Logger
+	cfg   Config
+	cache ackrtcache.Caches
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
@@ -60,7 +63,14 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	if r.rmf == nil {
 		return ackerr.NilResourceManagerFactory
 	}
+	clusterConfig := mgr.GetConfig()
+	clientset, err := kubernetes.NewForConfig(clusterConfig)
+	if err != nil {
+		return err
+	}
 	r.kc = mgr.GetClient()
+	r.cache = ackrtcache.New(clientset, r.log)
+	r.cache.Run()
 	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
@@ -97,14 +107,20 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
+	roleARN := r.getRoleARN(acctID)
+	sess, err := NewSession(region, roleARN)
+	if err != nil {
+		return err
+	}
 
 	r.log.WithValues(
-		"account_id", acctID,
+		"account", acctID,
+		"role", roleARN,
 		"region", region,
 		"kind", r.rd.GroupKind().String(),
-	)
+	).V(1).Info("starting reconcilation")
 
-	rm, err := r.rmf.ManagerFor(r, acctID, region)
+	rm, err := r.rmf.ManagerFor(r, sess, acctID, region)
 	if err != nil {
 		return err
 	}
@@ -152,7 +168,7 @@ func (r *reconciler) sync(
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info(
+		r.log.V(0).Info(
 			"reconciler.sync created new resource",
 			"arn", latest.Identifiers().ARN(),
 		)
@@ -162,18 +178,18 @@ func (r *reconciler) sync(
 		if r.rd.Equal(desired, latest) {
 			return nil
 		}
-		diff := r.rd.Diff(desired, latest)
-		r.log.V(2).Info(
+		diffReporter := r.rd.Diff(desired, latest)
+		r.log.V(1).Info(
 			"desired resource state has changed",
-			"diff", diff,
+			"diff", diffReporter.String(),
 			"arn", latest.Identifiers().ARN(),
 			"is_adopted", isAdopted,
 		)
-		latest, err = rm.Update(ctx, desired)
+		latest, err = rm.Update(ctx, desired, latest, diffReporter)
 		if err != nil {
 			return err
 		}
-		r.log.V(1).Info("reconciler.sync updated resource")
+		r.log.V(0).Info("reconciler.sync updated resource")
 	}
 	changedStatus, err := r.rd.UpdateCRStatus(latest)
 	if err != nil {
@@ -190,7 +206,7 @@ func (r *reconciler) sync(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("patched CR status")
+	r.log.V(1).Info("patched CR status")
 	return err
 }
 
@@ -207,14 +223,15 @@ func (r *reconciler) cleanup(
 	observed, err := rm.ReadOne(ctx, current)
 	if err != nil {
 		if err == ackerr.NotFound {
-			return nil
+			// If the aws resource is not found, remove finalizer
+			return r.setResourceUnmanaged(ctx, current)
 		}
 		return err
 	}
 	if err = rm.Delete(ctx, observed); err != nil {
 		return err
 	}
-	r.log.V(1).Info("reconciler.cleanup deleted resource")
+	r.log.V(0).Info("reconciler.cleanup deleted resource")
 
 	// Now that external AWS service resources have been appropriately cleaned
 	// up, we remove the finalizer representing the CR is managed by ACK,
@@ -242,7 +259,7 @@ func (r *reconciler) setResourceManaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("reconciler marked resource as managed")
+	r.log.V(1).Info("reconciler marked resource as managed")
 	return nil
 }
 
@@ -266,7 +283,7 @@ func (r *reconciler) setResourceUnmanaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(2).Info("reconciler removed resource from management")
+	r.log.V(1).Info("reconciler removed resource from management")
 	return nil
 }
 
@@ -326,19 +343,57 @@ func (r *reconciler) getOwnerAccountID(
 	if acctID != nil {
 		return *acctID
 	}
-	// OK, it's a new resource. Look for an override account ID annotation,
-	// which indicates a cross-account resource request
-	// TODO(jaypipes)
+
+	// look for owner account id in the CR annotations
+	annotations := res.MetaObject().GetAnnotations()
+	accID, ok := annotations[ackv1alpha1.AnnotationOwnerAccountID]
+	if ok {
+		return ackv1alpha1.AWSAccountID(accID)
+	}
+
+	// look for owner account id in the namespace annotations
+	namespace := res.MetaObject().GetNamespace()
+	accID, ok = r.cache.Namespaces.GetOwnerAccountID(namespace)
+	if ok {
+		return ackv1alpha1.AWSAccountID(accID)
+	}
+
+	// use controller configuration
 	return ackv1alpha1.AWSAccountID(r.cfg.AccountID)
 }
 
+// getRoleARN return the Role ARN that should be assumed in order to manage
+// the resources.
+func (r *reconciler) getRoleARN(
+	acctID ackv1alpha1.AWSAccountID,
+) ackv1alpha1.AWSResourceName {
+	roleARN, _ := r.cache.Accounts.GetAccountRoleARN(string(acctID))
+	return ackv1alpha1.AWSResourceName(roleARN)
+}
+
 // getRegion returns the AWS region that the given resource is in or should be
-// created in. If the Namespace has a region associated with it, that is used,
-// otherwise the region specified in the configuration is used.
+// created in. If the CR have a region associated with it, it is used. Otherwise
+// we look for the namespace associated region, if that is set we use it. Finally
+// if none of these annotations are set we use the use the region specified in the
+// configuration is used
 func (r *reconciler) getRegion(
 	res acktypes.AWSResource,
 ) ackv1alpha1.AWSRegion {
-	// TODO(jaypipes): Do the Namespace region lookup...
+	// look for region in CR metadata annotations
+	resAnnotations := res.MetaObject().GetAnnotations()
+	region, ok := resAnnotations[ackv1alpha1.AnnotationRegion]
+	if ok {
+		return ackv1alpha1.AWSRegion(region)
+	}
+
+	// look for default region in namespace metadata annotations
+	ns := res.MetaObject().GetNamespace()
+	defaultRegion, ok := r.cache.Namespaces.GetDefaultRegion(ns)
+	if ok {
+		return ackv1alpha1.AWSRegion(defaultRegion)
+	}
+
+	// use controller configuration region
 	return ackv1alpha1.AWSRegion(r.cfg.Region)
 }
 

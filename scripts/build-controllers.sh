@@ -54,7 +54,8 @@ if [[ ${#SERVICES[@]} -eq 0 ]]; then
 fi
 
 for SERVICE in ${SERVICES[@]}; do
-    $DIR/build-controller.sh "$SERVICE"
+    SERVICE=$(echo "$SERVICE" | tr '[:upper:]' '[:lower:]')
+    $DIR/build-controller.sh $SERVICE
     if [ $? -ne 0 ]; then
         exit 2
     fi

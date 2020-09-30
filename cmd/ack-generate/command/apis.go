@@ -68,19 +68,26 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 	if optAPIsOutputPath == "" {
 		optAPIsOutputPath = filepath.Join(optServicesDir)
 	}
-	if !optDryRun {
-		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
-		if _, err := ensureDir(apisVersionPath); err != nil {
-			return err
-		}
-	}
 	if err := ensureSDKRepo(optCacheDir); err != nil {
 		return err
 	}
 	sdkHelper := model.NewSDKHelper(sdkDir)
 	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
-		return err
+		newSvcAlias, err := FallBackFindServiceID(sdkDir, svcAlias)
+		if err != nil {
+			return err
+		}
+		sdkAPI, err = sdkHelper.API(newSvcAlias) // retry with serviceID
+		if err != nil {
+			return fmt.Errorf("service %s not found", svcAlias)
+		}
+	}
+	if !optDryRun {
+		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
+		if _, err := ensureDir(apisVersionPath); err != nil {
+			return err
+		}
 	}
 	g, err := generate.New(
 		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir,

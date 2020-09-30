@@ -5,7 +5,25 @@ ensure_controller_gen() {
     # Need this version of controller-gen to allow dangerous types and float
     # type support
     go get sigs.k8s.io/controller-tools/cmd/controller-gen@4a903ddb7005459a7baf4777c67244a74c91083d
+  else
+    minimum_req_version="v0.3.1"
+    # Don't overide the existing version let the user decide.
+    if ! is_min_controller_gen_version "$minimum_req_version"; then
+        echo "Existing version of controller-gen "`controller-gen --version`", minimum required is $minimum_req_version"
+        exit 1
+    fi
   fi
+
+}
+
+is_min_controller_gen_version() {
+    currentver="$(controller-gen --version | cut -d' ' -f2)";
+    requiredver="$1";
+    if [ "$(printf '%s\n' "$requiredver" "$currentver" | sort -V | head -n1)" = "$requiredver" ]; then
+        return 0
+    else
+        return 1
+    fi;
 }
 
 # ensure_kubectl installs the kubectl binary if it isn't present on the system.
@@ -67,11 +85,48 @@ ensure_service_controller_running() {
 # otherwise. An optional second parameter overrides the Kubernetes namespace
 # argument
 k8s_resource_exists() {
-    local __res_name="$1"
-    local __namespace="$2"
+    local __res_name=${1:-}
+    local __namespace=${2:-}
     local __args=""
     if [ -n "$__namespace" ]; then
         __args="$__args-n $__namespace"
     fi
     kubectl get $__args "$__res_name" >/dev/null 2>&1
+}
+
+# get_field_from_status returns the field from status of a K8s resource
+# get_field_from_status accepts three parameters. namespace (which is an optional parameter),
+# resource_name and status_field
+get_field_from_status() {
+
+  if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
+    echo "[FAIL] Usage: get_field_from_status [namespace] resource_name status_field"
+    exit 1
+  fi
+
+  local __namespace=""
+  local __resource_name=""
+  local __status_field=""
+
+  if [[ "$#" -eq 2 ]]; then
+    __resource_name="$1"
+    __status_field="$2"
+  else
+    __namespace="$1"
+    __resource_name="$2"
+    __status_field="$3"
+  fi
+
+  local __args=""
+  if [ -n "$__namespace" ]; then
+      __args="$__args-n $__namespace"
+  fi
+
+
+  local __id=$(kubectl get $__args "$__resource_name" -o=json | jq -r .status."$__status_field")
+  if [[ -z "$__id" ]];then
+    echo "FAIL: $__resource_name resource's status does not have $__status_field field"
+    exit 1
+  fi
+  echo "$__id"
 }

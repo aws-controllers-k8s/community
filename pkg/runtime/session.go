@@ -13,16 +13,42 @@
 
 package runtime
 
-import "github.com/aws/aws-sdk-go/aws/session"
+import (
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/session"
+)
 
-func NewSession() (*session.Session, error) {
-	// NOTE(jaypipes): session.NewSession() is needed for the STS::AssumeRole
-	// stuff we will need to do...
-	sess, err := session.NewSession()
+// NewSession returns a new session object. Buy default the returned session is
+// created using pod IRSA environment variables. If assumeRoleARN is not empty,
+// NewSession will call STS::AssumeRole and use the returned credentials to create
+// the session.
+func NewSession(
+	region ackv1alpha1.AWSRegion,
+	assumeRoleARN ackv1alpha1.AWSResourceName,
+) (*session.Session, error) {
+	awsCfg := aws.Config{
+		Region:              aws.String(string(region)),
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
+	}
+	sess, err := session.NewSession(&awsCfg)
 	if err != nil {
 		return nil, err
 	}
-	// TODO(jaypipes): Handling all common region endpoint, throttling
-	// configuration, TLS, etc
+
+	if assumeRoleARN != "" {
+		// call STS::AssumeRole
+		creds := stscreds.NewCredentials(sess, string(assumeRoleARN))
+		// recreate session with the new credentials
+		awsCfg.Credentials = creds
+		sess, err = session.NewSession(&awsCfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO(jaypipes): Handle throttling
 	return sess, nil
 }

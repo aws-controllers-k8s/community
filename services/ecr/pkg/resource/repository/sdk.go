@@ -19,6 +19,7 @@ import (
 	"context"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/ecr"
@@ -157,10 +158,24 @@ func (rm *resourceManager) sdkCreate(
 	if resp.Repository.RegistryId != nil {
 		ko.Status.RegistryID = resp.Repository.RegistryId
 	}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if resp.Repository.RepositoryArn != nil {
+		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if resp.Repository.RepositoryUri != nil {
 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
 	}
 
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
 
@@ -216,7 +231,9 @@ func (rm *resourceManager) newCreateRequestPayload(
 // returns a new resource with updated fields.
 func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
-	r *resource,
+	desired *resource,
+	latest *resource,
+	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	// TODO(jaypipes): Figure this out...
 	return nil, nil
