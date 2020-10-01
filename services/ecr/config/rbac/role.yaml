@@ -7,6 +7,22 @@ metadata:
   name: ack-controller
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - ecr.services.k8s.aws
   resources:
   - repositories

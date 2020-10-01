@@ -48,7 +48,6 @@ cat <<EOF | kubectl apply -f -
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  namespace: testing
   name: $bucket_name
   annotations:
     services.k8s.aws/default-region: $AWS_REGION_ALT
