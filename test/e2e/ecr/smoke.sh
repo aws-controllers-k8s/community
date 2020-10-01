@@ -42,6 +42,7 @@ done
 
 # TEST ACTIONS and ASSERTIONS
 
+# Create the repositories
 for x in a b c; do
 
     repo_name="ack-test-smoke-$service_name-$x"
@@ -59,6 +60,7 @@ done
 
 sleep $wait_seconds
 
+# Check the repositories were created
 for x in a b c; do
 
     repo_name="ack-test-smoke-$service_name-$x"
@@ -70,10 +72,45 @@ for x in a b c; do
         kubectl logs -n ack-system "$ack_ctrl_pod_id"
         exit 1
     fi
+done
+
+sleep $wait_seconds
+
+# Update one of the repository's ImageScanningConfiguration.ScanOnPush
+# attributes to check the update code path
+updated_repo_name="ack-test-smoke-$service_name-b"
+
+isc_json=$( ecr_repo_jq $updated_repo_name '.repositories[0].imageScanningConfiguration.scanOnPush')
+assert_equal "false" "$isc_json" "Expected scanning configuration to be 'false' but got '$isc_json'" || exit 1
+
+cat <<EOF | kubectl apply -f -
+apiVersion: ecr.services.k8s.aws/v1alpha1
+kind: Repository
+metadata:
+  name: $updated_repo_name
+spec:
+  repositoryName: $updated_repo_name
+  imageScanningConfiguration:
+    scanOnPush: true
+EOF
+
+sleep $wait_seconds
+
+debug_msg "checking repository $updated_repo_name updated scanning configuration in ECR"
+isc_json=$( ecr_repo_jq $updated_repo_name '.repositories[0].imageScanningConfiguration.scanOnPush')
+assert_equal "true" "$isc_json" "Expected scanning configuration to be 'true' but got '$isc_json'" || exit 1
+
+sleep $wait_seconds
+
+# Delete each of the created repositories
+
+for x in a b c; do
+
+    repo_name="ack-test-smoke-$service_name-$x"
+    resource_name="repositories/$repo_name"
 
     kubectl delete "$resource_name" 2>/dev/null
     assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
-
 done
 
 sleep $wait_seconds

@@ -17,3 +17,10 @@ ecr_repo_exists() {
         return 0
     fi
 }
+
+ecr_repo_jq() {
+    __repo_name="$1"
+    __jq_query="$2"
+    json=$( daws ecr describe-repositories --repository-names "$__repo_name" --output json || exit 1 )
+    echo "$json" | jq --raw-output $__jq_query
+}

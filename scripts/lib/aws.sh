@@ -97,5 +97,5 @@ aws_account_id() {
 daws() {
     aws_cli_img_version=${ACK_AWS_CLI_IMAGE_VERSION:-$DEFAULT_AWS_CLI_VERSION}
     aws_cli_img="amazon/aws-cli:$aws_cli_img_version"
-    docker run --rm -it -v ~/.aws:/root/.aws "$aws_cli_img" "$@"
+    docker run --rm -v ~/.aws:/root/.aws "$aws_cli_img" "$@"
 }

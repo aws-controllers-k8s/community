@@ -6,3 +6,5 @@ resources:
     list_operation:
       match_fields:
         - RepositoryName
+    update_operation:
+      custom_method_name: customUpdateRepository
