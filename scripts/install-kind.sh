@@ -7,6 +7,7 @@ set -Eo pipefail
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 
+source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/kind.sh"
 
 ensure_kind
