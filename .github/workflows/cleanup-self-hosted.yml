@@ -12,7 +12,7 @@ jobs:
       # Give us access to the make targets...
       - uses: actions/checkout@v2
       - run: |
-        echo "============== Cleaning up self-hosted runner ============================="
-        echo "Initiated by: ${{ github.actor }}"
-        echo "==========================================================================="
+          echo "============== Cleaning up self-hosted runner ============================="
+          echo "Initiated by: ${{ github.actor }}"
+          echo "==========================================================================="
       - run: make delete-all-kind-clusters
