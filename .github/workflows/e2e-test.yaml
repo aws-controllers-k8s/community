@@ -1,5 +1,7 @@
-name: on.pull-request.main
+name: e2e-test
 on:
+  # Allow manual trigger of e2e tests
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -11,41 +13,6 @@ on:
       - go.sum
 
 jobs:
-  build:
-    name: make test
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v2
-      - name: install mockery
-        run: ./scripts/install_mockery.sh
-      - name: make test
-        run: make test
-
-  build-controllers:
-    name: build service
-    strategy:
-      fail-fast: false
-      matrix:
-        service:
-         - s3
-         - ecr
-         - sns
-         - sqs
-         - elasticache
-         - dynamodb
-         - apigatewayv2
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v2
-      - name: build service controller
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          make build-controller SERVICE=$SERVICE
-        env:
-          SERVICE: ${{ matrix.service }}
-
   test-controllers:
     name: test controllers
     strategy:
@@ -59,6 +26,8 @@ jobs:
          - elasticache
          - dynamodb
          - apigatewayv2
+      # The number of self-hosted runners...
+      max-parallel: 3
     runs-on: self-hosted
     steps:
       - name: Set up Go 1.15
@@ -79,6 +48,5 @@ jobs:
           export AWS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
           make build-controller SERVICE=$SERVICE
           make kind-test SERVICE=$SERVICE
-          make delete-all-kind-clusters
         env:
           SERVICE: ${{ matrix.service }}
