@@ -1,0 +1,19 @@
+name: cleanup self-hosted runner state
+
+on:
+  # Manual trigger...
+  workflow_dispatch:
+
+jobs:
+  clean:
+    name: delete all kind clusters
+    runs-on: self-hosted
+    steps:
+      # Give us access to the make targets...
+      - uses: actions/checkout@v2
+      - run: |
+        echo "============== Cleaning up self-hosted runner ============================="
+        hostnamectl
+        echo "Initiated by: ${{ .github.actor }}"
+        echo "==========================================================================="
+      - run: make delete-all-kind-clusters
