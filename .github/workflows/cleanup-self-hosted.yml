@@ -13,6 +13,6 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
         echo "============== Cleaning up self-hosted runner ============================="
-        echo "Initiated by: ${{ .github.actor }}"
+        echo "Initiated by: ${{ github.actor }}"
         echo "==========================================================================="
       - run: make delete-all-kind-clusters
