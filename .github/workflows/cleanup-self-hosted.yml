@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "============== Cleaning up self-hosted runner ============================="
           echo "Initiated by: ${{ github.actor }}"
-          hoistnamectl
+          hostnamectl
           echo "==========================================================================="
       - name: ensure kind
         run: scripts/install-kind.sh
