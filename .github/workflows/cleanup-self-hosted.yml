@@ -8,6 +8,10 @@ jobs:
   clean:
     name: delete all kind clusters
     runs-on: self-hosted
+    strategy:
+      matrix:
+        # Trick GH into running on all 3 test runner instances...
+        instance: [1, 2, 3]
     steps:
       # Give us access to the make targets...
       - uses: actions/checkout@v2
@@ -15,8 +19,9 @@ jobs:
         run: |
           echo "============== Cleaning up self-hosted runner ============================="
           echo "Initiated by: ${{ github.actor }}"
+          hoistnamectl
           echo "==========================================================================="
       - name: ensure kind
-        run: bash scripts/install-kind.sh
+        run: scripts/install-kind.sh
       - name: delete kind clusters
         run: make delete-all-kind-clusters
