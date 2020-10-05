@@ -27,6 +27,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
 	ackrtcache "github.com/aws/aws-controllers-k8s/pkg/runtime/cache"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
@@ -40,12 +41,13 @@ import (
 // controller-runtime.Controller objects (each containing a single reconciler
 // object)s and sharing watch and informer queues across those controllers.
 type reconciler struct {
-	kc    client.Client
-	rmf   acktypes.AWSResourceManagerFactory
-	rd    acktypes.AWSResourceDescriptor
-	log   logr.Logger
-	cfg   Config
-	cache ackrtcache.Caches
+	kc      client.Client
+	rmf     acktypes.AWSResourceManagerFactory
+	rd      acktypes.AWSResourceDescriptor
+	log     logr.Logger
+	cfg     Config
+	cache   ackrtcache.Caches
+	metrics *ackmetrics.Metrics
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
@@ -402,11 +404,13 @@ func NewReconciler(
 	rmf acktypes.AWSResourceManagerFactory,
 	log logr.Logger,
 	cfg Config,
+	metrics *ackmetrics.Metrics,
 ) acktypes.AWSResourceReconciler {
 	return &reconciler{
-		rmf: rmf,
-		rd:  rmf.ResourceDescriptor(),
-		log: log,
-		cfg: cfg,
+		rmf:     rmf,
+		rd:      rmf.ResourceDescriptor(),
+		log:     log,
+		cfg:     cfg,
+		metrics: metrics,
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/go-logr/logr"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
@@ -41,6 +42,9 @@ type ServiceController struct {
 	// log refers to the logr.Logger object handling logging for the service
 	// controller
 	log logr.Logger
+	// metrics contains a collection of Prometheus metric objects that the
+	// service controller and its reconcilers
+	metrics *ackmetrics.Metrics
 }
 
 // GetReconcilers returns a slice of types.AWSResourceReconcilers associated
@@ -85,7 +89,7 @@ func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager, cfg Config
 	c.metaLock.Lock()
 	defer c.metaLock.Unlock()
 	for _, rmf := range c.rmFactories {
-		rec := NewReconciler(rmf, c.log, cfg)
+		rec := NewReconciler(rmf, c.log, cfg, c.metrics)
 		if err := rec.BindControllerManager(mgr); err != nil {
 			return err
 		}
@@ -102,5 +106,6 @@ func NewServiceController(
 	return &ServiceController{
 		ServiceAlias:    svcAlias,
 		ServiceAPIGroup: svcAPIGroup,
+		metrics:         ackmetrics.NewMetrics(svcAlias),
 	}
 }
