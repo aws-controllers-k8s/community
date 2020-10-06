@@ -41,6 +41,8 @@ jobs:
         run: make build-ack-generate
       - name: build controller
         run: ./scripts/build-controller.sh $SERVICE
+        env:
+          SERVICE: ${{ matrix.service }}
       - name: execute e2e tests
         run: |
           export ACK_TEST_IAM_ROLE=Admin-K8s
