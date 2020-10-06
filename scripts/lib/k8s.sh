@@ -1,25 +1,68 @@
 #!/usr/bin/env bash
 
-ensure_controller_gen() {
-  if ! is_installed controller-gen; then
-    # Need this version of controller-gen to allow dangerous types and float
-    # type support
-    go get sigs.k8s.io/controller-tools/cmd/controller-gen@4a903ddb7005459a7baf4777c67244a74c91083d
-  else
-    minimum_req_version="v0.3.1"
-    # Don't overide the existing version let the user decide.
-    if ! is_min_controller_gen_version "$minimum_req_version"; then
-        echo "Existing version of controller-gen "`controller-gen --version`", minimum required is $minimum_req_version"
-        exit 1
-    fi
-  fi
+CONTROLLER_TOOLS_VERSION="v0.4.0"
 
+# ensure_controller_gen checks that the `controller-gen` binary is available on
+# the host system and if it is, that it matches the exact version that we
+# require in order to standardize the YAML manifests for CRDs and Kubernetes
+# Roles.
+#
+# If the locally-installed controller-gen does not match the required version,
+# prints an error message asking the user to uninstall it.
+#
+# NOTE: We use this technique of building using `go build` within a temp
+# directory because controller-tools does not have a binary release artifact
+# for controller-gen.
+#
+# See: https://github.com/kubernetes-sigs/controller-tools/issues/500
+ensure_controller_gen() {
+    if ! is_installed controller-gen; then
+        # GOBIN not always set... so default to installing into $GOPATH/bin if
+        # not...
+        __install_dir=${GOBIN:-$GOPATH/bin}
+        __install_path="$__install_dir/controller-gen"
+        __work_dir=$(mktemp -d /tmp/controller-gen-XXX)
+
+        cd "$__work_dir"
+
+        go mod init tmp
+        go get -d "sigs.k8s.io/controller-tools/cmd/controller-gen@${CONTROLLER_TOOLS_VERSION}"
+        go build -o "$__work_dir/controller-gen" sigs.k8s.io/controller-tools/cmd/controller-gen
+        mv "$__work_dir/controller-gen" "$__install_path"
+
+        rm -rf "$WORK_DIR"
+        echo "****************************************************************************"
+        echo "WARNING: You may need to reload your Bash shell and path. If you see an"
+        echo "         error like this following:"
+        echo ""
+        echo "Error: couldn't find github.com/aws/aws-sdk-go in the go.mod require block"
+        echo ""
+        echo "simply reload your Bash shell with \`exec bash\`" and then re-run whichever
+        echo "command you were running."
+        echo "****************************************************************************"
+    else
+        # Don't overide the existing version let the user decide.
+        if ! controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
+            echo "FAIL: Existing version of controller-gen "`controller-gen --version`", required version is $CONTROLLER_TOOLS_VERSION."
+            echo "FAIL: Please uninstall controller-gen and re-run this script, which will install the required version."
+            exit 1
+        fi
+    fi
 }
 
-is_min_controller_gen_version() {
-    currentver="$(controller-gen --version | cut -d' ' -f2)";
+# controller_gen_version_equals accepts a string version and returns 0 if the
+# installed version of controller-gen matches the supplied version, otherwise
+# returns 1
+#
+# Usage:
+#
+#   if controller_gen_version_equals "v0.4.0"; then
+#       echo "controller-gen is at version 0.4.0"
+#   fi
+controller_gen_version_equals() {
+    currentver="$(controller-gen --version | cut -d' ' -f2 | tr -d '\n')";
     requiredver="$1";
-    if [ "$(printf '%s\n' "$requiredver" "$currentver" | sort -V | head -n1)" = "$requiredver" ]; then
+    if [ "$currentver" = "$requiredver" ]; then
         return 0
     else
         return 1
