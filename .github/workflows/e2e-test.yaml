@@ -26,8 +26,8 @@ jobs:
          - elasticache
          - dynamodb
          - apigatewayv2
-      # The number of self-hosted runners...
-      max-parallel: 3
+      # Need to run e2e tests serially (on each runner) for now...
+      max-parallel: 1
     runs-on: self-hosted
     steps:
       - name: Set up Go 1.15
