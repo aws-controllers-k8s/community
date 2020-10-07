@@ -134,6 +134,9 @@ spec:
                 type: array
               transitEncryptionEnabled:
                 type: boolean
+            required:
+            - replicationGroupDescription
+            - replicationGroupID
             type: object
           status:
             description: ReplicationGroupStatus defines the observed state of ReplicationGroup

@@ -42,6 +42,8 @@ spec:
                 type: string
               stageName:
                 type: string
+            required:
+            - apiID
             type: object
           status:
             description: DeploymentStatus defines the observed state of Deployment

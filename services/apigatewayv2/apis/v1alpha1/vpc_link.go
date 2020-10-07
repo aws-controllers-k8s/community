@@ -22,10 +22,12 @@ import (
 
 // VPCLinkSpec defines the desired state of VPCLink
 type VPCLinkSpec struct {
-	Name             *string            `json:"name,omitempty"`
-	SecurityGroupIDs []*string          `json:"securityGroupIDs,omitempty"`
-	SubnetIDs        []*string          `json:"subnetIDs,omitempty"`
-	Tags             map[string]*string `json:"tags,omitempty"`
+	// +kubebuilder:validation:Required
+	Name             *string   `json:"name"`
+	SecurityGroupIDs []*string `json:"securityGroupIDs,omitempty"`
+	// +kubebuilder:validation:Required
+	SubnetIDs []*string          `json:"subnetIDs"`
+	Tags      map[string]*string `json:"tags,omitempty"`
 }
 
 // VPCLinkStatus defines the observed state of VPCLink

@@ -22,37 +22,39 @@ import (
 
 // ReplicationGroupSpec defines the desired state of ReplicationGroup
 type ReplicationGroupSpec struct {
-	AtRestEncryptionEnabled     *bool                     `json:"atRestEncryptionEnabled,omitempty"`
-	AuthToken                   *string                   `json:"authToken,omitempty"`
-	AutoMinorVersionUpgrade     *bool                     `json:"autoMinorVersionUpgrade,omitempty"`
-	AutomaticFailoverEnabled    *bool                     `json:"automaticFailoverEnabled,omitempty"`
-	CacheNodeType               *string                   `json:"cacheNodeType,omitempty"`
-	CacheParameterGroupName     *string                   `json:"cacheParameterGroupName,omitempty"`
-	CacheSecurityGroupNames     []*string                 `json:"cacheSecurityGroupNames,omitempty"`
-	CacheSubnetGroupName        *string                   `json:"cacheSubnetGroupName,omitempty"`
-	Engine                      *string                   `json:"engine,omitempty"`
-	EngineVersion               *string                   `json:"engineVersion,omitempty"`
-	GlobalReplicationGroupID    *string                   `json:"globalReplicationGroupID,omitempty"`
-	KMSKeyID                    *string                   `json:"kmsKeyID,omitempty"`
-	MultiAZEnabled              *bool                     `json:"multiAZEnabled,omitempty"`
-	NodeGroupConfiguration      []*NodeGroupConfiguration `json:"nodeGroupConfiguration,omitempty"`
-	NotificationTopicARN        *string                   `json:"notificationTopicARN,omitempty"`
-	NumCacheClusters            *int64                    `json:"numCacheClusters,omitempty"`
-	NumNodeGroups               *int64                    `json:"numNodeGroups,omitempty"`
-	Port                        *int64                    `json:"port,omitempty"`
-	PreferredCacheClusterAZs    []*string                 `json:"preferredCacheClusterAZs,omitempty"`
-	PreferredMaintenanceWindow  *string                   `json:"preferredMaintenanceWindow,omitempty"`
-	PrimaryClusterID            *string                   `json:"primaryClusterID,omitempty"`
-	ReplicasPerNodeGroup        *int64                    `json:"replicasPerNodeGroup,omitempty"`
-	ReplicationGroupDescription *string                   `json:"replicationGroupDescription,omitempty"`
-	ReplicationGroupID          *string                   `json:"replicationGroupID,omitempty"`
-	SecurityGroupIDs            []*string                 `json:"securityGroupIDs,omitempty"`
-	SnapshotARNs                []*string                 `json:"snapshotARNs,omitempty"`
-	SnapshotName                *string                   `json:"snapshotName,omitempty"`
-	SnapshotRetentionLimit      *int64                    `json:"snapshotRetentionLimit,omitempty"`
-	SnapshotWindow              *string                   `json:"snapshotWindow,omitempty"`
-	Tags                        []*Tag                    `json:"tags,omitempty"`
-	TransitEncryptionEnabled    *bool                     `json:"transitEncryptionEnabled,omitempty"`
+	AtRestEncryptionEnabled    *bool                     `json:"atRestEncryptionEnabled,omitempty"`
+	AuthToken                  *string                   `json:"authToken,omitempty"`
+	AutoMinorVersionUpgrade    *bool                     `json:"autoMinorVersionUpgrade,omitempty"`
+	AutomaticFailoverEnabled   *bool                     `json:"automaticFailoverEnabled,omitempty"`
+	CacheNodeType              *string                   `json:"cacheNodeType,omitempty"`
+	CacheParameterGroupName    *string                   `json:"cacheParameterGroupName,omitempty"`
+	CacheSecurityGroupNames    []*string                 `json:"cacheSecurityGroupNames,omitempty"`
+	CacheSubnetGroupName       *string                   `json:"cacheSubnetGroupName,omitempty"`
+	Engine                     *string                   `json:"engine,omitempty"`
+	EngineVersion              *string                   `json:"engineVersion,omitempty"`
+	GlobalReplicationGroupID   *string                   `json:"globalReplicationGroupID,omitempty"`
+	KMSKeyID                   *string                   `json:"kmsKeyID,omitempty"`
+	MultiAZEnabled             *bool                     `json:"multiAZEnabled,omitempty"`
+	NodeGroupConfiguration     []*NodeGroupConfiguration `json:"nodeGroupConfiguration,omitempty"`
+	NotificationTopicARN       *string                   `json:"notificationTopicARN,omitempty"`
+	NumCacheClusters           *int64                    `json:"numCacheClusters,omitempty"`
+	NumNodeGroups              *int64                    `json:"numNodeGroups,omitempty"`
+	Port                       *int64                    `json:"port,omitempty"`
+	PreferredCacheClusterAZs   []*string                 `json:"preferredCacheClusterAZs,omitempty"`
+	PreferredMaintenanceWindow *string                   `json:"preferredMaintenanceWindow,omitempty"`
+	PrimaryClusterID           *string                   `json:"primaryClusterID,omitempty"`
+	ReplicasPerNodeGroup       *int64                    `json:"replicasPerNodeGroup,omitempty"`
+	// +kubebuilder:validation:Required
+	ReplicationGroupDescription *string `json:"replicationGroupDescription"`
+	// +kubebuilder:validation:Required
+	ReplicationGroupID       *string   `json:"replicationGroupID"`
+	SecurityGroupIDs         []*string `json:"securityGroupIDs,omitempty"`
+	SnapshotARNs             []*string `json:"snapshotARNs,omitempty"`
+	SnapshotName             *string   `json:"snapshotName,omitempty"`
+	SnapshotRetentionLimit   *int64    `json:"snapshotRetentionLimit,omitempty"`
+	SnapshotWindow           *string   `json:"snapshotWindow,omitempty"`
+	Tags                     []*Tag    `json:"tags,omitempty"`
+	TransitEncryptionEnabled *bool     `json:"transitEncryptionEnabled,omitempty"`
 }
 
 // ReplicationGroupStatus defines the observed state of ReplicationGroup

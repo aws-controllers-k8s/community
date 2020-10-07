@@ -57,6 +57,8 @@ spec:
                 type: string
               objectLockEnabledForBucket:
                 type: boolean
+            required:
+            - name
             type: object
           status:
             description: BucketStatus defines the observed state of Bucket

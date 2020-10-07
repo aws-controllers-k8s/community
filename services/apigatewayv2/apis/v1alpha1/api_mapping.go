@@ -22,10 +22,13 @@ import (
 
 // APIMappingSpec defines the desired state of APIMapping
 type APIMappingSpec struct {
-	APIID         *string `json:"apiID,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID         *string `json:"apiID"`
 	APIMappingKey *string `json:"apiMappingKey,omitempty"`
-	DomainName    *string `json:"domainName,omitempty"`
-	Stage         *string `json:"stage,omitempty"`
+	// +kubebuilder:validation:Required
+	DomainName *string `json:"domainName"`
+	// +kubebuilder:validation:Required
+	Stage *string `json:"stage"`
 }
 
 // APIMappingStatus defines the observed state of APIMapping

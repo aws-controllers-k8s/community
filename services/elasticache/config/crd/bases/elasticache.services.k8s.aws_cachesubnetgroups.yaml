@@ -44,6 +44,10 @@ spec:
                 items:
                   type: string
                 type: array
+            required:
+            - cacheSubnetGroupDescription
+            - cacheSubnetGroupName
+            - subnetIDs
             type: object
           status:
             description: CacheSubnetGroupStatus defines the observed state of CacheSubnetGroup

@@ -16,7 +16,9 @@ import (
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Spec struct {
 	{{- range $fieldName, $field := .CRD.SpecFields }}
-	{{ $field.Names.Camel }} {{ $field.GoType }} `json:"{{ $field.Names.CamelLower }},omitempty"`
+	{{ if $field.IsRequired }} // +kubebuilder:validation:Required
+	{{ $field.Names.Camel }} {{ $field.GoType }} `json:"{{ $field.Names.CamelLower }}"`
+	{{- else }} {{ $field.Names.Camel }} {{ $field.GoType }} `json:"{{ $field.Names.CamelLower }},omitempty"` {{ end }}
 {{- end }}
 }
 

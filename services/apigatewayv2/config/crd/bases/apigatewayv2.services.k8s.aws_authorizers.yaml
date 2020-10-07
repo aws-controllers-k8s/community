@@ -68,6 +68,11 @@ spec:
                 type: object
               name:
                 type: string
+            required:
+            - apiID
+            - authorizerType
+            - identitySource
+            - name
             type: object
           status:
             description: AuthorizerStatus defines the observed state of Authorizer

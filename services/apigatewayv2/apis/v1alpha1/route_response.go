@@ -22,12 +22,15 @@ import (
 
 // RouteResponseSpec defines the desired state of RouteResponse
 type RouteResponseSpec struct {
-	APIID                    *string                          `json:"apiID,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                    *string                          `json:"apiID"`
 	ModelSelectionExpression *string                          `json:"modelSelectionExpression,omitempty"`
 	ResponseModels           map[string]*string               `json:"responseModels,omitempty"`
 	ResponseParameters       map[string]*ParameterConstraints `json:"responseParameters,omitempty"`
-	RouteID                  *string                          `json:"routeID,omitempty"`
-	RouteResponseKey         *string                          `json:"routeResponseKey,omitempty"`
+	// +kubebuilder:validation:Required
+	RouteID *string `json:"routeID"`
+	// +kubebuilder:validation:Required
+	RouteResponseKey *string `json:"routeResponseKey"`
 }
 
 // RouteResponseStatus defines the observed state of RouteResponse

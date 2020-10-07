@@ -22,10 +22,12 @@ import (
 
 // PlatformEndpointSpec defines the desired state of PlatformEndpoint
 type PlatformEndpointSpec struct {
-	Attributes             map[string]*string `json:"attributes,omitempty"`
-	CustomUserData         *string            `json:"customUserData,omitempty"`
-	PlatformApplicationARN *string            `json:"platformApplicationARN,omitempty"`
-	Token                  *string            `json:"token,omitempty"`
+	Attributes     map[string]*string `json:"attributes,omitempty"`
+	CustomUserData *string            `json:"customUserData,omitempty"`
+	// +kubebuilder:validation:Required
+	PlatformApplicationARN *string `json:"platformApplicationARN"`
+	// +kubebuilder:validation:Required
+	Token *string `json:"token"`
 }
 
 // PlatformEndpointStatus defines the observed state of PlatformEndpoint

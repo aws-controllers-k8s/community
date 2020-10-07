@@ -151,6 +151,10 @@ spec:
                       type: string
                   type: object
                 type: array
+            required:
+            - attributeDefinitions
+            - keySchema
+            - tableName
             type: object
           status:
             description: TableStatus defines the observed state of Table

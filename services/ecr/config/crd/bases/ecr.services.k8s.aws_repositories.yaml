@@ -61,6 +61,8 @@ spec:
                       type: string
                   type: object
                 type: array
+            required:
+            - repositoryName
             type: object
           status:
             description: RepositoryStatus defines the observed state of Repository

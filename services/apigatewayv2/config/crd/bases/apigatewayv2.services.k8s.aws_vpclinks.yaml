@@ -50,6 +50,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+            required:
+            - name
+            - subnetIDs
             type: object
           status:
             description: VPCLinkStatus defines the observed state of VPCLink

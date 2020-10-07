@@ -22,19 +22,21 @@ import (
 
 // APISpec defines the desired state of API
 type APISpec struct {
-	APIKeySelectionExpression *string            `json:"apiKeySelectionExpression,omitempty"`
-	CorsConfiguration         *Cors              `json:"corsConfiguration,omitempty"`
-	CredentialsARN            *string            `json:"credentialsARN,omitempty"`
-	Description               *string            `json:"description,omitempty"`
-	DisableExecuteAPIEndpoint *bool              `json:"disableExecuteAPIEndpoint,omitempty"`
-	DisableSchemaValidation   *bool              `json:"disableSchemaValidation,omitempty"`
-	Name                      *string            `json:"name,omitempty"`
-	ProtocolType              *string            `json:"protocolType,omitempty"`
-	RouteKey                  *string            `json:"routeKey,omitempty"`
-	RouteSelectionExpression  *string            `json:"routeSelectionExpression,omitempty"`
-	Tags                      map[string]*string `json:"tags,omitempty"`
-	Target                    *string            `json:"target,omitempty"`
-	Version                   *string            `json:"version,omitempty"`
+	APIKeySelectionExpression *string `json:"apiKeySelectionExpression,omitempty"`
+	CorsConfiguration         *Cors   `json:"corsConfiguration,omitempty"`
+	CredentialsARN            *string `json:"credentialsARN,omitempty"`
+	Description               *string `json:"description,omitempty"`
+	DisableExecuteAPIEndpoint *bool   `json:"disableExecuteAPIEndpoint,omitempty"`
+	DisableSchemaValidation   *bool   `json:"disableSchemaValidation,omitempty"`
+	// +kubebuilder:validation:Required
+	Name *string `json:"name"`
+	// +kubebuilder:validation:Required
+	ProtocolType             *string            `json:"protocolType"`
+	RouteKey                 *string            `json:"routeKey,omitempty"`
+	RouteSelectionExpression *string            `json:"routeSelectionExpression,omitempty"`
+	Tags                     map[string]*string `json:"tags,omitempty"`
+	Target                   *string            `json:"target,omitempty"`
+	Version                  *string            `json:"version,omitempty"`
 }
 
 // APIStatus defines the observed state of API

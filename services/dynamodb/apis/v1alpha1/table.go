@@ -22,16 +22,19 @@ import (
 
 // TableSpec defines the desired state of Table
 type TableSpec struct {
-	AttributeDefinitions   []*AttributeDefinition  `json:"attributeDefinitions,omitempty"`
+	// +kubebuilder:validation:Required
+	AttributeDefinitions   []*AttributeDefinition  `json:"attributeDefinitions"`
 	BillingMode            *string                 `json:"billingMode,omitempty"`
 	GlobalSecondaryIndexes []*GlobalSecondaryIndex `json:"globalSecondaryIndexes,omitempty"`
-	KeySchema              []*KeySchemaElement     `json:"keySchema,omitempty"`
-	LocalSecondaryIndexes  []*LocalSecondaryIndex  `json:"localSecondaryIndexes,omitempty"`
-	ProvisionedThroughput  *ProvisionedThroughput  `json:"provisionedThroughput,omitempty"`
-	SSESpecification       *SSESpecification       `json:"sseSpecification,omitempty"`
-	StreamSpecification    *StreamSpecification    `json:"streamSpecification,omitempty"`
-	TableName              *string                 `json:"tableName,omitempty"`
-	Tags                   []*Tag                  `json:"tags,omitempty"`
+	// +kubebuilder:validation:Required
+	KeySchema             []*KeySchemaElement    `json:"keySchema"`
+	LocalSecondaryIndexes []*LocalSecondaryIndex `json:"localSecondaryIndexes,omitempty"`
+	ProvisionedThroughput *ProvisionedThroughput `json:"provisionedThroughput,omitempty"`
+	SSESpecification      *SSESpecification      `json:"sseSpecification,omitempty"`
+	StreamSpecification   *StreamSpecification   `json:"streamSpecification,omitempty"`
+	// +kubebuilder:validation:Required
+	TableName *string `json:"tableName"`
+	Tags      []*Tag  `json:"tags,omitempty"`
 }
 
 // TableStatus defines the observed state of Table

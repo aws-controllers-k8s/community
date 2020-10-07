@@ -22,17 +22,19 @@ import (
 
 // StageSpec defines the desired state of Stage
 type StageSpec struct {
-	AccessLogSettings    *AccessLogSettings        `json:"accessLogSettings,omitempty"`
-	APIID                *string                   `json:"apiID,omitempty"`
+	AccessLogSettings *AccessLogSettings `json:"accessLogSettings,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                *string                   `json:"apiID"`
 	AutoDeploy           *bool                     `json:"autoDeploy,omitempty"`
 	ClientCertificateID  *string                   `json:"clientCertificateID,omitempty"`
 	DefaultRouteSettings *RouteSettings            `json:"defaultRouteSettings,omitempty"`
 	DeploymentID         *string                   `json:"deploymentID,omitempty"`
 	Description          *string                   `json:"description,omitempty"`
 	RouteSettings        map[string]*RouteSettings `json:"routeSettings,omitempty"`
-	StageName            *string                   `json:"stageName,omitempty"`
-	StageVariables       map[string]*string        `json:"stageVariables,omitempty"`
-	Tags                 map[string]*string        `json:"tags,omitempty"`
+	// +kubebuilder:validation:Required
+	StageName      *string            `json:"stageName"`
+	StageVariables map[string]*string `json:"stageVariables,omitempty"`
+	Tags           map[string]*string `json:"tags,omitempty"`
 }
 
 // StageStatus defines the observed state of Stage

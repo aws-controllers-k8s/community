@@ -59,6 +59,9 @@ spec:
                 type: string
               successFeedbackSampleRate:
                 type: string
+            required:
+            - name
+            - platform
             type: object
           status:
             description: PlatformApplicationStatus defines the observed state of PlatformApplication
