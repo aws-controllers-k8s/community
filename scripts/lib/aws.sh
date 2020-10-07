@@ -57,8 +57,6 @@ generate_aws_temp_creds() {
     exit 1
   fi
 
-  printf "Running aws sts assume-role --role-arn %s --role-session-name tmp-role-%s --duration-seconds 900", "$AWS_ROLE_ARN", "$__uuid "
-
   JSON=$(aws sts assume-role \
            --role-arn "$AWS_ROLE_ARN"  \
            --role-session-name tmp-role-"$__uuid" \
