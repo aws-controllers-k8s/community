@@ -90,9 +90,9 @@ func (rm *resourceManager) diffReplicasPerNodeGroup(
 
 	for _, latestShard := range latestStatus.NodeGroups {
 		latestReplicaCount := 0
-		for _, latestShardMember := range latestShard.NodeGroupMembers {
-			if latestShardMember.CurrentRole != nil && *latestShardMember.CurrentRole == "replica" {
-				latestReplicaCount++
+		if latestShard.NodeGroupMembers != nil {
+			if len(latestShard.NodeGroupMembers) > 0 {
+				latestReplicaCount = len(latestShard.NodeGroupMembers) - 1
 			}
 		}
 		if desiredReplicaCount := int(*desiredSpec.ReplicasPerNodeGroup); desiredReplicaCount != latestReplicaCount {
@@ -125,9 +125,9 @@ func (rm *resourceManager) diffReplicasNodeGroupConfiguration(
 			continue
 		}
 		latestReplicaCount := 0
-		for _, latestShardMember := range latestShard.NodeGroupMembers {
-			if latestShardMember.CurrentRole != nil && *latestShardMember.CurrentRole == "replica" {
-				latestReplicaCount++
+		if latestShard.NodeGroupMembers != nil {
+			if len(latestShard.NodeGroupMembers) > 0 {
+				latestReplicaCount = len(latestShard.NodeGroupMembers) - 1
 			}
 		}
 		latestReplicaCounts[*latestShard.NodeGroupID] = latestReplicaCount
