@@ -386,8 +386,14 @@ func (rm *resourceManager) newUpdateShardConfigurationRequestPayload(
 	decrease := desiredShardsCount != nil && latestShardsCount != nil && *desiredShardsCount < *latestShardsCount
 
 	if increase {
-		res.SetReshardingConfiguration(shardsConfig)
+		if len(shardsConfig) > 0 {
+			res.SetReshardingConfiguration(shardsConfig)
+		}
 	} else if decrease {
+		if len(shardsToRetain) == 0 {
+			return nil, fmt.Errorf("Could not determine NodeGroups to retain while preparing for decrease nodegroups. " +
+				"Consider specifying Spec.NodeGroupConfiguration details to resolve this error.")
+		}
 		res.SetNodeGroupsToRetain(shardsToRetain)
 	}
 
