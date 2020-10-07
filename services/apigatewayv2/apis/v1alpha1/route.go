@@ -22,18 +22,20 @@ import (
 
 // RouteSpec defines the desired state of Route
 type RouteSpec struct {
-	APIID                            *string                          `json:"apiID,omitempty"`
-	APIKeyRequired                   *bool                            `json:"apiKeyRequired,omitempty"`
-	AuthorizationScopes              []*string                        `json:"authorizationScopes,omitempty"`
-	AuthorizationType                *string                          `json:"authorizationType,omitempty"`
-	AuthorizerID                     *string                          `json:"authorizerID,omitempty"`
-	ModelSelectionExpression         *string                          `json:"modelSelectionExpression,omitempty"`
-	OperationName                    *string                          `json:"operationName,omitempty"`
-	RequestModels                    map[string]*string               `json:"requestModels,omitempty"`
-	RequestParameters                map[string]*ParameterConstraints `json:"requestParameters,omitempty"`
-	RouteKey                         *string                          `json:"routeKey,omitempty"`
-	RouteResponseSelectionExpression *string                          `json:"routeResponseSelectionExpression,omitempty"`
-	Target                           *string                          `json:"target,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                    *string                          `json:"apiID"`
+	APIKeyRequired           *bool                            `json:"apiKeyRequired,omitempty"`
+	AuthorizationScopes      []*string                        `json:"authorizationScopes,omitempty"`
+	AuthorizationType        *string                          `json:"authorizationType,omitempty"`
+	AuthorizerID             *string                          `json:"authorizerID,omitempty"`
+	ModelSelectionExpression *string                          `json:"modelSelectionExpression,omitempty"`
+	OperationName            *string                          `json:"operationName,omitempty"`
+	RequestModels            map[string]*string               `json:"requestModels,omitempty"`
+	RequestParameters        map[string]*ParameterConstraints `json:"requestParameters,omitempty"`
+	// +kubebuilder:validation:Required
+	RouteKey                         *string `json:"routeKey"`
+	RouteResponseSelectionExpression *string `json:"routeResponseSelectionExpression,omitempty"`
+	Target                           *string `json:"target,omitempty"`
 }
 
 // RouteStatus defines the observed state of Route

@@ -45,6 +45,9 @@ spec:
                       type: string
                   type: object
                 type: array
+            required:
+            - globalTableName
+            - replicationGroup
             type: object
           status:
             description: GlobalTableStatus defines the observed state of GlobalTable

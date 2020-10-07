@@ -22,8 +22,10 @@ import (
 
 // GlobalTableSpec defines the desired state of GlobalTable
 type GlobalTableSpec struct {
-	GlobalTableName  *string    `json:"globalTableName,omitempty"`
-	ReplicationGroup []*Replica `json:"replicationGroup,omitempty"`
+	// +kubebuilder:validation:Required
+	GlobalTableName *string `json:"globalTableName"`
+	// +kubebuilder:validation:Required
+	ReplicationGroup []*Replica `json:"replicationGroup"`
 }
 
 // GlobalTableStatus defines the observed state of GlobalTable

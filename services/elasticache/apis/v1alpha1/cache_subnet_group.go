@@ -22,9 +22,12 @@ import (
 
 // CacheSubnetGroupSpec defines the desired state of CacheSubnetGroup
 type CacheSubnetGroupSpec struct {
-	CacheSubnetGroupDescription *string   `json:"cacheSubnetGroupDescription,omitempty"`
-	CacheSubnetGroupName        *string   `json:"cacheSubnetGroupName,omitempty"`
-	SubnetIDs                   []*string `json:"subnetIDs,omitempty"`
+	// +kubebuilder:validation:Required
+	CacheSubnetGroupDescription *string `json:"cacheSubnetGroupDescription"`
+	// +kubebuilder:validation:Required
+	CacheSubnetGroupName *string `json:"cacheSubnetGroupName"`
+	// +kubebuilder:validation:Required
+	SubnetIDs []*string `json:"subnetIDs"`
 }
 
 // CacheSubnetGroupStatus defines the observed state of CacheSubnetGroup

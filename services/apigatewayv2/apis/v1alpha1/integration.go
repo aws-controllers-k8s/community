@@ -22,15 +22,17 @@ import (
 
 // IntegrationSpec defines the desired state of Integration
 type IntegrationSpec struct {
-	APIID                       *string            `json:"apiID,omitempty"`
-	ConnectionID                *string            `json:"connectionID,omitempty"`
-	ConnectionType              *string            `json:"connectionType,omitempty"`
-	ContentHandlingStrategy     *string            `json:"contentHandlingStrategy,omitempty"`
-	CredentialsARN              *string            `json:"credentialsARN,omitempty"`
-	Description                 *string            `json:"description,omitempty"`
-	IntegrationMethod           *string            `json:"integrationMethod,omitempty"`
-	IntegrationSubtype          *string            `json:"integrationSubtype,omitempty"`
-	IntegrationType             *string            `json:"integrationType,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                   *string `json:"apiID"`
+	ConnectionID            *string `json:"connectionID,omitempty"`
+	ConnectionType          *string `json:"connectionType,omitempty"`
+	ContentHandlingStrategy *string `json:"contentHandlingStrategy,omitempty"`
+	CredentialsARN          *string `json:"credentialsARN,omitempty"`
+	Description             *string `json:"description,omitempty"`
+	IntegrationMethod       *string `json:"integrationMethod,omitempty"`
+	IntegrationSubtype      *string `json:"integrationSubtype,omitempty"`
+	// +kubebuilder:validation:Required
+	IntegrationType             *string            `json:"integrationType"`
 	IntegrationURI              *string            `json:"integrationURI,omitempty"`
 	PassthroughBehavior         *string            `json:"passthroughBehavior,omitempty"`
 	PayloadFormatVersion        *string            `json:"payloadFormatVersion,omitempty"`

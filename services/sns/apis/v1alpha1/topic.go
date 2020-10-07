@@ -25,9 +25,10 @@ type TopicSpec struct {
 	DeliveryPolicy *string `json:"deliveryPolicy,omitempty"`
 	DisplayName    *string `json:"displayName,omitempty"`
 	KMSMasterKeyID *string `json:"kmsMasterKeyID,omitempty"`
-	Name           *string `json:"name,omitempty"`
-	Policy         *string `json:"policy,omitempty"`
-	Tags           []*Tag  `json:"tags,omitempty"`
+	// +kubebuilder:validation:Required
+	Name   *string `json:"name"`
+	Policy *string `json:"policy,omitempty"`
+	Tags   []*Tag  `json:"tags,omitempty"`
 }
 
 // TopicStatus defines the observed state of Topic

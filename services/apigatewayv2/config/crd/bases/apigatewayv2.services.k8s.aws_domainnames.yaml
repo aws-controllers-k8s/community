@@ -73,6 +73,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+            required:
+            - domainName
             type: object
           status:
             description: DomainNameStatus defines the observed state of DomainName

@@ -46,6 +46,10 @@ spec:
                 type: string
               schema:
                 type: string
+            required:
+            - apiID
+            - name
+            - schema
             type: object
           status:
             description: ModelStatus defines the observed state of Model

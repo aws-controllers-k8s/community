@@ -93,6 +93,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+            required:
+            - apiID
+            - stageName
             type: object
           status:
             description: StageStatus defines the observed state of Stage

@@ -55,6 +55,10 @@ spec:
                 type: object
               templateSelectionExpression:
                 type: string
+            required:
+            - apiID
+            - integrationID
+            - integrationResponseKey
             type: object
           status:
             description: IntegrationResponseStatus defines the observed state of IntegrationResponse

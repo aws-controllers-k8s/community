@@ -22,8 +22,10 @@ import (
 
 // BackupSpec defines the desired state of Backup
 type BackupSpec struct {
-	BackupName *string `json:"backupName,omitempty"`
-	TableName  *string `json:"tableName,omitempty"`
+	// +kubebuilder:validation:Required
+	BackupName *string `json:"backupName"`
+	// +kubebuilder:validation:Required
+	TableName *string `json:"tableName"`
 }
 
 // BackupStatus defines the observed state of Backup

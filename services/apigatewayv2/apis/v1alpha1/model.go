@@ -22,11 +22,14 @@ import (
 
 // ModelSpec defines the desired state of Model
 type ModelSpec struct {
-	APIID       *string `json:"apiID,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID       *string `json:"apiID"`
 	ContentType *string `json:"contentType,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Schema      *string `json:"schema,omitempty"`
+	// +kubebuilder:validation:Required
+	Name *string `json:"name"`
+	// +kubebuilder:validation:Required
+	Schema *string `json:"schema"`
 }
 
 // ModelStatus defines the observed state of Model

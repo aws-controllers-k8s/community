@@ -22,10 +22,13 @@ import (
 
 // IntegrationResponseSpec defines the desired state of IntegrationResponse
 type IntegrationResponseSpec struct {
-	APIID                       *string            `json:"apiID,omitempty"`
-	ContentHandlingStrategy     *string            `json:"contentHandlingStrategy,omitempty"`
-	IntegrationID               *string            `json:"integrationID,omitempty"`
-	IntegrationResponseKey      *string            `json:"integrationResponseKey,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                   *string `json:"apiID"`
+	ContentHandlingStrategy *string `json:"contentHandlingStrategy,omitempty"`
+	// +kubebuilder:validation:Required
+	IntegrationID *string `json:"integrationID"`
+	// +kubebuilder:validation:Required
+	IntegrationResponseKey      *string            `json:"integrationResponseKey"`
 	ResponseParameters          map[string]*string `json:"responseParameters,omitempty"`
 	ResponseTemplates           map[string]*string `json:"responseTemplates,omitempty"`
 	TemplateSelectionExpression *string            `json:"templateSelectionExpression,omitempty"`

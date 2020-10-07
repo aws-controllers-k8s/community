@@ -44,6 +44,10 @@ spec:
                 type: string
               stage:
                 type: string
+            required:
+            - apiID
+            - domainName
+            - stage
             type: object
           status:
             description: APIMappingStatus defines the observed state of APIMapping

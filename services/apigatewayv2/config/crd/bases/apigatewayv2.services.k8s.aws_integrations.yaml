@@ -78,6 +78,9 @@ spec:
                   serverNameToVerify:
                     type: string
                 type: object
+            required:
+            - apiID
+            - integrationType
             type: object
           status:
             description: IntegrationStatus defines the observed state of Integration

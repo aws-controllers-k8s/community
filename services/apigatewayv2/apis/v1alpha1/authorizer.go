@@ -22,17 +22,21 @@ import (
 
 // AuthorizerSpec defines the desired state of Authorizer
 type AuthorizerSpec struct {
-	APIID                          *string           `json:"apiID,omitempty"`
-	AuthorizerCredentialsARN       *string           `json:"authorizerCredentialsARN,omitempty"`
-	AuthorizerPayloadFormatVersion *string           `json:"authorizerPayloadFormatVersion,omitempty"`
-	AuthorizerResultTtlInSeconds   *int64            `json:"authorizerResultTtlInSeconds,omitempty"`
-	AuthorizerType                 *string           `json:"authorizerType,omitempty"`
-	AuthorizerURI                  *string           `json:"authorizerURI,omitempty"`
-	EnableSimpleResponses          *bool             `json:"enableSimpleResponses,omitempty"`
-	IDentitySource                 []*string         `json:"identitySource,omitempty"`
-	IDentityValidationExpression   *string           `json:"identityValidationExpression,omitempty"`
-	JWTConfiguration               *JWTConfiguration `json:"jwtConfiguration,omitempty"`
-	Name                           *string           `json:"name,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID                          *string `json:"apiID"`
+	AuthorizerCredentialsARN       *string `json:"authorizerCredentialsARN,omitempty"`
+	AuthorizerPayloadFormatVersion *string `json:"authorizerPayloadFormatVersion,omitempty"`
+	AuthorizerResultTtlInSeconds   *int64  `json:"authorizerResultTtlInSeconds,omitempty"`
+	// +kubebuilder:validation:Required
+	AuthorizerType        *string `json:"authorizerType"`
+	AuthorizerURI         *string `json:"authorizerURI,omitempty"`
+	EnableSimpleResponses *bool   `json:"enableSimpleResponses,omitempty"`
+	// +kubebuilder:validation:Required
+	IDentitySource               []*string         `json:"identitySource"`
+	IDentityValidationExpression *string           `json:"identityValidationExpression,omitempty"`
+	JWTConfiguration             *JWTConfiguration `json:"jwtConfiguration,omitempty"`
+	// +kubebuilder:validation:Required
+	Name *string `json:"name"`
 }
 
 // AuthorizerStatus defines the observed state of Authorizer

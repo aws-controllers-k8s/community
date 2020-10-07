@@ -22,7 +22,8 @@ import (
 
 // DomainNameSpec defines the desired state of DomainName
 type DomainNameSpec struct {
-	DomainName               *string                       `json:"domainName,omitempty"`
+	// +kubebuilder:validation:Required
+	DomainName               *string                       `json:"domainName"`
 	DomainNameConfigurations []*DomainNameConfiguration    `json:"domainNameConfigurations,omitempty"`
 	MutualTLSAuthentication  *MutualTLSAuthenticationInput `json:"mutualTLSAuthentication,omitempty"`
 	Tags                     map[string]*string            `json:"tags,omitempty"`

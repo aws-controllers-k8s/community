@@ -22,13 +22,15 @@ import (
 
 // PlatformApplicationSpec defines the desired state of PlatformApplication
 type PlatformApplicationSpec struct {
-	EventDeliveryFailure      *string `json:"eventDeliveryFailure,omitempty"`
-	EventEndpointCreated      *string `json:"eventEndpointCreated,omitempty"`
-	EventEndpointDeleted      *string `json:"eventEndpointDeleted,omitempty"`
-	EventEndpointUpdated      *string `json:"eventEndpointUpdated,omitempty"`
-	FailureFeedbackRoleARN    *string `json:"failureFeedbackRoleARN,omitempty"`
-	Name                      *string `json:"name,omitempty"`
-	Platform                  *string `json:"platform,omitempty"`
+	EventDeliveryFailure   *string `json:"eventDeliveryFailure,omitempty"`
+	EventEndpointCreated   *string `json:"eventEndpointCreated,omitempty"`
+	EventEndpointDeleted   *string `json:"eventEndpointDeleted,omitempty"`
+	EventEndpointUpdated   *string `json:"eventEndpointUpdated,omitempty"`
+	FailureFeedbackRoleARN *string `json:"failureFeedbackRoleARN,omitempty"`
+	// +kubebuilder:validation:Required
+	Name *string `json:"name"`
+	// +kubebuilder:validation:Required
+	Platform                  *string `json:"platform"`
 	PlatformCredential        *string `json:"platformCredential,omitempty"`
 	PlatformPrincipal         *string `json:"platformPrincipal,omitempty"`
 	SuccessFeedbackRoleARN    *string `json:"successFeedbackRoleARN,omitempty"`

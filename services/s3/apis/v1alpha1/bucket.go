@@ -22,15 +22,16 @@ import (
 
 // BucketSpec defines the desired state of Bucket
 type BucketSpec struct {
-	ACL                        *string                    `json:"acl,omitempty"`
-	CreateBucketConfiguration  *CreateBucketConfiguration `json:"createBucketConfiguration,omitempty"`
-	GrantFullControl           *string                    `json:"grantFullControl,omitempty"`
-	GrantRead                  *string                    `json:"grantRead,omitempty"`
-	GrantReadACP               *string                    `json:"grantReadACP,omitempty"`
-	GrantWrite                 *string                    `json:"grantWrite,omitempty"`
-	GrantWriteACP              *string                    `json:"grantWriteACP,omitempty"`
-	Name                       *string                    `json:"name,omitempty"`
-	ObjectLockEnabledForBucket *bool                      `json:"objectLockEnabledForBucket,omitempty"`
+	ACL                       *string                    `json:"acl,omitempty"`
+	CreateBucketConfiguration *CreateBucketConfiguration `json:"createBucketConfiguration,omitempty"`
+	GrantFullControl          *string                    `json:"grantFullControl,omitempty"`
+	GrantRead                 *string                    `json:"grantRead,omitempty"`
+	GrantReadACP              *string                    `json:"grantReadACP,omitempty"`
+	GrantWrite                *string                    `json:"grantWrite,omitempty"`
+	GrantWriteACP             *string                    `json:"grantWriteACP,omitempty"`
+	// +kubebuilder:validation:Required
+	Name                       *string `json:"name"`
+	ObjectLockEnabledForBucket *bool   `json:"objectLockEnabledForBucket,omitempty"`
 }
 
 // BucketStatus defines the observed state of Bucket

@@ -116,10 +116,11 @@ var (
 )
 
 type Names struct {
-	Original   string
-	Camel      string
-	CamelLower string
-	Snake      string
+	ModelOrginal string
+	Original     string
+	Camel        string
+	CamelLower   string
+	Snake        string
 }
 
 func New(original string) Names {

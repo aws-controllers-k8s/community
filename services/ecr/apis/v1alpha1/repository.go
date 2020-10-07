@@ -25,8 +25,9 @@ type RepositorySpec struct {
 	EncryptionConfiguration    *EncryptionConfiguration    `json:"encryptionConfiguration,omitempty"`
 	ImageScanningConfiguration *ImageScanningConfiguration `json:"imageScanningConfiguration,omitempty"`
 	ImageTagMutability         *string                     `json:"imageTagMutability,omitempty"`
-	RepositoryName             *string                     `json:"repositoryName,omitempty"`
-	Tags                       []*Tag                      `json:"tags,omitempty"`
+	// +kubebuilder:validation:Required
+	RepositoryName *string `json:"repositoryName"`
+	Tags           []*Tag  `json:"tags,omitempty"`
 }
 
 // RepositoryStatus defines the observed state of Repository

@@ -55,6 +55,10 @@ spec:
                 type: string
               routeResponseKey:
                 type: string
+            required:
+            - apiID
+            - routeID
+            - routeResponseKey
             type: object
           status:
             description: RouteResponseStatus defines the observed state of RouteResponse

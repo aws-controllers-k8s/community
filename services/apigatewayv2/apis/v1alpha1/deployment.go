@@ -22,7 +22,8 @@ import (
 
 // DeploymentSpec defines the desired state of Deployment
 type DeploymentSpec struct {
-	APIID       *string `json:"apiID,omitempty"`
+	// +kubebuilder:validation:Required
+	APIID       *string `json:"apiID"`
 	Description *string `json:"description,omitempty"`
 	StageName   *string `json:"stageName,omitempty"`
 }

@@ -40,6 +40,9 @@ spec:
                 type: string
               tableName:
                 type: string
+            required:
+            - backupName
+            - tableName
             type: object
           status:
             description: BackupStatus defines the observed state of Backup
