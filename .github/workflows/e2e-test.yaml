@@ -26,8 +26,6 @@ jobs:
          - elasticache
          - dynamodb
          - apigatewayv2
-      # Need to run e2e tests serially (on each runner) for now...
-      max-parallel: 1
     runs-on: self-hosted
     steps:
       - name: Set up Go 1.15
@@ -45,10 +43,7 @@ jobs:
           SERVICE: ${{ matrix.service }}
       - name: execute e2e tests
         run: |
-          export ACK_TEST_IAM_ROLE=Admin-K8s
-          export ACK_TEST_PRINCIPAL_ARN=$(aws sts get-caller-identity --query 'Arn' --output text)
-          export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-          export AWS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
+          export AWS_ROLE_ARN=${{ secrets.AWS_ROLE_ARN }}
           ./scripts/kind-build-test.sh -s $SERVICE -r $AWS_ROLE_ARN
         env:
           SERVICE: ${{ matrix.service }}
