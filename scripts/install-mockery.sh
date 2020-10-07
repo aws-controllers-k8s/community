@@ -14,12 +14,12 @@ OS=$(uname -s)
 ARCH=$(uname -m)
 VERSION=2.2.2
 MOCKERY_RELEASE_URL="https://github.com/vektra/mockery/releases/download/v${VERSION}/mockery_${VERSION}_${OS}_${ARCH}.tar.gz"
-source "$SCRIPTS_DIR/lib/common.sh"
 
-if ! is_installed mockery; then
+if [[ ! -f $BIN_DIR/mockery ]]; then
+    echo -n "Installing mockery into bin/mockery ... "
     mkdir -p $BIN_DIR
     cd $BIN_DIR
     wget -q --no-check-certificate --content-disposition $MOCKERY_RELEASE_URL -O mockery.tar.gz
-    tar -xvf mockery.tar.gz
-    export PATH="$PATH:$BIN_DIR"
+    tar -xf mockery.tar.gz
+    echo "ok."
 fi
