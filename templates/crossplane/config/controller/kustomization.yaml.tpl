@@ -1,0 +1,8 @@
+resources:
+- deployment.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: controller
+  newName: ack-{{ .ServiceIDClean }}-controller
+  newTag: latest
