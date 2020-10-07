@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: checkout code
         uses: actions/checkout@v2
-      - name: install mockery
-        run: ./scripts/install_mockery.sh
       - name: make test
         run: make test
 

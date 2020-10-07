@@ -9,7 +9,6 @@ DOCKER_PASSWORD ?= ""
 PKGS=$(sort $(dir $(wildcard pkg/*/*/)))
 MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
-MOCKERY_BIN=$(shell which mockery || "./bin/mockery")
 AWS_SERVICE=$(shell echo $(SERVICE) | tr '[:upper:]' '[:lower:]')
 
 # Build ldflags
@@ -58,10 +57,15 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 	done
 	@rm -rf build/tmp-test*
 
-mocks: $(MOCKS)	## Run mock tests
+install-mockery:
+	@scripts/install-mockery.sh
+
+mocks: install-mockery $(MOCKS)	## Run mock tests
 
 $(MOCKS): mocks/% : %
-	${MOCKERY_BIN} --tags=codegen --case=underscore --output=$@ --dir=$^ --all
+	@echo -n "building mocks for $^... "
+	@bin/mockery --quiet --all --tags=codegen --case=underscore --output=$@ --dir=$^
+	@echo "ok."
 
 help:           ## Show this help.
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' \
