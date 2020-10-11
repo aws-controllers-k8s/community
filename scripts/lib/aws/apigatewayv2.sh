@@ -1,15 +1,22 @@
 #!/usr/bin/env bash
 
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ROOT_DIR="$THIS_DIR/../../.."
+SCRIPTS_DIR="$ROOT_DIR/scripts"
+
+. $SCRIPTS_DIR/lib/common.sh
+. $SCRIPTS_DIR/lib/aws.sh
+
 ###########################################
 # API
 ###########################################
-# create_http_api_and_validate creates an http-api and validates that api
+# apigwv2_create_http_api_and_validate creates an http-api and validates that api
 # exists in AWS.
 # create_http_api_and_validate accepts one required parameter api_name
-create_http_api_and_validate() {
+apigwv2_create_http_api_and_validate() {
   if [[ $# -ne 1 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_http_api_and_validate"
-    echo "Usage: create_http_api_and_validate api_name"
+    echo "FATAL: Wrong number of arguments passed to create_http_api_and_validate"
+    echo "Usage: apigwv2_create_http_api_and_validate api_name"
     exit 1
   fi
 
@@ -35,17 +42,17 @@ EOF
 
   ## validate that api was created using apigatewayv2 get-api operation
   debug_msg "apigatewayv2 get-api with api-id $__api_id"
-  aws apigatewayv2 get-api --api-id="$__api_id" > /dev/null
+  daws apigatewayv2 get-api --api-id="$__api_id" > /dev/null
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-api --api-id=$__api_id' but got $?" || exit 1
 }
 
-# delete_http_api_and_validate deletes an http-api and validates that api
+# apigwv2_delete_http_api_and_validate deletes an http-api and validates that api
 # does not exist anymore in AWS.
 # delete_http_api_and_validate accepts one required parameter api_name
-delete_http_api_and_validate() {
+apigwv2_delete_http_api_and_validate() {
   if [[ $# -ne 1 ]]; then
-    echo "FAIL: Wrong number of arguments passed to delete_http_api_and_validate"
-    echo "Usage: delete_http_api_and_validate api_name"
+    echo "FATAL: Wrong number of arguments passed to delete_http_api_and_validate"
+    echo "Usage: apigwv2_delete_http_api_and_validate api_name"
     exit 1
   fi
 
@@ -59,10 +66,10 @@ delete_http_api_and_validate() {
 
   #validate that api was deleted using apigatewayv2 get-api operation
   debug_msg "get-api with api-id $__api_id"
-  aws apigatewayv2 get-api --api-id="$__api_id" > /dev/null 2>&1
+  daws apigatewayv2 get-api --api-id="$__api_id" > /dev/null 2>&1
   local __status=$?
   if [[ $__status -ne 255 && $__status -ne 254 ]]; then
-    echo "FAIL: Expected not-found status code from 'apigatewayv2 get-api --api-id=$__api_id' but got $__status"
+    echo "FATAL: Expected not-found status code from 'apigatewayv2 get-api --api-id=$__api_id' but got $__status"
     exit 1
   fi
 }
@@ -70,13 +77,13 @@ delete_http_api_and_validate() {
 ###########################################
 # INTEGRATION
 ###########################################
-# create_integration_and_validate creates an http-api-integration and validates that integration
+# apigwv2_create_integration_and_validate creates an http-api-integration and validates that integration
 # is existing in AWS.
 # create_integration_and_validate accepts two required parameters. api_name and integration_name
-create_integration_and_validate() {
+apigwv2_create_integration_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_integration_and_validate"
-    echo "Usage: create_integration_and_validate api_name integration_name"
+    echo "FATAL: Wrong number of arguments passed to create_integration_and_validate"
+    echo "Usage: apigwv2_create_integration_and_validate api_name integration_name"
     exit 1
   fi
   local __api_name="$1"
@@ -107,17 +114,17 @@ EOF
 
   ## validate that integration was created using apigatewayv2 get-integration operation
   debug_msg "apigatewayv2 get-integration with api-id $__api_id and integration_id $__integration_id"
-  aws apigatewayv2 get-integration --api-id="$__api_id" --integration-id="$__integration_id" > /dev/null
+  daws apigatewayv2 get-integration --api-id="$__api_id" --integration-id="$__integration_id" > /dev/null
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-integration --api-id=$__api_id --integration-id=$__integration_id' but got $?" || exit 1
 }
 
-# delete_integration_and_validate deletes an http-api-integration and validates that integration
+# apigwv2_delete_integration_and_validate deletes an http-api-integration and validates that integration
 # does not exist in AWS anymore.
 # delete_integration_and_validate accepts two required parameters. api_name and integration_name
-delete_integration_and_validate() {
+apigwv2_delete_integration_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to delete_integration_and_validate"
-    echo "Usage: delete_integration_and_validate api_name integration_name"
+    echo "FATAL: Wrong number of arguments passed to delete_integration_and_validate"
+    echo "Usage: apigwv2_delete_integration_and_validate api_name integration_name"
     exit 1
   fi
   local __api_name="$1"
@@ -134,10 +141,10 @@ delete_integration_and_validate() {
 
   #validate that integration was deleted using apigatewayv2 get-integration operation
   debug_msg "get-integration with api-id $__api_id and integration_id $__integration_id"
-  aws apigatewayv2 get-integration --api-id="$__api_id" --integration-id="$__integration_id" >/dev/null 2>&1
+  daws apigatewayv2 get-integration --api-id="$__api_id" --integration-id="$__integration_id" >/dev/null 2>&1
   local __status=$?
   if [[ $__status -ne 255 && $__status -ne 254 ]]; then
-    echo "FAIL: Expected not-found status code from 'apigatewayv2 get-integration --api-id=$__api_id --integration-id=$__integration_id' but got $__status"
+    echo "FATAL: Expected not-found status code from 'apigatewayv2 get-integration --api-id=$__api_id --integration-id=$__integration_id' but got $__status"
     exit 1
   fi
 }
@@ -145,14 +152,14 @@ delete_integration_and_validate() {
 ###########################################
 # ROUTE
 ###########################################
-# create_route_and_validate creates an http-api-route and validates that route
+# apigwv2_create_route_and_validate creates an http-api-route and validates that route
 # is existing in AWS.
 # create_integration_and_validate accepts four required parameters. api_name, route_name
 # route_key, integration_name and authorizer_name
-create_route_and_validate() {
+apigwv2_create_route_and_validate() {
   if [[ $# -ne 5 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_route_and_validate"
-    echo "Usage: create_route_and_validate api_name route_name route_key integration_name authorizer_name"
+    echo "FATAL: Wrong number of arguments passed to create_route_and_validate"
+    echo "Usage: apigwv2_create_route_and_validate api_name route_name route_key integration_name authorizer_name"
     exit 1
   fi
 
@@ -194,17 +201,17 @@ EOF
 
   ## validate that route was created using apigatewayv2 get-route operation
   debug_msg "apigatewayv2 get-route with api-id $__api_id and route_id $__route_id"
-  aws apigatewayv2 get-route --api-id="$__api_id" --route-id="$__route_id" > /dev/null
+  daws apigatewayv2 get-route --api-id="$__api_id" --route-id="$__route_id" > /dev/null
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-route --api-id=$__api_id --route-id=$__route_id' but got $?" || exit 1
 }
 
-# delete_route_and_validate deletes an http-api-route and validates that route
+# apigwv2_delete_route_and_validate deletes an http-api-route and validates that route
 # is NOT existing in AWS anymore.
 # delete_route_and_validate accepts two required parameters. api_name and route_name
-delete_route_and_validate() {
+apigwv2_delete_route_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to delete_route_and_validate"
-    echo "Usage: delete_route_and_validate api_name route_name"
+    echo "FATAL: Wrong number of arguments passed to delete_route_and_validate"
+    echo "Usage: apigwv2_delete_route_and_validate api_name route_name"
     exit 1
   fi
   local __api_name="$1"
@@ -221,10 +228,10 @@ delete_route_and_validate() {
 
   #validate that route was deleted using apigatewayv2 get-route operation
   debug_msg "get-route with api-id $__api_id and route_id $__route_id"
-  aws apigatewayv2 get-route --api-id="$__api_id" --route-id="$__route_id" >/dev/null 2>&1
+  daws apigatewayv2 get-route --api-id="$__api_id" --route-id="$__route_id" >/dev/null 2>&1
   local __status=$?
   if [[ $__status -ne 255 && $__status -ne 254 ]]; then
-    echo "FAIL: Expected not-found status code from 'apigatewayv2 get-route --api-id=$__api_id --route-id=$__route_id' but got $__status"
+    echo "FATAL: Expected not-found status code from 'apigatewayv2 get-route --api-id=$__api_id --route-id=$__route_id' but got $__status"
     exit 1
   fi
 }
@@ -232,13 +239,13 @@ delete_route_and_validate() {
 ###########################################
 # STAGE
 ###########################################
-# create_stage_and_validate creates an http-api-stage and validates that stage
+# apigwv2_create_stage_and_validate creates an http-api-stage and validates that stage
 # is existing in AWS.
 # create_stage_and_validate accepts two required parameters. api_name and stage_name
-create_stage_and_validate() {
+apigwv2_create_stage_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_stage_and_validate"
-    echo "Usage: create_stage_and_validate api_name stage_name"
+    echo "FATAL: Wrong number of arguments passed to create_stage_and_validate"
+    echo "Usage: apigwv2_create_stage_and_validate api_name stage_name"
     exit 1
   fi
   local __api_name="$1"
@@ -262,17 +269,17 @@ EOF
 
   ## validate that stage was created using apigatewayv2 get-stage operation
   debug_msg "apigatewayv2 get-stage with api-id $__api_id and stage-name $__stage_name"
-  aws apigatewayv2 get-stage --api-id="$__api_id" --stage-name="$__stage_name" > /dev/null
+  daws apigatewayv2 get-stage --api-id="$__api_id" --stage-name="$__stage_name" > /dev/null
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-stage --api-id=$__api_id --stage-name=$__stage_name' but got $?" || exit 1
 }
 
-# delete_stage_and_validate deletes an http-api-stage and validates that stage
+# apigwv2_delete_stage_and_validate deletes an http-api-stage and validates that stage
 # does not exist in AWS anymore.
 # delete_stage_and_validate accepts two required parameters. api_name and stage_name
-delete_stage_and_validate() {
+apigwv2_delete_stage_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_stage_and_validate"
-    echo "Usage: delete_stage_and_validate api_name stage_name"
+    echo "FATAL: Wrong number of arguments passed to create_stage_and_validate"
+    echo "Usage: apigwv2_delete_stage_and_validate api_name stage_name"
     exit 1
   fi
   local __api_name="$1"
@@ -288,10 +295,10 @@ delete_stage_and_validate() {
 
   #validate that stage was deleted using apigatewayv2 get-stage operation
   debug_msg "get-stage with api-id $__api_id and stage_name $__stage_name"
-  aws apigatewayv2 get-stage --api-id="$__api_id" --stage-name="$__stage_name" >/dev/null 2>&1
+  daws apigatewayv2 get-stage --api-id="$__api_id" --stage-name="$__stage_name" >/dev/null 2>&1
   local __status=$?
   if [[ $__status -ne 255 && $__status -ne 254 ]]; then
-    echo "FAIL: Expected not-found status code from 'apigatewayv2 get-stage --api-id=$__api_id --stage-name=$__stage_name' but got $__status"
+    echo "FATAL: Expected not-found status code from 'apigatewayv2 get-stage --api-id=$__api_id --stage-name=$__stage_name' but got $__status"
     exit 1
   fi
 }
@@ -299,36 +306,36 @@ delete_stage_and_validate() {
 ###########################################
 # AUTHORIZER
 ###########################################
-# setup_iam_resources_for_authorizer creates an iam-role and attaches AWSLambdaBasicExecutionRole policy to it.
-# setup_iam_resources_for_authorizer accepts only one required parameter role_name
-setup_iam_resources_for_authorizer() {
+# apigwv2_setup_iam_resources_for_authorizer creates an iam-role and attaches AWSLambdaBasicExecutionRole policy to it.
+# apigwv2_setup_iam_resources_for_authorizer accepts only one required parameter role_name
+apigwv2_setup_iam_resources_for_authorizer() {
   if [[ $# -ne 1 ]]; then
-    echo "FAIL: Wrong number of arguments passed to setup_iam_resources_for_authorizer"
-    echo "Usage: setup_iam_resources_for_authorizer role_name"
+    echo "FATAL: Wrong number of arguments passed to setup_iam_resources_for_authorizer"
+    echo "Usage: apigwv2_setup_iam_resources_for_authorizer role_name"
     exit 1
   fi
 
   local __role_name="$1"
-  aws iam create-role --role-name "$__role_name" --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}' >/dev/null
+  daws iam create-role --role-name "$__role_name" --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}' >/dev/null
   assert_equal "0" "$?" "Expected success from aws iam create-role --role-name $__role_name but got $?" || exit 1
-  aws iam attach-role-policy --role-name "$__role_name" --policy-arn 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' >/dev/null
+  daws iam attach-role-policy --role-name "$__role_name" --policy-arn 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' >/dev/null
   assert_equal "0" "$?" "Expected success from aws iam attach-role-policy --role-name $__role_name but got $?" || exit 1
 }
 
-# create_lambda_authorizer creates a lambda function that will be used as authorizer for http-api
-# create_lambda_authorizer accepts two one required parameter function_name execution_role_name
-create_lambda_authorizer() {
+# apigwv2_create_lambda_authorizer creates a lambda function that will be used as authorizer for http-api
+# apigwv2_create_lambda_authorizer accepts two one required parameter function_name execution_role_name
+apigwv2_create_lambda_authorizer() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_lambda_authorizer"
-    echo "Usage: create_lambda_authorizer function_name execution_role_name"
+    echo "FATAL: Wrong number of arguments passed to create_lambda_authorizer"
+    echo "Usage: apigwv2_create_lambda_authorizer function_name execution_role_name"
     exit 1
   fi
 
   local __function_name="$1"
   local __role_name="$2"
-  local __role_arn=$(aws iam get-role --role-name "$__role_name" | jq -r ".Role.Arn")
+  local __role_arn=$(daws iam get-role --role-name "$__role_name" | jq -r ".Role.Arn")
   if [[ -z "$__role_arn" ]];then
-    echo "FAIL: Expected iam role $__role_name to exist."
+    echo "FATAL: Expected iam role $__role_name to exist."
     exit 1
   fi
 
@@ -364,7 +371,7 @@ exports.handler = async(event) => {
 EOF
   zip authorizer.zip index.js >/dev/null
 
-  aws lambda create-function --function-name "$__function_name" --runtime nodejs12.x --role "$__role_arn" --handler index.handler --zip-file fileb://authorizer.zip > /dev/null
+  daws lambda create-function --function-name "$__function_name" --runtime nodejs12.x --role "$__role_arn" --handler index.handler --zip-file fileb://authorizer.zip > /dev/null
   assert_equal "0" "$?" "Expected success from aws lambda create-function --function-name $__function_name but got $?" || exit 1
 
   #delete redundant files
@@ -372,13 +379,13 @@ EOF
   rm authorizer.zip
 }
 
-# create_authorizer_and_validate creates an http-api-authorizer and validates that authorizer
+# apigwv2_create_authorizer_and_validate creates an http-api-authorizer and validates that authorizer
 # is existing in AWS.
-# create_authorizer_and_validate accepts three required parameters. api_name, authorizer_name and lambda_function_name
-create_authorizer_and_validate() {
+# apigwv2_create_authorizer_and_validate accepts three required parameters. api_name, authorizer_name and lambda_function_name
+apigwv2_create_authorizer_and_validate() {
   if [[ $# -ne 3 ]]; then
-    echo "FAIL: Wrong number of arguments passed to create_lambda_authorizer"
-    echo "Usage: create_authorizer_and_validate api_name authorizer_name function_name"
+    echo "FATAL: Wrong number of arguments passed to create_lambda_authorizer"
+    echo "Usage: apigwv2_create_authorizer_and_validate api_name authorizer_name function_name"
     exit 1
   fi
 
@@ -390,9 +397,9 @@ create_authorizer_and_validate() {
   local __authorizer_resource_name=authorizer/"$2"
 
   local __function_name="$3"
-  local __function_arn=$(aws lambda get-function --function-name "$__function_name" | jq -r ".Configuration.FunctionArn")
+  local __function_arn=$(daws lambda get-function --function-name "$__function_name" | jq -r ".Configuration.FunctionArn")
   if [[ -z "$__function_arn" ]]; then
-    echo "FAIL: Expected lambda function $__function_name to exist"
+    echo "FATAL: Expected lambda function $__function_name to exist"
     exit 1
   fi
   local __region=$(echo "$__function_arn" | cut -d':' -f4)
@@ -426,20 +433,20 @@ EOF
 
   ## validate that authorizer was created using apigatewayv2 get-authorizer operation
   debug_msg "apigatewayv2 get-authorizer with api-id $__api_id and authorizer_id $__authorizer_id"
-  aws apigatewayv2 get-authorizer --api-id="$__api_id" --authorizer-id="$__authorizer_id" > /dev/null
+  daws apigatewayv2 get-authorizer --api-id="$__api_id" --authorizer-id="$__authorizer_id" > /dev/null
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-authorizer --api-id=$__api_id --authorizer-id=$__authorizer_id' but got $?" || exit 1
 
-  aws lambda add-permission --function-name "$__function_name" --statement-id "apigatewayv2-authorizer-invoke-permissions" --action "lambda:InvokeFunction" --principal "apigateway.amazonaws.com" --source-arn "arn:aws:execute-api:$__region:$__account:$__api_id/authorizers/$__authorizer_id" >/dev/null
+  daws lambda add-permission --function-name "$__function_name" --statement-id "apigatewayv2-authorizer-invoke-permissions" --action "lambda:InvokeFunction" --principal "apigateway.amazonaws.com" --source-arn "arn:aws:execute-api:$__region:$__account:$__api_id/authorizers/$__authorizer_id" >/dev/null
   assert_equal "0" "$?" "Expected success from lambda add-permission but got $?" || exit 1
 }
 
-# delete_authorizer_and_validate deletes an http-api-authorizer and validates that authorizer
+# apigwv2_delete_authorizer_and_validate deletes an http-api-authorizer and validates that authorizer
 # does not exist in AWS anymore.
-# delete_authorizer_and_validate accepts two required parameters. api_name and authorizer_name
-delete_authorizer_and_validate() {
+# apigwv2_delete_authorizer_and_validate accepts two required parameters. api_name and authorizer_name
+apigwv2_delete_authorizer_and_validate() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to delete_authorizer_and_validate"
-    echo "Usage: delete_authorizer_and_validate api_name authorizer_name"
+    echo "FATAL: Wrong number of arguments passed to delete_authorizer_and_validate"
+    echo "Usage: apigwv2_delete_authorizer_and_validate api_name authorizer_name"
     exit 1
   fi
   local __api_name="$1"
@@ -456,48 +463,48 @@ delete_authorizer_and_validate() {
 
   #validate that authorizer was deleted using apigatewayv2 get-authorizer operation
   debug_msg "get-authorizer with api-id $__api_id and authorizer_id $__authorizer_id"
-  aws apigatewayv2 get-authorizer --api-id="$__api_id" --authorizer-id="$__authorizer_id" >/dev/null 2>&1
+  daws apigatewayv2 get-authorizer --api-id="$__api_id" --authorizer-id="$__authorizer_id" >/dev/null 2>&1
   local __status=$?
   if [[ $__status -ne 255 && $__status -ne 254 ]]; then
-    echo "FAIL: Expected not-found status code from 'apigatewayv2 get-authorizer --api-id=$__api_id --authorizer-id=$__authorizer_id' but got $__status"
+    echo "FATAL: Expected not-found status code from 'apigatewayv2 get-authorizer --api-id=$__api_id --authorizer-id=$__authorizer_id' but got $__status"
     exit 1
   fi
 }
 
-# delete_authorizer_lambda deletes the lambda function created for http-api-authorizer.
-# delete_authorizer_lambda accepts one required parameters. lambda_function_name
+# apigwv2_delete_authorizer_lambda deletes the lambda function created for http-api-authorizer.
+# apigwv2_delete_authorizer_lambda accepts one required parameters. lambda_function_name
 delete_authorizer_lambda() {
   if [[ $# -ne 1 ]]; then
-    echo "FAIL: Wrong number of arguments passed to delete_authorizer_lambda"
-    echo "Usage: delete_authorizer_lambda function_name"
+    echo "FATAL: Wrong number of arguments passed to delete_authorizer_lambda"
+    echo "Usage: apigwv2_delete_authorizer_lambda function_name"
     exit 1
   fi
 
   local __function_name="$1"
-  aws lambda delete-function --function-name "$__function_name" >/dev/null
+  daws lambda delete-function --function-name "$__function_name" >/dev/null
   assert_equal "0" "$?" "Expected success from lambda delete-function --function-name $__function_name but got $?" || exit 1
 }
 
-## clean_up_iam_resources_for_authorizer deletes the lambda execution role created for http-api-authorizer.
-## clean_up_iam_resources_for_authorizer accepts one required parameters. iam_role_name
-clean_up_iam_resources_for_authorizer() {
+## apigwv2_clean_up_iam_resources_for_authorizer deletes the lambda execution role created for http-api-authorizer.
+## apigwv2_clean_up_iam_resources_for_authorizer accepts one required parameters. iam_role_name
+apigwv2_clean_up_iam_resources_for_authorizer() {
   local __role_name="$1"
-  aws iam detach-role-policy --role-name "$__role_name" --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole >/dev/null
+  daws iam detach-role-policy --role-name "$__role_name" --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole >/dev/null
   assert_equal "0" "$?" "Expected success from aws iam detach-role-policy --role-name $__role_name but got $?" || exit 1
 
-  aws iam delete-role --role-name "$__role_name" >/dev/null
+  daws iam delete-role --role-name "$__role_name" >/dev/null
   assert_equal "0" "$?" "Expected success from aws iam delete-role --role-name $__role_name but got $?" || exit 1
 }
 
 ###########################################
 # INVOCATION
 ###########################################
-# perform_invocation_and_validate invokes an http-api and validates the successful invocation
-# perform_invocation_and_validate accepts three required parameters. api_name, stage_name and route_key
-perform_invocation_and_validate() {
+# apigwv2_perform_invocation_and_validate invokes an http-api and validates the successful invocation
+# apigwv2_perform_invocation_and_validate accepts three required parameters. api_name, stage_name and route_key
+apigwv2_perform_invocation_and_validate() {
   if [[ $# -ne 3 ]]; then
-    echo "FAIL: Wrong number of arguments passed to perform_invocation_and_validate"
-    echo "Usage: perform_invocation_and_validate api_name stage_name route_key"
+    echo "FATAL: Wrong number of arguments passed to perform_invocation_and_validate"
+    echo "Usage: apigwv2_perform_invocation_and_validate api_name stage_name route_key"
     exit 1
   fi
 
@@ -511,7 +518,7 @@ perform_invocation_and_validate() {
   local __input_value="SecretToken"
   local __output_value=$(curl -s -H "$__test_header: $__input_value" "$__invocation_endpoint" | jq -r .headers.$__test_header)
   if [[ $__input_value != $__output_value ]]; then
-    echo "FAIL: expected invocation result: $__input_value but received; $__output_value"
+    echo "FATAL: expected invocation result: $__input_value but received; $__output_value"
     exit 1
   fi
 }

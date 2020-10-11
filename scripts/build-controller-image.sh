@@ -58,7 +58,9 @@ DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
 : "${AWS_SERVICE_DOCKER_IMG:="$DEFAULT_AWS_SERVICE_DOCKER_IMG"}"
 : "${DOCKERFILE:="$DOCKERFILE_PATH"}"
 
-echo "Building '$AWS_SERVICE' controller docker image with tag: ${AWS_SERVICE_DOCKER_IMG}"
+if [[ $QUIET = "false" ]]; then
+    echo "building '$AWS_SERVICE' controller docker image with tag: ${AWS_SERVICE_DOCKER_IMG}"
+fi
 
 docker build \
   --quiet=${QUIET} \
