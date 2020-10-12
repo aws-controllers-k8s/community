@@ -10,10 +10,6 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 TEST_E2E_DIR="$ROOT_DIR/test/e2e"
 
-source "$SCRIPTS_DIR/lib/common.sh"
-source "$SCRIPTS_DIR/lib/aws.sh"
-source "$SCRIPTS_DIR/lib/k8s.sh"
-
 OPTIND=1
 CLUSTER_NAME_BASE="test"
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
@@ -28,6 +24,28 @@ TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
 
+source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/aws.sh"
+source "$SCRIPTS_DIR/lib/k8s.sh"
+
+check_is_installed curl
+check_is_installed docker
+check_is_installed jq
+check_is_installed uuidgen
+check_is_installed wget
+check_is_installed kind "You can install kind with the helper scripts/install-kind.sh"
+check_is_installed kubectl "You can install kubectl with the helper scripts/install-kubectl.sh"
+check_is_installed kustomize "You can install kustomize with the helper scripts/install-kustomize.sh"
+check_is_installed controller-gen "You can install controller-gen with the helper scripts/install-controller-gen.sh"
+
+if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
+    echo "FATAL: Existing version of controller-gen "`controller-gen --version`", required version is $CONTROLLER_TOOLS_VERSION."
+    echo "FATAL: Please uninstall controller-gen and install the required version with scripts/install-controller-gen.sh."
+    exit 1
+fi
+
+aws_check_credentials
+
 if [ "z$AWS_ACCOUNT_ID" == "z" ]; then
     AWS_ACCOUNT_ID=$( aws_account_id )
 fi
@@ -40,12 +58,6 @@ function clean_up {
     echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
 }
 
-function exit_and_fail {
-    END=$(date +%s)
-    echo "⏰ Took $(expr "${END}" - "${START}")sec"
-    echo "❌ ACK Integration Test FAILED $CLUSTER_NAME! ❌"
-    exit 1
-}
 
 USAGE="
 Usage:
@@ -109,10 +121,12 @@ if [ -z "$AWS_ROLE_ARN" ]; then
     exit  1
 fi
 
-ensure_kustomize
-
 if [ -z "$TMP_DIR" ]; then
-    TMP_DIR=$("${SCRIPTS_DIR}"/provision-kind-cluster.sh -b "${CLUSTER_NAME_BASE}" -v "${K8S_VERSION}")
+    TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    CLUSTER_NAME="ack-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
+    TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
+    $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}" -v "${K8S_VERSION}"
 fi
 export PATH=$TMP_DIR:$PATH
 
@@ -121,21 +135,23 @@ CLUSTER_NAME=$(cat "$TMP_DIR"/clustername)
 ## Build and Load Docker Images
 
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
-    echo "Building ${AWS_SERVICE} docker image"
+    echo -n "building ack-${AWS_SERVICE}-controller docker image ... "
     DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
-    "${SCRIPTS_DIR}"/build-controller-image.sh -q -s ${AWS_SERVICE} -i ${DEFAULT_AWS_SERVICE_DOCKER_IMG}
+    ${SCRIPTS_DIR}/build-controller-image.sh -q -s ${AWS_SERVICE} -i ${DEFAULT_AWS_SERVICE_DOCKER_IMG} 1>/dev/null || exit 1
+    echo "ok."
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
+
 else
-    echo "Skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
+    debug_msg "skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
 fi
 echo "$AWS_SERVICE_DOCKER_IMG" > "${TMP_DIR}"/"${AWS_SERVICE}"_docker-img
 
-echo "Loading the images into the cluster"
-kind load docker-image --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}"
+echo -n "loading the images into the cluster ... "
+kind load docker-image --quiet --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}" || exit 1
+echo "ok."
 
 export KUBECONFIG="${TMP_DIR}/kubeconfig"
 
-trap "exit_and_fail" INT TERM ERR
 trap "clean_up" EXIT
 
 export AWS_ACCOUNT_ID
@@ -146,17 +162,15 @@ export ACK_ENABLE_DEVELOPMENT_LOGGING
 service_config_dir="$ROOT_DIR/services/$AWS_SERVICE/config"
 
 ## Register the ACK service controller's CRDs in the target k8s cluster
-# TODO(jaypipes): Remove --validate=false once
-# https://github.com/aws/aws-controllers-k8s/issues/121 (root:
-# https://github.com/kubernetes-sigs/controller-tools/issues/456) is addressed
-# TODO(jaypipes): Eventually use kubebuilder:scaffold:crdkustomizeresource?
-echo "Loading CRD manifests for $AWS_SERVICE into the cluster"
+echo -n "loading CRD manifests for $AWS_SERVICE into the cluster ... "
 for crd_file in $service_config_dir/crd/bases; do
-    kubectl apply -f "$crd_file" --validate=false
+    kubectl apply -f "$crd_file" --validate=false 1>/dev/null
 done
+echo "ok."
 
-echo "Loading RBAC manifests for $AWS_SERVICE into the cluster"
-kustomize build "$service_config_dir"/rbac | kubectl apply -f -
+echo -n "loading RBAC manifests for $AWS_SERVICE into the cluster ... "
+kustomize build "$service_config_dir"/rbac | kubectl apply -f - 1>/dev/null
+echo "ok."
 
 ## Create the ACK service controller Deployment in the target k8s cluster
 test_config_dir=$TMP_DIR/config/test
@@ -169,27 +183,27 @@ resources:
 - deployment.yaml
 EOF
 
-echo "Loading service controller Deployment for $AWS_SERVICE into the cluster"
+echo -n "loading service controller Deployment for $AWS_SERVICE into the cluster ..."
 cd "$test_config_dir"
 kustomize edit set image controller="$AWS_SERVICE_DOCKER_IMG"
-
-kustomize build "$test_config_dir" | kubectl apply -f -
+kustomize build "$test_config_dir" | kubectl apply -f - 1>/dev/null
+echo "ok."
 
 ## Functional tests where we assume role and pass aws temporary credentials as env vars to deployment
-generate_aws_temp_creds
+echo -n "generating AWS temporary credentials and adding to env vars map ... "
+aws_generate_temp_creds
 kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
-AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
-ACK_ENABLE_DEVELOPMENT_LOGGING="$ACK_ENABLE_DEVELOPMENT_LOGGING" \
-AWS_REGION="$AWS_REGION"
-echo "Added AWS Credentials to env vars map"
-
+    AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+    AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+    AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+    AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
+    ACK_ENABLE_DEVELOPMENT_LOGGING="$ACK_ENABLE_DEVELOPMENT_LOGGING" \
+    AWS_REGION="$AWS_REGION" 1>/dev/null
 sleep 10
+echo "ok."
 
 echo "======================================================================================================"
-echo "To poke around your test manually:"
+echo "To poke around your test cluster manually:"
 echo "export KUBECONFIG=$TMP_DIR/kubeconfig"
 echo "kubectl get pods -A"
 echo "======================================================================================================"

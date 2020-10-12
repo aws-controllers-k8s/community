@@ -11,9 +11,7 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
-source "$SCRIPTS_DIR/lib/aws_elasticache_testutil.sh"
-
-check_is_installed jq
+source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="elasticache"
@@ -40,7 +38,7 @@ fi
 
 
 describe_subnet_json() {
-    aws elasticache describe-cache-subnet-groups --cache-subnet-group-name "$aws_resource_name"  --output json >/dev/null 2>&1
+    daws elasticache describe-cache-subnet-groups --cache-subnet-group-name "$aws_resource_name"  --output json >/dev/null 2>&1
 }
 get_subnet_group_description() {
   if [[ $# -ne 1 ]]; then

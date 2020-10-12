@@ -6,9 +6,8 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
+source "$SCRIPTS_DIR/lib/aws/dynamodb.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
-
-check_is_installed jq
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="dynamodb"
@@ -18,13 +17,8 @@ debug_msg "executing test: $service_name/$test_name"
 table_name="ack-test-smoke-$service_name"
 resource_name="tables/$table_name"
 
-get_table() {
-    aws dynamodb describe-table --table-name "$table_name" --output json >/dev/null 2>&1
-}
-
 # PRE-CHECKS
-get_table
-if [[ $? -ne 255 && $? -ne 254 ]]; then
+if dynamodb_table_exists "$table_name"; then
     echo "FAIL: expected $table_name to not exist in DynamoDB. Did previous test run cleanup?"
     exit 1
 fi
@@ -72,8 +66,7 @@ EOF
 sleep 20
 
 debug_msg "checking table $table_name created in DynamoDB"
-get_table
-if [[ $? -eq 255 || $? -eq 254 ]]; then
+if ! dynamodb_table_exists "$table_name"; then
     echo "FAIL: expected $table_name to have been created in DynamoDB"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
@@ -95,8 +88,7 @@ assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 
 
 sleep 60
 
-get_table
-if [[ $? -ne 255 && $? -ne 254 ]]; then
+if dynamodb_table_exists "$table_name"; then
     echo "FAIL: expected $table_name to be deleted in DynamoDB"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1

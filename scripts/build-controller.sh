@@ -12,6 +12,15 @@ TEMPLATES_DIR="$ROOT_DIR/templates"
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 
+check_is_installed docker
+check_is_installed controller-gen "You can install controller-gen with the helper scripts/install-controller-gen.sh"
+
+if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
+    echo "FATAL: Existing version of controller-gen "`controller-gen --version`", required version is $CONTROLLER_TOOLS_VERSION."
+    echo "FATAL: Please uninstall controller-gen and install the required version with scripts/install-controller-gen.sh."
+    exit 1
+fi
+
 : "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
@@ -52,14 +61,12 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-ensure_controller_gen
-
 if [ ! -f $ACK_GENERATE_BIN_PATH ]; then
     if is_installed "ack-generate"; then
         ACK_GENERATE_BIN_PATH=$(which "ack-generate")
     else
         echo "ERROR: Unable to find an ack-generate binary.
-Either set the ACK_GENERATE_BIN_PATH to a valid location,
+Either set the ACK_GENERATE_BIN_PATH to a valid location or
 run:
  
    make build-ack-generate

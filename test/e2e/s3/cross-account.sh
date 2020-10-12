@@ -6,6 +6,7 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
+source "$SCRIPTS_DIR/lib/aws/s3.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
 
 # AWS_ACCOUNT_ID_ALT should be configured to allow cross account resources management
@@ -54,16 +55,8 @@ EOF
 
 sleep 5
 
-check_is_installed jq
-
-list_bucket_json() {
-    jq_expr='.Buckets[] | select(.Name | contains($BUCKET_NAME))'
-    aws s3api --profile=$AWS_PROFILE_ALT --region=$AWS_REGION_ALT list-buckets --output json | jq -e --arg BUCKET_NAME "$bucket_name" "$jq_expr"
-}
-
 # PRE-CHECKS
-list_bucket_json 
-if [ $? -ne 4 ]; then
+if s3_bucket_exists "$bucket_name" "$AWS_REGION_ALT" "$AWS_PROFILE_ALT"; then
     echo "FAIL: expected $bucket_name to not exist in S3. Did previous test run cleanup?"
     exit 1
 fi
@@ -87,8 +80,7 @@ EOF
 sleep 20
 
 debug_msg "checking bucket $bucket_name created in S3, in region $AWS_REGION_ALT"
-list_bucket_json
-if [ $? -eq 4 ]; then
+if ! s3_bucket_exists "$bucket_name" "$AWS_REGION_ALT" "$AWS_PROFILE_ALT"; then
     echo "FAIL: expected $bucket_name to have been created in S3"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
@@ -98,14 +90,14 @@ kubectl delete "$resource_name" 2>/dev/null
 assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
 
 list_bucket_json
-if [ $? -ne 4 ]; then
+if s3_bucket_exists "$bucket_name" "$AWS_REGION_ALT" "$AWS_PROFILE_ALT"; then
     echo "FAIL: expected $bucket_name to be deleted in S3"
     kubectl logs -n ack-system "$ack_ctrl_pod_id"
     exit 1
 fi
 
-assert_pod_not_restarted $ack_ctrl_pod_id
-
 # Delete the testing namespace and ack-role-account-map
 kubectl delete namespace $TESTING_NAMESPACE
 kubectl delete configmap -n ack-system ack-role-account-map
+
+assert_pod_not_restarted $ack_ctrl_pod_id

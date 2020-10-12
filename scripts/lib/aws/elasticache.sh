@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ROOT_DIR="$THIS_DIR/../../.."
+SCRIPTS_DIR="$ROOT_DIR/scripts"
+
+. $SCRIPTS_DIR/lib/common.sh
+. $SCRIPTS_DIR/lib/aws.sh
+
 #################################################
 # functions for tests
 #################################################
@@ -19,14 +26,14 @@ print_k8s_ack_controller_pod_logs() {
 # get_default_vpc returns status 1 if no default vpc is not found
 # Example usage:
 #    if ! default_vpc_id="$(get_default_vpc)"; then
-#      echo "FAIL: No default vpc id found."
+#      echo "FATAL: No default vpc id found."
 #    else
 #      echo "$default_vpc_id"
 #    fi
 get_default_vpc() {
-  local default_vpc_id="$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true Name=state,Values=available --output json | jq -r -e '.Vpcs[0] | .VpcId')"
+  local default_vpc_id="$(daws ec2 describe-vpcs --filters Name=isDefault,Values=true Name=state,Values=available --output json | jq -r -e '.Vpcs[0] | .VpcId')"
   if [ -z "$default_vpc_id" ]; then
-    echo "FAIL: No default vpc id found."
+    echo "FATAL: No default vpc id found."
     return 1
   fi
 
@@ -37,7 +44,7 @@ get_default_vpc() {
 # get_default_subnets returns status 1 if no default subnet is not found
 # Example usage:
 #    if ! aws_subnet_ids_json="$(get_default_subnets)"; then
-#      echo "FAIL: No default subnet id found."
+#      echo "FATAL: No default subnet id found."
 #    else
 #      # parse json as needed
 #      subnets_count="$(echo "$aws_subnet_ids_json" | jq length)"
@@ -48,10 +55,10 @@ get_default_vpc() {
 #    fi
 get_default_subnets() {
   if ! default_vpc_id="$(get_default_vpc)"; then
-    echo "FAIL: No default subnets. No default vpc id found."
+    echo "FATAL: No default subnets. No default vpc id found."
     return 1
   fi
-  local aws_subnet_ids="$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$default_vpc_id" Name=defaultForAz,Values=true --output json | jq -e '.Subnets[] | .SubnetId')"
+  local aws_subnet_ids="$(daws ec2 describe-subnets --filters Name=vpc-id,Values="$default_vpc_id" Name=defaultForAz,Values=true --output json | jq -e '.Subnets[] | .SubnetId')"
   if [ -z "$aws_subnet_ids" ]; then
     return 1
   fi
@@ -64,7 +71,7 @@ get_default_subnets() {
 # get_default_azs returns status 1 if no default availability zone is not found
 # Example usage:
 #    if ! get_default_azs_json="$(get_default_azs)"; then
-#      echo "FAIL: No default az found."
+#      echo "FATAL: No default az found."
 #    else
 #      # parse json as needed
 #      default_az_count="$(echo "$get_default_azs_json" | jq length)"
@@ -75,10 +82,10 @@ get_default_subnets() {
 #    fi
 get_default_azs() {
   if ! default_vpc_id="$(get_default_vpc)"; then
-    echo "FAIL: No default available zones. No default vpc id found."
+    echo "FATAL: No default available zones. No default vpc id found."
     return 1
   fi
-  local aws_subnet_default_azs="$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$default_vpc_id" Name=defaultForAz,Values=true --output json | jq -e '.Subnets[] | .AvailabilityZone')"
+  local aws_subnet_default_azs="$(daws ec2 describe-subnets --filters Name=vpc-id,Values="$default_vpc_id" Name=defaultForAz,Values=true --output json | jq -e '.Subnets[] | .AvailabilityZone')"
   if [ -z "$aws_subnet_default_azs" ]; then
     return 1
   fi
@@ -171,14 +178,14 @@ EOF
 #     error_message - message to print when wait is over with failure
 aws_wait_replication_group_available() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to aws_wait_replication_group_available"
+    echo "FATAL: Wrong number of arguments passed to aws_wait_replication_group_available"
     echo "Usage: aws_wait_replication_group_available replication_group_id $failure_message"
     exit 1
   fi
   local replication_group_id="$1"
   local failure_message="$2"
   debug_msg "starting to wait for replication group: $replication_group_id to be available."
-  $(aws elasticache wait replication-group-available --replication-group-id "$replication_group_id")
+  $(daws elasticache wait replication-group-available --replication-group-id "$replication_group_id")
   if [[ $? -eq 255 ]]; then
     echo "$failure_message"
     print_k8s_ack_controller_pod_logs
@@ -192,14 +199,14 @@ aws_wait_replication_group_available() {
 #     error_message - message to print when wait is over with failure
 aws_wait_replication_group_deleted() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to aws_wait_replication_group_deleted"
+    echo "FATAL: Wrong number of arguments passed to aws_wait_replication_group_deleted"
     echo "Usage: aws_wait_replication_group_deleted replication_group_id $failure_message"
     exit 1
   fi
   local replication_group_id="$1"
   local failure_message="$2"
   debug_msg "starting to wait for replication group: $replication_group_id to be deleted."
-  $(aws elasticache wait replication-group-deleted --replication-group-id "$replication_group_id")
+  $(daws elasticache wait replication-group-deleted --replication-group-id "$replication_group_id")
   if [[ $? -eq 255 ]]; then
     echo "$failure_message"
     print_k8s_ack_controller_pod_logs
@@ -215,15 +222,15 @@ aws_wait_replication_group_deleted() {
 # it depends on aws elasticache cli
 aws_assert_replication_group_status() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to aws_assert_replication_group_status"
+    echo "FATAL: Wrong number of arguments passed to aws_assert_replication_group_status"
     echo "Usage: aws_assert_replication_group_status replication_group_id  expected_status"
     exit 1
   fi
   local replication_group_id="$1"
   local expected_status="$2"
-  local actual_status="$(aws elasticache describe-replication-groups --replication-group-id "$replication_group_id" | jq -r -e '.ReplicationGroups[0] | .Status')"
+  local actual_status="$(daws elasticache describe-replication-groups --replication-group-id "$replication_group_id" | jq -r -e '.ReplicationGroups[0] | .Status')"
   if [[ "$expected_status" != "$actual_status" ]]; then
-    echo "FAIL: replication group $replication_group_id status on aws service. expected_status: $expected_status, actual_status: $actual_status"
+    echo "FATAL: replication group $replication_group_id status on aws service. expected_status: $expected_status, actual_status: $actual_status"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -237,7 +244,7 @@ aws_assert_replication_group_status() {
 #     expected_value - expected value of the property
 k8s_assert_replication_group_status_property() {
   if [[ $# -ne 3 ]]; then
-    echo "FAIL: Wrong number of arguments passed to k8s_assert_replication_group_status_property"
+    echo "FATAL: Wrong number of arguments passed to k8s_assert_replication_group_status_property"
     echo "Usage: k8s_assert_replication_group_status_property replication_group_id property_json_path expected_value"
     exit 1
   fi
@@ -246,7 +253,7 @@ k8s_assert_replication_group_status_property() {
   local expected_value="$3"
   local actual_value="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e ".status | $property_json_path")"
   if [[ "$expected_value" != "$actual_value" ]]; then
-    echo "FAIL: replication group $replication_group_id $property_json_path on k8s cluster. expected: $expected_value, actual: $actual_value"
+    echo "FATAL: replication group $replication_group_id $property_json_path on k8s cluster. expected: $expected_value, actual: $actual_value"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -259,7 +266,7 @@ k8s_assert_replication_group_status_property() {
 #     expected_count - expected shard count
 k8s_assert_replication_group_shard_count() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to k8s_assert_replication_group_shard_count"
+    echo "FATAL: Wrong number of arguments passed to k8s_assert_replication_group_shard_count"
     echo "Usage: k8s_assert_replication_group_shard_count replication_group_id expected_count"
     exit 1
   fi
@@ -267,7 +274,7 @@ k8s_assert_replication_group_shard_count() {
   local expected_value="$2"
   local actual_value="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e '.status .nodeGroups' | jq length)"
   if [[ "$expected_value" -ne "$actual_value" ]]; then
-    echo "FAIL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_value"
+    echo "FATAL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_value"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -280,7 +287,7 @@ k8s_assert_replication_group_shard_count() {
 #     expected_count - expected replica count
 k8s_assert_replication_group_replica_count() {
   if [[ $# -ne 2 ]]; then
-    echo "FAIL: Wrong number of arguments passed to k8s_assert_replication_group_replica_count"
+    echo "FATAL: Wrong number of arguments passed to k8s_assert_replication_group_replica_count"
     echo "Usage: k8s_assert_replication_group_replica_count replication_group_id expected_count"
     exit 1
   fi
@@ -289,7 +296,7 @@ k8s_assert_replication_group_replica_count() {
   local nodeGroupMembersCount="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e '.status .nodeGroups[0] .nodeGroupMembers' | jq length)"
   actual_replica_count=$(( nodeGroupMembersCount - 1 ))
   if [[ "$expected_value" -ne "$actual_replica_count" ]]; then
-    echo "FAIL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_replica_count"
+    echo "FATAL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_replica_count"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
