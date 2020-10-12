@@ -16,6 +16,8 @@ package replication_group
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-controllers-k8s/pkg/requeue"
+	"github.com/pkg/errors"
 
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
@@ -30,6 +32,14 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
+
+	latestRGStatus := latest.ko.Status.Status
+	if latestRGStatus != nil && *latestRGStatus != "available" {
+		return nil, requeue.NeededAfter(
+			errors.New("Replication Group can not be modified, it is not in 'available' state."),
+			requeue.DefaultRequeueAfterDuration)
+	}
+
 	// Order of operations when diffs map to multiple updates APIs:
 	// 1. updateReplicaCount() is invoked Before updateShardConfiguration()
 	//	  because both accept availability zones, however the number of
@@ -193,7 +203,7 @@ func (rm *resourceManager) increaseReplicaCount(
 	if respErr != nil {
 		return nil, respErr
 	}
-	return provideUpdatedResource(desired, resp.ReplicationGroup)
+	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
 }
 
 func (rm *resourceManager) decreaseReplicaCount(
@@ -208,7 +218,7 @@ func (rm *resourceManager) decreaseReplicaCount(
 	if respErr != nil {
 		return nil, respErr
 	}
-	return provideUpdatedResource(desired, resp.ReplicationGroup)
+	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
 }
 
 func (rm *resourceManager) updateShardConfiguration(
@@ -224,7 +234,7 @@ func (rm *resourceManager) updateShardConfiguration(
 	if respErr != nil {
 		return nil, respErr
 	}
-	return provideUpdatedResource(desired, resp.ReplicationGroup)
+	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
 }
 
 // newIncreaseReplicaCountRequestPayload returns an SDK-specific struct for the HTTP request
@@ -402,13 +412,13 @@ func (rm *resourceManager) newUpdateShardConfigurationRequestPayload(
 
 // This method copies the data from given replicationGroup by populating it into copy of supplied resource
 // and returns it.
-func provideUpdatedResource(
-	r *resource,
+func (rm *resourceManager) provideUpdatedResource(
+	desired *resource,
 	replicationGroup *svcsdk.ReplicationGroup,
 ) (*resource, error) {
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
-	ko := r.ko.DeepCopy()
+	ko := desired.ko.DeepCopy()
 
 	if replicationGroup.AuthTokenEnabled != nil {
 		ko.Status.AuthTokenEnabled = replicationGroup.AuthTokenEnabled
@@ -555,5 +565,7 @@ func provideUpdatedResource(
 		ko.Status.Status = replicationGroup.Status
 	}
 
+	// custom set output from response
+	rm.customSetOutput(desired, replicationGroup, ko)
 	return &resource{ko}, nil
 }

@@ -61,6 +61,13 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 {{- else if .CRD.Ops.GetAttributes }}
 	// If any required fields in the input shape are missing, AWS resource is
@@ -87,6 +94,13 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 {{- else if .CRD.Ops.ReadMany }}
 	input, err := rm.newListRequestPayload(r)
@@ -106,6 +120,13 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $setCode }}
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 {{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.ReadMany }}
 	// custom set output from response
 	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
@@ -192,10 +213,6 @@ func (rm *resourceManager) sdkCreate(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 {{ $createCode }}
-{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Create }}
-	// custom set output from response
-	rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
-{{ end }}
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 	}
@@ -203,6 +220,10 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
 	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	{{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Create }}
+		// custom set output from response
+		rm.{{ $setOutputCustomMethodName }}(r, resp, ko)
+	{{ end }}
 	return &resource{ko}, nil
 }
 

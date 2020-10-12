@@ -187,12 +187,39 @@ func (r *reconciler) sync(
 			"arn", latest.Identifiers().ARN(),
 			"is_adopted", isAdopted,
 		)
+		// Before we update the backend AWS service resources, let's first update
+		// the latest status of CR which was retrieved by ReadOne call.
+		// Else, latest read status is lost in-case Update call fails with error.
+		err = r.updateCRStatus(ctx, desired, latest)
+		if err != nil {
+			return err
+		}
 		latest, err = rm.Update(ctx, desired, latest, diffReporter)
 		if err != nil {
 			return err
 		}
 		r.log.V(0).Info("reconciler.sync updated resource")
 	}
+	err = r.updateCRStatus(ctx, desired, latest)
+	if err != nil {
+		return err
+	}
+	for _, condition := range latest.Conditions() {
+		if condition.Type == ackv1alpha1.ConditionTypeResourceSynced &&
+			condition.Status != corev1.ConditionTrue {
+			return requeue.NeededAfter(
+				errors.New("sync again"), requeue.DefaultRequeueAfterDuration)
+		}
+	}
+	return nil
+}
+
+// updateCRStatus updates status of CR using the supplied latest resource.
+func (r *reconciler) updateCRStatus(
+	ctx context.Context,
+	desired acktypes.AWSResource,
+	latest acktypes.AWSResource,
+) error {
 	changedStatus, err := r.rd.UpdateCRStatus(latest)
 	if err != nil {
 		return err
@@ -209,7 +236,7 @@ func (r *reconciler) sync(
 		return err
 	}
 	r.log.V(1).Info("patched CR status")
-	return err
+	return nil
 }
 
 // cleanup ensures that the supplied AWSResource's backing API resource is
