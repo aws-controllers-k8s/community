@@ -1,5 +1,7 @@
 name: build-unit-test
 on:
+  # Allow manual trigger of e2e tests
+  workflow_dispatch:
   pull_request:
     branches:
       - main
