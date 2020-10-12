@@ -8,12 +8,18 @@ source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
 
-
 # AWS_ACCOUNT_ID_ALT should be configured to allow cross account resources management
 # from AWS_ACCOUNT_ID
 AWS_ACCOUNT_ID_ALT=${AWS_ACCOUNT_ID_ALT:-""}
 AWS_PROFILE_ALT=${AWS_PROFILE_ALT:-""}
 AWS_REGION_ALT="eu-west-2"
+TESTING_NAMESPACE="testing-$RANDOM"
+ASSUME_POLICY_ARN=${ASSUME_POLICY_ARN:="s3FullAccess"}
+
+if [[ -z "$AWS_ACCOUNT_ID_ALT" ]] || [[ -z "$AWS_REGION_ALT" ]] || [[ -z "$AWS_PROFILE_ALT" ]]; then
+    echo "skipping cross-account tests due to missing credentials"
+    exit 0
+fi
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="s3"
@@ -22,6 +28,31 @@ debug_msg "executing test: $service_name/$test_name"
 
 bucket_name="ack-test-smoke-$service_name-$AWS_ACCOUNT_ID_ALT-$RANDOM"
 resource_name="buckets/$bucket_name"
+
+# Create the testing namespace.
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $TESTING_NAMESPACE
+  annotations:
+    services.k8s.aws/default-region: "$AWS_REGION_ALT"
+    services.k8s.aws/owner-account-id: "$AWS_ACCOUNT_ID_ALT"
+EOF
+
+# Create the ack-role-account-map ConfigMap.
+# See CARM design: https://github.com/aws/aws-controllers-k8s/blob/main/docs/design/proposals/carm/cross-account-resource-management.md#storing-aws-role-arns
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ack-role-account-map
+  namespace: ack-system
+data:
+  "$AWS_ACCOUNT_ID_ALT": arn:aws:iam::$AWS_ACCOUNT_ID_ALT:role/$ASSUME_POLICY_ARN
+EOF
+
+sleep 5
 
 check_is_installed jq
 
@@ -49,9 +80,6 @@ apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
   name: $bucket_name
-  annotations:
-    services.k8s.aws/default-region: $AWS_REGION_ALT
-    services.k8s.aws/owner-account-id: $AWS_ACCOUNT_ID_ALT
 spec:
   name: $bucket_name
 EOF
@@ -77,3 +105,7 @@ if [ $? -ne 4 ]; then
 fi
 
 assert_pod_not_restarted $ack_ctrl_pod_id
+
+# Delete the testing namespace and ack-role-account-map
+kubectl delete namespace $TESTING_NAMESPACE
+kubectl delete configmap -n ack-system ack-role-account-map
