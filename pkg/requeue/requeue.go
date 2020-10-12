@@ -17,6 +17,11 @@ import (
 	"time"
 )
 
+
+const (
+	DefaultRequeueAfterDuration time.Duration = 30 * time.Second
+)
+
 // Needed returns a new RequeueNeeded to instruct the ACK runtime to requeue
 // the processing item without been logged as error.
 func Needed(err error) *RequeueNeeded {

@@ -122,7 +122,6 @@ spec:
     engine: redis
     replicationGroupID: $rg_id
     replicationGroupDescription: $rg_description
-    automaticFailover: true
     cacheNodeType: cache.t3.micro
     numNodeGroups: $num_node_groups
     replicasPerNodeGroup: $replicas_per_node_group

@@ -14,8 +14,10 @@
 package replication_group
 
 import (
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	"github.com/aws/aws-sdk-go/service/elasticache"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (rm *resourceManager) CustomDescribeReplicationGroupsSetOutput(
@@ -54,5 +56,37 @@ func (rm *resourceManager) customSetOutput(
 	respRG *elasticache.ReplicationGroup,
 	ko *svcapitypes.ReplicationGroup,
 ) {
-	// TODO: custom code
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
+	rgStatus := respRG.Status
+	syncConditionStatus := corev1.ConditionUnknown
+	if rgStatus != nil {
+		if *rgStatus == "available" ||
+			*rgStatus == "create-failed" {
+			syncConditionStatus = corev1.ConditionTrue
+		} else {
+			// resource in "creating", "modifying" , "deleting", "snapshotting"
+			// states is being modified at server end
+			// thus current status is considered out of sync.
+			syncConditionStatus = corev1.ConditionFalse
+		}
+	}
+	var resourceSyncedCondition *ackv1alpha1.Condition = nil
+	for _, condition := range ko.Status.Conditions {
+		if condition.Type == ackv1alpha1.ConditionTypeResourceSynced {
+			resourceSyncedCondition = condition
+			break
+		}
+	}
+	if resourceSyncedCondition == nil {
+		resourceSyncedCondition = &ackv1alpha1.Condition{
+			Type:   ackv1alpha1.ConditionTypeResourceSynced,
+			Status: syncConditionStatus,
+		}
+		ko.Status.Conditions = append(ko.Status.Conditions, resourceSyncedCondition)
+	} else {
+		resourceSyncedCondition.Status = syncConditionStatus
+	}
+
 }

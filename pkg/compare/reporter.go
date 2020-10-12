@@ -8,12 +8,10 @@ import (
 
 type DiffItem struct {
 	Path string
-	ValueA string
-	ValueB string
 }
 
 func (diff *DiffItem) String() string {
-	return fmt.Sprintf("%#v:\n\t-: %+v\n\t+: %+v\n", diff.Path, diff.ValueA, diff.ValueB)
+	return fmt.Sprintf("%#v\n", diff.Path)
 }
 
 type Reporter struct {
@@ -31,8 +29,7 @@ func (reporter *Reporter) PopStep() {
 
 func (reporter *Reporter) Report(result cmp.Result) {
 	if !result.Equal() {
-		a, b := reporter.path.Last().Values()
-		reporter.Differences = append(reporter.Differences, DiffItem{reporter.path.String(), fmt.Sprintf("%v",a), fmt.Sprintf("%v",b)});
+		reporter.Differences = append(reporter.Differences, DiffItem{reporter.path.String()})
 	}
 }
 

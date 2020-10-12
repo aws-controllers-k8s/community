@@ -76,6 +76,13 @@ func (rm *resourceManager) sdkFind(
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["TopicArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	return &resource{ko}, nil
 }
 
@@ -149,6 +156,7 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
 	}
 	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+
 	return &resource{ko}, nil
 }
 
