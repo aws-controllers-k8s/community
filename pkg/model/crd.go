@@ -1329,7 +1329,7 @@ func (r *CRD) goCodeVarEmptyConstructorSDKType(
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
 	keepPointer := (shape.Type == "list" || shape.Type == "map")
-	goType = r.replacePkgName(goType, "svcsdk", keepPointer)
+	goType = replacePkgName(goType, r.sdkAPI.API.PackageName(), "svcsdk", keepPointer)
 	switch shape.Type {
 	case "structure":
 		// f0 := &svcsdk.BookData{}
@@ -1355,7 +1355,7 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
 	keepPointer := (shape.Type == "list" || shape.Type == "map")
-	goType = r.replacePkgName(goType, "svcapitypes", keepPointer)
+	goType = replacePkgName(goType, r.sdkAPI.API.PackageName(), "svcapitypes", keepPointer)
 	goTypeNoPkg := goType
 	goPkg := ""
 	hadPkg := false
@@ -2294,19 +2294,25 @@ func (r *CRD) goCodeSetOutputForScalar(
 // Shape.GoTypeWithPkgName() and replaces the package name of the aws-sdk-go
 // SDK API (e.g. "ecr" for the ECR API) with the string "svcsdkapi" which is
 // the only alias we always use in our templated output.
-func (r *CRD) replacePkgName(
+func replacePkgName(
 	subject string,
+	apiPkgName string,
 	replacePkgAlias string,
 	keepPointer bool,
 ) string {
 	memberType := subject
+	sliceDepth := 0 // Depth of the slice type
 	isSliceType := strings.HasPrefix(memberType, "[]")
 	if isSliceType {
-		memberType = memberType[2:]
+		sliceDepth = strings.LastIndex(subject, "[]")/2 + 1
+		memberType = memberType[sliceDepth*2:]
 	}
+	mapDepth := 0 // Depth of the map type
+	// Assuming the map keys are always of type string.
 	isMapType := strings.HasPrefix(memberType, "map[string]")
 	if isMapType {
-		memberType = memberType[11:]
+		mapDepth = strings.LastIndex(subject, "map[string]")/11 + 1
+		memberType = memberType[mapDepth*11:]
 	}
 	isPointerType := strings.HasPrefix(memberType, "*")
 	if isPointerType {
@@ -2318,11 +2324,9 @@ func (r *CRD) replacePkgName(
 	if strings.Contains(memberType, ".") {
 		pkgName := strings.Split(memberType, ".")[0]
 		typeName := strings.Split(memberType, ".")[1]
-		apiPkgName := r.sdkAPI.API.PackageName()
 		if pkgName == apiPkgName {
 			memberType = replacePkgAlias + "." + typeName
 		} else {
-			// Leave package prefixes like "time." alone...
 			memberType = pkgName + "." + typeName
 		}
 	}
@@ -2330,10 +2334,10 @@ func (r *CRD) replacePkgName(
 		memberType = "*" + memberType
 	}
 	if isMapType {
-		memberType = "map[string]" + memberType
+		memberType = strings.Repeat("map[string]", mapDepth) + memberType
 	}
 	if isSliceType {
-		memberType = "[]" + memberType
+		memberType = strings.Repeat("[]", sliceDepth) + memberType
 	}
 	return memberType
 }
