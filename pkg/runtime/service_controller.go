@@ -43,7 +43,7 @@ type ServiceController struct {
 	// controller
 	log logr.Logger
 	// metrics contains a collection of Prometheus metric objects that the
-	// service controller and its reconcilers
+	// service controller and its reconcilers track
 	metrics *ackmetrics.Metrics
 }
 

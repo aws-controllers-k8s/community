@@ -21,8 +21,10 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	svcsdk "github.com/aws/aws-sdk-go/service/ecr"
 	svcsdkapi "github.com/aws/aws-sdk-go/service/ecr/ecriface"
@@ -36,6 +38,12 @@ import (
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
 type resourceManager struct {
+	// log refers to the logr.Logger object handling logging for the service
+	// controller
+	log logr.Logger
+	// metrics contains a collection of Prometheus metric objects that the
+	// service controller and its reconcilers track
+	metrics *ackmetrics.Metrics
 	// rr is the AWSResourceReconciler which can be used for various utility
 	// functions such as querying for Secret values given a SecretReference
 	rr acktypes.AWSResourceReconciler
@@ -156,12 +164,16 @@ func (rm *resourceManager) ARNFromName(name string) string {
 // newResourceManager returns a new struct implementing
 // acktypes.AWSResourceManager
 func newResourceManager(
+	log logr.Logger,
+	metrics *ackmetrics.Metrics,
 	rr acktypes.AWSResourceReconciler,
 	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
 	return &resourceManager{
+		log:          log,
+		metrics:      metrics,
 		rr:           rr,
 		awsAccountID: id,
 		awsRegion:    region,
