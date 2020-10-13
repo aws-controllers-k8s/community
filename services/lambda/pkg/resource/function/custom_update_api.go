@@ -19,11 +19,11 @@ func (rm *resourceManager) customUpdateFunction(
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	fmt.Printf("Marshal funnction output %s\n\n", string(empJSON))
+	fmt.Printf("desired: %s\n\n", string(empJSON))
 	empJSON, err = json.MarshalIndent(latest.ko.Spec, "", "    ")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	fmt.Printf("Marshal funnction output %s\n", string(empJSON))
+	fmt.Printf("latest: %s\n", string(empJSON))
 	return desired, nil
 }

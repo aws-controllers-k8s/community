@@ -17,6 +17,9 @@ package alias
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -231,6 +234,17 @@ func (rm *resourceManager) sdkUpdate(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
+
+	empJSON, err := json.MarshalIndent(desired.ko.Spec, "", "    ")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	fmt.Printf("desired: %s\n\n", string(empJSON))
+	empJSON, err = json.MarshalIndent(latest.ko.Spec, "", "    ")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	fmt.Printf("latest: %s\n", string(empJSON))
 
 	input, err := rm.newUpdateRequestPayload(desired)
 	if err != nil {
