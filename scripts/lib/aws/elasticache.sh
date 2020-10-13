@@ -5,6 +5,7 @@ ROOT_DIR="$THIS_DIR/../../.."
 SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 . $SCRIPTS_DIR/lib/common.sh
+. $SCRIPTS_DIR/lib/testutil.sh
 . $SCRIPTS_DIR/lib/aws.sh
 
 #################################################
@@ -162,7 +163,7 @@ spec:
     engine: redis
     replicationGroupID: $rg_id
     replicationGroupDescription: $rg_description
-    automaticFailover: true
+    automaticFailoverEnabled: true
     cacheNodeType: cache.t3.micro
     numNodeGroups: $num_node_groups
     replicasPerNodeGroup: $replicas_per_node_group
@@ -184,9 +185,18 @@ aws_wait_replication_group_available() {
   fi
   local replication_group_id="$1"
   local failure_message="$2"
-  debug_msg "starting to wait for replication group: $replication_group_id to be available."
-  $(daws elasticache wait replication-group-available --replication-group-id "$replication_group_id")
-  if [[ $? -eq 255 ]]; then
+  local wait_failed="true"
+  for i in $(seq 0 3); do
+    debug_msg "starting to wait for replication group: $replication_group_id to be available."
+    $(daws elasticache wait replication-group-available --replication-group-id "$replication_group_id")
+    if [[ $? -eq 255 ]]; then
+      continue
+    fi
+    wait_failed="false"
+    break
+  done
+
+  if [[ $wait_failed == "true" ]]; then
     echo "$failure_message"
     print_k8s_ack_controller_pod_logs
     exit 1
@@ -205,9 +215,18 @@ aws_wait_replication_group_deleted() {
   fi
   local replication_group_id="$1"
   local failure_message="$2"
-  debug_msg "starting to wait for replication group: $replication_group_id to be deleted."
-  $(daws elasticache wait replication-group-deleted --replication-group-id "$replication_group_id")
-  if [[ $? -eq 255 ]]; then
+  local wait_failed="true"
+  for i in $(seq 0 3); do
+    debug_msg "starting to wait for replication group: $replication_group_id to be deleted."
+    $(daws elasticache wait replication-group-deleted --replication-group-id "$replication_group_id")
+    if [[ $? -eq 255 ]]; then
+      continue
+    fi
+    wait_failed="false"
+    break
+  done
+
+  if [[ $wait_failed == "true" ]]; then
     echo "$failure_message"
     print_k8s_ack_controller_pod_logs
     exit 1

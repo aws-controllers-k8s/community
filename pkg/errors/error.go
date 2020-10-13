@@ -34,6 +34,11 @@ var (
 	// information that the resource being checked for existence was
 	// previously-created out of band from ACK
 	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
+	// TemporaryOutOfSync is to indicate the error isn't really an error
+	// but more of a marker that the status check will be performed
+	// after some wait time
+	TemporaryOutOfSync = fmt.Errorf(
+		"Temporary out of sync, reconcile after some time")
 )
 
 // AWSError returns the type conversion for the supplied error to an aws-sdk-go

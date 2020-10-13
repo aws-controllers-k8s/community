@@ -98,13 +98,7 @@ func (rm *resourceManager) sdkFind(
 		ko.Spec.TemplateSelectionExpression = resp.TemplateSelectionExpression
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
 }
 
@@ -178,13 +172,7 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.IntegrationResponseID = resp.IntegrationResponseId
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -258,6 +246,8 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.IntegrationResponseId != nil {
 		ko.Status.IntegrationResponseID = resp.IntegrationResponseId
 	}
+
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -340,4 +330,19 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	}
 
 	return res, nil
+}
+
+// setStatusDefaults sets default properties into supplied custom resource
+func (rm *resourceManager) setStatusDefaults(
+	ko *svcapitypes.IntegrationResponse,
+) {
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
 }

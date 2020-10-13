@@ -13,9 +13,9 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 source "$SCRIPTS_DIR/lib/testutil.sh"
-source "$SCRIPTS_DIR/lib/aws_elasticache_testutil.sh"
+source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 
-check_is_installed jq
+check_is_installed jq "Please install jq before running this script."
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 service_name="elasticache"
@@ -35,8 +35,8 @@ setup_replication_group_fields
 wait_and_assert_replication_group_available_status() {
   sleep 5
   aws_wait_replication_group_available "$rg_id" "FAIL: expected replication group $rg_id to have been created in ${service_name}"
-  k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
-  sleep 5
+  aws_assert_replication_group_status "$rg_id" "available"
+  sleep 35
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
 

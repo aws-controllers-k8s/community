@@ -97,13 +97,7 @@ func (rm *resourceManager) sdkFind(
 		ko.Spec.RouteResponseKey = resp.RouteResponseKey
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
 }
 
@@ -177,13 +171,7 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.RouteResponseID = resp.RouteResponseId
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -256,6 +244,8 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.RouteResponseId != nil {
 		ko.Status.RouteResponseID = resp.RouteResponseId
 	}
+
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -337,4 +327,19 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	}
 
 	return res, nil
+}
+
+// setStatusDefaults sets default properties into supplied custom resource
+func (rm *resourceManager) setStatusDefaults(
+	ko *svcapitypes.RouteResponse,
+) {
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
 }

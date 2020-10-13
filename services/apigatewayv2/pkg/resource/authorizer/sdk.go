@@ -120,13 +120,7 @@ func (rm *resourceManager) sdkFind(
 		ko.Spec.Name = resp.Name
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
 }
 
@@ -194,13 +188,7 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.AuthorizerID = resp.AuthorizerId
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -293,6 +281,8 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.AuthorizerId != nil {
 		ko.Status.AuthorizerID = resp.AuthorizerId
 	}
+
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -391,4 +381,19 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	}
 
 	return res, nil
+}
+
+// setStatusDefaults sets default properties into supplied custom resource
+func (rm *resourceManager) setStatusDefaults(
+	ko *svcapitypes.Authorizer,
+) {
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
 }

@@ -208,7 +208,7 @@ func (r *reconciler) sync(
 		if condition.Type == ackv1alpha1.ConditionTypeResourceSynced &&
 			condition.Status != corev1.ConditionTrue {
 			return requeue.NeededAfter(
-				errors.New("sync again"), requeue.DefaultRequeueAfterDuration)
+				ackerr.TemporaryOutOfSync, requeue.DefaultRequeueAfterDuration)
 		}
 	}
 	return nil
