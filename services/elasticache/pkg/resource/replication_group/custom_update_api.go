@@ -16,6 +16,7 @@ package replication_group
 import (
 	"context"
 	"fmt"
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
 	"github.com/pkg/errors"
 
@@ -420,6 +421,13 @@ func (rm *resourceManager) provideUpdatedResource(
 	// the original Kubernetes object we passed to the function
 	ko := desired.ko.DeepCopy()
 
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if replicationGroup.ARN != nil {
+		arn := ackv1alpha1.AWSResourceName(*replicationGroup.ARN)
+		ko.Status.ACKResourceMetadata.ARN = &arn
+	}
 	if replicationGroup.AuthTokenEnabled != nil {
 		ko.Status.AuthTokenEnabled = replicationGroup.AuthTokenEnabled
 	}
@@ -564,7 +572,7 @@ func (rm *resourceManager) provideUpdatedResource(
 	if replicationGroup.Status != nil {
 		ko.Status.Status = replicationGroup.Status
 	}
-
+	rm.setStatusDefaults(ko)
 	// custom set output from response
 	rm.customSetOutput(desired, replicationGroup, ko)
 	return &resource{ko}, nil

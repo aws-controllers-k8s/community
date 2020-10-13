@@ -95,13 +95,7 @@ func (rm *resourceManager) sdkFind(
 		ko.Spec.ReplicationGroup = f4
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
 }
 
@@ -172,13 +166,7 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.GlobalTableStatus = resp.GlobalTableDescription.GlobalTableStatus
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -244,6 +232,8 @@ func (rm *resourceManager) sdkUpdate(
 		ko.Status.GlobalTableStatus = resp.GlobalTableDescription.GlobalTableStatus
 	}
 
+	rm.setStatusDefaults(ko)
+
 	return &resource{ko}, nil
 }
 
@@ -269,4 +259,19 @@ func (rm *resourceManager) sdkDelete(
 	// TODO(jaypipes): Figure this out...
 	return nil
 
+}
+
+// setStatusDefaults sets default properties into supplied custom resource
+func (rm *resourceManager) setStatusDefaults(
+	ko *svcapitypes.GlobalTable,
+) {
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
 }
