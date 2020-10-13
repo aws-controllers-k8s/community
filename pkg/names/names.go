@@ -18,6 +18,8 @@ import (
 
 	regexp "github.com/dlclark/regexp2" // for negative lookahead support
 	"github.com/iancoleman/strcase"
+
+	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
 type initialismTranslator struct {
@@ -115,6 +117,34 @@ var (
 	}
 )
 
+var goKeywords = []string{
+	"break",
+	"case",
+	"chan",
+	"const",
+	"continue",
+	"default",
+	"defer",
+	"else",
+	"fallthrough",
+	"for",
+	"func",
+	"go",
+	"goto",
+	"if",
+	"import",
+	"interface",
+	"map",
+	"package",
+	"range",
+	"return",
+	"select",
+	"struct",
+	"switch",
+	"type",
+	"var",
+}
+
 type Names struct {
 	ModelOrginal string
 	Original     string
@@ -149,6 +179,9 @@ func goName(original string, lowerFirst bool, snake bool) (result string) {
 	}
 	if snake {
 		result = strcase.ToSnake(result)
+	}
+	if util.InStrings(result, goKeywords) {
+		result = result + "_"
 	}
 	return
 }
