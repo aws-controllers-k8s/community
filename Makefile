@@ -6,8 +6,6 @@ GO111MODULE=on
 DOCKER_REPOSITORY ?= amazon/aws-controllers-k8s
 DOCKER_USERNAME ?= ""
 DOCKER_PASSWORD ?= ""
-PKGS=$(sort $(dir $(wildcard pkg/*/*/)))
-MOCKS=$(foreach x, $(PKGS), mocks/$(x))
 
 AWS_SERVICE=$(shell echo $(SERVICE) | tr '[:upper:]' '[:lower:]')
 
@@ -62,11 +60,9 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 install-mockery:
 	@scripts/install-mockery.sh
 
-mocks: install-mockery $(MOCKS)	## Run mock tests
-
-$(MOCKS): mocks/% : %
-	@echo -n "building mocks for $^... "
-	@bin/mockery --quiet --all --tags=codegen --case=underscore --output=$@ --dir=$^
+mocks: install-mockery ## Build mocks
+	@echo -n "building mocks for pkg/types ... "
+	@bin/mockery --quiet --all --tags=codegen --case=underscore --output=mocks/pkg/types --dir=pkg/types
 	@echo "ok."
 
 help:           ## Show this help.

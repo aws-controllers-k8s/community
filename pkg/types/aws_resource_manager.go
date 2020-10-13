@@ -17,9 +17,11 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 )
 
 // AWSResourceManager is responsible for providing a consistent way to perform
@@ -71,6 +73,8 @@ type AWSResourceManagerFactory interface {
 	// ManagerFor returns an AWSResourceManager that manages AWS resources on
 	// behalf of a particular AWS account and in a specific AWS region
 	ManagerFor(
+		logr.Logger,
+		*ackmetrics.Metrics,
 		AWSResourceReconciler,
 		*session.Session,
 		ackv1alpha1.AWSAccountID,

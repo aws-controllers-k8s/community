@@ -122,7 +122,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		"kind", r.rd.GroupKind().String(),
 	).V(1).Info("starting reconcilation")
 
-	rm, err := r.rmf.ManagerFor(r, sess, acctID, region)
+	rm, err := r.rmf.ManagerFor(r.log, r.metrics, r, sess, acctID, region)
 	if err != nil {
 		return err
 	}

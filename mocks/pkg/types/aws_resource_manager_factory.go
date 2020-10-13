@@ -3,8 +3,11 @@
 package mocks
 
 import (
-	session "github.com/aws/aws-sdk-go/aws/session"
+	metrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
+	logr "github.com/go-logr/logr"
 	mock "github.com/stretchr/testify/mock"
+
+	session "github.com/aws/aws-sdk-go/aws/session"
 
 	types "github.com/aws/aws-controllers-k8s/pkg/types"
 
@@ -16,13 +19,13 @@ type AWSResourceManagerFactory struct {
 	mock.Mock
 }
 
-// ManagerFor provides a mock function with given fields: _a0, _a1, _a2, _a3
-func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSResourceReconciler, _a1 *session.Session, _a2 v1alpha1.AWSAccountID, _a3 v1alpha1.AWSRegion) (types.AWSResourceManager, error) {
-	ret := _m.Called(_a0, _a1, _a2, _a3)
+// ManagerFor provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5
+func (_m *AWSResourceManagerFactory) ManagerFor(_a0 logr.Logger, _a1 *metrics.Metrics, _a2 types.AWSResourceReconciler, _a3 *session.Session, _a4 v1alpha1.AWSAccountID, _a5 v1alpha1.AWSRegion) (types.AWSResourceManager, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5)
 
 	var r0 types.AWSResourceManager
-	if rf, ok := ret.Get(0).(func(types.AWSResourceReconciler, *session.Session, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) types.AWSResourceManager); ok {
-		r0 = rf(_a0, _a1, _a2, _a3)
+	if rf, ok := ret.Get(0).(func(logr.Logger, *metrics.Metrics, types.AWSResourceReconciler, *session.Session, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) types.AWSResourceManager); ok {
+		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AWSResourceManager)
@@ -30,8 +33,8 @@ func (_m *AWSResourceManagerFactory) ManagerFor(_a0 types.AWSResourceReconciler,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AWSResourceReconciler, *session.Session, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) error); ok {
-		r1 = rf(_a0, _a1, _a2, _a3)
+	if rf, ok := ret.Get(1).(func(logr.Logger, *metrics.Metrics, types.AWSResourceReconciler, *session.Session, v1alpha1.AWSAccountID, v1alpha1.AWSRegion) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5)
 	} else {
 		r1 = ret.Error(1)
 	}
