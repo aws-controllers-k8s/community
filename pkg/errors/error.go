@@ -47,3 +47,22 @@ func AWSError(err error) (awserr.Error, bool) {
 	awsErr, ok := err.(awserr.Error)
 	return awsErr, ok
 }
+
+// AWSRequestFailure returns the type conversion for the supplied error to an
+// aws-sdk-go RequestFailure interface
+func AWSRequestFailure(err error) (awserr.RequestFailure, bool) {
+	awsRF, ok := err.(awserr.RequestFailure)
+	return awsRF, ok
+}
+
+// HTTPStatusCode returns the HTTP status code from the supplied error by
+// introspecting the error to see if it's an awserr.RequestFailure interface
+// and if so, calling StatusCode() on that type-converted RequestFailure. If
+// the type conversion fails, returns -1
+func HTTPStatusCode(err error) int {
+	awsRF, ok := AWSRequestFailure(err)
+	if !ok {
+		return -1
+	}
+	return awsRF.StatusCode()
+}

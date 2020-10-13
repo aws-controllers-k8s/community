@@ -49,6 +49,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeReplicationGroupsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeReplicationGroups", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "ReplicationGroupNotFoundFault" {
 			return nil, ackerr.NotFound
@@ -278,6 +279,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateReplicationGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateReplicationGroup", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -630,6 +632,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "ModifyReplicationGroup", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -882,6 +885,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteReplicationGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteReplicationGroup", respErr)
 	return respErr
 }
 

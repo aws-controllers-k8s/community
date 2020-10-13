@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetTopicAttributesWithContext(ctx, input)
+	rm.metrics.RecordAPICall("GET_ATTRIBUTES", "GetTopicAttributes", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFound" {
 			return nil, ackerr.NotFound
@@ -128,6 +129,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateTopicWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateTopic", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -215,6 +217,7 @@ func (rm *resourceManager) sdkUpdate(
 	// DeepCopy of the supplied desired state, which should be fine because
 	// that desired state has been constructed from a call to GetAttributes...
 	_, respErr := rm.sdkapi.SetTopicAttributesWithContext(ctx, input)
+	rm.metrics.RecordAPICall("SET_ATTRIBUTES", "SetTopicAttributes", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFound" {
 			// Technically, this means someone deleted the backend resource in
@@ -261,6 +264,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteTopicWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteTopic", respErr)
 	return respErr
 }
 

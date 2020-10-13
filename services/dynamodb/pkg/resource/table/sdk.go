@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "DescribeTable", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "ResourceNotFoundException" {
 			return nil, ackerr.NotFound
@@ -395,6 +396,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateTable", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -741,6 +743,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateTable", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -962,6 +965,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteTable", respErr)
 	return respErr
 }
 

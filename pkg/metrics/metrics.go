@@ -16,6 +16,8 @@ package metrics
 import (
 	"strconv"
 
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -70,19 +72,18 @@ func (m *Metrics) RecordAPICall(
 	opType string,
 	// The name of the AWS API call, e.g. "CreateTopic"
 	opID string,
-	// The HTTP status code returned from the AWS API call
-	statusCode int,
 	// Any error that was returned from the aws-sdk-go client call
 	err error,
 ) {
 	m.obAPIRequestTotal.With(
 		prometheus.Labels{
 			"service": m.serviceID,
-			"op_type": string(opType),
+			"op_type": opType,
 			"op_id":   opID,
 		},
 	).Inc()
-	if statusCode >= 400 && statusCode < 600 {
+	if err != nil {
+		statusCode := ackerr.HTTPStatusCode(err)
 		m.obAPIRequestErrorTotal.With(
 			prometheus.Labels{
 				"service":     m.serviceID,

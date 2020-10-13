@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetApiMappingWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetApiMapping", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -137,6 +138,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateApiMappingWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateApiMapping", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -191,6 +193,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateApiMappingWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateApiMapping", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -243,6 +246,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteApiMappingWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteApiMapping", respErr)
 	return respErr
 }
 

@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeGlobalTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "DescribeGlobalTable", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
 			return nil, ackerr.NotFound
@@ -145,6 +146,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateGlobalTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateGlobalTable", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -211,6 +213,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateGlobalTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateGlobalTable", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}

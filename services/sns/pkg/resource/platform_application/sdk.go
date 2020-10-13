@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	_, respErr := rm.sdkapi.GetPlatformApplicationAttributesWithContext(ctx, input)
+	rm.metrics.RecordAPICall("GET_ATTRIBUTES", "GetPlatformApplicationAttributes", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFound" {
 			return nil, ackerr.NotFound
@@ -119,6 +120,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreatePlatformApplicationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreatePlatformApplication", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -210,6 +212,7 @@ func (rm *resourceManager) sdkUpdate(
 	// DeepCopy of the supplied desired state, which should be fine because
 	// that desired state has been constructed from a call to GetAttributes...
 	_, respErr := rm.sdkapi.SetPlatformApplicationAttributesWithContext(ctx, input)
+	rm.metrics.RecordAPICall("SET_ATTRIBUTES", "SetPlatformApplicationAttributes", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFound" {
 			// Technically, this means someone deleted the backend resource in
@@ -291,6 +294,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeletePlatformApplicationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeletePlatformApplication", respErr)
 	return respErr
 }
 

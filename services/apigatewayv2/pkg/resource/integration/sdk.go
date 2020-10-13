@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetIntegrationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetIntegration", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -198,6 +199,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateIntegrationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateIntegration", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -313,6 +315,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateIntegrationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateIntegration", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -426,6 +429,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteIntegrationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteIntegration", respErr)
 	return respErr
 }
 

@@ -56,6 +56,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetDomainNameWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetDomainName", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -178,6 +179,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateDomainNameWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateDomainName", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -277,6 +279,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateDomainNameWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateDomainName", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -362,6 +365,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteDomainNameWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteDomainName", respErr)
 	return respErr
 }
 
