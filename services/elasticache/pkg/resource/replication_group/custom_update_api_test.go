@@ -410,7 +410,8 @@ func TestNewIncreaseReplicaCountRequestPayload(t *testing.T) {
 	// Tests
 	t.Run("EmptyPayload=NoSpec", func(t *testing.T) {
 		desired := provideResource()
-		payload, err := rm.newIncreaseReplicaCountRequestPayload(desired)
+		latest := provideResource()
+		payload, err := rm.newIncreaseReplicaCountRequestPayload(desired, latest)
 		require.NotNil(payload)
 		require.NotNil(payload.ApplyImmediately)
 		assert.True(*payload.ApplyImmediately)
@@ -427,14 +428,21 @@ func TestNewIncreaseReplicaCountRequestPayload(t *testing.T) {
 		desired.ko.Spec.ReplicasPerNodeGroup = &desiredReplicaCount
 		desired.ko.Spec.NodeGroupConfiguration = provideNodeGroupConfigurationWithReplicas(
 			int(desiredReplicaCount), "1001", "1002")
-		payload, err := rm.newIncreaseReplicaCountRequestPayload(desired)
+		// expected: only node groups that are present on server are included in payload.
+		expectedPayloadReplicaConfiguration := provideNodeGroupConfigurationWithReplicas(
+			int(desiredReplicaCount), "1001")
+		latest := provideResource()
+		latestReplicaCount := int64(3)
+		latest.ko.Status.NodeGroups = provideNodeGroupsWithReplicas(
+			int(latestReplicaCount), "1001", "1003")
+		payload, err := rm.newIncreaseReplicaCountRequestPayload(desired, latest)
 		require.NotNil(payload)
 		require.NotNil(payload.ApplyImmediately)
 		assert.True(*payload.ApplyImmediately)
 		assert.Equal(replicationGroupID, *payload.ReplicationGroupId)
 		assert.Equal(desiredReplicaCount, *payload.NewReplicaCount)
 		assert.NotNil(payload.ReplicaConfiguration)
-		validatePayloadReplicaConfig(desired.ko.Spec.NodeGroupConfiguration, payload.ReplicaConfiguration, assert, require)
+		validatePayloadReplicaConfig(expectedPayloadReplicaConfiguration, payload.ReplicaConfiguration, assert, require)
 		assert.Nil(err)
 	})
 }
@@ -449,7 +457,8 @@ func TestNewDecreaseReplicaCountRequestPayload(t *testing.T) {
 	// Tests
 	t.Run("EmptyPayload=NoSpec", func(t *testing.T) {
 		desired := provideResource()
-		payload, err := rm.newDecreaseReplicaCountRequestPayload(desired)
+		latest := provideResource()
+		payload, err := rm.newDecreaseReplicaCountRequestPayload(desired, latest)
 		require.NotNil(payload)
 		require.NotNil(payload.ApplyImmediately)
 		assert.True(*payload.ApplyImmediately)
@@ -458,7 +467,7 @@ func TestNewDecreaseReplicaCountRequestPayload(t *testing.T) {
 		assert.Nil(payload.ReplicaConfiguration)
 		assert.Nil(err)
 	})
-	t.Run("Payload=Spec", func(t *testing.T) {
+	t.Run("Payload=Spec_Server", func(t *testing.T) {
 		desired := provideResource()
 		replicationGroupID := "test-rg"
 		desired.ko.Spec.ReplicationGroupID = &replicationGroupID
@@ -466,14 +475,21 @@ func TestNewDecreaseReplicaCountRequestPayload(t *testing.T) {
 		desired.ko.Spec.ReplicasPerNodeGroup = &desiredReplicaCount
 		desired.ko.Spec.NodeGroupConfiguration = provideNodeGroupConfigurationWithReplicas(
 			int(desiredReplicaCount), "1001", "1002")
-		payload, err := rm.newDecreaseReplicaCountRequestPayload(desired)
+		// expected: only node groups that are present on server are included in payload.
+		expectedPayloadReplicaConfiguration := provideNodeGroupConfigurationWithReplicas(
+			int(desiredReplicaCount), "1001")
+		latest := provideResource()
+		latestReplicaCount := int64(1)
+		latest.ko.Status.NodeGroups = provideNodeGroupsWithReplicas(
+			int(latestReplicaCount), "1001")
+		payload, err := rm.newDecreaseReplicaCountRequestPayload(desired, latest)
 		require.NotNil(payload)
 		require.NotNil(payload.ApplyImmediately)
 		assert.True(*payload.ApplyImmediately)
 		assert.Equal(replicationGroupID, *payload.ReplicationGroupId)
 		assert.Equal(desiredReplicaCount, *payload.NewReplicaCount)
 		assert.NotNil(payload.ReplicaConfiguration)
-		validatePayloadReplicaConfig(desired.ko.Spec.NodeGroupConfiguration, payload.ReplicaConfiguration, assert, require)
+		validatePayloadReplicaConfig(expectedPayloadReplicaConfiguration, payload.ReplicaConfiguration, assert, require)
 		assert.Nil(err)
 	})
 }
