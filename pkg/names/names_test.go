@@ -48,6 +48,7 @@ func TestNames(t *testing.T) {
 		{"RepositoryUriTest", "RepositoryURITest", "repositoryURITest", "repository_uri_test"},
 		{"Ip", "IP", "ip", "ip"},
 		{"MultipartUpload", "MultipartUpload", "multipartUpload", "multipart_upload"},
+		{"Package", "Package", "package_", "package_"},
 	}
 	for _, tc := range testCases {
 		n := names.New(tc.original)
