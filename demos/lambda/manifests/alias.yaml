@@ -1,0 +1,10 @@
+apiVersion: lambda.services.k8s.aws/v1alpha1
+kind: Alias
+metadata:
+  name: test-function-alias
+  namespace: default
+spec:
+  functionName: test-ack-lambda-function
+  functionVersion: $LATEST
+  name: version-1
+  description: ""
