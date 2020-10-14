@@ -8,6 +8,8 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 . $SCRIPTS_DIR/lib/testutil.sh
 . $SCRIPTS_DIR/lib/aws.sh
 
+service_name="elasticache"
+
 #################################################
 # functions for tests
 #################################################
@@ -180,13 +182,14 @@ EOF
 aws_wait_replication_group_available() {
   if [[ $# -ne 2 ]]; then
     echo "FATAL: Wrong number of arguments passed to aws_wait_replication_group_available"
-    echo "Usage: aws_wait_replication_group_available replication_group_id $failure_message"
+    echo "Usage: aws_wait_replication_group_available replication_group_id failure_message"
     exit 1
   fi
   local replication_group_id="$1"
   local failure_message="$2"
   local wait_failed="true"
-  for i in $(seq 0 3); do
+  for i in $(seq 0 5); do
+    k8s_controller_reload_credentials "$service_name"
     debug_msg "starting to wait for replication group: $replication_group_id to be available."
     $(daws elasticache wait replication-group-available --replication-group-id "$replication_group_id")
     if [[ $? -eq 255 ]]; then
@@ -201,6 +204,7 @@ aws_wait_replication_group_available() {
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
+  k8s_controller_reload_credentials "$service_name"
 }
 
 # aws_wait_replication_group_deleted waits for supplied replication_group_id to be deleted
@@ -210,13 +214,14 @@ aws_wait_replication_group_available() {
 aws_wait_replication_group_deleted() {
   if [[ $# -ne 2 ]]; then
     echo "FATAL: Wrong number of arguments passed to aws_wait_replication_group_deleted"
-    echo "Usage: aws_wait_replication_group_deleted replication_group_id $failure_message"
+    echo "Usage: aws_wait_replication_group_deleted replication_group_id failure_message"
     exit 1
   fi
   local replication_group_id="$1"
   local failure_message="$2"
   local wait_failed="true"
-  for i in $(seq 0 3); do
+  for i in $(seq 0 5); do
+    k8s_controller_reload_credentials "$service_name"
     debug_msg "starting to wait for replication group: $replication_group_id to be deleted."
     $(daws elasticache wait replication-group-deleted --replication-group-id "$replication_group_id")
     if [[ $? -eq 255 ]]; then
@@ -231,6 +236,7 @@ aws_wait_replication_group_deleted() {
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
+  k8s_controller_reload_credentials "$service_name"
 }
 
 # aws_assert_replication_group_status compares status of supplied replication_group_id with supplied status
@@ -255,9 +261,9 @@ aws_assert_replication_group_status() {
   fi
 }
 
-# k8s_assert_replication_group_status compares status of supplied replication_group_id with supplied status
+# k8s_assert_replication_group_status_property compares status of supplied replication_group_id with supplied status
 # current status is retrieved from latest state of replication group in k8s cluster using kubectl
-# aws_assert_replication_group_status requires 3 arguments
+# k8s_assert_replication_group_status_property requires 3 arguments
 #     replication_group_id
 #     property_json_path - json path inside k8s crd status object. example: .description
 #     expected_value - expected value of the property
@@ -280,7 +286,7 @@ k8s_assert_replication_group_status_property() {
 
 # k8s_assert_replication_group_shard_count compares shard count of supplied replication_group_id with supplied count
 # current status is retrieved from latest state of replication group in k8s cluster using kubectl
-# aws_assert_replication_group_status requires 2 arguments
+# k8s_assert_replication_group_shard_count requires 2 arguments
 #     replication_group_id
 #     expected_count - expected shard count
 k8s_assert_replication_group_shard_count() {
@@ -301,7 +307,7 @@ k8s_assert_replication_group_shard_count() {
 
 # k8s_assert_replication_group_replica_count compares replica count of supplied replication_group_id with supplied count
 # current status is retrieved from latest state of replication group in k8s cluster using kubectl
-# aws_assert_replication_group_status requires 2 arguments
+# k8s_assert_replication_group_replica_count requires 2 arguments
 #     replication_group_id
 #     expected_count - expected replica count
 k8s_assert_replication_group_replica_count() {

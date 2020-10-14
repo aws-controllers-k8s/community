@@ -18,7 +18,6 @@ source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 check_is_installed jq "Please install jq before running this script."
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
-service_name="elasticache"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test: $service_name/$test_name"
 
@@ -49,6 +48,8 @@ ack_apply_replication_group_with_node_groups_yaml() {
   rg_yaml="$(provide_replication_group_detailed_yaml)"  # helps determine node groups to retain during decrease
   echo "$rg_yaml" | kubectl apply -f -
 }
+
+k8s_controller_reload_credentials "$service_name"
 
 #################################################
 # create replication group
@@ -130,4 +131,3 @@ assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 
 sleep 5
 aws_wait_replication_group_deleted  "$rg_id" "FAIL: expected replication group $rg_id to have been deleted in ${service_name}"
 
-assert_pod_not_restarted "$ack_ctrl_pod_id"

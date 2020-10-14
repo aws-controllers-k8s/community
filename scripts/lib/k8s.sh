@@ -2,6 +2,12 @@
 
 CONTROLLER_TOOLS_VERSION="v0.4.0"
 
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ROOT_DIR="$THIS_DIR/../.."
+SCRIPTS_DIR="$ROOT_DIR/scripts"
+
+. $SCRIPTS_DIR/lib/aws.sh
+
 # controller_gen_version_equals accepts a string version and returns 0 if the
 # installed version of controller-gen matches the supplied version, otherwise
 # returns 1
@@ -69,4 +75,28 @@ get_field_from_status() {
     exit 1
   fi
   echo "$__id"
+}
+
+# k8s_controller_reload_credentials generates AWS temporary credentials
+# and adds them to service controller running on kubernetes cluster.
+# it requires 1 argument: service name
+# it depends upon:
+#   $AWS_ACCESS_KEY_ID
+#   $AWS_SECRET_ACCESS_KEY
+#   $AWS_SESSION_TOKEN
+k8s_controller_reload_credentials() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to k8s_controller_reload_credentials"
+    echo "Usage: k8s_controller_reload_credentials service_name"
+    exit 1
+  fi
+  local service_name="$1"
+  echo -n "generating AWS temporary credentials and adding to env vars map ... "
+  aws_generate_temp_creds
+  kubectl -n ack-system set env deployment/ack-"$service_name"-controller \
+    AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+    AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+    AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" 1>/dev/null
+  sleep 15
+  echo "ok."
 }
