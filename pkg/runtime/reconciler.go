@@ -110,7 +110,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
 	roleARN := r.getRoleARN(acctID)
-	sess, err := NewSession(region, roleARN)
+	sess, err := NewSession(region, roleARN, res.RuntimeObject().GetObjectKind().GroupVersionKind())
 	if err != nil {
 		return err
 	}

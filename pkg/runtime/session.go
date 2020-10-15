@@ -14,12 +14,19 @@
 package runtime
 
 import (
+	"fmt"
+
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	"github.com/aws/aws-controllers-k8s/pkg/version"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+const appName = "aws-controller-k8s"
 
 // NewSession returns a new session object. Buy default the returned session is
 // created using pod IRSA environment variables. If assumeRoleARN is not empty,
@@ -28,6 +35,7 @@ import (
 func NewSession(
 	region ackv1alpha1.AWSRegion,
 	assumeRoleARN ackv1alpha1.AWSResourceName,
+	groupVersionKind schema.GroupVersionKind,
 ) (*session.Session, error) {
 	awsCfg := aws.Config{
 		Region:              aws.String(string(region)),
@@ -48,7 +56,23 @@ func NewSession(
 			return nil, err
 		}
 	}
+	//injecting session handler info
+	injectUserAgent(&sess.Handlers, groupVersionKind)
 
 	// TODO(jaypipes): Handle throttling
 	return sess, nil
+}
+
+// injectUserAgent will inject app specific user-agent into awsSDK
+func injectUserAgent(handlers *request.Handlers, groupVersionKind schema.GroupVersionKind) {
+	handlers.Build.PushFrontNamed(request.NamedHandler{
+		Name: fmt.Sprintf("%s/user-agent", appName),
+		Fn:   request.MakeAddToUserAgentHandler(
+			appName,
+			groupVersionKind.Group+"-"+version.GitVersion,
+			"GitCommit/" + version.GitCommit,
+			"BuildDate/" + version.BuildDate,
+			"CRDKind/" + groupVersionKind.Kind,
+			"CRDVersion/" + groupVersionKind.Version),
+	})
 }
