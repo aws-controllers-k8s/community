@@ -101,6 +101,10 @@ type ResourceConfig struct {
 	// very little consistency to the APIs that we can use to instruct the code
 	// generator :(
 	UpdateOperation *UpdateOperationConfig `json:"update_operation,omitempty"`
+	// UpdateConditionsCustomMethodName provides the name of the custom method on the
+	// `resourceManager` struct that will set Conditions on a `resource` struct
+	// depending on the status of the resource.
+	UpdateConditionsCustomMethodName string `json:"update_conditions_custom_method_name,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -188,6 +192,8 @@ type ExceptionsConfig struct {
 	// Codes is a map of HTTP status code to the name of the Exception shape
 	// that corresponds to that HTTP status code for this resource
 	Codes map[int]string `json:"codes"`
+	// Set of aws exception codes that are terminal exceptions for this resource
+	TerminalCodes []string `json:"terminal_codes"`
 }
 
 // RenamesConfig contains instructions to the code generator how to rename

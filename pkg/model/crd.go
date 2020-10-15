@@ -356,6 +356,32 @@ func (r *CRD) GetCustomImplementation(
 	return operationConfig.CustomImplementation
 }
 
+// UpdateConditionsCustomMethodName returns custom update conditions operation
+// as *string for custom resource, if specified in generator config
+func (r *CRD) UpdateConditionsCustomMethodName() string {
+	if r.genCfg == nil {
+		return ""
+	}
+	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	if !found {
+		return ""
+	}
+	return resGenConfig.UpdateConditionsCustomMethodName
+}
+
+// TerminalExceptionCodes returns terminal exception codes as
+// []string for custom resource, if specified in generator config
+func (r *CRD) TerminalExceptionCodes() []string {
+	if r.genCfg == nil {
+		return nil
+	}
+	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	if found && resGenConfig.Exceptions != nil {
+		return resGenConfig.Exceptions.TerminalCodes
+	}
+	return nil
+}
+
 // ExceptionCode returns the name of the resource's Exception code for the
 // Exception having the exception code. If the generator config has
 // instructions for overriding the name of an exception code for a resource for
