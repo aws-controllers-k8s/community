@@ -12,7 +12,6 @@ TEMPLATES_DIR="$ROOT_DIR/templates"
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 
-check_is_installed docker
 check_is_installed controller-gen "You can install controller-gen with the helper scripts/install-controller-gen.sh"
 
 if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
