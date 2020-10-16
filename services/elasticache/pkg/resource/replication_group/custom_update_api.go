@@ -42,16 +42,34 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 	}
 
 	// Order of operations when diffs map to multiple updates APIs:
-	// 1. updateReplicaCount() is invoked Before updateShardConfiguration()
-	//	  because both accept availability zones, however the number of
-	//	  values depend on replica count.
+	// 1. When automaticFailoverEnabled differs:
+	//		if automaticFailoverEnabled == false; do nothing in this custom logic, let the modify execute first.
+	// 		else if automaticFailoverEnabled == true then following logic should execute first.
+	// 2. When multiAZ differs
+	// 		if multiAZ = true  then below is fine.
+	// 		else if multiAZ = false ; do nothing in custom logic
+	// 3. updateReplicaCount() is invoked Before updateShardConfiguration()
+	//		because both accept availability zones, however the number of
+	//		values depend on replica count.
+	if desired.ko.Spec.AutomaticFailoverEnabled != nil && *desired.ko.Spec.AutomaticFailoverEnabled == false {
+		if latest.ko.Spec.AutomaticFailoverEnabled == nil ||
+			*latest.ko.Spec.AutomaticFailoverEnabled != *desired.ko.Spec.AutomaticFailoverEnabled {
+			return nil, nil
+		}
+	}
+	if desired.ko.Spec.MultiAZEnabled != nil && *desired.ko.Spec.MultiAZEnabled == false {
+		if latest.ko.Spec.MultiAZEnabled == nil ||
+			*latest.ko.Spec.MultiAZEnabled != *desired.ko.Spec.MultiAZEnabled {
+			return nil, nil
+		}
+	}
 
 	// increase/decrease replica count
 	if diff := rm.replicaCountDifference(desired, latest); diff != 0 {
 		if diff > 0 {
-			return rm.increaseReplicaCount(ctx, desired)
+			return rm.increaseReplicaCount(ctx, desired, latest)
 		}
-		return rm.decreaseReplicaCount(ctx, desired)
+		return rm.decreaseReplicaCount(ctx, desired, latest)
 	}
 
 	// increase/decrease shards
@@ -195,8 +213,9 @@ func (rm *resourceManager) shardConfigurationsDiffer(
 func (rm *resourceManager) increaseReplicaCount(
 	ctx context.Context,
 	desired *resource,
+	latest *resource,
 ) (*resource, error) {
-	input, err := rm.newIncreaseReplicaCountRequestPayload(desired)
+	input, err := rm.newIncreaseReplicaCountRequestPayload(desired, latest)
 	if err != nil {
 		return nil, err
 	}
@@ -210,8 +229,9 @@ func (rm *resourceManager) increaseReplicaCount(
 func (rm *resourceManager) decreaseReplicaCount(
 	ctx context.Context,
 	desired *resource,
+	latest *resource,
 ) (*resource, error) {
-	input, err := rm.newDecreaseReplicaCountRequestPayload(desired)
+	input, err := rm.newDecreaseReplicaCountRequestPayload(desired, latest)
 	if err != nil {
 		return nil, err
 	}
@@ -242,6 +262,7 @@ func (rm *resourceManager) updateShardConfiguration(
 // payload of the Create API call for the resource
 func (rm *resourceManager) newIncreaseReplicaCountRequestPayload(
 	desired *resource,
+	latest *resource,
 ) (*svcsdk.IncreaseReplicaCountInput, error) {
 	res := &svcsdk.IncreaseReplicaCountInput{}
 	desiredSpec := desired.ko.Spec
@@ -254,13 +275,35 @@ func (rm *resourceManager) newIncreaseReplicaCountRequestPayload(
 		res.SetNewReplicaCount(*desiredSpec.ReplicasPerNodeGroup)
 	}
 
+	latestStatus := latest.ko.Status
+	// each shard could have different value for replica count
+	latestReplicaCounts := map[string]int{}
+	for _, latestShard := range latestStatus.NodeGroups {
+		if latestShard.NodeGroupID == nil {
+			continue
+		}
+		latestReplicaCount := 0
+		if latestShard.NodeGroupMembers != nil {
+			if len(latestShard.NodeGroupMembers) > 0 {
+				latestReplicaCount = len(latestShard.NodeGroupMembers) - 1
+			}
+		}
+		latestReplicaCounts[*latestShard.NodeGroupID] = latestReplicaCount
+	}
+
 	if desiredSpec.NodeGroupConfiguration != nil {
 		shardsConfig := []*svcsdk.ConfigureShard{}
 		for _, desiredShard := range desiredSpec.NodeGroupConfiguration {
-			shardConfig := &svcsdk.ConfigureShard{}
-			if desiredShard.NodeGroupID != nil {
-				shardConfig.SetNodeGroupId(*desiredShard.NodeGroupID)
+			if desiredShard.NodeGroupID == nil {
+				continue
 			}
+			_, found := latestReplicaCounts[*desiredShard.NodeGroupID]
+			if !found {
+				continue
+			}
+			// shard has an Id and it is present on server.
+			shardConfig := &svcsdk.ConfigureShard{}
+			shardConfig.SetNodeGroupId(*desiredShard.NodeGroupID)
 			if desiredShard.ReplicaCount != nil {
 				shardConfig.SetNewReplicaCount(*desiredShard.ReplicaCount)
 			}
@@ -288,6 +331,7 @@ func (rm *resourceManager) newIncreaseReplicaCountRequestPayload(
 // payload of the Create API call for the resource
 func (rm *resourceManager) newDecreaseReplicaCountRequestPayload(
 	desired *resource,
+	latest *resource,
 ) (*svcsdk.DecreaseReplicaCountInput, error) {
 	res := &svcsdk.DecreaseReplicaCountInput{}
 	desiredSpec := desired.ko.Spec
@@ -300,13 +344,35 @@ func (rm *resourceManager) newDecreaseReplicaCountRequestPayload(
 		res.SetNewReplicaCount(*desiredSpec.ReplicasPerNodeGroup)
 	}
 
+	latestStatus := latest.ko.Status
+	// each shard could have different value for replica count
+	latestReplicaCounts := map[string]int{}
+	for _, latestShard := range latestStatus.NodeGroups {
+		if latestShard.NodeGroupID == nil {
+			continue
+		}
+		latestReplicaCount := 0
+		if latestShard.NodeGroupMembers != nil {
+			if len(latestShard.NodeGroupMembers) > 0 {
+				latestReplicaCount = len(latestShard.NodeGroupMembers) - 1
+			}
+		}
+		latestReplicaCounts[*latestShard.NodeGroupID] = latestReplicaCount
+	}
+
 	if desiredSpec.NodeGroupConfiguration != nil {
 		shardsConfig := []*svcsdk.ConfigureShard{}
 		for _, desiredShard := range desiredSpec.NodeGroupConfiguration {
-			shardConfig := &svcsdk.ConfigureShard{}
-			if desiredShard.NodeGroupID != nil {
-				shardConfig.SetNodeGroupId(*desiredShard.NodeGroupID)
+			if desiredShard.NodeGroupID == nil {
+				continue
 			}
+			_, found := latestReplicaCounts[*desiredShard.NodeGroupID]
+			if !found {
+				continue
+			}
+			// shard has an Id and it is present on server.
+			shardConfig := &svcsdk.ConfigureShard{}
+			shardConfig.SetNodeGroupId(*desiredShard.NodeGroupID)
 			if desiredShard.ReplicaCount != nil {
 				shardConfig.SetNewReplicaCount(*desiredShard.ReplicaCount)
 			}
