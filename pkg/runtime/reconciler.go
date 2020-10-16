@@ -361,10 +361,9 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 
 // getOwnerAccountID returns the AWS account that owns the supplied resource.
 // The function looks to the common `Status.ACKResourceState` object, followed
-// by the ACK OwnerAccountAccountID annotation, followed by the default AWS
-// account ID associated with the Kubernetes Namespace in which the CR was
-// created, followed by the AWS Account in which the IAM Role that the service
-// controller is in.
+// by the default AWS account ID associated with the Kubernetes Namespace in
+// which the CR was created, followed by the AWS Account in which the IAM Role
+// that the service controller is in.
 func (r *reconciler) getOwnerAccountID(
 	res acktypes.AWSResource,
 ) ackv1alpha1.AWSAccountID {
@@ -373,16 +372,9 @@ func (r *reconciler) getOwnerAccountID(
 		return *acctID
 	}
 
-	// look for owner account id in the CR annotations
-	annotations := res.MetaObject().GetAnnotations()
-	accID, ok := annotations[ackv1alpha1.AnnotationOwnerAccountID]
-	if ok {
-		return ackv1alpha1.AWSAccountID(accID)
-	}
-
 	// look for owner account id in the namespace annotations
 	namespace := res.MetaObject().GetNamespace()
-	accID, ok = r.cache.Namespaces.GetOwnerAccountID(namespace)
+	accID, ok := r.cache.Namespaces.GetOwnerAccountID(namespace)
 	if ok {
 		return ackv1alpha1.AWSAccountID(accID)
 	}
