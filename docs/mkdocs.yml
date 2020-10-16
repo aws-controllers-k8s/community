@@ -31,8 +31,8 @@ extra:
 theme:
   name: 'material'
   features:
-  - 'tabs'
-  - 'instant'
+  - navigation.tabs
+  - navigation.instant
   custom_dir: 'theme'
   favicon: 'assets/images/favicon.png'
   logo: 'assets/images/logo.png'
