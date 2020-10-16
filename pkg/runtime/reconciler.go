@@ -151,6 +151,14 @@ func (r *reconciler) sync(
 
 	latest, err := rm.ReadOne(ctx, desired)
 	if err != nil {
+		if latest != nil {
+			// this indicates, that even though ReadOne failed
+			// there is some changes available in the latest.RuntimeObject()
+			// (example: ko.Status.Conditions) which have been
+			// updated in the resource
+			// Thus, updateCRStatus() call should be made here
+			_ = r.updateCRStatus(ctx, desired, latest)
+		}
 		if err != ackerr.NotFound {
 			return err
 		}
@@ -168,6 +176,14 @@ func (r *reconciler) sync(
 
 		latest, err = rm.Create(ctx, desired)
 		if err != nil {
+			if latest != nil {
+				// this indicates, that even though Create failed
+				// there is some changes available in the latest.RuntimeObject()
+				// (example: ko.Status.Conditions) which have been
+				// updated in the resource
+				// Thus, updateCRStatus() call should be made here
+				_ = r.updateCRStatus(ctx, desired, latest)
+			}
 			return err
 		}
 		r.log.V(0).Info(
@@ -196,6 +212,14 @@ func (r *reconciler) sync(
 		}
 		latest, err = rm.Update(ctx, desired, latest, diffReporter)
 		if err != nil {
+			if latest != nil {
+				// this indicates, that even though update failed
+				// there is some changes available in the latest.RuntimeObject()
+				// (example: ko.Status.Conditions) which have been
+				// updated in the resource
+				// Thus, updateCRStatus() call should be made here
+				_ = r.updateCRStatus(ctx, desired, latest)
+			}
 			return err
 		}
 		r.log.V(0).Info("reconciler.sync updated resource")
@@ -332,7 +356,7 @@ func (r *reconciler) getAWSResource(
 // handleReconcileError will handle errors from reconcile handlers, which
 // respects runtime errors.
 func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
-	if err == nil {
+	if err == nil || err == ackerr.Terminal{
 		return ctrlrt.Result{}, nil
 	}
 
@@ -350,7 +374,7 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 	var requeueNeeded *requeue.RequeueNeeded
 	if errors.As(err, &requeueNeeded) {
 		r.log.V(1).Info(
-			"requeue needed after error",
+			"requeue needed error",
 			"error", requeueNeeded.Unwrap(),
 		)
 		return ctrlrt.Result{Requeue: true}, nil

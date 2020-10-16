@@ -26,6 +26,12 @@ const (
 	// ConditionTypeResourceSynced indicates the state of the resource in the
 	// backend service is in sync with the ACK service controller
 	ConditionTypeResourceSynced ConditionType = "ACK.ResourceSynced"
+	// ConditionTypeTerminal indicates that the custom resource Spec need to be
+	// updated before any further sync.
+	// Examples include:
+	//		- As a result of InvalidArgument in input yaml
+	//		- Resource server state is "create-failed"
+	ConditionTypeTerminal ConditionType = "ACK.Terminal"
 )
 
 // Condition is the common struct used by all CRDs managed by ACK service

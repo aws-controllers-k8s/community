@@ -4,6 +4,7 @@ package {{ .CRD.Names.Snake }}
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
 	{{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
@@ -352,9 +353,8 @@ func (rm *resourceManager) newDeleteRequestPayload(
 {{ GoCodeSetDeleteInput .CRD "r.ko" "res" 1 }}
 	return res, nil
 }
-{{- end -}}
+{{- end }}
 
-{{ "" }}
 // setStatusDefaults sets default properties into supplied custom resource
 func (rm *resourceManager) setStatusDefaults (
 	ko *svcapitypes.{{ .CRD.Names.Camel }},
@@ -368,4 +368,76 @@ func (rm *resourceManager) setStatusDefaults (
 	if ko.Status.Conditions == nil {
 		ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	}
+}
+
+// updateConditions returns updated resource, true; if conditions were updated
+// else it returns nil, false
+func (rm *resourceManager) updateConditions (
+	r *resource,
+	err error,
+) (*resource, bool) {
+	ko := r.ko.DeepCopy()
+	rm.setStatusDefaults(ko)
+
+	// Terminal condition
+	var terminalCondition *ackv1alpha1.Condition = nil
+	for _, condition := range ko.Status.Conditions {
+		if condition.Type == ackv1alpha1.ConditionTypeTerminal {
+			terminalCondition = condition
+			break
+		}
+	}
+
+	if rm.terminalAWSError(err) {
+		if terminalCondition == nil {
+			terminalCondition = &ackv1alpha1.Condition{
+				Type:   ackv1alpha1.ConditionTypeTerminal,
+			}
+			ko.Status.Conditions = append(ko.Status.Conditions, terminalCondition)
+		}
+		terminalCondition.Status = corev1.ConditionTrue
+		awsErr, _ := ackerr.AWSError(err)
+		errorMessage := awsErr.Message()
+		terminalCondition.Message = &errorMessage
+	} else if terminalCondition != nil {
+		terminalCondition.Status = corev1.ConditionFalse
+		terminalCondition.Message = nil
+	}
+
+{{- if $updateConditionsCustomMethodName := .CRD.UpdateConditionsCustomMethodName }}
+	// custom update conditions
+	customUpdate := rm.{{ $updateConditionsCustomMethodName }}(ko, r, err)
+	if terminalCondition != nil || customUpdate {
+		return &resource{ko}, true // updated
+	}
+{{- else }}
+	if terminalCondition != nil {
+		return &resource{ko}, true // updated
+	}
+{{- end }}
+	return nil, false // not updated
+}
+
+// terminalAWSError returns awserr, true; if the supplied error is an aws Error type
+// and if the exception indicates that it is a Terminal exception
+// 'Terminal' exception are specified in generator configuration
+func (rm *resourceManager) terminalAWSError(err error) bool {
+{{- if .CRD.TerminalExceptionCodes }}
+	if err == nil {
+		return false
+	}
+	awsErr, ok := ackerr.AWSError(err)
+	if !ok {
+		return false
+	}
+	switch awsErr.Code() {
+	case {{ range $x, $terminalCode := .CRD.TerminalExceptionCodes -}}{{ if ne ($x) (0) }}, {{ end }} "{{ $terminalCode }}"{{ end }}:
+		return true
+	default:
+		return false
+	}
+{{- else }}
+	// No terminal_errors specified for this resource in generator config
+	return false
+{{- end }}
 }

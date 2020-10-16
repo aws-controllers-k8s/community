@@ -38,7 +38,10 @@ var (
 	// but more of a marker that the status check will be performed
 	// after some wait time
 	TemporaryOutOfSync = fmt.Errorf(
-		"Temporary out of sync, reconcile after some time")
+		"temporary out of sync, reconcile after some time")
+	// Terminal is returned with resource is in Terminal Condition
+	Terminal = fmt.Errorf(
+		"resource is in terminal condition")
 )
 
 // AWSError returns the type conversion for the supplied error to an aws-sdk-go

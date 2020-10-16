@@ -3,6 +3,13 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
+  ReplicationGroup:
+    update_conditions_custom_method_name: CustomUpdateConditions
+    exceptions:
+      terminal_codes:
+        - InvalidParameter
+        - InvalidParameterValue
+        - InvalidParameterCombination
 operations:
   DescribeReplicationGroups:
     set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
