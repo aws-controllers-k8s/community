@@ -19,3 +19,8 @@ resources:
           is_read_only: true
         QueueArn:
           is_read_only: true
+      get_attributes_input:
+        overrides:
+          AttributeNames:
+            values:
+              - All
