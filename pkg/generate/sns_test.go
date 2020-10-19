@@ -146,7 +146,9 @@ func TestSNS_Topic(t *testing.T) {
 	if r.ko.Spec.Policy != nil {
 		attrMap["Policy"] = r.ko.Spec.Policy
 	}
-	res.SetAttributes(attrMap)
+	if len(attrMap) > 0 {
+		res.SetAttributes(attrMap)
+	}
 	if r.ko.Spec.Name != nil {
 		res.SetName(*r.ko.Spec.Name)
 	}

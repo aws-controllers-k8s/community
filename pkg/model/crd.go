@@ -654,7 +654,9 @@ func (r *CRD) GoCodeSetInput(
 		// attrMap["DisplayName"} = r.ko.Spec.DisplayName
 		// attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
 		// attrMap["Policy"] = r.ko.Spec.Policy
-		// res.SetAttributes(attrMap)
+		// if len(attrMap) > 0 {
+		//     res.SetAttributes(attrMap)
+		// }
 		attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 		out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 		sortedAttrFieldNames := []string{}
@@ -680,7 +682,9 @@ func (r *CRD) GoCodeSetInput(
 				)
 			}
 		}
-		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
+		out += fmt.Sprintf("%sif len(attrMap) > 0 {\n", indent)
+		out += fmt.Sprintf("%s\t%s.SetAttributes(attrMap)\n", indent, targetVarName)
+		out += fmt.Sprintf("%s}\n", indent)
 	}
 
 	opConfig, override := r.genCfg.OverrideValues(op.Name)
@@ -1131,7 +1135,9 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 			// if r.ko.Spec.Policy != nil {
 			//     attrMap["Policy"] = r.ko.Spec.Policy
 			// }
-			// res.SetAttributes(attrMap)
+			// if len(attrMap) > 0 {
+			//     res.SetAttributes(attrMap)
+			// }
 			attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 			out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 			sortedAttrFieldNames := []string{}
@@ -1157,7 +1163,9 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 					)
 				}
 			}
-			out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
+			out += fmt.Sprintf("%sif len(attrMap) > 0 {\n", indent)
+			out += fmt.Sprintf("%s\t%s.SetAttributes(attrMap)\n", indent, targetVarName)
+			out += fmt.Sprintf("%s}\n", indent)
 			continue
 		}
 
