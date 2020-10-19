@@ -233,8 +233,8 @@ func (a *SDKAPI) HasConflictingTypeName(typeName string, cfg *ackgenconfig.Confi
 		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
 	}
 	return util.InStrings(cleanTypeName, crdResourceNames) ||
-			util.InStrings(cleanTypeName, crdSpecNames) ||
-			util.InStrings(cleanTypeName, crdStatusNames)
+		util.InStrings(cleanTypeName, crdSpecNames) ||
+		util.InStrings(cleanTypeName, crdStatusNames)
 }
 
 // ServiceID returns the exact `metadata.serviceId` attribute for the AWS

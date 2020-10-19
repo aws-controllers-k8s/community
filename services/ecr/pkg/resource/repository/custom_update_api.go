@@ -15,6 +15,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	"github.com/aws/aws-sdk-go/aws"
@@ -48,6 +49,7 @@ func (rm *resourceManager) customUpdateRepository(
 	var err error
 	var updated *resource
 	updated = desired
+	fmt.Println("----", diffReporter.String())
 	if imageScanningConfigurationChanged(desired, latest) {
 		updated, err = rm.updateImageScanningConfiguration(ctx, updated)
 		if err != nil {
@@ -60,7 +62,7 @@ func (rm *resourceManager) customUpdateRepository(
 			return nil, err
 		}
 	}
-	return updated, nil
+	return desired, nil
 }
 
 // imageScanningConfigurationChanged returns true if the image scanning

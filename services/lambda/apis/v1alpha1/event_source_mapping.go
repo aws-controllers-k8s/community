@@ -22,21 +22,21 @@ import (
 
 // EventSourceMappingSpec defines the desired state of EventSourceMapping
 type EventSourceMappingSpec struct {
-	BatchSize                  *int64             `json:"batchSize,omitempty"`
-	BisectBatchOnFunctionError *bool              `json:"bisectBatchOnFunctionError,omitempty"`
-	DestinationConfig          *DestinationConfig `json:"destinationConfig,omitempty"`
-	Enabled                    *bool              `json:"enabled,omitempty"`
-	// +kubebuilder:validation:Required
+	 BatchSize *int64 `json:"batchSize,omitempty"` 
+	 BisectBatchOnFunctionError *bool `json:"bisectBatchOnFunctionError,omitempty"` 
+	 DestinationConfig *DestinationConfig `json:"destinationConfig,omitempty"` 
+	 Enabled *bool `json:"enabled,omitempty"` 
+	 // +kubebuilder:validation:Required
 	EventSourceARN *string `json:"eventSourceARN"`
-	// +kubebuilder:validation:Required
-	FunctionName                   *string      `json:"functionName"`
-	MaximumBatchingWindowInSeconds *int64       `json:"maximumBatchingWindowInSeconds,omitempty"`
-	MaximumRecordAgeInSeconds      *int64       `json:"maximumRecordAgeInSeconds,omitempty"`
-	MaximumRetryAttempts           *int64       `json:"maximumRetryAttempts,omitempty"`
-	ParallelizationFactor          *int64       `json:"parallelizationFactor,omitempty"`
-	StartingPosition               *string      `json:"startingPosition,omitempty"`
-	StartingPositionTimestamp      *metav1.Time `json:"startingPositionTimestamp,omitempty"`
-	Topics                         []*string    `json:"topics,omitempty"`
+	 // +kubebuilder:validation:Required
+	FunctionName *string `json:"functionName"`
+	 MaximumBatchingWindowInSeconds *int64 `json:"maximumBatchingWindowInSeconds,omitempty"` 
+	 MaximumRecordAgeInSeconds *int64 `json:"maximumRecordAgeInSeconds,omitempty"` 
+	 MaximumRetryAttempts *int64 `json:"maximumRetryAttempts,omitempty"` 
+	 ParallelizationFactor *int64 `json:"parallelizationFactor,omitempty"` 
+	 StartingPosition *string `json:"startingPosition,omitempty"` 
+	 StartingPositionTimestamp *metav1.Time `json:"startingPositionTimestamp,omitempty"` 
+	 Topics []*string `json:"topics,omitempty"` 
 }
 
 // EventSourceMappingStatus defines the observed state of EventSourceMapping
@@ -49,13 +49,13 @@ type EventSourceMappingStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions            []*ackv1alpha1.Condition `json:"conditions"`
-	FunctionARN           *string                  `json:"functionARN,omitempty"`
-	LastModified          *metav1.Time             `json:"lastModified,omitempty"`
-	LastProcessingResult  *string                  `json:"lastProcessingResult,omitempty"`
-	State                 *string                  `json:"state,omitempty"`
-	StateTransitionReason *string                  `json:"stateTransitionReason,omitempty"`
-	UUID                  *string                  `json:"uUID,omitempty"`
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+	FunctionARN *string `json:"functionARN,omitempty"`
+	LastModified *metav1.Time `json:"lastModified,omitempty"`
+	LastProcessingResult *string `json:"lastProcessingResult,omitempty"`
+	State *string `json:"state,omitempty"`
+	StateTransitionReason *string `json:"stateTransitionReason,omitempty"`
+	UUID *string `json:"uUID,omitempty"`
 }
 
 // EventSourceMapping is the Schema for the EventSourceMappings API
@@ -64,8 +64,8 @@ type EventSourceMappingStatus struct {
 type EventSourceMapping struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              EventSourceMappingSpec   `json:"spec,omitempty"`
-	Status            EventSourceMappingStatus `json:"status,omitempty"`
+	Spec   EventSourceMappingSpec   `json:"spec,omitempty"`
+	Status EventSourceMappingStatus `json:"status,omitempty"`
 }
 
 // EventSourceMappingList contains a list of EventSourceMapping
@@ -73,7 +73,7 @@ type EventSourceMapping struct {
 type EventSourceMappingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EventSourceMapping `json:"items"`
+	Items []EventSourceMapping `json:"items"`
 }
 
 func init() {

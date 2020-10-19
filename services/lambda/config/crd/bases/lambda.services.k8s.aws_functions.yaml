@@ -148,6 +148,10 @@ spec:
                 type: object
               codeSha256:
                 type: string
+              repositoryType:
+                type: string
+              location:
+                type: string
               codeSize:
                 format: int64
                 type: integer

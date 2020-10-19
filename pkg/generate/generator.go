@@ -14,6 +14,7 @@
 package generate
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	ttpl "text/template"
@@ -58,6 +59,15 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 	deleteOps := (*opMap)[ackmodel.OpTypeDelete]
 	getAttributesOps := (*opMap)[ackmodel.OpTypeGetAttributes]
 	setAttributesOps := (*opMap)[ackmodel.OpTypeSetAttributes]
+
+	for crdName, readOneOp := range readOneOps {
+		fmt.Printf("\n\nparsing: %v %+v\n\n\n", crdName, readOneOp.OutputRef.Shape.MemberRefs["Code"])
+		/* 		empJSON, err := json.MarshalIndent(readOneOp, "", "    ")
+		   		if err != nil {
+		   			log.Fatalf(err.Error())
+		   		}
+		   		fmt.Printf("op: %s\n\n\n\n\n\n\n", string(empJSON)) */
+	}
 
 	for crdName, createOp := range createOps {
 		if g.cfg.IsIgnoredResource(crdName) {
@@ -104,7 +114,8 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 
 		// Now process the fields that will go into the Status struct. We want
 		// fields that are in the Create operation's Output Shape but that are
-		// not in the Input Shape.
+		// not in the Input Shape. We also check the generator config to see
+		// if there are more fields to grab from other requests
 		outputShape := createOp.OutputRef.Shape
 		if outputShape.UsedAsOutput && len(outputShape.MemberRefs) == 1 {
 			// We might be in a "wrapper" shape. Unwrap it to find the real object

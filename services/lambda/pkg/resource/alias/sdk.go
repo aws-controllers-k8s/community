@@ -17,9 +17,6 @@ package alias
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"log"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -103,6 +100,7 @@ func (rm *resourceManager) sdkFind(
 		ko.Spec.RoutingConfig = f5
 	}
 
+	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
 }
 
@@ -180,13 +178,8 @@ func (rm *resourceManager) sdkCreate(
 		ko.Status.RevisionID = resp.RevisionId
 	}
 
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
-		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
-	}
-	ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	rm.setStatusDefaults(ko)
+
 	return &resource{ko}, nil
 }
 
@@ -235,17 +228,6 @@ func (rm *resourceManager) sdkUpdate(
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 
-	empJSON, err := json.MarshalIndent(desired.ko.Spec, "", "    ")
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	fmt.Printf("desired: %s\n\n", string(empJSON))
-	empJSON, err = json.MarshalIndent(latest.ko.Spec, "", "    ")
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	fmt.Printf("latest: %s\n", string(empJSON))
-
 	input, err := rm.newUpdateRequestPayload(desired)
 	if err != nil {
 		return nil, err
@@ -269,6 +251,8 @@ func (rm *resourceManager) sdkUpdate(
 	if resp.RevisionId != nil {
 		ko.Status.RevisionID = resp.RevisionId
 	}
+
+	rm.setStatusDefaults(ko)
 
 	return &resource{ko}, nil
 }
@@ -340,4 +324,19 @@ func (rm *resourceManager) newDeleteRequestPayload(
 	}
 
 	return res, nil
+}
+
+// setStatusDefaults sets default properties into supplied custom resource
+func (rm *resourceManager) setStatusDefaults(
+	ko *svcapitypes.Alias,
+) {
+	if ko.Status.ACKResourceMetadata == nil {
+		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
+	}
+	if ko.Status.ACKResourceMetadata.OwnerAccountID == nil {
+		ko.Status.ACKResourceMetadata.OwnerAccountID = &rm.awsAccountID
+	}
+	if ko.Status.Conditions == nil {
+		ko.Status.Conditions = []*ackv1alpha1.Condition{}
+	}
 }

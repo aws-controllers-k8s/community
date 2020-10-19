@@ -14,7 +14,8 @@ type Event struct {
 
 func HandleRequest(ctx context.Context, event Event) (string, error) {
 	env := os.Environ()
-	return fmt.Sprintf(`Hello from event: %s!
+	return fmt.Sprintf(`ACK lambda controller - smoke tests 
+	event: %s
 	environ: %v
 `, event.Name, env), nil
 }

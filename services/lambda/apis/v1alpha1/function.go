@@ -22,28 +22,28 @@ import (
 
 // FunctionSpec defines the desired state of Function
 type FunctionSpec struct {
-	// +kubebuilder:validation:Required
-	Code              *FunctionCode       `json:"code"`
-	DeadLetterConfig  *DeadLetterConfig   `json:"deadLetterConfig,omitempty"`
-	Description       *string             `json:"description,omitempty"`
-	Environment       *Environment        `json:"environment,omitempty"`
-	FileSystemConfigs []*FileSystemConfig `json:"fileSystemConfigs,omitempty"`
-	// +kubebuilder:validation:Required
+	 // +kubebuilder:validation:Required
+	Code *FunctionCode `json:"code"`
+	 DeadLetterConfig *DeadLetterConfig `json:"deadLetterConfig,omitempty"` 
+	 Description *string `json:"description,omitempty"` 
+	 Environment *Environment `json:"environment,omitempty"` 
+	 FileSystemConfigs []*FileSystemConfig `json:"fileSystemConfigs,omitempty"` 
+	 // +kubebuilder:validation:Required
 	FunctionName *string `json:"functionName"`
-	// +kubebuilder:validation:Required
-	Handler    *string   `json:"handler"`
-	KMSKeyARN  *string   `json:"kmsKeyARN,omitempty"`
-	Layers     []*string `json:"layers,omitempty"`
-	MemorySize *int64    `json:"memorySize,omitempty"`
-	Publish    *bool     `json:"publish,omitempty"`
-	// +kubebuilder:validation:Required
+	 // +kubebuilder:validation:Required
+	Handler *string `json:"handler"`
+	 KMSKeyARN *string `json:"kmsKeyARN,omitempty"` 
+	 Layers []*string `json:"layers,omitempty"` 
+	 MemorySize *int64 `json:"memorySize,omitempty"` 
+	 Publish *bool `json:"publish,omitempty"` 
+	 // +kubebuilder:validation:Required
 	Role *string `json:"role"`
-	// +kubebuilder:validation:Required
-	Runtime       *string            `json:"runtime"`
-	Tags          map[string]*string `json:"tags,omitempty"`
-	Timeout       *int64             `json:"timeout,omitempty"`
-	TracingConfig *TracingConfig     `json:"tracingConfig,omitempty"`
-	VPCConfig     *VPCConfig         `json:"vpcConfig,omitempty"`
+	 // +kubebuilder:validation:Required
+	Runtime *string `json:"runtime"`
+	 Tags map[string]*string `json:"tags,omitempty"` 
+	 Timeout *int64 `json:"timeout,omitempty"` 
+	 TracingConfig *TracingConfig `json:"tracingConfig,omitempty"` 
+	 VPCConfig *VPCConfig `json:"vpcConfig,omitempty"` 
 }
 
 // FunctionStatus defines the observed state of Function
@@ -56,19 +56,19 @@ type FunctionStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions                 []*ackv1alpha1.Condition `json:"conditions"`
-	CodeSha256                 *string                  `json:"codeSha256,omitempty"`
-	CodeSize                   *int64                   `json:"codeSize,omitempty"`
-	LastModified               *string                  `json:"lastModified,omitempty"`
-	LastUpdateStatus           *string                  `json:"lastUpdateStatus,omitempty"`
-	LastUpdateStatusReason     *string                  `json:"lastUpdateStatusReason,omitempty"`
-	LastUpdateStatusReasonCode *string                  `json:"lastUpdateStatusReasonCode,omitempty"`
-	MasterARN                  *string                  `json:"masterARN,omitempty"`
-	RevisionID                 *string                  `json:"revisionID,omitempty"`
-	State                      *string                  `json:"state,omitempty"`
-	StateReason                *string                  `json:"stateReason,omitempty"`
-	StateReasonCode            *string                  `json:"stateReasonCode,omitempty"`
-	Version                    *string                  `json:"version,omitempty"`
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+	CodeSha256 *string `json:"codeSha256,omitempty"`
+	CodeSize *int64 `json:"codeSize,omitempty"`
+	LastModified *string `json:"lastModified,omitempty"`
+	LastUpdateStatus *string `json:"lastUpdateStatus,omitempty"`
+	LastUpdateStatusReason *string `json:"lastUpdateStatusReason,omitempty"`
+	LastUpdateStatusReasonCode *string `json:"lastUpdateStatusReasonCode,omitempty"`
+	MasterARN *string `json:"masterARN,omitempty"`
+	RevisionID *string `json:"revisionID,omitempty"`
+	State *string `json:"state,omitempty"`
+	StateReason *string `json:"stateReason,omitempty"`
+	StateReasonCode *string `json:"stateReasonCode,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Function is the Schema for the Functions API
@@ -77,8 +77,8 @@ type FunctionStatus struct {
 type Function struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              FunctionSpec   `json:"spec,omitempty"`
-	Status            FunctionStatus `json:"status,omitempty"`
+	Spec   FunctionSpec   `json:"spec,omitempty"`
+	Status FunctionStatus `json:"status,omitempty"`
 }
 
 // FunctionList contains a list of Function
@@ -86,7 +86,7 @@ type Function struct {
 type FunctionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Function `json:"items"`
+	Items []Function `json:"items"`
 }
 
 func init() {

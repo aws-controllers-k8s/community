@@ -22,14 +22,14 @@ import (
 
 // AliasSpec defines the desired state of Alias
 type AliasSpec struct {
-	Description *string `json:"description,omitempty"`
-	// +kubebuilder:validation:Required
+	 Description *string `json:"description,omitempty"` 
+	 // +kubebuilder:validation:Required
 	FunctionName *string `json:"functionName"`
-	// +kubebuilder:validation:Required
+	 // +kubebuilder:validation:Required
 	FunctionVersion *string `json:"functionVersion"`
-	// +kubebuilder:validation:Required
-	Name          *string                    `json:"name"`
-	RoutingConfig *AliasRoutingConfiguration `json:"routingConfig,omitempty"`
+	 // +kubebuilder:validation:Required
+	Name *string `json:"name"`
+	 RoutingConfig *AliasRoutingConfiguration `json:"routingConfig,omitempty"` 
 }
 
 // AliasStatus defines the observed state of Alias
@@ -43,7 +43,7 @@ type AliasStatus struct {
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
-	RevisionID *string                  `json:"revisionID,omitempty"`
+	RevisionID *string `json:"revisionID,omitempty"`
 }
 
 // Alias is the Schema for the Aliases API
@@ -52,8 +52,8 @@ type AliasStatus struct {
 type Alias struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              AliasSpec   `json:"spec,omitempty"`
-	Status            AliasStatus `json:"status,omitempty"`
+	Spec   AliasSpec   `json:"spec,omitempty"`
+	Status AliasStatus `json:"status,omitempty"`
 }
 
 // AliasList contains a list of Alias
@@ -61,7 +61,7 @@ type Alias struct {
 type AliasList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Alias `json:"items"`
+	Items []Alias `json:"items"`
 }
 
 func init() {

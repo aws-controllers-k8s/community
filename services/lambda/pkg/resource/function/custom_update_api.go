@@ -15,15 +15,17 @@ func (rm *resourceManager) customUpdateFunction(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-	empJSON, err := json.MarshalIndent(desired.ko.Spec, "", "    ")
+	fmt.Println("----", diffReporter.String())
+
+	empJSON, err := json.MarshalIndent(desired.ko, "", "    ")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	fmt.Printf("desired: %s\n\n", string(empJSON))
-	empJSON, err = json.MarshalIndent(latest.ko.Spec, "", "    ")
+	empJSON, err = json.MarshalIndent(latest.ko, "", "    ")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 	fmt.Printf("latest: %s\n", string(empJSON))
-	return desired, nil
+	return nil, nil
 }

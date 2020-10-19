@@ -8,3 +8,8 @@ resources:
         - FunctionName
     update_operation:
       custom_method_name: customUpdateFunction
+operations:
+  GetFunction:
+    status_fields:
+      from: Code.Location
+      to: Location
