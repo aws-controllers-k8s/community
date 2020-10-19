@@ -167,6 +167,29 @@ type UnpackAttributesMapConfig struct {
 	// SetPlatformApplicationAttributes API call which accepts multiple
 	// attributes and replaces the supplied attributes map key/values...
 	SetAttributesSingleAttribute bool `json:"set_attributes_single_attribute"`
+	// GetAttributesInput instructs the code generator how to handle the
+	// GetAttributes input shape
+	GetAttributesInput *GetAttributesInputConfig `json:"get_attributes_input,omitempty"`
+}
+
+// GetAttributesInputConfig is used to instruct the code generator how to
+// handle the GetAttributes API operation's Input shape.
+type GetAttributesInputConfig struct {
+	// Overrides is a map of structures instructing the code generator how to
+	// handle the override of a particular field in the Input shape for the
+	// GetAttributes operation. The map keys are the names of the field in the
+	// Input shape to override.
+	Overrides map[string]*MemberConstructorConfig `json:"overrides"`
+}
+
+// MemberConstructorConfig contains override instructions for how to handle the
+// construction of a particular member for a Shape in the API.
+type MemberConstructorConfig struct {
+	// Values contains the value or values of the member to always set the
+	// member to. If the member's type is a []string, the member is set to the
+	// Values list. If the type is a string, the member's value is set to the
+	// first list element in the Values list.
+	Values []string `json:"values"`
 }
 
 // FieldConfig contains instructions to the code generator about how

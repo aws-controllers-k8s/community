@@ -153,6 +153,12 @@ func TestSQS_Queue(t *testing.T) {
 	// attributes for and a QueueUrl field. We only care about the QueueUrl
 	// field, since we look for all attributes for a queue.
 	expGetAttrsInput := `
+	{
+		tmpVals := []*string{}
+		tmpVal0 := "All"
+		tmpVals = append(tmpVals, &tmpVal0)
+		res.SetAttributeNames(tmpVals)
+	}
 	if r.ko.Status.QueueURL != nil {
 		res.SetQueueUrl(*r.ko.Status.QueueURL)
 	}

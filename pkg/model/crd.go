@@ -894,6 +894,14 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
 
+	inputFieldOverrides := map[string][]string{}
+	attrCfg := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+	if attrCfg.GetAttributesInput != nil {
+		for memberName, override := range attrCfg.GetAttributesInput.Overrides {
+			inputFieldOverrides[memberName] = override.Values
+		}
+	}
+
 	for _, memberName := range inputShape.MemberNames() {
 		if r.IsPrimaryARNField(memberName) {
 			// if ko.Status.ACKResourceMetadata != nil && ko.Status.ACKResourceMetadata.ARN != nil {
@@ -920,6 +928,41 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 			out += fmt.Sprintf(
 				"%s}\n", indent,
 			)
+			continue
+		}
+
+		// Some APIs to retrieve the attributes for a resource require passing
+		// specific fields and field values. For example, in order to get all
+		// of an SQS Queue's attributes, the SQS GetQueueAttributes API call's
+		// Input shape's AttributeNames member needs to be set to
+		// []string{"All"}...
+		//
+		// Go code output in this section will look something like this:
+		//
+		// {
+		//     tmpVals := []*string{}
+		//     tmpVal0 := "All"
+		//     tmpVals = append(tmpVals, &tmpVal0)
+		//     res.SetAttributeNames(tmpVals)
+		// }
+		if overrideValues, ok := inputFieldOverrides[memberName]; ok {
+			memberShapeRef := inputShape.MemberRefs[memberName]
+			out += fmt.Sprintf("%s{\n", indent)
+			// We need to output a set of temporary strings that we will take a
+			// reference to when constructing the values of the []*string or
+			// *string members.
+			if memberShapeRef.Shape.Type == "list" {
+				out += fmt.Sprintf("%s\ttmpVals := []*string{}\n", indent)
+				for x, overrideValue := range overrideValues {
+					out += fmt.Sprintf("%s\ttmpVal%d := \"%s\"\n", indent, x, overrideValue)
+					out += fmt.Sprintf("%s\ttmpVals = append(tmpVals, &tmpVal%d)\n", indent, x)
+				}
+				out += fmt.Sprintf("%s\t%s.Set%s(tmpVals)\n", indent, targetVarName, memberName)
+			} else {
+				out += fmt.Sprintf("%s\ttmpVal := \"%s\"\n", indent, overrideValues[0])
+				out += fmt.Sprintf("%s\t%s.Set%s(&tmpVal)\n", indent, targetVarName, memberName)
+			}
+			out += fmt.Sprintf("%s}\n", indent)
 			continue
 		}
 
