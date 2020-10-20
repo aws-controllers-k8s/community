@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetRouteResponseWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetRouteResponse", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -161,6 +162,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateRouteResponseWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateRouteResponse", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -235,6 +237,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateRouteResponseWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateRouteResponse", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -307,6 +310,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteRouteResponseWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteRouteResponse", respErr)
 	return respErr
 }
 

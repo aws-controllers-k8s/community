@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetModelWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetModel", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -141,6 +142,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateModelWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateModel", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -198,6 +200,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateModelWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateModel", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -253,6 +256,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteModelWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteModel", respErr)
 	return respErr
 }
 

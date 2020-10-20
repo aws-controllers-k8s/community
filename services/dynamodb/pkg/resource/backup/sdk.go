@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	_, respErr := rm.sdkapi.DescribeBackupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "DescribeBackup", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
 			return nil, ackerr.NotFound
@@ -127,6 +128,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateBackupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateBackup", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -201,6 +203,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteBackupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteBackup", respErr)
 	return respErr
 }
 

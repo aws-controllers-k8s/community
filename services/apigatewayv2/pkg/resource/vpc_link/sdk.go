@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetVpcLinkWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetVpcLink", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -164,6 +165,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateVpcLinkWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateVpcLink", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -248,6 +250,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateVpcLinkWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateVpcLink", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -303,6 +306,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteVpcLinkWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteVpcLink", respErr)
 	return respErr
 }
 

@@ -62,6 +62,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreatePlatformEndpointWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreatePlatformEndpoint", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}

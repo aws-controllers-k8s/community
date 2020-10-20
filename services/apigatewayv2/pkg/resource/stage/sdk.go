@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetStageWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetStage", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -223,6 +224,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateStageWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateStage", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -362,6 +364,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateStageWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateStage", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -487,6 +490,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteStageWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteStage", respErr)
 	return respErr
 }
 

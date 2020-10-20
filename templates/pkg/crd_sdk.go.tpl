@@ -51,6 +51,7 @@ func (rm *resourceManager) sdkFind(
 	}
 {{ $setCode := GoCodeSetReadOneOutput .CRD "resp" "ko" 1 true }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "{{ .CRD.Ops.ReadOne.Name }}", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -78,6 +79,7 @@ func (rm *resourceManager) sdkFind(
 	}
 {{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("GET_ATTRIBUTES", "{{ .CRD.Ops.GetAttributes.Name }}", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -98,6 +100,7 @@ func (rm *resourceManager) sdkFind(
 	}
 {{ $setCode := GoCodeSetReadManyOutput .CRD "resp" "ko" 1 true }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.ReadMany.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "{{ .CRD.Ops.ReadMany.Name }}", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
@@ -189,6 +192,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 {{ $createCode := GoCodeSetCreateOutput .CRD "resp" "ko" 1 false }}
 	{{ if not ( Empty $createCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Create.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "{{ .CRD.Ops.Create.Name }}", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -223,7 +227,7 @@ func (rm *resourceManager) sdkUpdate(
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 {{- if .CRD.CustomUpdateMethodName }}
-    return rm.{{ .CRD.CustomUpdateMethodName }}(ctx, desired, latest, diffReporter)
+	return rm.{{ .CRD.CustomUpdateMethodName }}(ctx, desired, latest, diffReporter)
 {{- else if .CRD.Ops.Update }}
 
 {{ $customMethod := .CRD.GetCustomImplementation .CRD.Ops.Update }}
@@ -241,6 +245,7 @@ func (rm *resourceManager) sdkUpdate(
 
 {{ $setCode := GoCodeSetUpdateOutput .CRD "resp" "ko" 1 false }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "{{ .CRD.Ops.Update.Name }}", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -248,7 +253,7 @@ func (rm *resourceManager) sdkUpdate(
 	// the original Kubernetes object we passed to the function
 	ko := desired.ko.DeepCopy()
 {{ $setCode }}
-    rm.setStatusDefaults(ko)
+	rm.setStatusDefaults(ko)
 {{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Update }}
 	// custom set output from response
 	rm.{{ $setOutputCustomMethodName }}(desired, resp, ko)
@@ -272,6 +277,7 @@ func (rm *resourceManager) sdkUpdate(
 	// DeepCopy of the supplied desired state, which should be fine because
 	// that desired state has been constructed from a call to GetAttributes...
 	_, respErr := rm.sdkapi.{{ .CRD.Ops.SetAttributes.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("SET_ATTRIBUTES", "{{ .CRD.Ops.SetAttributes.Name }}", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			// Technically, this means someone deleted the backend resource in
@@ -336,6 +342,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.{{ .CRD.Ops.Delete.Name }}WithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "{{ .CRD.Ops.Delete.Name }}", respErr)
 	return respErr
 {{- else }}
 	// TODO(jaypipes): Figure this out...

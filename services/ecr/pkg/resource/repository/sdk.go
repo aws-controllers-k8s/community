@@ -50,6 +50,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeRepositoriesWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeRepositories", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "RepositoryNotFoundException" {
 			return nil, ackerr.NotFound
@@ -148,6 +149,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateRepositoryWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateRepository", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -246,6 +248,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteRepositoryWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteRepository", respErr)
 	return respErr
 }
 

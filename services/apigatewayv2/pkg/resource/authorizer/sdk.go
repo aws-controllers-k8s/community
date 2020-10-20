@@ -57,6 +57,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.GetAuthorizerWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_ONE", "GetAuthorizer", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFoundException" {
 			return nil, ackerr.NotFound
@@ -178,6 +179,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateAuthorizerWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateAuthorizer", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -272,6 +274,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.UpdateAuthorizerWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "UpdateAuthorizer", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -364,6 +367,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteAuthorizerWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteAuthorizer", respErr)
 	return respErr
 }
 

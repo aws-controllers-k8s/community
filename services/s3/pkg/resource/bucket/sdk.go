@@ -50,6 +50,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.ListBucketsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "ListBuckets", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
 			return nil, ackerr.NotFound
@@ -108,6 +109,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateBucketWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateBucket", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -188,6 +190,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteBucketWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteBucket", respErr)
 	return respErr
 }
 

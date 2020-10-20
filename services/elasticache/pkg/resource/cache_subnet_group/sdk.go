@@ -50,6 +50,7 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeCacheSubnetGroupsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeCacheSubnetGroups", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "CacheSubnetGroupNotFoundFault" {
 			return nil, ackerr.NotFound
@@ -138,6 +139,7 @@ func (rm *resourceManager) sdkCreate(
 	}
 
 	resp, respErr := rm.sdkapi.CreateCacheSubnetGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("CREATE", "CreateCacheSubnetGroup", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -220,6 +222,7 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	resp, respErr := rm.sdkapi.ModifyCacheSubnetGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "ModifyCacheSubnetGroup", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -297,6 +300,7 @@ func (rm *resourceManager) sdkDelete(
 		return err
 	}
 	_, respErr := rm.sdkapi.DeleteCacheSubnetGroupWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteCacheSubnetGroup", respErr)
 	return respErr
 }
 
