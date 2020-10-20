@@ -17,7 +17,7 @@
 
 This is a new open source project built with ❤️ by AWS and available as a **Developer Preview**. We encourage you to [try it out](https://aws.github.io/aws-controllers-k8s/dev-docs/testing/), provide feedback and contribute to development.
 
-> **IMPORTANT** Because this project is in developer preview, you may see breaking changes throughout. We encourage you to experiment with ACK but DO NOT adopt it for production use just yet*
+> **IMPORTANT** Because this project is in developer preview, you may see breaking changes throughout. We encourage you to experiment with ACK but DO NOT adopt it for production use. Use of ACK controllers in preview is subject to the terms and conditions contained in the [AWS Service Terms](https://aws.amazon.com/service-terms), particularly the Beta Service Participation Service Terms, and apply to any service controllers not marked as 'Generally Available'.
 
 * [Overview](#overview)
 * [Getting Started](#getting-started)
@@ -50,6 +50,9 @@ We welcome community contributions and pull requests. See our [contribution guid
 Check the [issues list](https://github.com/aws/aws-controllers-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
 
 ACK adheres to the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct). You can also learn more about our [Governance](/GOVERNANCE.md) structure.
+
+## Use of Preview Service Controllers
+Use of ACK controllers in preview is subject to the terms and conditions contained in the AWS Service Terms, particularly the Beta Service Participation Service Terms, located at https://aws.amazon.com/service-terms, (the “Beta Terms”) and apply to any service controllers not marked as 'Generally Available'.
 
 ## License
 This project is licensed under the Apache-2.0 License.
