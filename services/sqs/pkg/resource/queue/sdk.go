@@ -17,6 +17,7 @@ package queue
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -67,13 +68,24 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
+	ko.Spec.ContentBasedDeduplication = resp.Attributes["ContentBasedDeduplication"]
 	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
+	ko.Spec.DelaySeconds = resp.Attributes["DelaySeconds"]
+	ko.Spec.FifoQueue = resp.Attributes["FifoQueue"]
+	ko.Spec.KMSDataKeyReusePeriodSeconds = resp.Attributes["KmsDataKeyReusePeriodSeconds"]
+	ko.Spec.KMSMasterKeyID = resp.Attributes["KmsMasterKeyId"]
 	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
+	ko.Spec.MaximumMessageSize = resp.Attributes["MaximumMessageSize"]
+	ko.Spec.MessageRetentionPeriod = resp.Attributes["MessageRetentionPeriod"]
+	ko.Spec.Policy = resp.Attributes["Policy"]
 	if ko.Status.ACKResourceMetadata == nil {
 		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 	}
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
+	ko.Spec.ReceiveMessageWaitTimeSeconds = resp.Attributes["ReceiveMessageWaitTimeSeconds"]
+	ko.Spec.RedrivePolicy = resp.Attributes["RedrivePolicy"]
+	ko.Spec.VisibilityTimeout = resp.Attributes["VisibilityTimeout"]
 
 	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
@@ -349,4 +361,51 @@ func (rm *resourceManager) setStatusDefaults(
 	if ko.Status.Conditions == nil {
 		ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	}
+}
+
+// updateConditions returns updated resource, true; if conditions were updated
+// else it returns nil, false
+func (rm *resourceManager) updateConditions(
+	r *resource,
+	err error,
+) (*resource, bool) {
+	ko := r.ko.DeepCopy()
+	rm.setStatusDefaults(ko)
+
+	// Terminal condition
+	var terminalCondition *ackv1alpha1.Condition = nil
+	for _, condition := range ko.Status.Conditions {
+		if condition.Type == ackv1alpha1.ConditionTypeTerminal {
+			terminalCondition = condition
+			break
+		}
+	}
+
+	if rm.terminalAWSError(err) {
+		if terminalCondition == nil {
+			terminalCondition = &ackv1alpha1.Condition{
+				Type: ackv1alpha1.ConditionTypeTerminal,
+			}
+			ko.Status.Conditions = append(ko.Status.Conditions, terminalCondition)
+		}
+		terminalCondition.Status = corev1.ConditionTrue
+		awsErr, _ := ackerr.AWSError(err)
+		errorMessage := awsErr.Message()
+		terminalCondition.Message = &errorMessage
+	} else if terminalCondition != nil {
+		terminalCondition.Status = corev1.ConditionFalse
+		terminalCondition.Message = nil
+	}
+	if terminalCondition != nil {
+		return &resource{ko}, true // updated
+	}
+	return nil, false // not updated
+}
+
+// terminalAWSError returns awserr, true; if the supplied error is an aws Error type
+// and if the exception indicates that it is a Terminal exception
+// 'Terminal' exception are specified in generator configuration
+func (rm *resourceManager) terminalAWSError(err error) bool {
+	// No terminal_errors specified for this resource in generator config
+	return false
 }

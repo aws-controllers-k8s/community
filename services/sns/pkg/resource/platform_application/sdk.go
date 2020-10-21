@@ -56,7 +56,7 @@ func (rm *resourceManager) sdkFind(
 		return nil, err
 	}
 
-	_, respErr := rm.sdkapi.GetPlatformApplicationAttributesWithContext(ctx, input)
+	resp, respErr := rm.sdkapi.GetPlatformApplicationAttributesWithContext(ctx, input)
 	rm.metrics.RecordAPICall("GET_ATTRIBUTES", "GetPlatformApplicationAttributes", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "NotFound" {
@@ -68,6 +68,16 @@ func (rm *resourceManager) sdkFind(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
+
+	ko.Spec.EventDeliveryFailure = resp.Attributes["EventDeliveryFailure"]
+	ko.Spec.EventEndpointCreated = resp.Attributes["EventEndpointCreated"]
+	ko.Spec.EventEndpointDeleted = resp.Attributes["EventEndpointDeleted"]
+	ko.Spec.EventEndpointUpdated = resp.Attributes["EventEndpointUpdated"]
+	ko.Spec.FailureFeedbackRoleARN = resp.Attributes["FailureFeedbackRoleArn"]
+	ko.Spec.PlatformCredential = resp.Attributes["PlatformCredential"]
+	ko.Spec.PlatformPrincipal = resp.Attributes["PlatformPrincipal"]
+	ko.Spec.SuccessFeedbackRoleARN = resp.Attributes["SuccessFeedbackRoleArn"]
+	ko.Spec.SuccessFeedbackSampleRate = resp.Attributes["SuccessFeedbackSampleRate"]
 
 	rm.setStatusDefaults(ko)
 	return &resource{ko}, nil
@@ -167,7 +177,9 @@ func (rm *resourceManager) newCreateRequestPayload(
 	if r.ko.Spec.SuccessFeedbackSampleRate != nil {
 		attrMap["SuccessFeedbackSampleRate"] = r.ko.Spec.SuccessFeedbackSampleRate
 	}
-	res.SetAttributes(attrMap)
+	if len(attrMap) > 0 {
+		res.SetAttributes(attrMap)
+	}
 	if r.ko.Spec.Name != nil {
 		res.SetName(*r.ko.Spec.Name)
 	}
@@ -265,7 +277,9 @@ func (rm *resourceManager) newSetAttributesRequestPayload(
 	if r.ko.Spec.SuccessFeedbackSampleRate != nil {
 		attrMap["SuccessFeedbackSampleRate"] = r.ko.Spec.SuccessFeedbackSampleRate
 	}
-	res.SetAttributes(attrMap)
+	if len(attrMap) > 0 {
+		res.SetAttributes(attrMap)
+	}
 	if r.ko.Status.ACKResourceMetadata != nil && r.ko.Status.ACKResourceMetadata.ARN != nil {
 		res.SetPlatformApplicationArn(string(*r.ko.Status.ACKResourceMetadata.ARN))
 	} else {
