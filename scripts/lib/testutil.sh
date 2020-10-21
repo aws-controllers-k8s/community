@@ -66,6 +66,8 @@ assert_pod_not_restarted() {
     restartCount=$( kubectl get pods -n "$__ns" "$__pod_id" --output jsonpath='{.status.containerStatuses[0].restartCount}' )
     if [ "$restartCount" != "0" ]; then
         echo "FAIL: Expected pod $__pod_id to not have been restarted but it has been restarted $restartCount times."
+        echo "****************************** logs from previous controller pod ************************************"
+        kubectl logs -n ack-system --previous "$__pod_id"
         return 1
     fi
 }

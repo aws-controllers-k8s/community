@@ -32,6 +32,8 @@ spec:
         - "$(AWS_REGION)"
         - --enable-development-logging
         - "$(ACK_ENABLE_DEVELOPMENT_LOGGING)"
+        - --log-level
+        - "$(ACK_LOG_LEVEL)"
         image: controller:latest
         name: controller
         resources:
