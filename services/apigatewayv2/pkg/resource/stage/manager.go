@@ -189,7 +189,7 @@ func newResourceManager(
 func (rm *resourceManager) onError(
 	r *resource,
 	err error,
-) (*resource, error) {
+) (acktypes.AWSResource, error) {
 	r1, updated := rm.updateConditions(r, err)
 	if !updated {
 		return nil, err
@@ -209,7 +209,7 @@ func (rm *resourceManager) onError(
 // it returns the supplied resource if no condition is updated.
 func (rm *resourceManager) onSuccess(
 	r *resource,
-) (*resource, error) {
+) (acktypes.AWSResource, error) {
 	r1, updated := rm.updateConditions(r, nil)
 	if !updated {
 		return r, nil
