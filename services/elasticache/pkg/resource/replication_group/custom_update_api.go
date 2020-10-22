@@ -52,14 +52,14 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 	//		because both accept availability zones, however the number of
 	//		values depend on replica count.
 	if desired.ko.Spec.AutomaticFailoverEnabled != nil && *desired.ko.Spec.AutomaticFailoverEnabled == false {
-		if latest.ko.Spec.AutomaticFailoverEnabled == nil ||
-			*latest.ko.Spec.AutomaticFailoverEnabled != *desired.ko.Spec.AutomaticFailoverEnabled {
+		latestAutomaticFailoverEnabled := latest.ko.Status.AutomaticFailover != nil && *latest.ko.Status.AutomaticFailover == "enabled"
+		if latestAutomaticFailoverEnabled != *desired.ko.Spec.AutomaticFailoverEnabled {
 			return nil, nil
 		}
 	}
 	if desired.ko.Spec.MultiAZEnabled != nil && *desired.ko.Spec.MultiAZEnabled == false {
-		if latest.ko.Spec.MultiAZEnabled == nil ||
-			*latest.ko.Spec.MultiAZEnabled != *desired.ko.Spec.MultiAZEnabled {
+		latestMultiAZEnabled := latest.ko.Status.MultiAZ != nil && *latest.ko.Status.MultiAZ == "enabled"
+		if latestMultiAZEnabled != *desired.ko.Spec.MultiAZEnabled {
 			return nil, nil
 		}
 	}
