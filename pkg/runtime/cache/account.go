@@ -53,7 +53,7 @@ func NewAccountCache(clientset kubernetes.Interface, log logr.Logger) *AccountCa
 	)
 	return &AccountCache{
 		informer: sharedInformer,
-		log:      log.WithName("AccountCache"),
+		log:      log.WithName("cache.account"),
 		roleARNs: make(map[string]string),
 	}
 }
@@ -71,27 +71,27 @@ func (c *AccountCache) Run(stopCh <-chan struct{}) {
 	c.informer.AddEventHandler(k8scache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			if resourceMatchACKRoleAccountsConfigMap(obj) {
-				object := obj.(*corev1.ConfigMap).DeepCopy()
-				c.log.V(1).Info("ack-role-account-map has been created")
+				cm := obj.(*corev1.ConfigMap)
+				object := cm.DeepCopy()
 				c.updateAccountRoleData(object.Data)
-				c.log.V(1).Info("cached ack-role-account-map data")
+				c.log.V(1).Info("created account config map", "name", cm.ObjectMeta.Name)
 			}
 		},
 		UpdateFunc: func(orig, desired interface{}) {
 			if resourceMatchACKRoleAccountsConfigMap(desired) {
-				object := desired.(*corev1.ConfigMap).DeepCopy()
-				c.log.V(1).Info("ack-role-account-map has been updated")
+				cm := desired.(*corev1.ConfigMap)
+				object := cm.DeepCopy()
 				//TODO(a-hilaly): compare data checksum before updating the cache
 				c.updateAccountRoleData(object.Data)
-				c.log.V(1).Info("cached ack-role-account-map data")
+				c.log.V(1).Info("updated account config map", "name", cm.ObjectMeta.Name)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			if resourceMatchACKRoleAccountsConfigMap(obj) {
-				c.log.V(1).Info("ack-role-account-map has been deleted")
+				cm := obj.(*corev1.ConfigMap)
 				newMap := make(map[string]string)
 				c.updateAccountRoleData(newMap)
-				c.log.V(1).Info("cleaned up role account map")
+				c.log.V(1).Info("deleted account config map", "name", cm.ObjectMeta.Name)
 			}
 		},
 	})
