@@ -101,27 +101,68 @@ get_default_azs() {
 # functions to test replication group
 #################################################
 
+# exit_if_rg_config_application_failed exits if the result of the previous "kubectl apply" command failed
+# exit_if_rg_config_application_failed requires 2 arguments:
+#   error_code: the error code from the "kubectl apply call"
+#   rg_id: the ID of the replication group for failure message in case config application failed
+exit_if_rg_config_application_failed() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to exit_if_rg_config_application_failed"
+    echo "Usage: exit_if_rg_config_application_failed error_code rg_id"
+    exit 1
+  fi
+
+  if [[ $1 -ne 0 ]]; then
+    echo "FAIL: application of config for replication group $2 should not have failed"
+    exit 1
+  fi
+}
+
+# clear_rg_parameter_variables unsets the variables used to override default values in provide_replication_group_yaml
+# requires no arguments
+clear_rg_parameter_variables() {
+  unset rg_id
+  unset rg_description
+  unset automatic_failover_enabled
+  unset cache_node_type
+  unset num_node_groups
+  unset replicas_per_node_group
+  unset multi_az_enabled
+}
+
+
 test_default_replication_group="ack-test-rg"
 test_default_replication_group_desc="ack-test-rg description"
+test_default_replication_group_automatic_failover_enabled="true"
+test_default_replication_group_cache_node_type="cache.t3.micro"
 test_default_replication_group_num_node_groups="2" # cluster mode enabled
 test_default_replication_group_replicas_per_node_group="1"
+test_default_replication_group_multi_az_enabled="true"
 test_default_replication_group_node_group_id1="0001"
 test_default_replication_group_node_group_id2="0002"
 
 # provide_replication_group_yaml puts replication group yaml to standard output
 # it uses following environment variables:
-#     rg_id, rg_description, num_node_groups, replicas_per_node_group
+#     rg_id, rg_description,
+#     automatic_failover_enabled, cache_node_type,
+#     num_node_groups, replicas_per_node_group, multi_az_enabled
 # if environment variables are not found, then following defaults are used
 #     $test_default_replication_group
 #     $test_default_replication_group_desc
+#     $test_default_replication_group_automatic_failover_enabled
+#     $test_default_replication_group_cache_node_type
 #     $test_default_replication_group_num_node_groups
 #     $test_default_replication_group_replicas_per_node_group
+#     $test_default_replication_group_multi_az_enabled
 provide_replication_group_yaml() {
   local rg_id="${rg_id:-$test_default_replication_group}"
   local rg_name="$rg_id"
   local rg_description="${rg_description:-$test_default_replication_group_desc}"
+  local automatic_failover_enabled="${automatic_failover_enabled:-$test_default_replication_group_automatic_failover_enabled}"
+  local cache_node_type="${cache_node_type:=$test_default_replication_group_cache_node_type}"
   local num_node_groups="${num_node_groups:-$test_default_replication_group_num_node_groups}"
   local replicas_per_node_group="${replicas_per_node_group:-$test_default_replication_group_replicas_per_node_group}"
+  local multi_az_enabled="${multi_az_enabled:-$test_default_replication_group_multi_az_enabled}"
 
   cat <<EOF
 apiVersion: elasticache.services.k8s.aws/v1alpha1
@@ -132,9 +173,11 @@ spec:
     engine: redis
     replicationGroupID: $rg_id
     replicationGroupDescription: $rg_description
-    cacheNodeType: cache.t3.micro
+    automaticFailoverEnabled: $automatic_failover_enabled
+    cacheNodeType: $cache_node_type
     numNodeGroups: $num_node_groups
     replicasPerNodeGroup: $replicas_per_node_group
+    multiAZEnabled: $multi_az_enabled
 EOF
 }
 
@@ -239,6 +282,38 @@ aws_wait_replication_group_deleted() {
   k8s_controller_reload_credentials "$service_name"
 }
 
+# aws_get_replication_group_json returns the JSON description of the replication group of interest
+# aws_get_replication_group_json requires 1 arguments:
+#    replication_group_id
+aws_get_replication_group_json() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "${FUNCNAME[0]} replication_group_id"
+    exit 1
+  fi
+  echo $(daws elasticache describe-replication-groups --replication-group-id "$1" | jq -r -e ".ReplicationGroups[0]")
+}
+
+# aws_assert_replication_group_property compares the requested property, retrieved from the AWS CLI,
+#   to the expected value of that property.
+# aws_assert_replication_group_property requires 3 arguments:
+#   replication_group_id
+#   jq_filter – the property of interest, e.g. ".CacheNodeType"
+#   expected_value
+aws_assert_replication_group_property() {
+  if [[ $# -ne 3 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "${FUNCNAME[0]} replication_group_id jq_filter expected_value"
+    exit 1
+  fi
+  local actual_value=$(aws_get_replication_group_json "$1" | jq -r -e "$2")
+  if [[ "$3" != "$actual_value" ]]; then
+    echo "FAIL: property $2 for replication group $1 has value '$actual_value', but expected '$3'"
+    print_k8s_ack_controller_pod_logs
+    exit 1
+  fi
+}
+
 # aws_assert_replication_group_status compares status of supplied replication_group_id with supplied status
 # current status is retrieved from aws cli service api
 # aws_assert_replication_group_status requires 2 arguments
@@ -251,14 +326,20 @@ aws_assert_replication_group_status() {
     echo "Usage: aws_assert_replication_group_status replication_group_id  expected_status"
     exit 1
   fi
-  local replication_group_id="$1"
-  local expected_status="$2"
-  local actual_status="$(daws elasticache describe-replication-groups --replication-group-id "$replication_group_id" | jq -r -e '.ReplicationGroups[0] | .Status')"
-  if [[ "$expected_status" != "$actual_status" ]]; then
-    echo "FATAL: replication group $replication_group_id status on aws service. expected_status: $expected_status, actual_status: $actual_status"
-    print_k8s_ack_controller_pod_logs
+  aws_assert_replication_group_property "$1" ".Status" "$2"
+}
+
+# k8s_get_rg_field retrieves the JSON of the requested status field
+# k8s_get_rg_field requires 2 arguments:
+#   replication_group_id
+#   jq_filter – the status field of interest, e.g. ".status .nodeGroups[0] .nodeGroupMembers" for nodes in a shard
+k8s_get_rg_field() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id jq_filter"
     exit 1
   fi
+  echo $(kubectl get ReplicationGroup/"$1" -o json | jq -r -e "$2")
 }
 
 # k8s_assert_replication_group_status_property compares status of supplied replication_group_id with supplied status
@@ -273,12 +354,9 @@ k8s_assert_replication_group_status_property() {
     echo "Usage: k8s_assert_replication_group_status_property replication_group_id property_json_path expected_value"
     exit 1
   fi
-  local replication_group_id="$1"
-  local property_json_path="$2"
-  local expected_value="$3"
-  local actual_value="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e ".status | $property_json_path")"
-  if [[ "$expected_value" != "$actual_value" ]]; then
-    echo "FATAL: replication group $replication_group_id $property_json_path on k8s cluster. expected: $expected_value, actual: $actual_value"
+  local actual_value=$(k8s_get_rg_field "$1" ".status | $2")
+  if [[ "$3" != "$actual_value" ]]; then
+    echo "FAIL: property $2 for replication group $1 has value '$actual_value', but expected '$3'"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -295,11 +373,9 @@ k8s_assert_replication_group_shard_count() {
     echo "Usage: k8s_assert_replication_group_shard_count replication_group_id expected_count"
     exit 1
   fi
-  local replication_group_id="$1"
-  local expected_value="$2"
-  local actual_value="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e '.status .nodeGroups' | jq length)"
-  if [[ "$expected_value" -ne "$actual_value" ]]; then
-    echo "FATAL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_value"
+  local actual_value=$(k8s_get_rg_field "$1" ".status .nodeGroups" | jq length)
+  if [[ "$2" -ne "$actual_value" ]]; then
+    echo "FAIL: expected $2 node groups in replication group $1, actual: $actual_value"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -316,13 +392,25 @@ k8s_assert_replication_group_replica_count() {
     echo "Usage: k8s_assert_replication_group_replica_count replication_group_id expected_count"
     exit 1
   fi
-  local replication_group_id="$1"
-  local expected_value="$2"
-  local nodeGroupMembersCount="$(kubectl get ReplicationGroup/"$replication_group_id" -o json | jq -r -e '.status .nodeGroups[0] .nodeGroupMembers' | jq length)"
-  actual_replica_count=$(( nodeGroupMembersCount - 1 ))
-  if [[ "$expected_value" -ne "$actual_replica_count" ]]; then
-    echo "FATAL: replication group $replication_group_id Node Groups count on k8s cluster. expected: $expected_value, actual: $actual_replica_count"
+  local node_group_size=$(k8s_get_rg_field "$1" ".status .nodeGroups[0] .nodeGroupMembers" | jq length)
+  actual_replica_count=$(( node_group_size - 1 ))
+  if [[ "$2" -ne "$actual_replica_count" ]]; then
+    echo "FAIL: expected $2 replicas per node group for replication group $1, actual: $actual_replica_count"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
+}
+
+# wait_and_assert_replication_group_available_status should be called after applying a yaml for replication group
+#   creation to ensure the resource is available. It checks the underlying AWS resource directly but also checks the
+#   availability of the resource via Kubernetes. If any of these checks fail the script will exit with a nonzero
+#   error code.
+# wait_and_assert_replication_group_available_status requires no direct arguments but requires rg_id and service_name
+#   to be set to the name of the replication group of interest and "elasticache", respectively
+wait_and_assert_replication_group_available_status() {
+  sleep 5
+  aws_wait_replication_group_available "$rg_id" "FAIL: expected replication group $rg_id to have been created in ${service_name}"
+  aws_assert_replication_group_status "$rg_id" "available"
+  sleep 35
+  k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }

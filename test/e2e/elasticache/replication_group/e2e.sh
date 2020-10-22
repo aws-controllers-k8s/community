@@ -31,14 +31,6 @@ setup_replication_group_fields() {
 }
 setup_replication_group_fields
 
-wait_and_assert_replication_group_available_status() {
-  sleep 5
-  aws_wait_replication_group_available "$rg_id" "FAIL: expected replication group $rg_id to have been created in ${service_name}"
-  aws_assert_replication_group_status "$rg_id" "available"
-  sleep 35
-  k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
-}
-
 ack_apply_replication_group_yaml() {
   rg_yaml="$(provide_replication_group_yaml)"
   echo "$rg_yaml" | kubectl apply -f -
