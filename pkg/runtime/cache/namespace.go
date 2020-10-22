@@ -71,7 +71,7 @@ func NewNamespaceCache(clientset kubernetes.Interface, log logr.Logger) *Namespa
 	)
 	return &NamespaceCache{
 		informer:       sharedInformer,
-		log:            log.WithName("NamespaceCache"),
+		log:            log.WithName("cache.namespace"),
 		namespaceInfos: make(map[string]*namespaceInfo),
 	}
 }
@@ -92,24 +92,23 @@ func (c *NamespaceCache) Run(stopCh <-chan struct{}) {
 	c.informer.AddEventHandler(k8scache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			if !isIgnoredNamespace(obj) {
-				c.log.V(1).Info("namespace has been created")
-				c.setNamespaceInfoFromK8sObject(obj.(*corev1.Namespace))
-				c.log.V(1).Info("cached namespace ACK related annotations")
+				ns := obj.(*corev1.Namespace)
+				c.setNamespaceInfoFromK8sObject(ns)
+				c.log.V(1).Info("created namespace", "name", ns.ObjectMeta.Name)
 			}
 		},
-
 		UpdateFunc: func(orig, desired interface{}) {
 			if !isIgnoredNamespace(desired) {
-				c.log.V(1).Info("namespace has been updated")
-				c.setNamespaceInfoFromK8sObject(desired.(*corev1.Namespace))
-				c.log.V(1).Info("cached namespace ACK related annotations")
+				ns := desired.(*corev1.Namespace)
+				c.setNamespaceInfoFromK8sObject(ns)
+				c.log.V(1).Info("updated namespace", "name", ns.ObjectMeta.Name)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			if !isIgnoredNamespace(obj) {
-				c.log.V(1).Info("namespace has been deleted")
-				c.deleteNamespaceInfo(obj.(*corev1.Namespace).ObjectMeta.Name)
-				c.log.V(1).Info("cleaned up namespace informations from cache")
+				ns := obj.(*corev1.Namespace)
+				c.deleteNamespaceInfo(ns.ObjectMeta.Name)
+				c.log.V(1).Info("deleted namespace", "name", ns.ObjectMeta.Name)
 			}
 		},
 	})

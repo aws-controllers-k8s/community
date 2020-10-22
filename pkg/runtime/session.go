@@ -67,12 +67,12 @@ func NewSession(
 func injectUserAgent(handlers *request.Handlers, groupVersionKind schema.GroupVersionKind) {
 	handlers.Build.PushFrontNamed(request.NamedHandler{
 		Name: fmt.Sprintf("%s/user-agent", appName),
-		Fn:   request.MakeAddToUserAgentHandler(
+		Fn: request.MakeAddToUserAgentHandler(
 			appName,
 			groupVersionKind.Group+"-"+version.GitVersion,
-			"GitCommit/" + version.GitCommit,
-			"BuildDate/" + version.BuildDate,
-			"CRDKind/" + groupVersionKind.Kind,
-			"CRDVersion/" + groupVersionKind.Version),
+			"GitCommit/"+version.GitCommit,
+			"BuildDate/"+version.BuildDate,
+			"CRDKind/"+groupVersionKind.Kind,
+			"CRDVersion/"+groupVersionKind.Version),
 	})
 }

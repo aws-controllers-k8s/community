@@ -30,6 +30,7 @@ import (
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
 	ackrtcache "github.com/aws/aws-controllers-k8s/pkg/runtime/cache"
+	ackrtlog "github.com/aws/aws-controllers-k8s/pkg/runtime/log"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
@@ -115,12 +116,12 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		return err
 	}
 
-	r.log.WithValues(
+	ackrtlog.DebugResource(
+		r.log, res, "starting reconciliation",
 		"account", acctID,
 		"role", roleARN,
 		"region", region,
-		"kind", r.rd.GroupKind().String(),
-	).V(1).Info("starting reconcilation")
+	)
 
 	rm, err := r.rmf.ManagerFor(r.log, r.metrics, r, sess, acctID, region)
 	if err != nil {
@@ -144,6 +145,10 @@ func (r *reconciler) sync(
 	var latest acktypes.AWSResource // the newly created or mutated resource
 
 	isAdopted := IsAdopted(desired)
+	log := ackrtlog.AdaptResource(
+		r.log, desired,
+		"is_adopted", isAdopted,
+	)
 
 	// TODO(jaypipes): Validate all dependent resources. The AWSResource
 	// interface needs to get some methods that return schema relationships,
@@ -156,8 +161,8 @@ func (r *reconciler) sync(
 			// there is some changes available in the latest.RuntimeObject()
 			// (example: ko.Status.Conditions) which have been
 			// updated in the resource
-			// Thus, updateCRStatus() call should be made here
-			_ = r.updateCRStatus(ctx, desired, latest)
+			// Thus, patchResource() call should be made here
+			_ = r.patchResource(ctx, desired, latest)
 		}
 		if err != ackerr.NotFound {
 			return err
@@ -181,13 +186,13 @@ func (r *reconciler) sync(
 				// there is some changes available in the latest.RuntimeObject()
 				// (example: ko.Status.Conditions) which have been
 				// updated in the resource
-				// Thus, updateCRStatus() call should be made here
-				_ = r.updateCRStatus(ctx, desired, latest)
+				// Thus, patchResource() call should be made here
+				_ = r.patchResource(ctx, desired, latest)
 			}
 			return err
 		}
-		r.log.V(0).Info(
-			"reconciler.sync created new resource",
+		log.V(0).Info(
+			"created new resource",
 			"arn", latest.Identifiers().ARN(),
 		)
 	} else {
@@ -197,16 +202,15 @@ func (r *reconciler) sync(
 			return nil
 		}
 		diffReporter := r.rd.Diff(desired, latest)
-		r.log.V(1).Info(
+		log.V(1).Info(
 			"desired resource state has changed",
 			"diff", diffReporter.String(),
 			"arn", latest.Identifiers().ARN(),
-			"is_adopted", isAdopted,
 		)
 		// Before we update the backend AWS service resources, let's first update
 		// the latest status of CR which was retrieved by ReadOne call.
 		// Else, latest read status is lost in-case Update call fails with error.
-		err = r.updateCRStatus(ctx, desired, latest)
+		err = r.patchResource(ctx, desired, latest)
 		if err != nil {
 			return err
 		}
@@ -217,14 +221,14 @@ func (r *reconciler) sync(
 				// there is some changes available in the latest.RuntimeObject()
 				// (example: ko.Status.Conditions) which have been
 				// updated in the resource
-				// Thus, updateCRStatus() call should be made here
-				_ = r.updateCRStatus(ctx, desired, latest)
+				// Thus, patchResource() call should be made here
+				_ = r.patchResource(ctx, desired, latest)
 			}
 			return err
 		}
-		r.log.V(0).Info("reconciler.sync updated resource")
+		log.V(0).Info("updated resource")
 	}
-	err = r.updateCRStatus(ctx, desired, latest)
+	err = r.patchResource(ctx, desired, latest)
 	if err != nil {
 		return err
 	}
@@ -238,8 +242,9 @@ func (r *reconciler) sync(
 	return nil
 }
 
-// updateCRStatus updates status of CR using the supplied latest resource.
-func (r *reconciler) updateCRStatus(
+// patchResource patches the custom resource in the Kubernetes API to match the
+// supplied latest resource.
+func (r *reconciler) patchResource(
 	ctx context.Context,
 	desired acktypes.AWSResource,
 	latest acktypes.AWSResource,
@@ -259,7 +264,7 @@ func (r *reconciler) updateCRStatus(
 	if err != nil {
 		return err
 	}
-	r.log.V(1).Info("patched CR status")
+	ackrtlog.DebugResource(r.log, latest, "patched resource")
 	return nil
 }
 
@@ -284,7 +289,7 @@ func (r *reconciler) cleanup(
 	if err = rm.Delete(ctx, observed); err != nil {
 		return err
 	}
-	r.log.V(0).Info("reconciler.cleanup deleted resource")
+	ackrtlog.InfoResource(r.log, current, "deleted resource")
 
 	// Now that external AWS service resources have been appropriately cleaned
 	// up, we remove the finalizer representing the CR is managed by ACK,
@@ -312,7 +317,7 @@ func (r *reconciler) setResourceManaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(1).Info("reconciler marked resource as managed")
+	ackrtlog.DebugResource(r.log, res, "marked resource as managed")
 	return nil
 }
 
@@ -336,7 +341,7 @@ func (r *reconciler) setResourceUnmanaged(
 	if err != nil {
 		return err
 	}
-	r.log.V(1).Info("reconciler removed resource from management")
+	ackrtlog.DebugResource(r.log, res, "removed resource from management")
 	return nil
 }
 
@@ -356,7 +361,7 @@ func (r *reconciler) getAWSResource(
 // handleReconcileError will handle errors from reconcile handlers, which
 // respects runtime errors.
 func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
-	if err == nil || err == ackerr.Terminal{
+	if err == nil || err == ackerr.Terminal {
 		return ctrlrt.Result{}, nil
 	}
 
@@ -452,7 +457,7 @@ func NewReconciler(
 	return &reconciler{
 		rmf:     rmf,
 		rd:      rmf.ResourceDescriptor(),
-		log:     log,
+		log:     log.WithName("ackrt"),
 		cfg:     cfg,
 		metrics: metrics,
 	}
