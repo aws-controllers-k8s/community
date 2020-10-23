@@ -14,6 +14,7 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 |Amazon [S3](https://aws.amazon.com/s3/)|`DEVELOPER PREVIEW`|[`s3`](https://github.com/aws/aws-controllers-k8s/tree/main/services/s3)|
 |Amazon [SQS](https://aws.amazon.com/sqs/)|`BUILD`|`sqs`|
 |Amazon [SNS](https://aws.amazon.com/sns/)|`DEVELOPER PREVIEW`|[`sns`](https://github.com/aws/aws-controllers-k8s/tree/main/services/sns)|
+|Amazon [ElastiCache](https://aws.amazon.com/elasticache/)|`DEVELOPER PREVIEW`|[`elasticache`](https://github.com/aws/aws-controllers-k8s/tree/main/services/elasticache)|
 
 !!! note "IMPORTANT"
     There is no single release of the ACK project. The ACK project contains a

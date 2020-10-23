@@ -8,6 +8,7 @@ through the steps to test ACK for the currently supported AWS services:
 - Amazon SNS
 - Amazon API Gateway V2
 - Amazon DynamoDB
+- [Amazon ElastiCache](https://github.com/aws/aws-controllers-k8s/tree/main/services/elasticache)
 
 If you run into any problems when testing one of the above services,
 [raise an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
