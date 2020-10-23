@@ -16,12 +16,13 @@
 package v1alpha1
 
 import (
-    cpv1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// RepositorySpecParams defines the desired state of Repository
-type RepositorySpecParams struct {
+// RepositoryParameters defines the desired state of Repository
+type RepositoryParameters struct {
 	EncryptionConfiguration *EncryptionConfiguration `json:"encryptionConfiguration,omitempty"`
 	ImageScanningConfiguration *ImageScanningConfiguration `json:"imageScanningConfiguration,omitempty"`
 	ImageTagMutability *string `json:"imageTagMutability,omitempty"`
@@ -31,27 +32,32 @@ type RepositorySpecParams struct {
 
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
-    cpv1alpha1.ResourceSpec `json:",inline"`
-    ForProvider RepositorySpecParams `json:"forProvider"`
+	runtimev1alpha1.ResourceSpec `json:",inline"`
+	ForProvider RepositoryParameters `json:"forProvider"`
 }
 
-// RepositoryExternalStatus defines the observed state of Repository
-type RepositoryExternalStatus struct {
-    // TODO(negz): place common Crossplane-y stuff.
+// RepositoryObservation defines the observed state of Repository
+type RepositoryObservation struct {
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 	RegistryID *string `json:"registryID,omitempty"`
 	RepositoryURI *string `json:"repositoryURI,omitempty"`
 }
 
-// RepositoryStatus defines the observed state of Repository
+// RepositoryStatus defines the observed state of Repository.
 type RepositoryStatus struct {
 	runtimev1alpha1.ResourceStatus `json:",inline"`
-	AtProvider RepositoryExternalStatus `json:"atProvider"`
+	AtProvider RepositoryObservation `json:"atProvider"`
 }
 
-// Repository is the Schema for the Repositories API
+
 // +kubebuilder:object:root=true
+
+// Repository is the Schema for the Repositories API
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,aws}
 type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -59,13 +65,22 @@ type Repository struct {
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
-// RepositoryList contains a list of Repository
 // +kubebuilder:object:root=true
+
+// RepositoryList contains a list of Repositories
 type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items []Repository `json:"items"`
 }
+
+// Repository type metadata.
+var (
+	RepositoryKind             = "Repository"
+	RepositoryGroupKind        = schema.GroupKind{Group: Group, Kind: RepositoryKind}.String()
+	RepositoryKindAPIVersion   = RepositoryKind + "." + GroupVersion.String()
+	RepositoryGroupVersionKind = GroupVersion.WithKind(RepositoryKind)
+)
 
 func init() {
 	SchemeBuilder.Register(&Repository{}, &RepositoryList{})
