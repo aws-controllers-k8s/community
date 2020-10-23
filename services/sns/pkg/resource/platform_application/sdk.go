@@ -73,16 +73,6 @@ func (rm *resourceManager) sdkFind(
 	return &resource{ko}, nil
 }
 
-// newListRequestPayload returns SDK-specific struct for the HTTP request
-// payload of the List API call for the resource
-func (rm *resourceManager) newListRequestPayload(
-	r *resource,
-) (*svcsdk.ListPlatformApplicationsInput, error) {
-	res := &svcsdk.ListPlatformApplicationsInput{}
-
-	return res, nil
-}
-
 // requiredFieldsMissingFromGetAtttributesInput returns true if there are any
 // fields for the GetAttributes Input shape that are required by not present in
 // the resource's Spec or Status

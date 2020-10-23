@@ -113,20 +113,6 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	return res, nil
 }
 
-// newListRequestPayload returns SDK-specific struct for the HTTP request
-// payload of the List API call for the resource
-func (rm *resourceManager) newListRequestPayload(
-	r *resource,
-) (*svcsdk.GetApiMappingsInput, error) {
-	res := &svcsdk.GetApiMappingsInput{}
-
-	if r.ko.Spec.DomainName != nil {
-		res.SetDomainName(*r.ko.Spec.DomainName)
-	}
-
-	return res, nil
-}
-
 // sdkCreate creates the supplied resource in the backend AWS service API and
 // returns a new resource with any fields in the Status field filled in
 func (rm *resourceManager) sdkCreate(
