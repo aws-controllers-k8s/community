@@ -256,6 +256,10 @@ func (g *Generator) initTemplates() error {
 			"pkg/resource/sdk_find_get_attributes",
 			"pkg/resource/sdk_find_read_many",
 			"pkg/resource/sdk_find_not_implemented",
+			"pkg/resource/sdk_update",
+			"pkg/resource/sdk_update_custom",
+			"pkg/resource/sdk_update_set_attributes",
+			"pkg/resource/sdk_update_not_implemented",
 		}
 		for _, include := range includes {
 			if t, err = IncludeTemplate(t, g.templateBasePath, include); err != nil {

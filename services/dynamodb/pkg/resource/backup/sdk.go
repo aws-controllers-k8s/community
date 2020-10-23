@@ -173,7 +173,7 @@ func (rm *resourceManager) sdkUpdate(
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 	// TODO(jaypipes): Figure this out...
-	return nil, nil
+	return nil, ackerr.NotImplemented
 }
 
 // sdkDelete deletes the supplied resource in the backend AWS service API
