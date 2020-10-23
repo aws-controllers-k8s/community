@@ -144,7 +144,7 @@ func writeResourcePackage(g *generate.Generator, crds []*ackmodel.CRD) error {
 			}
 		}
 		for _, target := range targets {
-			b, err := g.GenerateCRDResourcePackageFile(crd.Names.Original, target)
+			b, err := g.GenerateResourcePackageFile(crd.Names.Original, target)
 			if err != nil {
 				return err
 			}

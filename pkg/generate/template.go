@@ -32,12 +32,12 @@ var (
 		"apis/groupversion_info",
 		"apis/types",
 		"cmd/controller/main",
-		"pkg/crd_descriptor",
-		"pkg/crd_identifiers",
-		"pkg/crd_manager",
-		"pkg/crd_manager_factory",
-		"pkg/crd_resource",
-		"pkg/crd_sdk",
+		"pkg/resource/descriptor",
+		"pkg/resource/identifiers",
+		"pkg/resource/manager",
+		"pkg/resource/manager_factory",
+		"pkg/resource/resource",
+		"pkg/resource/sdk",
 		"pkg/resource_registry",
 	}
 	yamlTemplatePaths = []string{
@@ -356,16 +356,16 @@ func (g *Generator) GenerateResourceRegistryFile() (*bytes.Buffer, error) {
 	return &b, nil
 }
 
-// GenerateCRDResourcePackageFile returns a byte buffer containing the output of
+// GenerateResourcePackageFile returns a byte buffer containing the output of
 // an executed template containing a file in a specific CRD's resource package
-func (g *Generator) GenerateCRDResourcePackageFile(
+func (g *Generator) GenerateResourcePackageFile(
 	crdName string,
 	target string,
 ) (*bytes.Buffer, error) {
 	if err := g.initTemplates(); err != nil {
 		return nil, err
 	}
-	targetPath := "pkg/crd_" + target
+	targetPath := "pkg/resource/" + target
 	t, found := g.templates[targetPath]
 	if !found {
 		return nil, errUnknownTemplate(targetPath)
