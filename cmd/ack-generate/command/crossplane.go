@@ -15,91 +15,59 @@ package command
 
 import (
 	"fmt"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/aws/aws-controllers-k8s/pkg/crossplane"
 
-	"github.com/aws/aws-controllers-k8s/pkg/generate"
-	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"github.com/spf13/cobra"
 )
 
 // crossplaneCmd is the command that generates Crossplane API types
 var crossplaneCmd = &cobra.Command{
 	Use:   "crossplane <service>",
-	Short: "Generate Crossplane-compatible Kubernetes API type definitions for a service",
+	Short: "Generate Crossplane Provider",
 	RunE:  generateCrossplane,
 }
 
+var providerDir string
+
 func init() {
+	crossplaneCmd.PersistentFlags().StringVar(
+		&providerDir, "provider-dir", ".", "the directory of the Crossplane provider",
+	)
 	rootCmd.AddCommand(crossplaneCmd)
 }
 
-// generateCrossplane generates the Go files for Crossplane-compatible
-// resources in the AWS service API.
-func generateCrossplane(cmd *cobra.Command, args []string) error {
+func generateCrossplane(_ *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
-	}
-	optTemplatesDir = filepath.Join(optTemplatesDir, "crossplane")
-	svcAlias := strings.ToLower(args[0])
-	if optAPIsOutputPath == "" {
-		optAPIsOutputPath = filepath.Join(optServicesDir, "crossplane")
-	}
-	if !optDryRun {
-		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
-		if _, err := ensureDir(apisVersionPath); err != nil {
-			return err
-		}
 	}
 	if err := ensureSDKRepo(optCacheDir); err != nil {
 		return err
 	}
+	optTemplatesDir = filepath.Join(optTemplatesDir, "crossplane")
+	svcAlias := strings.ToLower(args[0])
 	sdkHelper := model.NewSDKHelper(sdkDir)
+	sdkHelper.APIGroupSuffix = "aws.crossplane.io"
 	sdkAPI, err := sdkHelper.API(svcAlias)
 	if err != nil {
-		return err
-	}
-	g, err := generate.New(
-		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir,
-	)
-	if err != nil {
-		return err
-	}
-
-	crds, err := g.GetCRDs()
-	if err != nil {
-		return err
-	}
-	typeDefs, _, err := g.GetTypeDefs()
-	if err != nil {
-		return err
-	}
-	enumDefs, err := g.GetEnumDefs()
-	if err != nil {
-		return err
-	}
-
-	if err = writeDocGo(g); err != nil {
-		return err
-	}
-
-	if err = writeGroupVersionInfoGo(g); err != nil {
-		return err
-	}
-
-	if err = writeEnumsGo(g, enumDefs); err != nil {
-		return err
-	}
-
-	if err = writeTypesGo(g, typeDefs); err != nil {
-		return err
-	}
-
-	for _, crd := range crds {
-		if err = writeCRDGo(g, crd); err != nil {
+		newSvcAlias, err := FallBackFindServiceID(sdkDir, svcAlias)
+		if err != nil {
 			return err
 		}
+		sdkAPI, err = sdkHelper.API(newSvcAlias) // retry with serviceID
+		if err != nil {
+			return fmt.Errorf("cannot get the API model for service %s", svcAlias)
+		}
 	}
-	return nil
+	var opts []crossplane.GenerationOption
+	cfgPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
+	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
+		opts = append(opts, crossplane.WithGeneratorConfigFilePath(cfgPath))
+	}
+	g := crossplane.NewGeneration(svcAlias, optGenVersion, providerDir, optTemplatesDir, sdkAPI, opts...)
+	return g.Generate()
 }
