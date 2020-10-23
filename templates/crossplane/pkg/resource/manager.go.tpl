@@ -5,11 +5,15 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 	"fmt"
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
 	svcsdkapi "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}/{{ .ServiceIDClean }}iface"
@@ -17,10 +21,18 @@ import (
 
 // +kubebuilder:rbac:groups={{ .APIGroup }},resources={{ ToLower .CRD.Plural }},verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups={{ .APIGroup }},resources={{ ToLower .CRD.Plural }}/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
 type resourceManager struct {
+	// log refers to the logr.Logger object handling logging for the service
+	// controller
+	log logr.Logger
+	// metrics contains a collection of Prometheus metric objects that the
+	// service controller and its reconcilers track
+	metrics *ackmetrics.Metrics
 	// rr is the AWSResourceReconciler which can be used for various utility
 	// functions such as querying for Secret values given a SecretReference
 	rr acktypes.AWSResourceReconciler
@@ -62,7 +74,7 @@ func (rm *resourceManager) ReadOne(
 	if err != nil {
 		return nil, err
 	}
-	return observed, nil
+	return rm.onSuccess(observed)
 }
 
 // Create attempts to create the supplied AWSResource in the backend AWS
@@ -79,31 +91,36 @@ func (rm *resourceManager) Create(
 	}
 	created, err := rm.sdkCreate(ctx, r)
 	if err != nil {
-		return nil, err
+		return rm.onError(r, err)
 	}
-	return created, nil
+	return rm.onSuccess(created)
 }
 
-// Update attempts to mutate the supplied AWSResource in the backend AWS
+// Update attempts to mutate the supplied desired AWSResource in the backend AWS
 // service API, returning an AWSResource representing the newly-mutated
-// resource. Note that implementers should NOT check to see if the latest
-// observed resource differs from the supplied desired state. The higher-level
-// reonciler determines whether or not the desired differs from the latest
-// observed and decides whether to call the resource manager's Update method
+// resource.
+// Note for specialized logic implementers can check to see how the latest
+// observed resource differs from the supplied desired state. The
+// higher-level reonciler determines whether or not the desired differs
+// from the latest observed and decides whether to call the resource
+// manager's Update method
 func (rm *resourceManager) Update(
 	ctx context.Context,
-	res acktypes.AWSResource,
+	resDesired acktypes.AWSResource,
+	resLatest acktypes.AWSResource,
+	diffReporter *ackcompare.Reporter,
 ) (acktypes.AWSResource, error) {
-	r := rm.concreteResource(res)
-	if r.ko == nil {
+	desired := rm.concreteResource(resDesired)
+	latest := rm.concreteResource(resLatest)
+	if desired.ko == nil || latest.ko == nil {
 		// Should never happen... if it does, it's buggy code.
 		panic("resource manager's Update() method received resource with nil CR object")
 	}
-	updated, err := rm.sdkUpdate(ctx, r)
+	updated, err := rm.sdkUpdate(ctx, desired, latest, diffReporter)
 	if err != nil {
-		return nil, err
+		return rm.onError(latest, err)
 	}
-	return updated, nil
+	return rm.onSuccess(updated)
 }
 
 // Delete attempts to destroy the supplied AWSResource in the backend AWS
@@ -136,19 +153,53 @@ func (rm *resourceManager) ARNFromName(name string) string {
 // newResourceManager returns a new struct implementing
 // acktypes.AWSResourceManager
 func newResourceManager(
+	log logr.Logger,
+	metrics *ackmetrics.Metrics,
 	rr acktypes.AWSResourceReconciler,
+	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
-	sess, err := ackrt.NewSession()
-	if err != nil {
-		return nil, err
-	}
 	return &resourceManager{
+		log: log,
+		metrics: metrics,
 		rr: rr,
 		awsAccountID: id,
 		awsRegion: region,
 		sess:		 sess,
 		sdkapi:	   svcsdk.New(sess),
 	}, nil
+}
+
+// onError updates resource conditions and returns updated resource
+// it returns nil if no condition is updated.
+func (rm *resourceManager) onError(
+	r *resource,
+	err error,
+) (acktypes.AWSResource, error) {
+	r1, updated := rm.updateConditions(r, err)
+	if !updated {
+		return nil, err
+	}
+	for _, condition := range r1.Conditions() {
+		if condition.Type == ackv1alpha1.ConditionTypeTerminal &&
+			condition.Status == corev1.ConditionTrue {
+			// resource is in Terminal condition
+			// return Terminal error
+			return r1, ackerr.Terminal
+		}
+	}
+	return r1, err
+}
+
+// onSuccess updates resource conditions and returns updated resource
+// it returns the supplied resource if no condition is updated.
+func (rm *resourceManager) onSuccess(
+	r *resource,
+) (acktypes.AWSResource, error) {
+	r1, updated := rm.updateConditions(r, nil)
+	if !updated {
+		return r, nil
+	}
+	return r1, nil
 }

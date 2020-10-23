@@ -6,7 +6,10 @@ import (
 	"sync"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/pkg/resource"
 )
@@ -28,7 +31,10 @@ func (f *resourceManagerFactory) ResourceDescriptor() acktypes.AWSResourceDescri
 // ManagerFor returns a resource manager object that can manage resources for a
 // supplied AWS account
 func (f *resourceManagerFactory) ManagerFor(
+	log logr.Logger,
+	metrics *ackmetrics.Metrics,
 	rr acktypes.AWSResourceReconciler,
+	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (acktypes.AWSResourceManager, error) {
@@ -43,7 +49,7 @@ func (f *resourceManagerFactory) ManagerFor(
 	f.Lock()
 	defer f.Unlock()
 
-	rm, err := newResourceManager(rr, id, region)
+	rm, err := newResourceManager(log, metrics, rr, sess, id, region)
 	if err != nil {
 		return nil, err
 	}
