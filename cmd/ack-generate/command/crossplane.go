@@ -27,27 +27,35 @@ import (
 // crossplaneCmd is the command that generates Crossplane API types
 var crossplaneCmd = &cobra.Command{
 	Use:   "crossplane <service>",
-	Short: "Generate Crossplane-compatible Kubernetes API type definitions for a service",
-	RunE:  generateCrossplane,
+	Short: "Generate Crossplane Provider",
 }
 
+var crossplaneAPIsCmd = &cobra.Command{
+	Use:   "apis <service>",
+	Short: "Generate Crossplane-compatible Kubernetes API type definitions for a service",
+	RunE:  generateCrossplaneAPIs,
+}
+
+var providerDir string
+
 func init() {
+	crossplaneCmd.PersistentFlags().StringVar(
+		&providerDir, "provider-dir", ".", "the directory of the Crossplane provider",
+	)
+	crossplaneCmd.AddCommand(crossplaneAPIsCmd)
 	rootCmd.AddCommand(crossplaneCmd)
 }
 
-// generateCrossplane generates the Go files for Crossplane-compatible
+// generateCrossplaneAPIs generates the Go files for Crossplane-compatible
 // resources in the AWS service API.
-func generateCrossplane(cmd *cobra.Command, args []string) error {
+func generateCrossplaneAPIs(_ *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("please specify the service alias for the AWS service API to generate")
 	}
 	optTemplatesDir = filepath.Join(optTemplatesDir, "crossplane")
 	svcAlias := strings.ToLower(args[0])
-	if optAPIsOutputPath == "" {
-		optAPIsOutputPath = filepath.Join(optServicesDir, "crossplane")
-	}
 	if !optDryRun {
-		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
+		apisVersionPath = filepath.Join(providerDir, "apis", svcAlias, optGenVersion)
 		if _, err := ensureDir(apisVersionPath); err != nil {
 			return err
 		}
