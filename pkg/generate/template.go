@@ -252,6 +252,10 @@ func (g *Generator) initTemplates() error {
 			"boilerplate",
 			"apis/enum_def",
 			"apis/type_def",
+			"pkg/resource/sdk_find_read_one",
+			"pkg/resource/sdk_find_get_attributes",
+			"pkg/resource/sdk_find_read_many",
+			"pkg/resource/sdk_find_not_implemented",
 		}
 		for _, include := range includes {
 			if t, err = IncludeTemplate(t, g.templateBasePath, include); err != nil {
