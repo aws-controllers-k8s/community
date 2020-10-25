@@ -49,6 +49,13 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
+{{- $customMethod := .CRD.GetCustomImplementation .CRD.Ops.Create -}}
+{{- if $customMethod }}
+	customResp, customRespErr := rm.{{ $customMethod }}(ctx, r)
+	if customResp != nil || customRespErr != nil {
+		return customResp, customRespErr
+	}
+{{- end }}
 	input, err := rm.newCreateRequestPayload(r)
 	if err != nil {
 		return nil, err

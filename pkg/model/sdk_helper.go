@@ -164,6 +164,21 @@ func (a *SDKAPI) GetOperationMap(cfg *ackgenconfig.Config) *OperationMap {
 	return &opMap
 }
 
+// Given an API operation and member of API operation, return shape reference associated with the member
+func (a *SDKAPI) GetMemberShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
+	for opID, op := range a.API.Operations {
+		if opID == operation && op.InputRef.Shape != nil {
+			for opMemberName, memberShapeRef := range op.InputRef.Shape.MemberRefs {
+				if opMemberName == memberName {
+					return memberShapeRef, true
+				}
+			}
+		}
+	}
+
+	return nil, false
+}
+
 // CRDNames returns a slice of names structs for all top-level resources in the
 // API
 func (a *SDKAPI) CRDNames(cfg *ackgenconfig.Config) []names.Names {

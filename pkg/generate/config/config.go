@@ -111,6 +111,23 @@ type ResourceConfig struct {
 	// `resourceManager` struct that will set Conditions on a `resource` struct
 	// depending on the status of the resource.
 	UpdateConditionsCustomMethodName string `json:"update_conditions_custom_method_name,omitempty"`
+
+	// SpecFields is a list of instructions about additional Spec fields
+	// on this Resource
+	SpecFields []*SpecFieldConfig `json:"spec_fields"`
+}
+
+// SpecFieldConfig instructs the code generator how to handle an additional
+// field in the Resource's SpecFields collection. This additional field can source
+// its value from a shape in a different API Operation.
+type SpecFieldConfig struct {
+	// OperationID refers to the ID of the API Operation where we will
+	// determine the field's Go type.
+	OperationID string `json:"operation_id,omitempty"`
+	// MemberName refers to the name of the member of the
+	// Input shape in the Operation identified by OperaitonID that
+	// we will take as our additional spec field.
+	MemberName string `json:"member_name"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -319,6 +336,19 @@ func (c *Config) OverrideValues(operationName string) (map[string]string, bool) 
 		return nil, false
 	}
 	return oConfig.OverrideValues, ok
+}
+
+// AdditionSpec gives map of operation and their MemberFields to
+// add to spec.
+func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool) {
+	if c == nil {
+		return nil, false
+	}
+	resourceConfig, ok := c.Resources[resourceName]
+	if !ok {
+		return nil, false
+	}
+	return resourceConfig.SpecFields, ok
 }
 
 // IsIgnoredResource returns true if Operation Name is configured to be ignored

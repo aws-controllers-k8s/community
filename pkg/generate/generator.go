@@ -102,6 +102,18 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			crd.AddSpecField(memberNames, memberShapeRef)
 		}
 
+		// Now add the additional Spec fields that are required from other API operations.
+		specFieldConfigs, ok := g.cfg.SpecFieldConfigs(crdName)
+
+		if ok {
+			for _, specField := range specFieldConfigs {
+				memberShapeRef, found := g.SDKAPI.GetMemberShapeRef(specField.OperationID, specField.MemberName)
+				if found {
+					crd.AddSpecField(names.New(specField.MemberName), memberShapeRef)
+				}
+			}
+		}
+
 		// Now process the fields that will go into the Status struct. We want
 		// fields that are in the Create operation's Output Shape but that are
 		// not in the Input Shape.

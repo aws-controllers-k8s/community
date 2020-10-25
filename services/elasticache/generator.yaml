@@ -10,6 +10,19 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+  Snapshot:
+    update_conditions_custom_method_name: CustomUpdateConditions
+    exceptions:
+      terminal_codes:
+        - InvalidParameter
+        - InvalidParameterValue
+        - InvalidParameterCombination
+    spec_fields:
+          -
+            operation_id: CopySnapshot
+            member_name: SourceSnapshotName
+    update_operation:
+      custom_method_name: customUpdateSnapshot
 operations:
   DescribeReplicationGroups:
     set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
@@ -20,10 +33,14 @@ operations:
     set_output_custom_method_name: CustomModifyReplicationGroupSetOutput
     override_values:
       ApplyImmediately: true
+  CreateSnapshot:
+    custom_implementation: CustomCreateSnapshot
+    set_output_custom_method_name: CustomCreateSnapshotSetOutput
+  DescribeSnapshots:
+    set_output_custom_method_name: CustomDescribeSnapshotSetOutput
 ignore:
   resource_names:
     - GlobalReplicationGroup
     - CacheCluster
     - CacheParameterGroup
     - CacheSecurityGroup
-    - Snapshot
