@@ -107,6 +107,18 @@ Kind that the service controller manages.
 
     This step runs the `controller-gen rbac` command
 
+### Crossplane Provider Generation
+
+We have experimental support for generating API types and controller code for AWS
+services to be used in Crossplane AWS Provider. To try it out, you can run the
+following command:
+
+```console
+go run -tags codegen cmd/ack-generate/main.go crossplane apis ecr --provider-dir <directory for provider>
+cd <directory for provider>
+go generate ./...
+```
+
 [1]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation
 [2]: https://github.com/amazon-archives/aws-service-operator/tree/master/models
 [3]: https://github.com/amazon-archives/aws-service-operator/tree/master/code-generation/pkg/codegen/assets
