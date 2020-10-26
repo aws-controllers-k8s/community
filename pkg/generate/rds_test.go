@@ -683,9 +683,6 @@ func TestRDS_DBInstance(t *testing.T) {
 	// target variable are constructed with cleaned, renamed-friendly names
 	// referring to the generated Kubernetes API type definitions
 	expReadManyOutput := `
-	if len(resp.DBInstances) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.DBInstances {
 		if elem.AllocatedStorage != nil {

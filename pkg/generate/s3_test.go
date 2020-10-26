@@ -140,9 +140,6 @@ func TestS3_Bucket(t *testing.T) {
 	assert.Equal(expDeleteInput, crd.GoCodeSetInput(model.OpTypeDelete, "r.ko", "res", 1))
 
 	expReadManyOutput := `
-	if len(resp.Buckets) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.Buckets {
 		if elem.Name != nil {

@@ -44,6 +44,8 @@ var (
 type SDKHelper struct {
 	basePath string
 	loader   *awssdkmodel.Loader
+	// Default is "services.k8s.aws"
+	APIGroupSuffix string
 }
 
 // NewSDKHelper returns a new SDKHelper object
@@ -77,7 +79,7 @@ func (h *SDKHelper) API(serviceAlias string) (*SDKAPI, error) {
 		// Calling API.ServicePackageDoc() ends up resetting the API.imports
 		// unexported map variable...
 		_ = api.ServicePackageDoc()
-		return &SDKAPI{api, nil, nil}, nil
+		return &SDKAPI{api, nil, nil, h.APIGroupSuffix}, nil
 	}
 	return nil, ErrServiceNotFound
 }
@@ -132,6 +134,8 @@ type SDKAPI struct {
 	// Map, keyed by original Shape GoTypeElem(), with the values being a
 	// renamed type name (due to conflicting names)
 	typeRenames map[string]string
+	// Default is "services.k8s.aws"
+	apiGroupSuffix string
 }
 
 // GetPayloads returns a slice of strings of Shape names representing input and
@@ -263,7 +267,11 @@ func (a *SDKAPI) GetServiceFullName() string {
 // e.g. "sns.services.k8s.aws"
 func (a *SDKAPI) APIGroup() string {
 	serviceID := a.ServiceIDClean()
-	return fmt.Sprintf("%s.services.k8s.aws", serviceID)
+	suffix := "services.k8s.aws"
+	if a.apiGroupSuffix != "" {
+		suffix = a.apiGroupSuffix
+	}
+	return fmt.Sprintf("%s.%s", serviceID, suffix)
 }
 
 // SDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
