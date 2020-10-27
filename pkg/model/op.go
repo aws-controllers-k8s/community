@@ -98,5 +98,38 @@ func GetOpTypeAndResourceNameFromOpID(opID string) (OpType, string) {
 			return OpTypeSetAttributes, resName
 		}
 	}
-	return OpTypeUnknown, ""
+	return OpTypeUnknown, opID
+}
+
+func OpTypeFromString(s string) OpType {
+	switch s {
+	case "Create":
+		return OpTypeCreate
+	case "CreateBatch":
+		return OpTypeCreateBatch
+	case "Delete":
+		return OpTypeDelete
+	case "Replace":
+		return OpTypeReplace
+	case "Update":
+		return OpTypeUpdate
+	case "AddChild":
+		return OpTypeAddChild
+	case "AddChildren":
+		return OpTypeAddChildren
+	case "RemoveChild":
+		return OpTypeRemoveChild
+	case "RemoveChildren":
+		return OpTypeRemoveChildren
+	case "Get":
+		return OpTypeGet
+	case "List":
+		return OpTypeList
+	case "GetAttributes":
+		return OpTypeGetAttributes
+	case "SetAttributes":
+		return OpTypeSetAttributes
+	}
+
+	return OpTypeUnknown
 }

@@ -335,6 +335,10 @@ func (r *CRD) SetOutputCustomMethodName(
 	if !found {
 		return nil
 	}
+
+	if resGenConfig.SetOutputCustomMethodName == "" {
+		return nil
+	}
 	return &resGenConfig.SetOutputCustomMethodName
 }
 

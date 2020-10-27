@@ -43,6 +43,12 @@ type OperationConfig struct {
 	// `resourceManager` struct that will set fields on a `resource` struct
 	// depending on the output of the operation.
 	SetOutputCustomMethodName string `json:"set_output_custom_method_name,omitempty"`
+	// Override for resource name in case of heuristic failure
+	// An example of this is correcting stutter when the resource logic doesn't properly determine the resource name
+	ResourceName string `json:"resource_name"`
+	// Override for operation type in case of heuristic failure
+	// An example of this is `Put...` or `Register...` API operations not being correctly classified as `Create` op type
+	OperationType string `json:"operation_type"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to
