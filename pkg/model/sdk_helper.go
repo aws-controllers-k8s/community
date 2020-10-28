@@ -147,14 +147,14 @@ func (a *SDKAPI) GetPayloads() []string {
 
 // GetOperationMap returns a map, keyed by the operation type and operation
 // ID/name, of aws-sdk-go private/model/api.Operation struct pointers
-func (a *SDKAPI) GetOperationMap() *OperationMap {
+func (a *SDKAPI) GetOperationMap(cfg *ackgenconfig.Config) *OperationMap {
 	if a.opMap != nil {
 		return a.opMap
 	}
 	// create an index of Operations by operation types and resource name
 	opMap := OperationMap{}
 	for opID, op := range a.API.Operations {
-		opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+		opType, resName := getOpTypeAndResourceName(opID, cfg)
 		if _, found := opMap[opType]; !found {
 			opMap[opType] = map[string]*awssdkmodel.Operation{}
 		}
@@ -167,7 +167,7 @@ func (a *SDKAPI) GetOperationMap() *OperationMap {
 // CRDNames returns a slice of names structs for all top-level resources in the
 // API
 func (a *SDKAPI) CRDNames(cfg *ackgenconfig.Config) []names.Names {
-	opMap := a.GetOperationMap()
+	opMap := a.GetOperationMap(cfg)
 	createOps := (*opMap)[OpTypeCreate]
 	crdNames := []names.Names{}
 	for crdName := range createOps {
@@ -233,8 +233,8 @@ func (a *SDKAPI) HasConflictingTypeName(typeName string, cfg *ackgenconfig.Confi
 		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
 	}
 	return util.InStrings(cleanTypeName, crdResourceNames) ||
-			util.InStrings(cleanTypeName, crdSpecNames) ||
-			util.InStrings(cleanTypeName, crdStatusNames)
+		util.InStrings(cleanTypeName, crdSpecNames) ||
+		util.InStrings(cleanTypeName, crdStatusNames)
 }
 
 // ServiceID returns the exact `metadata.serviceId` attribute for the AWS
@@ -273,4 +273,23 @@ func (a *SDKAPI) SDKAPIInterfaceTypeName() string {
 		return ""
 	}
 	return a.API.StructName()
+}
+
+// Override the operation type and/or resource name if specified in config
+func getOpTypeAndResourceName(opID string, cfg *ackgenconfig.Config) (OpType, string) {
+	opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+
+	if cfg != nil {
+		if operationConfig, exists := cfg.Operations[opID]; exists {
+			if operationConfig.OperationType != "" {
+				opType = OpTypeFromString(operationConfig.OperationType)
+			}
+
+			if operationConfig.ResourceName != "" {
+				resName = operationConfig.ResourceName
+			}
+		}
+	}
+
+	return opType, resName
 }

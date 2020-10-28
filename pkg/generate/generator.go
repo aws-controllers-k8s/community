@@ -49,7 +49,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 	}
 	crds := []*ackmodel.CRD{}
 
-	opMap := g.SDKAPI.GetOperationMap()
+	opMap := g.SDKAPI.GetOperationMap(g.cfg)
 
 	createOps := (*opMap)[ackmodel.OpTypeCreate]
 	readOneOps := (*opMap)[ackmodel.OpTypeGet]
