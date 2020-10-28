@@ -192,24 +192,17 @@ func writeConfigDirs(g *generate.Generator) error {
 			return err
 		}
 	}
-	targets := []string{
-		"controller/deployment",
-		"controller/kustomization",
-		"default/kustomization",
-		"rbac/cluster-role-binding",
-		"rbac/kustomization",
-	}
-	for _, target := range targets {
-		b, err := g.GenerateConfigYAMLFile(target)
+	for _, target := range generate.ConfigFiles {
+		b, err := g.GenerateConfigFile(target)
 		if err != nil {
 			return err
 		}
 		if optDryRun {
-			fmt.Println("============================= config/" + target + ".yaml ======================================")
+			fmt.Println("============================= " + target + " ======================================")
 			fmt.Println(strings.TrimSpace(b.String()))
 			return nil
 		}
-		path := filepath.Join(optControllerOutputPath, "config", target+".yaml")
+		path := filepath.Join(optControllerOutputPath, target)
 		if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
 			return err
 		}

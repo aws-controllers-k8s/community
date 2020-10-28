@@ -1,29 +1,5 @@
 #!/usr/bin/env bash
 
-DEFAULT_HELM_VERSION="3.2.4"
-
-# ensure_helm [<helm version>]
-#
-# Installs the helm binary if it isn't present on the system.  Takes an
-# optional parameter for the version of helm to install. Defaults to the value
-# of the HELM_VERSION environment variable and then the value of the
-# DEFAULT_HELM_VERSION variable.  Uses `sudo mv` to place the downloaded binary
-# into your PATH.
-ensure_helm() {
-    local __helm_version="$1"
-    if [ "x$__helm_version" == "x" ]; then
-        __helm_version=${HELM_VERSION:-$DEFAULT_HELM_VERSION}
-    fi
-    if ! is_installed helm; then
-        __platform=$(uname | tr '[:upper:]' '[:lower:]')
-        __tmp_install_dir=$(mktemp -d -t install-helm-XXX)
-        curl -L https://get.helm.sh/helm-v$__helm_version-$__platform-amd64.tar.gz | tar zxf - -C $__tmp_install_dir
-        mv $__tmp_install_dir/$__platform-amd64/helm $__tmp_install_dir/.
-        chmod +x $__tmp_install_dir/helm
-        sudo mv $__tmp_install_dir/helm /usr/local/bin/helm
-    fi
-}
-
 add_helm_repo() {
    if ! should_execute add_helm_repo; then
      return 1
