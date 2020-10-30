@@ -181,6 +181,31 @@ spec:
 EOF
 }
 
+# provide_replication_group_yaml_basic is similar to provide_replication_group_yaml, except only specifies
+#   a name, description, and engine. This is meant for use cases where certain properties which are usually included
+#   need to be excluded from the yaml (e.g. numNodeGroups not specified because replicaCount will be specified).
+#   Therefore further properties will need to be appended for this to be a fully specified config.
+# provide_replication_group_yaml_basic requires 1 argument:
+#   replication_group_id
+provide_replication_group_yaml_basic() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "${FUNCNAME[0]} replication_group_id"
+    exit 1
+  fi
+
+  cat <<EOF
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: ReplicationGroup
+metadata:
+  name: $1
+spec:
+    engine: redis
+    replicationGroupID: $1
+    replicationGroupDescription: default test description
+EOF
+}
+
 # provide_replication_group_detailed_yaml puts replication group yaml with node groups details to standard output
 # it uses following environment variables:
 #     rg_id, rg_description, num_node_groups, replicas_per_node_group, node_group_id1, node_group_id2
@@ -294,6 +319,27 @@ aws_get_replication_group_json() {
   echo $(daws elasticache describe-replication-groups --replication-group-id "$1" | jq -r -e ".ReplicationGroups[0]")
 }
 
+# aws_get_rg_param_group asserts that the name of the parameter group associated with the provided replication group
+#   matches the name of the expected parameter group
+# aws_get_rg_param_group requires 2 arguments:
+#   replication_group_id
+#   expected_parameter_group_name
+aws_assert_rg_param_group() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "${FUNCNAME[0]} replication_group_id expected_parameter_group_name"
+    exit 1
+  fi
+
+  local primary_cluster=$(aws_get_replication_group_json "$1" | jq -r -e ".MemberClusters[0]")
+  local cluster_json=$(daws elasticache describe-cache-clusters --cache-cluster-id "$primary_cluster" | jq -r -e ".CacheClusters[0]")
+  local param_group=$(echo $cluster_json | jq -r -e ".CacheParameterGroup .CacheParameterGroupName")
+  if [[ "$param_group" != "$2" ]]; then
+    echo "FAIL: expected replication group $1 to have parameter group $2. Actual: $param_group"
+    exit 1
+  fi
+}
+
 # aws_assert_replication_group_property compares the requested property, retrieved from the AWS CLI,
 #   to the expected value of that property.
 # aws_assert_replication_group_property requires 3 arguments:
@@ -399,6 +445,86 @@ k8s_assert_replication_group_replica_count() {
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
+}
+
+# k8s_assert_replication_group_total_node_count asserts the total number of nodes/clusters in the specified
+#   replication group. The total node count should be (# shards) x (# replicas per shard + 1)
+# k8s_assert_replication_group_total_node_count requires 2 arguments
+#     replication_group_id
+#     expected_count - expected total node count
+k8s_assert_replication_group_total_node_count() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_count"
+    exit 1
+  fi
+  local actual_value=$(k8s_get_rg_field "$1" ".status .memberClusters" | jq length)
+  if [[ "$2" != "$actual_value" ]]; then
+    echo "FAIL: expected $2 total nodes for replication group $1, actual: $actual_value"
+    print_k8s_ack_controller_pod_logs
+    exit 1
+  fi
+}
+
+# delete all replication groups in existing clusters and print a debug message
+k8s_perform_rg_test_cleanup () {
+  debug_msg "Cleaning up test replication groups..."
+  kubectl delete ReplicationGroup --all 2>/dev/null
+  assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
+}
+
+# assert_terminal_condition_true asserts that the terminal condition exists, has status "True", and
+#   the message associated with the terminal condition matches the one provided. The assertions should pass
+#   following an invalid operation (e.g. create RG with negative replica count, e.g. modify cluster mode
+#   disabled RG from 1 to 2 shards)
+# assert_terminal_condition_true requires 2 arguments
+#   replication_group_id
+#   expected_substring: a substring of the expected message associated with the terminal condition
+assert_rg_terminal_condition_true() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
+    exit 1
+  fi
+
+  terminal_cond=$(k8s_get_rg_field "$1" ".status .conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
+  if [[ $? != 0 ]]; then
+    echo "FAIL: expected replication group $1 to have a terminal condition"
+    exit 1
+  fi
+
+  status=$(echo $terminal_cond | jq -r -e ".status")
+  if [[ $status != "True" ]]; then
+    echo "FAIL: expected status of terminal condition to be True for replication group $1"
+    exit 1
+  fi
+
+  cond_msg=$(echo $terminal_cond | jq -r -e ".message")
+  if [[ $cond_msg != *"$2"* ]]; then
+    echo "FAIL: replication group $1 has terminal condition set True, but with unexpected message"
+    exit 1
+  fi
+}
+
+# check_rg_terminal_condition_true waits for a number of seconds (ideally after config application), then
+#   periodically calls assert_rg_terminal_condition_true to ensure that the expected terminal condition
+#   exists, is set True, has the proper message, and that the state of all of these properties is stable.
+# check_rg_terminal_condition_true requires 2 arguments
+#   replication_group_id
+#   expected_substring: a substring of the expected message associated with the terminal condition
+check_rg_terminal_condition_true() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
+    exit 1
+  fi
+  sleep 10 # allow time for terminal condition property to exist in conditions array
+
+  # check all desired state periodically, should ensure state is stable
+  for i in $(seq 0 14); do
+    sleep 2
+    assert_rg_terminal_condition_true "$1" "$2"
+  done
 }
 
 # wait_and_assert_replication_group_available_status should be called after applying a yaml for replication group
