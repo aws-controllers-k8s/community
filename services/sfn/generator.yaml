@@ -1,0 +1,9 @@
+resources:
+  StateMachine:
+    exceptions:
+      codes:
+        404: StateMachineDoesNotExist
+  Activity:
+    exceptions:
+      codes:
+        404: ActivityDoesNotExist
