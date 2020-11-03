@@ -315,6 +315,9 @@ func (r *CRD) UnpackAttributes() {
 // IsPrimaryARNField returns true if the supplied field name is likely the resource's
 // ARN identifier field.
 func (r *CRD) IsPrimaryARNField(fieldName string) bool {
+	if r.genCfg != nil && !r.genCfg.IncludeACKMetadata {
+		return false
+	}
 	return strings.EqualFold(fieldName, "arn") ||
 		strings.EqualFold(fieldName, r.Names.Original+"arn")
 }
@@ -333,6 +336,10 @@ func (r *CRD) SetOutputCustomMethodName(
 	}
 	resGenConfig, found := r.genCfg.Operations[op.Name]
 	if !found {
+		return nil
+	}
+
+	if resGenConfig.SetOutputCustomMethodName == "" {
 		return nil
 	}
 	return &resGenConfig.SetOutputCustomMethodName
@@ -732,14 +739,14 @@ func (r *CRD) GoCodeSetInput(
 		sourceAdaptedVarName := sourceVarName
 		crdField, found = r.SpecFields[renamedName]
 		if found {
-			sourceAdaptedVarName += ".Spec"
+			sourceAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 		} else {
 			crdField, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			sourceAdaptedVarName += ".Status"
+			sourceAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
 		sourceAdaptedVarName += "." + crdField.Names.Camel
 
@@ -1671,7 +1678,7 @@ func (r *CRD) GoCodeSetOutput(
 		targetAdaptedVarName := targetVarName
 		crdField, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += ".Spec"
+			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 			if !performSpecUpdate {
 				continue
 			}
@@ -1681,7 +1688,7 @@ func (r *CRD) GoCodeSetOutput(
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += ".Status"
+			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = crdField.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
@@ -1851,16 +1858,6 @@ func (r *CRD) goCodeSetOutputReadMany(
 	// operation by checking for matching values in these fields.
 	matchFieldNames := r.listOpMatchFieldNames()
 
-	//  if len(resp.CacheClusters) == 0 {
-	//      return nil, ackerr.NotFound
-	//  }
-	out += fmt.Sprintf(
-		"%sif len(%s.%s) == 0 {\n",
-		indent, sourceVarName, listShapeName,
-	)
-	out += fmt.Sprintf("%s\treturn nil, ackerr.NotFound\n", indent)
-	out += fmt.Sprintf("%s}\n", indent)
-
 	// found := false
 	out += fmt.Sprintf("%sfound := false\n", indent)
 	// for _, elem := range resp.CacheClusters {
@@ -1918,14 +1915,14 @@ func (r *CRD) goCodeSetOutputReadMany(
 		targetAdaptedVarName := targetVarName
 		crdField, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += ".Spec"
+			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 		} else {
 			crdField, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += ".Status"
+			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = crdField.ShapeRef
 		out += fmt.Sprintf(
@@ -2016,7 +2013,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	//      return nil, ackerr.NotFound
 	//  }
 	out += fmt.Sprintf("%sif !found {\n", indent)
-	out += fmt.Sprintf("%s\treturn nil, ackerr.NotFound\n", indent)
+	out += fmt.Sprintf("%s\t%s\n", indent, r.genCfg.SetManyOutputNotFoundErrReturn)
 	out += fmt.Sprintf("%s}\n", indent)
 	return out
 }

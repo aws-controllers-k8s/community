@@ -425,9 +425,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expReadManyInput, crd.GoCodeSetInput(model.OpTypeList, "r.ko", "res", 1))
 
 	expReadManyOutput := `
-	if len(resp.CacheClusters) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.CacheClusters {
 		if elem.ARN != nil {

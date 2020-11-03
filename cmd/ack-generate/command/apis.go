@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -90,7 +91,7 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 		}
 	}
 	g, err := generate.New(
-		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir,
+		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir, config.Default,
 	)
 	if err != nil {
 		return err

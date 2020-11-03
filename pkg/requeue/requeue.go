@@ -17,7 +17,6 @@ import (
 	"time"
 )
 
-
 const (
 	DefaultRequeueAfterDuration time.Duration = 30 * time.Second
 )

@@ -21,7 +21,7 @@ func (rm *resourceManager) sdkFind(
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
 			return nil, ackerr.NotFound
 		}
-		return nil, err
+		return nil, respErr
 	}
 
 	// Merge in the information we read from the API call above to the copy of

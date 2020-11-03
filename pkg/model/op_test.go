@@ -101,7 +101,7 @@ func TestGetOpTypeAndResourceNameFromOpID(t *testing.T) {
 		{
 			"PauseEC2Instance",
 			model.OpTypeUnknown,
-			"",
+			"PauseEC2Instance",
 		},
 	}
 	for _, test := range tests {

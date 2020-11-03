@@ -49,7 +49,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 	}
 	crds := []*ackmodel.CRD{}
 
-	opMap := g.SDKAPI.GetOperationMap()
+	opMap := g.SDKAPI.GetOperationMap(g.cfg)
 
 	createOps := (*opMap)[ackmodel.OpTypeCreate]
 	readOneOps := (*opMap)[ackmodel.OpTypeGet]
@@ -361,14 +361,11 @@ func New(
 	apiVersion string,
 	configPath string,
 	templateBasePath string,
+	defaultConfig ackgenconfig.Config,
 ) (*Generator, error) {
-	var gc *ackgenconfig.Config
-	var err error
-	if configPath != "" {
-		gc, err = ackgenconfig.New(configPath)
-		if err != nil {
-			return nil, err
-		}
+	gc, err := ackgenconfig.New(configPath, defaultConfig)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Generator{
@@ -378,6 +375,6 @@ func New(
 		serviceAlias:     SDKAPI.ServiceID(),
 		apiVersion:       apiVersion,
 		templateBasePath: templateBasePath,
-		cfg:              gc,
+		cfg:              &gc,
 	}, nil
 }
