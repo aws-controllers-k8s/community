@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -33,7 +34,7 @@ func NewGeneratorForService(t *testing.T, serviceAlias string) *generate.Generat
 	if _, err := os.Stat(generatorConfigPath); os.IsNotExist(err) {
 		generatorConfigPath = ""
 	}
-	g, err := generate.New(sdkAPI, "v1alpha1", generatorConfigPath, "")
+	g, err := generate.New(sdkAPI, "v1alpha1", generatorConfigPath, "", config.Default)
 	if err != nil {
 		t.Fatal(err)
 	}
