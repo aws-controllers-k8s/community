@@ -1,0 +1,5 @@
+accountId=`aws sts get-caller-identity --query Account --output text`
+aws iam put-role-policy \
+    --role-name $IAM_ROLE \
+    --policy-name SFNPassRoleInlinePolicy \
+    --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":{\"Effect\":\"Allow\",\"Action\":\"iam:PassRole\",\"Resource\":\"arn:aws:iam::$accountId:role/ack-sfn-execution-role\"}}"

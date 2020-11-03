@@ -145,6 +145,13 @@ aws iam attach-role-policy \
     Set the `$IAM_ROLE` variable above to the ARN of the IAM Role the
     ACK service controller will run as.
 
+Some services may need an additional inline policy, specified in
+`config/iam/additional-policy`, in addition to the managed policy from
+`recommended-policy-arn`. For example, the service controller may require
+`iam:PassRole` permission in order to pass an execution role which will be
+ assumed by the AWS service. With `$IAM_ROLE` still set, run the script at
+`config/iam/additional-policy` if there is one to create the inline policy.
+
 [2]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html
 
 ## Cross-account resource management
