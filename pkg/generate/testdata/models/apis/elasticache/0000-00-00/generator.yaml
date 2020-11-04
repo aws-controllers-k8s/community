@@ -1,4 +1,9 @@
 resources:
+  Snapshot:
+    spec_fields:
+        -
+          operation_id: CopySnapshot
+          member_name: SourceSnapshotName
 operations:
   ModifyReplicationGroup:
     override_values:

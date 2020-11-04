@@ -29,6 +29,7 @@ import (
 
 	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/cache_subnet_group"
 	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/replication_group"
+	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/snapshot"
 )
 
 var (

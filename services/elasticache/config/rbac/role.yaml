@@ -62,3 +62,23 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - snapshots
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - snapshots/status
+  verbs:
+  - get
+  - patch
+  - update
