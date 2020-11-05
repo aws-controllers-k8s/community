@@ -316,6 +316,14 @@ apigwv2_setup_iam_resources_for_authorizer() {
   fi
 
   local __role_name="$1"
+
+  daws iam get-role --role-name "$__role_name" >/dev/null 2>&1
+  local __status=$?
+  if [[ $__status -ne 255 && $__status -ne 254 ]]; then
+    echo "FATAL: Expected IAM role $__role_name to not exist. Did previous test run cleanup?"
+    exit 1
+  fi
+
   daws iam create-role --role-name "$__role_name" --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}' >/dev/null
   assert_equal "0" "$?" "Expected success from aws iam create-role --role-name $__role_name but got $?" || exit 1
   daws iam attach-role-policy --role-name "$__role_name" --policy-arn 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' >/dev/null
@@ -370,6 +378,13 @@ exports.handler = async(event) => {
 };
 EOF
   zip authorizer.zip index.js >/dev/null
+
+  daws lambda get-function --function-name "$__function_name" >/dev/null 2>&1
+  local __status=$?
+  if [[ $__status -ne 255 && $__status -ne 254 ]]; then
+    echo "FATAL: Expected lambda function $__function_name to not exist. Did previous test run cleanup?"
+    exit 1
+  fi
 
   daws lambda create-function --function-name "$__function_name" --runtime nodejs12.x --role "$__role_arn" --handler index.handler --zip-file fileb://authorizer.zip > /dev/null
   assert_equal "0" "$?" "Expected success from aws lambda create-function --function-name $__function_name but got $?" || exit 1
@@ -473,7 +488,7 @@ apigwv2_delete_authorizer_and_validate() {
 
 # apigwv2_delete_authorizer_lambda deletes the lambda function created for http-api-authorizer.
 # apigwv2_delete_authorizer_lambda accepts one required parameters. lambda_function_name
-delete_authorizer_lambda() {
+apigwv2_delete_authorizer_lambda() {
   if [[ $# -ne 1 ]]; then
     echo "FATAL: Wrong number of arguments passed to delete_authorizer_lambda"
     echo "Usage: apigwv2_delete_authorizer_lambda function_name"
