@@ -49,7 +49,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 	}
 	crds := []*ackmodel.CRD{}
 
-	opMap := g.SDKAPI.GetOperationMap()
+	opMap := g.SDKAPI.GetOperationMap(g.cfg)
 
 	createOps := (*opMap)[ackmodel.OpTypeCreate]
 	readOneOps := (*opMap)[ackmodel.OpTypeGet]
@@ -100,6 +100,18 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 				continue
 			}
 			crd.AddSpecField(memberNames, memberShapeRef)
+		}
+
+		// Now add the additional Spec fields that are required from other API operations.
+		specFieldConfigs, ok := g.cfg.SpecFieldConfigs(crdName)
+
+		if ok {
+			for _, specField := range specFieldConfigs {
+				memberShapeRef, found := g.SDKAPI.GetMemberShapeRef(specField.OperationID, specField.MemberName)
+				if found {
+					crd.AddSpecField(names.New(specField.MemberName), memberShapeRef)
+				}
+			}
 		}
 
 		// Now process the fields that will go into the Status struct. We want
@@ -361,14 +373,11 @@ func New(
 	apiVersion string,
 	configPath string,
 	templateBasePath string,
+	defaultConfig ackgenconfig.Config,
 ) (*Generator, error) {
-	var gc *ackgenconfig.Config
-	var err error
-	if configPath != "" {
-		gc, err = ackgenconfig.New(configPath)
-		if err != nil {
-			return nil, err
-		}
+	gc, err := ackgenconfig.New(configPath, defaultConfig)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Generator{
@@ -378,6 +387,6 @@ func New(
 		serviceAlias:     SDKAPI.ServiceID(),
 		apiVersion:       apiVersion,
 		templateBasePath: templateBasePath,
-		cfg:              gc,
+		cfg:              &gc,
 	}, nil
 }

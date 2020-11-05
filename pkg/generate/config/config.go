@@ -22,6 +22,15 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
+var Default = Config{
+	PrefixConfig: PrefixConfig{
+		SpecField:   ".Spec",
+		StatusField: ".Status",
+	},
+	IncludeACKMetadata:             true,
+	SetManyOutputNotFoundErrReturn: "return nil, ackerr.NotFound",
+}
+
 // Config represents instructions to the ACK code generator for a particular
 // AWS service API
 type Config struct {
@@ -32,6 +41,16 @@ type Config struct {
 	Ignore IgnoreSpec `json:"ignore"`
 	// Contains generator instructions for individual API operations.
 	Operations map[string]OperationConfig `json:"operations"`
+	// PrefixConfig contains the prefixes to access certain fields in the generated
+	// Go code.
+	PrefixConfig PrefixConfig `json:"prefix_config,omitempty"`
+	// IncludeACKMetadata lets you specify whether ACK Metadata should be included
+	// in the status. Default is true.
+	IncludeACKMetadata bool `json:"include_ack_metadata,omitempty"`
+	// SetManyOutputNotFoundErrReturn is the return statement when generated
+	// SetManyOutput function fails with NotFound error.
+	// Default is "return nil, ackerr.NotFound"
+	SetManyOutputNotFoundErrReturn string `json:"set_many_output_notfound_err_return,omitempty"`
 }
 
 // OperationConfig represents instructions to the ACK code generator to
@@ -43,6 +62,12 @@ type OperationConfig struct {
 	// `resourceManager` struct that will set fields on a `resource` struct
 	// depending on the output of the operation.
 	SetOutputCustomMethodName string `json:"set_output_custom_method_name,omitempty"`
+	// Override for resource name in case of heuristic failure
+	// An example of this is correcting stutter when the resource logic doesn't properly determine the resource name
+	ResourceName string `json:"resource_name"`
+	// Override for operation type in case of heuristic failure
+	// An example of this is `Put...` or `Register...` API operations not being correctly classified as `Create` op type
+	OperationType string `json:"operation_type"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to
@@ -105,6 +130,32 @@ type ResourceConfig struct {
 	// `resourceManager` struct that will set Conditions on a `resource` struct
 	// depending on the status of the resource.
 	UpdateConditionsCustomMethodName string `json:"update_conditions_custom_method_name,omitempty"`
+
+	// SpecFields is a list of instructions about additional Spec fields
+	// on this Resource
+	SpecFields []*SpecFieldConfig `json:"spec_fields"`
+}
+
+// SpecFieldConfig instructs the code generator how to handle an additional
+// field in the Resource's SpecFields collection. This additional field can source
+// its value from a shape in a different API Operation.
+type SpecFieldConfig struct {
+	// OperationID refers to the ID of the API Operation where we will
+	// determine the field's Go type.
+	OperationID string `json:"operation_id,omitempty"`
+	// MemberName refers to the name of the member of the
+	// Input shape in the Operation identified by OperaitonID that
+	// we will take as our additional spec field.
+	MemberName string `json:"member_name"`
+}
+
+type PrefixConfig struct {
+	// SpecField stores the string prefix to use for information that will be
+	// sent to AWS. Defaults to `.Spec`
+	SpecField string `json:"spec_field,omitempty"`
+	// StatusField stores the string prefix to use for information fetched from
+	// AWS. Defaults to `.Status`
+	StatusField string `json:"status_field,omitempty"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -315,6 +366,19 @@ func (c *Config) OverrideValues(operationName string) (map[string]string, bool) 
 	return oConfig.OverrideValues, ok
 }
 
+// AdditionSpec gives map of operation and their MemberFields to
+// add to spec.
+func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool) {
+	if c == nil {
+		return nil, false
+	}
+	resourceConfig, ok := c.Resources[resourceName]
+	if !ok {
+		return nil, false
+	}
+	return resourceConfig.SpecFields, ok
+}
+
 // IsIgnoredResource returns true if Operation Name is configured to be ignored
 // in generator config for the AWS service
 func (c *Config) IsIgnoredResource(resourceName string) bool {
@@ -380,14 +444,18 @@ func (c *Config) ListOpMatchFieldNames(
 // path to a config file
 func New(
 	configPath string,
-) (*Config, error) {
-	gc := Config{}
+	defaultConfig Config,
+) (Config, error) {
+	if configPath == "" {
+		return defaultConfig, nil
+	}
 	contents, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
+	gc := defaultConfig
 	if err = yaml.Unmarshal(contents, &gc); err != nil {
-		return nil, err
+		return Config{}, err
 	}
-	return &gc, nil
+	return gc, nil
 }

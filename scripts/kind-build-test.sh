@@ -80,7 +80,7 @@ Options:
 "
 
 # Process our input arguments
-while getopts "ps:r:ic:v" opt; do
+while getopts "ps:r:i:c:v:" opt; do
   case ${opt} in
     p ) # PRESERVE K8s Cluster
         PRESERVE=true

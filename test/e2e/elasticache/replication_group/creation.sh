@@ -199,39 +199,6 @@ EOF
   aws_assert_rg_param_group "$rg_id" "pgtest"
 }
 
-# create multiple RGs and check deletion succeeds
-test_rg_deletion_multiple() {
-  debug_msg "executing ${FUNCNAME[0]}"
-
-  # generate and apply yaml for creation of first replication group
-  clear_rg_parameter_variables
-  rg_id="rg-deletion-1"
-  num_node_groups=1
-  replicas_per_node_group=0
-  automatic_failover_enabled="false"
-  multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
-  exit_if_rg_config_application_failed $? "$rg_id"
-
-  # ensure first RG successfully created and available
-  wait_and_assert_replication_group_available_status
-
-  # generate and apply yaml for creation of second replication group
-  rg_id="rg-deletion-2"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
-  exit_if_rg_config_application_failed $? "$rg_id"
-
-  # ensure second RG successfully created and available
-  wait_and_assert_replication_group_available_status
-
-  # delete and wait for deletion to complete
-  kubectl delete ReplicationGroup --all 2>/dev/null
-  assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
-
-  aws_wait_replication_group_deleted "rg-deletion-1" "FAIL: expected replication group rg-deletion-1 to have been deleted in ${service_name}"
-  aws_wait_replication_group_deleted "rg-deletion-2" "FAIL: expected replication group rg-deletion-2 to have been deleted in ${service_name}"
-}
-
 # run tests
 test_create_rg_numeric_name
 test_create_rg_name_contains_spaces
@@ -240,6 +207,5 @@ test_create_rg_single_shard_no_replicas
 test_create_rg_specify_node_group_no_quotes
 test_create_rg_custom_node_config
 test_create_rg_custom_param_group
-test_rg_deletion_multiple
 
 k8s_perform_rg_test_cleanup

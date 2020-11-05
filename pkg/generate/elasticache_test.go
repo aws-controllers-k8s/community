@@ -425,9 +425,6 @@ func TestElasticache_CacheCluster(t *testing.T) {
 	assert.Equal(expReadManyInput, crd.GoCodeSetInput(model.OpTypeList, "r.ko", "res", 1))
 
 	expReadManyOutput := `
-	if len(resp.CacheClusters) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.CacheClusters {
 		if elem.ARN != nil {
@@ -737,4 +734,19 @@ func TestElasticache_Override_Values(t *testing.T) {
 `
 	assert := assert.New(t)
 	assert.Equal(expected, crd.GoCodeSetInput(model.OpTypeUpdate, "r.ko", "res", 1))
+}
+
+func TestElasticache_Additional_Spec(t *testing.T) {
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "elasticache")
+	crds, err := g.GetCRDs()
+
+	require.Nil(err)
+
+	crd := getCRDByName("Snapshot", crds)
+	require.NotNil(crd)
+
+	assert := assert.New(t)
+	assert.Contains(crd.SpecFields, "SourceSnapshotName")
 }

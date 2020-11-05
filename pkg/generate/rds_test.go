@@ -16,10 +16,11 @@ package generate_test
 import (
 	"testing"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
-	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
 func TestRDS_DBInstance(t *testing.T) {
@@ -682,9 +683,6 @@ func TestRDS_DBInstance(t *testing.T) {
 	// target variable are constructed with cleaned, renamed-friendly names
 	// referring to the generated Kubernetes API type definitions
 	expReadManyOutput := `
-	if len(resp.DBInstances) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.DBInstances {
 		if elem.AllocatedStorage != nil {

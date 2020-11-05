@@ -44,6 +44,8 @@ var (
 type SDKHelper struct {
 	basePath string
 	loader   *awssdkmodel.Loader
+	// Default is "services.k8s.aws"
+	APIGroupSuffix string
 }
 
 // NewSDKHelper returns a new SDKHelper object
@@ -77,7 +79,7 @@ func (h *SDKHelper) API(serviceAlias string) (*SDKAPI, error) {
 		// Calling API.ServicePackageDoc() ends up resetting the API.imports
 		// unexported map variable...
 		_ = api.ServicePackageDoc()
-		return &SDKAPI{api, nil, nil}, nil
+		return &SDKAPI{api, nil, nil, h.APIGroupSuffix}, nil
 	}
 	return nil, ErrServiceNotFound
 }
@@ -132,6 +134,8 @@ type SDKAPI struct {
 	// Map, keyed by original Shape GoTypeElem(), with the values being a
 	// renamed type name (due to conflicting names)
 	typeRenames map[string]string
+	// Default is "services.k8s.aws"
+	apiGroupSuffix string
 }
 
 // GetPayloads returns a slice of strings of Shape names representing input and
@@ -147,14 +151,14 @@ func (a *SDKAPI) GetPayloads() []string {
 
 // GetOperationMap returns a map, keyed by the operation type and operation
 // ID/name, of aws-sdk-go private/model/api.Operation struct pointers
-func (a *SDKAPI) GetOperationMap() *OperationMap {
+func (a *SDKAPI) GetOperationMap(cfg *ackgenconfig.Config) *OperationMap {
 	if a.opMap != nil {
 		return a.opMap
 	}
 	// create an index of Operations by operation types and resource name
 	opMap := OperationMap{}
 	for opID, op := range a.API.Operations {
-		opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+		opType, resName := getOpTypeAndResourceName(opID, cfg)
 		if _, found := opMap[opType]; !found {
 			opMap[opType] = map[string]*awssdkmodel.Operation{}
 		}
@@ -164,10 +168,25 @@ func (a *SDKAPI) GetOperationMap() *OperationMap {
 	return &opMap
 }
 
+// Given an API operation and member of API operation, return shape reference associated with the member
+func (a *SDKAPI) GetMemberShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
+	for opID, op := range a.API.Operations {
+		if opID == operation && op.InputRef.Shape != nil {
+			for opMemberName, memberShapeRef := range op.InputRef.Shape.MemberRefs {
+				if opMemberName == memberName {
+					return memberShapeRef, true
+				}
+			}
+		}
+	}
+
+	return nil, false
+}
+
 // CRDNames returns a slice of names structs for all top-level resources in the
 // API
 func (a *SDKAPI) CRDNames(cfg *ackgenconfig.Config) []names.Names {
-	opMap := a.GetOperationMap()
+	opMap := a.GetOperationMap(cfg)
 	createOps := (*opMap)[OpTypeCreate]
 	crdNames := []names.Names{}
 	for crdName := range createOps {
@@ -233,8 +252,8 @@ func (a *SDKAPI) HasConflictingTypeName(typeName string, cfg *ackgenconfig.Confi
 		crdStatusNames = append(crdStatusNames, cleanResourceName+"Status")
 	}
 	return util.InStrings(cleanTypeName, crdResourceNames) ||
-			util.InStrings(cleanTypeName, crdSpecNames) ||
-			util.InStrings(cleanTypeName, crdStatusNames)
+		util.InStrings(cleanTypeName, crdSpecNames) ||
+		util.InStrings(cleanTypeName, crdStatusNames)
 }
 
 // ServiceID returns the exact `metadata.serviceId` attribute for the AWS
@@ -263,7 +282,11 @@ func (a *SDKAPI) GetServiceFullName() string {
 // e.g. "sns.services.k8s.aws"
 func (a *SDKAPI) APIGroup() string {
 	serviceID := a.ServiceIDClean()
-	return fmt.Sprintf("%s.services.k8s.aws", serviceID)
+	suffix := "services.k8s.aws"
+	if a.apiGroupSuffix != "" {
+		suffix = a.apiGroupSuffix
+	}
+	return fmt.Sprintf("%s.%s", serviceID, suffix)
 }
 
 // SDKAPIInterfaceTypeName returns the name of the aws-sdk-go primary API
@@ -273,4 +296,23 @@ func (a *SDKAPI) SDKAPIInterfaceTypeName() string {
 		return ""
 	}
 	return a.API.StructName()
+}
+
+// Override the operation type and/or resource name if specified in config
+func getOpTypeAndResourceName(opID string, cfg *ackgenconfig.Config) (OpType, string) {
+	opType, resName := GetOpTypeAndResourceNameFromOpID(opID)
+
+	if cfg != nil {
+		if operationConfig, exists := cfg.Operations[opID]; exists {
+			if operationConfig.OperationType != "" {
+				opType = OpTypeFromString(operationConfig.OperationType)
+			}
+
+			if operationConfig.ResourceName != "" {
+				resName = operationConfig.ResourceName
+			}
+		}
+	}
+
+	return opType, resName
 }

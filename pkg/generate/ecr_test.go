@@ -195,9 +195,6 @@ func TestECRRepository(t *testing.T) {
 	// the DescribeRepositoriesInput.RepositoryNames filter from the CR's
 	// Spec.RepositoryName field.
 	expReadManyOutput := `
-	if len(resp.Repositories) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.Repositories {
 		if elem.CreatedAt != nil {

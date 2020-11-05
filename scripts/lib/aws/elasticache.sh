@@ -111,11 +111,9 @@ exit_if_rg_config_application_failed() {
     echo "Usage: exit_if_rg_config_application_failed error_code rg_id"
     exit 1
   fi
-
-  if [[ $1 -ne 0 ]]; then
-    echo "FAIL: application of config for replication group $2 should not have failed"
-    exit 1
-  fi
+  local error_code=$1
+  local rg_id=$2
+  assert_equal "0" "$error_code" "application of config for replication group $rg_id should not have failed" || exit 1
 }
 
 # clear_rg_parameter_variables unsets the variables used to override default values in provide_replication_group_yaml
@@ -190,18 +188,19 @@ EOF
 provide_replication_group_yaml_basic() {
   if [[ $# -ne 1 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "${FUNCNAME[0]} replication_group_id"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id"
     exit 1
   fi
+  local rg_id="$1"
 
   cat <<EOF
 apiVersion: elasticache.services.k8s.aws/v1alpha1
 kind: ReplicationGroup
 metadata:
-  name: $1
+  name: $rg_id
 spec:
     engine: redis
-    replicationGroupID: $1
+    replicationGroupID: $rg_id
     replicationGroupDescription: default test description
 EOF
 }
@@ -313,10 +312,11 @@ aws_wait_replication_group_deleted() {
 aws_get_replication_group_json() {
   if [[ $# -ne 1 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "${FUNCNAME[0]} replication_group_id"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id"
     exit 1
   fi
-  echo $(daws elasticache describe-replication-groups --replication-group-id "$1" | jq -r -e ".ReplicationGroups[0]")
+  local rg_id="$1"
+  echo $(daws elasticache describe-replication-groups --replication-group-id "$rg_id" | jq -r ".ReplicationGroups[0]")
 }
 
 # aws_get_rg_param_group asserts that the name of the parameter group associated with the provided replication group
@@ -327,15 +327,17 @@ aws_get_replication_group_json() {
 aws_assert_rg_param_group() {
   if [[ $# -ne 2 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "${FUNCNAME[0]} replication_group_id expected_parameter_group_name"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_parameter_group_name"
     exit 1
   fi
+  local rg_id="$1"
+  local expected_pg="$2"
 
-  local primary_cluster=$(aws_get_replication_group_json "$1" | jq -r -e ".MemberClusters[0]")
-  local cluster_json=$(daws elasticache describe-cache-clusters --cache-cluster-id "$primary_cluster" | jq -r -e ".CacheClusters[0]")
-  local param_group=$(echo $cluster_json | jq -r -e ".CacheParameterGroup .CacheParameterGroupName")
-  if [[ "$param_group" != "$2" ]]; then
-    echo "FAIL: expected replication group $1 to have parameter group $2. Actual: $param_group"
+  local primary_cluster=$(aws_get_replication_group_json "$rg_id" | jq -r ".MemberClusters[0]")
+  local cluster_json=$(daws elasticache describe-cache-clusters --cache-cluster-id "$primary_cluster" | jq -r ".CacheClusters[0]")
+  local param_group=$(echo $cluster_json | jq -r ".CacheParameterGroup.CacheParameterGroupName")
+  if [[ "$param_group" != "$expected_pg" ]]; then
+    echo "FAIL: expected replication group $rg_id to have parameter group $expected_pg. Actual: $param_group"
     exit 1
   fi
 }
@@ -349,12 +351,16 @@ aws_assert_rg_param_group() {
 aws_assert_replication_group_property() {
   if [[ $# -ne 3 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "${FUNCNAME[0]} replication_group_id jq_filter expected_value"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id jq_filter expected_value"
     exit 1
   fi
-  local actual_value=$(aws_get_replication_group_json "$1" | jq -r -e "$2")
-  if [[ "$3" != "$actual_value" ]]; then
-    echo "FAIL: property $2 for replication group $1 has value '$actual_value', but expected '$3'"
+  local rg_id="$1"
+  local jq_filter="$2"
+  local expected_value="$3"
+
+  local actual_value=$(aws_get_replication_group_json "$rg_id" | jq -r "$jq_filter")
+  if [[ "$expected_value" != "$actual_value" ]]; then
+    echo "FAIL: property $jq_filter for replication group $rg_id has value '$actual_value', but expected '$expected_value'"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -372,20 +378,24 @@ aws_assert_replication_group_status() {
     echo "Usage: aws_assert_replication_group_status replication_group_id  expected_status"
     exit 1
   fi
-  aws_assert_replication_group_property "$1" ".Status" "$2"
+  local rg_id="$1"
+  local expected_status="$2"
+  aws_assert_replication_group_property "$rg_id" ".Status" "$expected_status"
 }
 
 # k8s_get_rg_field retrieves the JSON of the requested status field
 # k8s_get_rg_field requires 2 arguments:
 #   replication_group_id
-#   jq_filter – the status field of interest, e.g. ".status .nodeGroups[0] .nodeGroupMembers" for nodes in a shard
+#   jq_filter – the status field of interest, e.g. ".status .nodeGroups[0].nodeGroupMembers" for nodes in a shard
 k8s_get_rg_field() {
   if [[ $# -ne 2 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
     echo "Usage: ${FUNCNAME[0]} replication_group_id jq_filter"
     exit 1
   fi
-  echo $(kubectl get ReplicationGroup/"$1" -o json | jq -r -e "$2")
+  local rg_id="$1"
+  local jq_filter="$2"
+  echo $(kubectl get ReplicationGroup/"$rg_id" -o json | jq -r "$jq_filter")
 }
 
 # k8s_assert_replication_group_status_property compares status of supplied replication_group_id with supplied status
@@ -400,9 +410,13 @@ k8s_assert_replication_group_status_property() {
     echo "Usage: k8s_assert_replication_group_status_property replication_group_id property_json_path expected_value"
     exit 1
   fi
-  local actual_value=$(k8s_get_rg_field "$1" ".status | $2")
-  if [[ "$3" != "$actual_value" ]]; then
-    echo "FAIL: property $2 for replication group $1 has value '$actual_value', but expected '$3'"
+  local rg_id="$1"
+  local property_json_path="$2"
+  local expected_value="$3"
+
+  local actual_value=$(k8s_get_rg_field "$rg_id" ".status | $property_json_path")
+  if [[ "$expected_value" != "$actual_value" ]]; then
+    echo "FAIL: property $property_json_path for replication group $rg_id has value '$actual_value', but expected '$expected_value'"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -419,9 +433,12 @@ k8s_assert_replication_group_shard_count() {
     echo "Usage: k8s_assert_replication_group_shard_count replication_group_id expected_count"
     exit 1
   fi
-  local actual_value=$(k8s_get_rg_field "$1" ".status .nodeGroups" | jq length)
-  if [[ "$2" -ne "$actual_value" ]]; then
-    echo "FAIL: expected $2 node groups in replication group $1, actual: $actual_value"
+  local rg_id="$1"
+  local expected_count="$2"
+
+  local actual_value=$(k8s_get_rg_field "$rg_id" ".status.nodeGroups" | jq length)
+  if [[ "$expected_count" -ne "$actual_value" ]]; then
+    echo "FAIL: expected $expected_count node groups in replication group $rg_id, actual: $actual_value"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -438,10 +455,13 @@ k8s_assert_replication_group_replica_count() {
     echo "Usage: k8s_assert_replication_group_replica_count replication_group_id expected_count"
     exit 1
   fi
-  local node_group_size=$(k8s_get_rg_field "$1" ".status .nodeGroups[0] .nodeGroupMembers" | jq length)
+  local rg_id="$1"
+  local expected_count="$2"
+
+  local node_group_size=$(k8s_get_rg_field "$rg_id" ".status.nodeGroups[0].nodeGroupMembers" | jq length)
   actual_replica_count=$(( node_group_size - 1 ))
-  if [[ "$2" -ne "$actual_replica_count" ]]; then
-    echo "FAIL: expected $2 replicas per node group for replication group $1, actual: $actual_replica_count"
+  if [[ "$expected_count" -ne "$actual_replica_count" ]]; then
+    echo "FAIL: expected $expected_count replicas per node group for replication group $rg_id, actual: $actual_replica_count"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -458,9 +478,12 @@ k8s_assert_replication_group_total_node_count() {
     echo "Usage: ${FUNCNAME[0]} replication_group_id expected_count"
     exit 1
   fi
-  local actual_value=$(k8s_get_rg_field "$1" ".status .memberClusters" | jq length)
-  if [[ "$2" != "$actual_value" ]]; then
-    echo "FAIL: expected $2 total nodes for replication group $1, actual: $actual_value"
+  local rg_id="$1"
+  local expected_count="$2"
+
+  local actual_value=$(k8s_get_rg_field "$rg_id" ".status.memberClusters" | jq length)
+  if [[ "$expected_count" != "$actual_value" ]]; then
+    echo "FAIL: expected $expected_count total nodes for replication group $rg_id, actual: $actual_value"
     print_k8s_ack_controller_pod_logs
     exit 1
   fi
@@ -486,22 +509,24 @@ assert_rg_terminal_condition_true() {
     echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
     exit 1
   fi
+  local rg_id="$1"
+  local expected_substring="$2"
 
-  terminal_cond=$(k8s_get_rg_field "$1" ".status .conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
+  terminal_cond=$(k8s_get_rg_field "$rg_id" ".status.conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
   if [[ $? != 0 ]]; then
-    echo "FAIL: expected replication group $1 to have a terminal condition"
+    echo "FAIL: expected replication group $rg_id to have a terminal condition"
     exit 1
   fi
 
-  status=$(echo $terminal_cond | jq -r -e ".status")
+  status=$(echo $terminal_cond | jq -r ".status")
   if [[ $status != "True" ]]; then
-    echo "FAIL: expected status of terminal condition to be True for replication group $1"
+    echo "FAIL: expected status of terminal condition to be True for replication group $rg_id"
     exit 1
   fi
 
-  cond_msg=$(echo $terminal_cond | jq -r -e ".message")
-  if [[ $cond_msg != *"$2"* ]]; then
-    echo "FAIL: replication group $1 has terminal condition set True, but with unexpected message"
+  cond_msg=$(echo $terminal_cond | jq -r ".message")
+  if [[ $cond_msg != *"$expected_substring"* ]]; then
+    echo "FAIL: replication group $rg_id has terminal condition set True, but with unexpected message"
     exit 1
   fi
 }
@@ -518,12 +543,14 @@ check_rg_terminal_condition_true() {
     echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
     exit 1
   fi
+  local rg_id="$1"
+  local expected_substring="$2"
   sleep 10 # allow time for terminal condition property to exist in conditions array
 
   # check all desired state periodically, should ensure state is stable
   for i in $(seq 0 14); do
     sleep 2
-    assert_rg_terminal_condition_true "$1" "$2"
+    assert_rg_terminal_condition_true "$rg_id" "$expected_substring"
   done
 }
 

@@ -365,32 +365,33 @@ type SlotMigration struct {
 	ProgressPercentage *float64 `json:"progressPercentage,omitempty"`
 }
 
-type Snapshot struct {
-	ARN                         *string      `json:"arn,omitempty"`
-	AutoMinorVersionUpgrade     *bool        `json:"autoMinorVersionUpgrade,omitempty"`
-	AutomaticFailover           *string      `json:"automaticFailover,omitempty"`
-	CacheClusterCreateTime      *metav1.Time `json:"cacheClusterCreateTime,omitempty"`
-	CacheClusterID              *string      `json:"cacheClusterID,omitempty"`
-	CacheNodeType               *string      `json:"cacheNodeType,omitempty"`
-	CacheParameterGroupName     *string      `json:"cacheParameterGroupName,omitempty"`
-	CacheSubnetGroupName        *string      `json:"cacheSubnetGroupName,omitempty"`
-	Engine                      *string      `json:"engine,omitempty"`
-	EngineVersion               *string      `json:"engineVersion,omitempty"`
-	KMSKeyID                    *string      `json:"kmsKeyID,omitempty"`
-	NumCacheNodes               *int64       `json:"numCacheNodes,omitempty"`
-	NumNodeGroups               *int64       `json:"numNodeGroups,omitempty"`
-	Port                        *int64       `json:"port,omitempty"`
-	PreferredAvailabilityZone   *string      `json:"preferredAvailabilityZone,omitempty"`
-	PreferredMaintenanceWindow  *string      `json:"preferredMaintenanceWindow,omitempty"`
-	ReplicationGroupDescription *string      `json:"replicationGroupDescription,omitempty"`
-	ReplicationGroupID          *string      `json:"replicationGroupID,omitempty"`
-	SnapshotName                *string      `json:"snapshotName,omitempty"`
-	SnapshotRetentionLimit      *int64       `json:"snapshotRetentionLimit,omitempty"`
-	SnapshotSource              *string      `json:"snapshotSource,omitempty"`
-	SnapshotStatus              *string      `json:"snapshotStatus,omitempty"`
-	SnapshotWindow              *string      `json:"snapshotWindow,omitempty"`
-	TopicARN                    *string      `json:"topicARN,omitempty"`
-	VPCID                       *string      `json:"vpcID,omitempty"`
+type Snapshot_SDK struct {
+	ARN                         *string         `json:"arn,omitempty"`
+	AutoMinorVersionUpgrade     *bool           `json:"autoMinorVersionUpgrade,omitempty"`
+	AutomaticFailover           *string         `json:"automaticFailover,omitempty"`
+	CacheClusterCreateTime      *metav1.Time    `json:"cacheClusterCreateTime,omitempty"`
+	CacheClusterID              *string         `json:"cacheClusterID,omitempty"`
+	CacheNodeType               *string         `json:"cacheNodeType,omitempty"`
+	CacheParameterGroupName     *string         `json:"cacheParameterGroupName,omitempty"`
+	CacheSubnetGroupName        *string         `json:"cacheSubnetGroupName,omitempty"`
+	Engine                      *string         `json:"engine,omitempty"`
+	EngineVersion               *string         `json:"engineVersion,omitempty"`
+	KMSKeyID                    *string         `json:"kmsKeyID,omitempty"`
+	NodeSnapshots               []*NodeSnapshot `json:"nodeSnapshots,omitempty"`
+	NumCacheNodes               *int64          `json:"numCacheNodes,omitempty"`
+	NumNodeGroups               *int64          `json:"numNodeGroups,omitempty"`
+	Port                        *int64          `json:"port,omitempty"`
+	PreferredAvailabilityZone   *string         `json:"preferredAvailabilityZone,omitempty"`
+	PreferredMaintenanceWindow  *string         `json:"preferredMaintenanceWindow,omitempty"`
+	ReplicationGroupDescription *string         `json:"replicationGroupDescription,omitempty"`
+	ReplicationGroupID          *string         `json:"replicationGroupID,omitempty"`
+	SnapshotName                *string         `json:"snapshotName,omitempty"`
+	SnapshotRetentionLimit      *int64          `json:"snapshotRetentionLimit,omitempty"`
+	SnapshotSource              *string         `json:"snapshotSource,omitempty"`
+	SnapshotStatus              *string         `json:"snapshotStatus,omitempty"`
+	SnapshotWindow              *string         `json:"snapshotWindow,omitempty"`
+	TopicARN                    *string         `json:"topicARN,omitempty"`
+	VPCID                       *string         `json:"vpcID,omitempty"`
 }
 
 type Subnet struct {

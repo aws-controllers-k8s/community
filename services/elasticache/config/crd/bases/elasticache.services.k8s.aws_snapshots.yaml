@@ -1,0 +1,205 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: snapshots.elasticache.services.k8s.aws
+spec:
+  group: elasticache.services.k8s.aws
+  names:
+    kind: Snapshot
+    listKind: SnapshotList
+    plural: snapshots
+    singular: snapshot
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Snapshot is the Schema for the Snapshots API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotSpec defines the desired state of Snapshot
+            properties:
+              cacheClusterID:
+                type: string
+              kmsKeyID:
+                type: string
+              replicationGroupID:
+                type: string
+              snapshotName:
+                type: string
+              sourceSnapshotName:
+                type: string
+            required:
+            - snapshotName
+            type: object
+          status:
+            description: SnapshotStatus defines the observed state of Snapshot
+            properties:
+              ackResourceMetadata:
+                description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
+                  member that is used to contain resource sync state, account ownership,
+                  constructed ARN for the resource
+                properties:
+                  arn:
+                    description: 'ARN is the Amazon Resource Name for the resource.
+                      This is a globally-unique identifier and is set only by the
+                      ACK service controller once the controller has orchestrated
+                      the creation of the resource OR when it has verified that an
+                      "adopted" resource (a resource where the ARN annotation was
+                      set by the Kubernetes user on the CR) exists and matches the
+                      supplied CR''s Spec field values. TODO(vijat@): Find a better
+                      strategy for resources that do not have ARN in CreateOutputResponse
+                      https://github.com/aws/aws-controllers-k8s/issues/270'
+                    type: string
+                  ownerAccountID:
+                    description: OwnerAccountID is the AWS Account ID of the account
+                      that owns the backend AWS service API resource.
+                    type: string
+                required:
+                - ownerAccountID
+                type: object
+              autoMinorVersionUpgrade:
+                type: boolean
+              automaticFailover:
+                type: string
+              cacheClusterCreateTime:
+                format: date-time
+                type: string
+              cacheNodeType:
+                type: string
+              cacheParameterGroupName:
+                type: string
+              cacheSubnetGroupName:
+                type: string
+              conditions:
+                description: All CRS managed by ACK have a common `Status.Conditions`
+                  member that contains a collection of `ackv1alpha1.Condition` objects
+                  that describe the various terminal states of the CR and its backend
+                  AWS service API resource
+                items:
+                  description: Condition is the common struct used by all CRDs managed
+                    by ACK service controllers to indicate terminal states  of the
+                    CR and its backend AWS service API resource
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the Condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              engine:
+                type: string
+              engineVersion:
+                type: string
+              nodeSnapshots:
+                items:
+                  properties:
+                    cacheClusterID:
+                      type: string
+                    cacheNodeCreateTime:
+                      format: date-time
+                      type: string
+                    cacheNodeID:
+                      type: string
+                    cacheSize:
+                      type: string
+                    nodeGroupConfiguration:
+                      properties:
+                        nodeGroupID:
+                          type: string
+                        primaryAvailabilityZone:
+                          type: string
+                        replicaAvailabilityZones:
+                          items:
+                            type: string
+                          type: array
+                        replicaCount:
+                          format: int64
+                          type: integer
+                        slots:
+                          type: string
+                      type: object
+                    nodeGroupID:
+                      type: string
+                    snapshotCreateTime:
+                      format: date-time
+                      type: string
+                  type: object
+                type: array
+              numCacheNodes:
+                format: int64
+                type: integer
+              numNodeGroups:
+                format: int64
+                type: integer
+              port:
+                format: int64
+                type: integer
+              preferredAvailabilityZone:
+                type: string
+              preferredMaintenanceWindow:
+                type: string
+              replicationGroupDescription:
+                type: string
+              snapshotRetentionLimit:
+                format: int64
+                type: integer
+              snapshotSource:
+                type: string
+              snapshotStatus:
+                type: string
+              snapshotWindow:
+                type: string
+              topicARN:
+                type: string
+              vpcID:
+                type: string
+            required:
+            - ackResourceMetadata
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

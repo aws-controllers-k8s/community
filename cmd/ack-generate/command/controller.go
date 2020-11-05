@@ -27,6 +27,7 @@ import (
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -80,7 +81,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	g, err := generate.New(
-		sdkAPI, latestAPIVersion, optGeneratorConfigPath, optTemplatesDir,
+		sdkAPI, latestAPIVersion, optGeneratorConfigPath, optTemplatesDir, config.Default,
 	)
 	if err != nil {
 		return err
