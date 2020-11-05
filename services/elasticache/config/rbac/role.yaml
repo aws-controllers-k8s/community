@@ -25,6 +25,26 @@ rules:
 - apiGroups:
   - elasticache.services.k8s.aws
   resources:
+  - cacheparametergroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - cacheparametergroups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
   - cachesubnetgroups
   verbs:
   - create

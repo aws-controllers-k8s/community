@@ -133,7 +133,10 @@ type ResourceConfig struct {
 
 	// SpecFields is a list of instructions about additional Spec fields
 	// on this Resource
-	SpecFields []*SpecFieldConfig `json:"spec_fields"`
+	SpecFields []*AdditionalFieldConfig `json:"spec_fields"`
+	// StatusFields is a list of instructions about additional Status fields
+	// on this Resource
+	StatusFields []*AdditionalFieldConfig `json:"status_fields"`
 	// Compare contains instructions for the code generation to generate custom
 	// comparison logic.
 	Compare *CompareConfig `json:"compare,omitempty"`
@@ -146,16 +149,16 @@ type CompareConfig struct {
 	Ignore []string `json:"ignore"`
 }
 
-// SpecFieldConfig instructs the code generator how to handle an additional
-// field in the Resource's SpecFields collection. This additional field can source
-// its value from a shape in a different API Operation.
-type SpecFieldConfig struct {
+// AdditionalFieldConfig instructs the code generator how to handle an additional
+// field in the Resource's SpecFields/StatusFields collection. This additional field
+// can source its value from a shape in a different API Operation.
+type AdditionalFieldConfig struct {
 	// OperationID refers to the ID of the API Operation where we will
 	// determine the field's Go type.
 	OperationID string `json:"operation_id,omitempty"`
 	// MemberName refers to the name of the member of the
-	// Input shape in the Operation identified by OperaitonID that
-	// we will take as our additional spec field.
+	// Input shape in the Operation identified by OperationID that
+	// we will take as our additional spec/status field.
 	MemberName string `json:"member_name"`
 }
 
@@ -378,7 +381,7 @@ func (c *Config) OverrideValues(operationName string) (map[string]string, bool) 
 
 // SpecFieldConfigs gives map of operation and their MemberFields to
 // add to spec.
-func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool) {
+func (c *Config) SpecFieldConfigs(resourceName string) ([]*AdditionalFieldConfig, bool) {
 	if c == nil {
 		return nil, false
 	}
@@ -387,6 +390,19 @@ func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool
 		return nil, false
 	}
 	return resourceConfig.SpecFields, ok
+}
+
+// StatusFieldConfigs gives map of operation and their MemberFields to
+// add to status.
+func (c *Config) StatusFieldConfigs(resourceName string) ([]*AdditionalFieldConfig, bool) {
+	if c == nil {
+		return nil, false
+	}
+	resourceConfig, ok := c.Resources[resourceName]
+	if !ok {
+		return nil, false
+	}
+	return resourceConfig.StatusFields, ok
 }
 
 // GetCompareIgnoredFields returns the list of field path to ignore when

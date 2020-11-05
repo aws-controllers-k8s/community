@@ -14,6 +14,7 @@
 package snapshot
 
 import (
+	"context"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	"github.com/aws/aws-sdk-go/service/elasticache"
@@ -21,25 +22,27 @@ import (
 )
 
 func (rm *resourceManager) CustomDescribeSnapshotSetOutput(
+	ctx context.Context,
 	r *resource,
 	resp *elasticache.DescribeSnapshotsOutput,
 	ko *svcapitypes.Snapshot,
-) *svcapitypes.Snapshot {
+) (*svcapitypes.Snapshot, error) {
 	if len(resp.Snapshots) == 0 {
-		return ko
+		return ko, nil
 	}
 	elem := resp.Snapshots[0]
 	rm.customSetOutput(r, elem, ko)
-	return ko
+	return ko, nil
 }
 
 func (rm *resourceManager) CustomCreateSnapshotSetOutput(
+	ctx context.Context,
 	r *resource,
 	resp *elasticache.CreateSnapshotOutput,
 	ko *svcapitypes.Snapshot,
-) *svcapitypes.Snapshot {
+) (*svcapitypes.Snapshot, error) {
 	rm.customSetOutput(r, resp.Snapshot, ko)
-	return ko
+	return ko, nil
 }
 
 func (rm *resourceManager) CustomCopySnapshotSetOutput(

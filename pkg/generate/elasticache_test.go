@@ -736,7 +736,7 @@ func TestElasticache_Override_Values(t *testing.T) {
 	assert.Equal(expected, crd.GoCodeSetInput(model.OpTypeUpdate, "r.ko", "res", 1))
 }
 
-func TestElasticache_Additional_Spec(t *testing.T) {
+func TestElasticache_Additional_Snapshot_Spec(t *testing.T) {
 	require := require.New(t)
 
 	g := testutil.NewGeneratorForService(t, "elasticache")
@@ -750,3 +750,19 @@ func TestElasticache_Additional_Spec(t *testing.T) {
 	assert := assert.New(t)
 	assert.Contains(crd.SpecFields, "SourceSnapshotName")
 }
+
+func TestElasticache_Additional_CacheParameterGroup_Spec(t *testing.T) {
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "elasticache")
+	crds, err := g.GetCRDs()
+
+	require.Nil(err)
+
+	crd := getCRDByName("CacheParameterGroup", crds)
+	require.NotNil(crd)
+
+	assert := assert.New(t)
+	assert.Contains(crd.SpecFields, "ParameterNameValues")
+}
+

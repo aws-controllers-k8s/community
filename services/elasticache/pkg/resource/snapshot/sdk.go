@@ -204,7 +204,10 @@ func (rm *resourceManager) sdkFind(
 	rm.setStatusDefaults(ko)
 
 	// custom set output from response
-	rm.CustomDescribeSnapshotSetOutput(r, resp, ko)
+	ko, err = rm.CustomDescribeSnapshotSetOutput(ctx, r, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }
@@ -378,7 +381,10 @@ func (rm *resourceManager) sdkCreate(
 	rm.setStatusDefaults(ko)
 
 	// custom set output from response
-	rm.CustomCreateSnapshotSetOutput(r, resp, ko)
+	ko, err = rm.CustomCreateSnapshotSetOutput(ctx, r, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }

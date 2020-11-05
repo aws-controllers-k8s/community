@@ -246,7 +246,10 @@ func (rm *resourceManager) sdkFind(
 	rm.setStatusDefaults(ko)
 
 	// custom set output from response
-	rm.CustomDescribeReplicationGroupsSetOutput(r, resp, ko)
+	ko, err = rm.CustomDescribeReplicationGroupsSetOutput(ctx, r, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }
@@ -440,7 +443,10 @@ func (rm *resourceManager) sdkCreate(
 	rm.setStatusDefaults(ko)
 
 	// custom set output from response
-	rm.CustomCreateReplicationGroupSetOutput(r, resp, ko)
+	ko, err = rm.CustomCreateReplicationGroupSetOutput(ctx, r, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }
@@ -793,7 +799,10 @@ func (rm *resourceManager) sdkUpdate(
 	rm.setStatusDefaults(ko)
 
 	// custom set output from response
-	rm.CustomModifyReplicationGroupSetOutput(desired, resp, ko)
+	ko, err = rm.CustomModifyReplicationGroupSetOutput(ctx, desired, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }

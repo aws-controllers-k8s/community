@@ -18,11 +18,24 @@ resources:
         - InvalidParameterValue
         - InvalidParameterCombination
     spec_fields:
-          -
-            operation_id: CopySnapshot
-            member_name: SourceSnapshotName
+        - operation_id: CopySnapshot
+          member_name: SourceSnapshotName
     update_operation:
       custom_method_name: customUpdateSnapshot
+  CacheParameterGroup:
+    exceptions:
+      terminal_codes:
+        - CacheParameterGroupAlreadyExists
+        - CacheParameterGroupQuotaExceeded
+        - InvalidCacheParameterGroupState
+        - InvalidGlobalReplicationGroupState
+        - InvalidParameterCombination
+        - InvalidParameterValue
+    spec_fields:
+      - operation_id: ModifyCacheParameterGroup
+        member_name: ParameterNameValues
+    update_operation:
+      custom_method_name: customUpdateCacheParameterGroup
 operations:
   DescribeReplicationGroups:
     set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
@@ -38,9 +51,12 @@ operations:
     set_output_custom_method_name: CustomCreateSnapshotSetOutput
   DescribeSnapshots:
     set_output_custom_method_name: CustomDescribeSnapshotSetOutput
+  CreateCacheParameterGroup:
+    set_output_custom_method_name: CustomCreateCacheParameterGroupSetOutput
+  DescribeCacheParameterGroups:
+    set_output_custom_method_name: CustomDescribeCacheParameterGroupsSetOutput
 ignore:
   resource_names:
     - GlobalReplicationGroup
     - CacheCluster
-    - CacheParameterGroup
     - CacheSecurityGroup
