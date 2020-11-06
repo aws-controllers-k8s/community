@@ -280,6 +280,11 @@ func (r *CRD) UnpacksAttributesMap() bool {
 	return r.genCfg.UnpacksAttributesMap(r.Names.Original)
 }
 
+// CompareIgnoredFields returns the list of fields compare logic should ignore
+func (r *CRD) CompareIgnoredFields() []string {
+	return r.genCfg.GetCompareIgnoredFields(r.Names.Original)
+}
+
 // SetAttributesSingleAttribute returns true if the supplied resource name has
 // a SetAttributes operation that only actually changes a single attribute at a
 // time. See: SNS SetTopicAttributes API call, which is entirely different from

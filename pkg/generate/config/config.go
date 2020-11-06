@@ -134,6 +134,16 @@ type ResourceConfig struct {
 	// SpecFields is a list of instructions about additional Spec fields
 	// on this Resource
 	SpecFields []*SpecFieldConfig `json:"spec_fields"`
+	// Compare contains instructions for the code generation to generate custom
+	// comparison logic.
+	Compare *CompareConfig `json:"compare,omitempty"`
+}
+
+// CompareConfig informs instruct the code generator on how to compare two different
+// two objects of the same type
+type CompareConfig struct {
+	// Ignore is a list of field paths to ignore when comparing two objects
+	Ignore []string `json:"ignore"`
 }
 
 // SpecFieldConfig instructs the code generator how to handle an additional
@@ -366,7 +376,7 @@ func (c *Config) OverrideValues(operationName string) (map[string]string, bool) 
 	return oConfig.OverrideValues, ok
 }
 
-// AdditionSpec gives map of operation and their MemberFields to
+// SpecFieldConfigs gives map of operation and their MemberFields to
 // add to spec.
 func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool) {
 	if c == nil {
@@ -377,6 +387,22 @@ func (c *Config) SpecFieldConfigs(resourceName string) ([]*SpecFieldConfig, bool
 		return nil, false
 	}
 	return resourceConfig.SpecFields, ok
+}
+
+// GetCompareIgnoredFields returns the list of field path to ignore when
+// comparing two differnt objects
+func (c *Config) GetCompareIgnoredFields(resName string) []string {
+	if c == nil {
+		return nil
+	}
+	rConfig, ok := c.Resources[resName]
+	if !ok {
+		return nil
+	}
+	if rConfig.Compare == nil {
+		return nil
+	}
+	return rConfig.Compare.Ignore
 }
 
 // IsIgnoredResource returns true if Operation Name is configured to be ignored

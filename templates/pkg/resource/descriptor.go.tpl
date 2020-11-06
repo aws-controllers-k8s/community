@@ -62,8 +62,15 @@ func (d *resourceDescriptor) Equal(
 ) bool {
 	ac := a.(*resource)
 	bc := b.(*resource)
-	opts := cmpopts.EquateEmpty()
-	return cmp.Equal(ac.ko, bc.ko, opts)
+	opts := []cmp.Option{cmpopts.EquateEmpty()}
+	{{- if .CRD.CompareIgnoredFields }}
+	opts = append(opts, cmpopts.IgnoreFields(ac,
+		{{- range $fieldPath := .CRD.CompareIgnoredFields }}
+		{{ printf "%q" $fieldPath }},
+		{{- end }}
+	))
+	{{- end }}
+	return cmp.Equal(ac.ko, bc.ko, opts...)
 }
 
 // Diff returns a Reporter which provides the difference between two supplied
@@ -77,7 +84,18 @@ func (d *resourceDescriptor) Diff(
 	ac := a.(*resource)
 	bc := b.(*resource)
 	var diffReporter ackcompare.Reporter
-	cmp.Equal(ac.ko, bc.ko, cmp.Reporter(&diffReporter), cmp.AllowUnexported(svcapitypes.{{ .CRD.Kind }}{}))
+	opts := []cmp.Option{
+		cmp.Reporter(&diffReporter),
+		cmp.AllowUnexported(svcapitypes.{{ .CRD.Kind }}{}),
+	}
+	{{- if .CRD.CompareIgnoredFields }}
+	opts = append(opts, cmpopts.IgnoreFields(ac,
+		{{- range $fieldPath := .CRD.CompareIgnoredFields }}
+		{{ printf "%q" $fieldPath }},
+		{{- end }}
+	))
+	{{- end }}
+	cmp.Equal(ac.ko, bc.ko, opts...)
 	return &diffReporter
 }
 
