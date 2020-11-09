@@ -1,0 +1,2 @@
+resources:
+  - bases/s3.services.k8s.aws_buckets.yaml

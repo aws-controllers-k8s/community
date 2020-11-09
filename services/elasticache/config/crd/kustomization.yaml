@@ -1,0 +1,4 @@
+resources:
+  - bases/elasticache.services.k8s.aws_cachesubnetgroups.yaml
+  - bases/elasticache.services.k8s.aws_replicationgroups.yaml
+  - bases/elasticache.services.k8s.aws_snapshots.yaml

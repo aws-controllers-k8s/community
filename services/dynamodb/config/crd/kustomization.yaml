@@ -1,0 +1,4 @@
+resources:
+  - bases/dynamodb.services.k8s.aws_backups.yaml
+  - bases/dynamodb.services.k8s.aws_globaltables.yaml
+  - bases/dynamodb.services.k8s.aws_tables.yaml

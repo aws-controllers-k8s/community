@@ -1,0 +1,2 @@
+resources:
+  - bases/ecr.services.k8s.aws_repositories.yaml
