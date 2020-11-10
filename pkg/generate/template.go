@@ -17,11 +17,13 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	ttpl "text/template"
 
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
+	ackutil "github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
 var (
@@ -40,13 +42,28 @@ var (
 		"pkg/resource/sdk",
 		"pkg/resource_registry",
 	}
-	yamlTemplatePaths = []string{
-		"config/controller/deployment",
-		"config/controller/kustomization",
-		"config/default/kustomization",
-		"config/rbac/cluster-role-binding",
-		"config/rbac/kustomization",
+	// ConfigFiles is the set of configuration files that are generated.
+	ConfigFiles = []string{
+		"config/controller/deployment.yaml",
+		"config/controller/kustomization.yaml",
+		"config/default/kustomization.yaml",
+		"config/rbac/cluster-role-binding.yaml",
+		"config/rbac/kustomization.yaml",
 	}
+
+	// These are files we straight copy without template variable interpolation
+	releaseCopyFiles = []string{
+		"helm/templates/_helpers.tpl",
+		"helm/templates/cluster-role-binding.yaml",
+		"helm/templates/deployment.yaml",
+	}
+	releaseTemplateFiles = []string{
+		"helm/Chart.yaml",
+		"helm/values.yaml",
+	}
+	// ReleaseFiles is the set of template files that are generated for Helm
+	// chart releases artifacts.
+	ReleaseFiles      = append(releaseTemplateFiles, releaseCopyFiles...)
 	goTemplateFuncMap = ttpl.FuncMap{
 		"ToLower": strings.ToLower,
 		"ResourceExceptionCode": func(r *ackmodel.CRD, httpStatusCode int) string {
@@ -160,6 +177,21 @@ type templateCmdVars struct {
 	SnakeCasedCRDNames []string
 }
 
+// TemplateReleaseVars contains template variables for the template that
+// outputs Go code for a release artifact
+type templateReleaseVars struct {
+	templateMetaVars
+	// ReleaseVersion is the semver release tag (or Git SHA1 commit) that is
+	// used for the binary image artifacts and Helm release version
+	ReleaseVersion string
+	// ImageRepository is the Docker image repository to inject into the Helm
+	// values template
+	ImageRepository string
+	// ServiceAccountName is the name of the service account and cluster role
+	// created by the Helm chart
+	ServiceAccountName string
+}
+
 // templateMetaVars returns a templateMetaVars struct populated with metadata
 // about the AWS service API
 func (g *Generator) templateMetaVars() templateMetaVars {
@@ -229,6 +261,21 @@ func (g *Generator) templateCmdVars() (*templateCmdVars, error) {
 	}, nil
 }
 
+// templateReleaseVars returns a templateReleaseVars struct populated with
+// information for a release
+func (g *Generator) templateReleaseVars(
+	releaseVersion string,
+	imageRepository string,
+	serviceAccountName string,
+) *templateReleaseVars {
+	return &templateReleaseVars{
+		g.templateMetaVars(),
+		releaseVersion,
+		imageRepository,
+		serviceAccountName,
+	}
+}
+
 // initTemplates initializes the templates for generating Kubernetes API
 // type files and the service controller Go code files
 func (g *Generator) initTemplates() error {
@@ -268,8 +315,9 @@ func (g *Generator) initTemplates() error {
 		}
 		tpls[path] = t
 	}
-	for _, path := range yamlTemplatePaths {
-		tplPath := filepath.Join(g.templateBasePath, path+".yaml.tpl")
+	templateFiles := append(ConfigFiles, releaseTemplateFiles...)
+	for _, path := range templateFiles {
+		tplPath := filepath.Join(g.templateBasePath, path+".tpl")
 		tplContents, err := ioutil.ReadFile(tplPath)
 		if err != nil {
 			return err
@@ -389,20 +437,19 @@ func (g *Generator) GenerateResourcePackageFile(
 	return &b, nil
 }
 
-// GenerateConfigYAMLFile returns a byte buffer containing the output of an
+// GenerateConfigFile returns a byte buffer containing the output of an
 // executed template for the Kubernetes YAML manifest/configuration file
-func (g *Generator) GenerateConfigYAMLFile(
-	// target is the thing to generate, e.g. "controller/deployment" or
-	// "default/kustomization"
+func (g *Generator) GenerateConfigFile(
+	// target is the thing to generate without the ".tpl" suffix, e.g.
+	// "controller/deployment.yaml" or "default/kustomization.yaml"
 	target string,
 ) (*bytes.Buffer, error) {
 	if err := g.initTemplates(); err != nil {
 		return nil, err
 	}
-	targetPath := "config/" + target
-	t, found := g.templates[targetPath]
+	t, found := g.templates[target]
 	if !found {
-		return nil, errUnknownTemplate(targetPath)
+		return nil, errUnknownTemplate(target)
 	}
 	vars := g.templateMetaVars()
 	var b bytes.Buffer
@@ -410,6 +457,67 @@ func (g *Generator) GenerateConfigYAMLFile(
 		return nil, err
 	}
 	return &b, nil
+}
+
+// GenerateReleaseFile returns a byte buffer containing the output of an
+// executed template for a release artifact (e.g. Helm chart)
+func (g *Generator) GenerateReleaseFile(
+	// target is the thing to generate without the ".tpl" suffix, e.g.
+	// "helm/Chart.yaml"
+	target string,
+	// releaseVersion is the SemVer string describing the release that the Helm
+	// chart will install
+	releaseVersion string,
+	// imageRepository is the Docker image repository to use when generating
+	// release files
+	imageRepository string,
+	// serviceAccountName is the name of the ServiceAccount and ClusterRole
+	// used in the Helm chart
+	serviceAccountName string,
+) (*bytes.Buffer, error) {
+	if err := g.initTemplates(); err != nil {
+		return nil, err
+	}
+	if ackutil.InStrings(target, releaseCopyFiles) {
+		copyPath := filepath.Join(g.templateBasePath, target)
+		return byteBufferFromFile(copyPath)
+	}
+	t, found := g.templates[target]
+	if !found {
+		return nil, errUnknownTemplate(target)
+	}
+	vars := g.templateReleaseVars(
+		releaseVersion,
+		imageRepository,
+		serviceAccountName,
+	)
+	var b bytes.Buffer
+	if err := t.Execute(&b, vars); err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
+func byteBufferFromFile(path string) (*bytes.Buffer, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	fsize := fi.Size()
+	b := make([]byte, fsize)
+
+	_, err = f.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewBuffer(b), nil
 }
 
 // IncludeTemplate includes a template into a supplied Template struct

@@ -8,7 +8,9 @@ set -Eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
-TEST_E2E_DIR="$ROOT_DIR/test/e2e"
+TEST_DIR="$ROOT_DIR/test"
+TEST_E2E_DIR="$TEST_DIR/e2e"
+TEST_RELEASE_DIR="$TEST_DIR/release"
 
 OPTIND=1
 CLUSTER_NAME_BASE="test"
@@ -136,8 +138,8 @@ CLUSTER_NAME=$(cat "$TMP_DIR"/clustername)
 ## Build and Load Docker Images
 
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
-    echo -n "building ack-${AWS_SERVICE}-controller docker image ... "
-    DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
+    DEFAULT_AWS_SERVICE_DOCKER_IMG="aws-controllers-k8s:${AWS_SERVICE}-${VERSION}"
+    echo -n "building $DEFAULT_AWS_SERVICE_DOCKER_IMG docker image ... "
     ${SCRIPTS_DIR}/build-controller-image.sh -q -s ${AWS_SERVICE} -i ${DEFAULT_AWS_SERVICE_DOCKER_IMG} 1>/dev/null || exit 1
     echo "ok."
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
@@ -213,4 +215,5 @@ echo "==========================================================================
 
 export KUBECONFIG
 
+$TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
 $TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
