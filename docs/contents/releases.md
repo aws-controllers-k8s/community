@@ -9,6 +9,8 @@ We use the following different release statuses:
 * [BETA](#beta)
 * [GENERALLY AVAILABLE](#generally-available) (GA)
 
+![ACK release criteria](images/release-criteria.png)
+
 ## PROPOSED
 
 The `PROPOSEDD` status indicates that someone has expressed interest in
