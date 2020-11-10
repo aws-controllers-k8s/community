@@ -1,0 +1,264 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ack-apigatewayv2-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - apimappings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - apimappings/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - apis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - apis/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - authorizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - authorizers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - domainnames
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - domainnames/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - integrationresponses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - integrationresponses/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - integrations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - integrations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - models
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - models/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - routeresponses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - routeresponses/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - routes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - routes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - stages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - stages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - vpclinks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - vpclinks/status
+  verbs:
+  - get
+  - patch
+  - update
