@@ -129,4 +129,5 @@ if [[ $? -ne 255 && $? -ne 254 ]]; then
     exit 1
 fi
 
-assert_pod_not_restarted $ack_ctrl_pod_id
+# pod may restart upon refresh of credentials, remove this check for now
+# assert_pod_not_restarted $ack_ctrl_pod_id
