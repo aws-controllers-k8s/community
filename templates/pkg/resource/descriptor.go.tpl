@@ -64,7 +64,7 @@ func (d *resourceDescriptor) Equal(
 	bc := b.(*resource)
 	opts := []cmp.Option{cmpopts.EquateEmpty()}
 	{{- if .CRD.CompareIgnoredFields }}
-	opts = append(opts, cmpopts.IgnoreFields(ac,
+	opts = append(opts, cmpopts.IgnoreFields(*ac.ko,
 		{{- range $fieldPath := .CRD.CompareIgnoredFields }}
 		{{ printf "%q" $fieldPath }},
 		{{- end }}
@@ -89,7 +89,7 @@ func (d *resourceDescriptor) Diff(
 		cmp.AllowUnexported(svcapitypes.{{ .CRD.Kind }}{}),
 	}
 	{{- if .CRD.CompareIgnoredFields }}
-	opts = append(opts, cmpopts.IgnoreFields(ac,
+	opts = append(opts, cmpopts.IgnoreFields(*ac.ko,
 		{{- range $fieldPath := .CRD.CompareIgnoredFields }}
 		{{ printf "%q" $fieldPath }},
 		{{- end }}
