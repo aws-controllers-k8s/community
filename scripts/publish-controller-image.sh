@@ -32,9 +32,6 @@ Options:
 # Process our input arguments
 while getopts "r:s:i:" opt; do
   case ${opt} in
-    q ) # Build image quietly
-        QUIET=true
-      ;;
     r ) # Docker repository name
         DOCKER_REPOSITORY="${OPTARG}"
       ;;

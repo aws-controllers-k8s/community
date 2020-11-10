@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# A script that builds relase artifacts for a single ACK service controller for
-# an AWS service API
+# A script that builds release artifacts for a single ACK service controller
+# for an AWS service API
 
 set -Eo pipefail
 
