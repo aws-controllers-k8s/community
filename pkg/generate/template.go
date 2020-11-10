@@ -56,6 +56,7 @@ var (
 		"helm/templates/_helpers.tpl",
 		"helm/templates/cluster-role-binding.yaml",
 		"helm/templates/deployment.yaml",
+		"helm/templates/service-account.yaml",
 	}
 	releaseTemplateFiles = []string{
 		"helm/Chart.yaml",
