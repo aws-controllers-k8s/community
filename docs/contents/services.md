@@ -1,5 +1,11 @@
 # Services
 
+The following AWS service APIs have service controllers included in ACK or have
+controllers currently being built.
+
+For details, including a list of planned AWS service APIs, see the [Service
+Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/1):
+
 !!! note "IMPORTANT"
     There is no single release of the ACK project. The ACK project contains a
     series of service controllers, one for each AWS service API. Each
@@ -16,14 +22,14 @@
 | Amazon [EFS][efs] | `PROPOSED` |
 | Amazon [EKS][eks] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/7)
 | Amazon [ElastiCache][elasticache] | `DEVELOPER PREVIEW` | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/9)
-| Amazon [Lambda][lambda] | `PLANNED` |
+| AWS [Lambda][lambda] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
 | Amazon [MQ][mq] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/12)
 | Amazon [MSK][msk] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/13)
 | Amazon [RDS][rds] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/8)
 | Amazon [Sagemaker][sagemaker] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/11)
 | Amazon [SNS][sns] | `DEVELOPER PREVIEW` |
 | Amazon [SQS][sqs] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/6)
-| Amazon [StepFunctions][sfn] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
+| AWS [StepFunctions][sfn] | `DEVELOPER PREVIEW`
 | Amazon [S3][s3] | `DEVELOPER PREVIEW` |
 
 !!! note "Don't see a service listed?"
@@ -81,7 +87,7 @@
 * AWS service documentation: https://aws.amazon.com/elasticache/
 * ACK service controller: https://github.com/aws/aws-controllers-k8s/tree/main/services/elasticache
 
-## Amazon Lambda [lambda]
+## AWS Lambda [lambda]
 
 * Proposed: https://github.com/aws/aws-controllers-k8s/issues/238
 * Current release status: `PLANNED`
@@ -132,11 +138,10 @@
 * AWS service documentation: https://aws.amazon.com/sqs/
 * ACK service controller: https://github.com/aws/aws-controllers-k8s/tree/main/services/sqs
 
-## Amazon Step Functions [sfn]
+## AWS Step Functions [sfn]
 
 * Proposed: https://github.com/aws/aws-controllers-k8s/issues/239
-* Current release status: `BUILD`
-* Next milestone: [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
+* Current release status: `DEVELOPER PREVIEW`
 * AWS service documentation: https://aws.amazon.com/step-functions/
 * ACK service controller: https://github.com/aws/aws-controllers-k8s/tree/main/services/sfn
 
