@@ -358,11 +358,26 @@ func (g *Generator) ApplyIgnoreRules() {
 		return
 	}
 	for _, name := range g.cfg.Ignore.ShapeNames {
-		delete(g.SDKAPI.API.Shapes, name)
+		for sdkShapeId, shape := range g.SDKAPI.API.Shapes {
+			if shape.ShapeName == name {
+				delete(g.SDKAPI.API.Shapes, sdkShapeId)
+				continue
+			}
+			for sdkMemberId, memberRef := range shape.MemberRefs {
+				if memberRef.ShapeName == name {
+					delete(shape.MemberRefs, sdkMemberId)
+				}
+			}
+		}
 	}
-	for _, shape := range g.SDKAPI.API.Shapes {
-		for _, name := range g.cfg.Ignore.ShapeNames {
-			delete(shape.MemberRefs, name)
+	for sdkShapeName, sdkShape := range g.SDKAPI.API.Shapes {
+		for _, fieldpath := range g.cfg.Ignore.FieldPaths {
+			shape := strings.Split(fieldpath, ".")[0]
+			field := strings.Split(fieldpath, ".")[1]
+			if sdkShapeName != shape {
+				continue
+			}
+			delete(sdkShape.MemberRefs, field)
 		}
 	}
 }

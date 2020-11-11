@@ -82,6 +82,12 @@ type IgnoreSpec struct {
 	// Set of shapes to ignore when constructing API type definitions and
 	// associated SDK code for structs that have these shapes as members
 	ShapeNames []string `json:"shape_names"`
+	// Set of field paths to ignore. The name here should be the original name of
+	// the field as it appears in AWS SDK objects. You can refer to a field by
+	// giving its "<shape_name>.<field_name>". For example,
+	// "ImageScanningConfiguration.ScanOnPush". For top level fields, you can
+	// leave the shape_name empty, like ".RepositoryName"
+	FieldPaths []string `json:"field_paths"`
 }
 
 // ResourceConfig represents instructions to the ACK code generator
