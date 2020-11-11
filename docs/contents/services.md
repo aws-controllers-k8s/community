@@ -22,6 +22,7 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 | Amazon [EFS][efs] | `PROPOSED` |
 | Amazon [EKS][eks] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/7)
 | Amazon [ElastiCache][elasticache] | `DEVELOPER PREVIEW` | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/9)
+| AWS [IAM][iam] | `PROPOSED` |
 | AWS [Lambda][lambda] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
 | Amazon [MQ][mq] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/12)
 | Amazon [MSK][msk] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/13)
@@ -86,6 +87,12 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 * Next milestone: [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/9)
 * AWS service documentation: https://aws.amazon.com/elasticache/
 * ACK service controller: https://github.com/aws/aws-controllers-k8s/tree/main/services/elasticache
+
+## AWS IAM [iam]
+
+* Proposed: https://github.com/aws/aws-controllers-k8s/issues/222
+* Current release status: `PROPOSED`
+* AWS service documentation: https://aws.amazon.com/iam/
 
 ## AWS Lambda [lambda]
 
