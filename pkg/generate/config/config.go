@@ -355,15 +355,6 @@ func (c *Config) SetAttributesSingleAttribute(resourceName string) bool {
 	return resGenConfig.UnpackAttributesMapConfig.SetAttributesSingleAttribute
 }
 
-// IsIgnoredShape returns true if the supplied shape name should be ignored by the
-// code generator, false otherwise
-func (c *Config) IsIgnoredShape(shapeName string) bool {
-	if c == nil || len(c.Ignore.ShapeNames) == 0 {
-		return false
-	}
-	return util.InStrings(shapeName, c.Ignore.ShapeNames)
-}
-
 // OverrideValues gives list of member values to override.
 func (c *Config) OverrideValues(operationName string) (map[string]string, bool) {
 	if c == nil {

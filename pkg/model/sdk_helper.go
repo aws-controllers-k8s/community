@@ -221,9 +221,6 @@ func (a *SDKAPI) GetTypeRenames(cfg *ackgenconfig.Config) map[string]string {
 			// Neither are exceptions
 			continue
 		}
-		if cfg.IsIgnoredShape(shapeName) {
-			continue
-		}
 		tdefNames := names.New(shapeName)
 		if a.HasConflictingTypeName(shapeName, cfg) {
 			tdefNames.Camel += ConflictingNameSuffix

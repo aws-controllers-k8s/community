@@ -87,9 +87,6 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			if memberShapeRef.Shape == nil {
 				return nil, ackmodel.ErrNilShapePointer
 			}
-			if g.cfg.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
 			renamedName, _ := crd.InputFieldRename(
 				createOp.Name, memberName,
 			)
@@ -129,9 +126,6 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			}
 		}
 		for memberName, memberShapeRef := range outputShape.MemberRefs {
-			if g.cfg.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
 			if memberShapeRef.Shape == nil {
 				return nil, ackmodel.ErrNilShapePointer
 			}
@@ -228,9 +222,6 @@ func (g *Generator) GetTypeDefs() ([]*ackmodel.TypeDef, map[string]string, error
 			// Neither are exceptions
 			continue
 		}
-		if g.cfg.IsIgnoredShape(shapeName) {
-			continue
-		}
 		tdefNames := names.New(shapeName)
 		if g.SDKAPI.HasConflictingTypeName(shapeName, g.cfg) {
 			tdefNames.Camel += ackmodel.ConflictingNameSuffix
@@ -241,9 +232,6 @@ func (g *Generator) GetTypeDefs() ([]*ackmodel.TypeDef, map[string]string, error
 		for memberName, memberRef := range shape.MemberRefs {
 			memberNames := names.New(memberName)
 			memberShape := memberRef.Shape
-			if g.cfg.IsIgnoredShape(memberShape.ShapeName) {
-				continue
-			}
 			if !g.IsShapeUsedInCRDs(memberShape.ShapeName) {
 				continue
 			}
@@ -365,6 +353,20 @@ func (g *Generator) GetEnumDefs() ([]*ackmodel.EnumDef, error) {
 	return edefs, nil
 }
 
+func (g *Generator) ApplyIgnoreRules() {
+	if g.cfg == nil || g.SDKAPI == nil {
+		return
+	}
+	for _, name := range g.cfg.Ignore.ShapeNames {
+		delete(g.SDKAPI.API.Shapes, name)
+	}
+	for _, shape := range g.SDKAPI.API.Shapes {
+		for _, name := range g.cfg.Ignore.ShapeNames {
+			delete(shape.MemberRefs, name)
+		}
+	}
+}
+
 // New returns a new Generator struct for a supplied API model.
 // Optionally, pass a file path to a generator config file that can be used to
 // instruct the code generator how to handle the API properly
@@ -375,18 +377,19 @@ func New(
 	templateBasePath string,
 	defaultConfig ackgenconfig.Config,
 ) (*Generator, error) {
-	gc, err := ackgenconfig.New(configPath, defaultConfig)
+	cfg, err := ackgenconfig.New(configPath, defaultConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	return &Generator{
+	g := &Generator{
 		SDKAPI: SDKAPI,
 		// TODO(jaypipes): Handle cases where service alias and service ID
 		// don't match (Step Functions)
 		serviceAlias:     SDKAPI.ServiceID(),
 		apiVersion:       apiVersion,
 		templateBasePath: templateBasePath,
-		cfg:              &gc,
-	}, nil
+		cfg:              &cfg,
+	}
+	g.ApplyIgnoreRules()
+	return g, nil
 }
