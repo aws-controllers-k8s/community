@@ -1,0 +1,84 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: ack-dynamodb-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - globaltables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - globaltables/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - tables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - tables/status
+  verbs:
+  - get
+  - patch
+  - update
