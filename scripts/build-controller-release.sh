@@ -29,7 +29,6 @@ fi
 : "${ACK_GENERATE_CONFIG_PATH:=""}"
 : "${ACK_GENERATE_OUTPUT_PATH:=""}"
 : "${ACK_GENERATE_IMAGE_REPOSITORY:="amazon/aws-controllers-k8s"}"
-: "${ACK_GENERATE_SERVICE_ACCOUNT_NAME:="ack-controller"}"
 
 USAGE="
 Usage:
@@ -93,6 +92,7 @@ fi
 SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 RELEASE_VERSION="$2"
 : "${K8S_RBAC_ROLE_NAME:="ack-$SERVICE-controller"}"
+: "${ACK_GENERATE_SERVICE_ACCOUNT_NAME:="ack-$SERVICE-controller"}"
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.
