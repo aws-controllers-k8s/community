@@ -3,6 +3,7 @@
 package {{ .CRD.Names.Snake }}
 
 import (
+	"fmt"
 	"sync"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -19,7 +20,7 @@ import (
 type resourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
-	rmCache map[ackv1alpha1.AWSAccountID]*resourceManager
+	rmCache map[string]*resourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by
@@ -38,8 +39,9 @@ func (f *resourceManagerFactory) ManagerFor(
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,
 ) (acktypes.AWSResourceManager, error) {
+	rmId := fmt.Sprintf("%s/%s", id, region)
 	f.RLock()
-	rm, found := f.rmCache[id]
+	rm, found := f.rmCache[rmId]
 	f.RUnlock()
 
 	if found {
@@ -53,13 +55,13 @@ func (f *resourceManagerFactory) ManagerFor(
 	if err != nil {
 		return nil, err
 	}
-	f.rmCache[id] = rm
+	f.rmCache[rmId] = rm
 	return rm, nil
 }
 
 func newResourceManagerFactory() *resourceManagerFactory {
 	return &resourceManagerFactory{
-		rmCache: map[ackv1alpha1.AWSAccountID]*resourceManager{},
+		rmCache: map[string]*resourceManager{},
 	}
 }
 
