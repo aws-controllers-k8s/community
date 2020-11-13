@@ -31,5 +31,5 @@ Above is the motivation for our 3rd tenet: we want to make sure that there is a 
 
 Outside of AWS, there are projects that share similar goals we have with the ASO, for example:
 
-- [Crossplane](https://crossplane.io/docs/v0.5/services/aws-services-guide.html)
+- [Crossplane](https://github.com/crossplane/provider-aws)
 - [aws-s3-provisioner](https://github.com/yard-turkey/aws-s3-provisioner)
