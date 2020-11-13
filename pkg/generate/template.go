@@ -49,6 +49,7 @@ var (
 		"config/default/kustomization.yaml",
 		"config/rbac/cluster-role-binding.yaml",
 		"config/rbac/kustomization.yaml",
+		"config/crd/kustomization.yaml",
 	}
 
 	// These are files we straight copy without template variable interpolation
@@ -153,6 +154,8 @@ type templateMetaVars struct {
 	// SDKAPIInterfaceTypeName is the name of the interface type used by the
 	// aws-sdk-go services/$SERVICE/api.go file
 	SDKAPIInterfaceTypeName string
+	//CRDConfigs will go here
+	CRDNames []string
 }
 
 // TemplateAPIVars contains template variables for templates that output Go
@@ -203,7 +206,19 @@ func (g *Generator) templateMetaVars() templateMetaVars {
 		APIGroup:                g.SDKAPI.APIGroup(),
 		APIVersion:              g.apiVersion,
 		SDKAPIInterfaceTypeName: g.SDKAPI.SDKAPIInterfaceTypeName(),
+		CRDNames:                g.crdNames(),
 	}
+}
+
+func (g *Generator) crdNames() []string {
+	var crdConfigs []string
+
+	crds, _ := g.GetCRDs()
+	for _, crd := range crds {
+		crdConfigs = append(crdConfigs, strings.ToLower(crd.Plural))
+	}
+
+	return crdConfigs
 }
 
 // templateAPIVars returns a templateAPIVars struct populated with information
