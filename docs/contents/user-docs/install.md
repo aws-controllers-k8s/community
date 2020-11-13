@@ -30,7 +30,7 @@ Before installing an ACK service controller, ensure you have added the
 AWS Controllers for Kubernetes Helm repository:
 
 ```
-helm repo add ack https://aws.github.io/aws-controllers-k8s
+helm repo add ack https://aws.github.io/aws-controllers-k8s/charts
 ```
 
 Likewise, each ACK service controller has a separate Helm chart that
@@ -42,7 +42,7 @@ You may install a particular ACK service controller using the `helm install`
 CLI command:
 
 ```
-helm install [--namespace $KUBERNETES_NAMESPACE] ack/ack-$SERVICE-controller
+helm install [--namespace $KUBERNETES_NAMESPACE] ack-$SERVICE-controller ack/ack-$SERVICE-controller
 ```
 
 for example, if you wanted to install the latest ACK service controller for S3
@@ -50,7 +50,7 @@ into the "ack-system" Kubernetes namespace, you would execute:
 
 
 ```sh
-helm install --namespace ack-system ack/ack-s3-controller
+helm install --namespace ack-system ack-s3-controller ack/ack-s3-controller
 ```
 
 ## Static Kubernetes manifests
