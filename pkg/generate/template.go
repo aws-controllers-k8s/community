@@ -154,7 +154,7 @@ type templateMetaVars struct {
 	// SDKAPIInterfaceTypeName is the name of the interface type used by the
 	// aws-sdk-go services/$SERVICE/api.go file
 	SDKAPIInterfaceTypeName string
-	//CRDConfigs will go here
+	//CRDNames contains all crds names lowercased and in plural
 	CRDNames []string
 }
 
@@ -210,6 +210,7 @@ func (g *Generator) templateMetaVars() templateMetaVars {
 	}
 }
 
+// crdNames returns all crd names lowercased and in plural
 func (g *Generator) crdNames() []string {
 	var crdConfigs []string
 
