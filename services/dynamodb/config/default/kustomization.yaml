@@ -13,7 +13,7 @@
 #  someName: someValue
 
 bases:
-# - ../crd
+- ../crd
 - ../rbac
 - ../controller
 

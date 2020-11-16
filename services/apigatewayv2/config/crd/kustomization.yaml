@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - bases/apigatewayv2.services.k8s.aws_apis.yaml
+  - bases/apigatewayv2.services.k8s.aws_apimappings.yaml
+  - bases/apigatewayv2.services.k8s.aws_authorizers.yaml
+  - bases/apigatewayv2.services.k8s.aws_deployments.yaml
+  - bases/apigatewayv2.services.k8s.aws_domainnames.yaml
+  - bases/apigatewayv2.services.k8s.aws_integrations.yaml
+  - bases/apigatewayv2.services.k8s.aws_integrationresponses.yaml
+  - bases/apigatewayv2.services.k8s.aws_models.yaml
+  - bases/apigatewayv2.services.k8s.aws_routes.yaml
+  - bases/apigatewayv2.services.k8s.aws_routeresponses.yaml
+  - bases/apigatewayv2.services.k8s.aws_stages.yaml
+  - bases/apigatewayv2.services.k8s.aws_vpclinks.yaml

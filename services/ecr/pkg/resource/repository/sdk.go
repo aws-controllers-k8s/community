@@ -62,9 +62,6 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	if len(resp.Repositories) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.Repositories {
 		if elem.CreatedAt != nil {
