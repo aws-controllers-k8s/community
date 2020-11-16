@@ -181,6 +181,7 @@ func writeConfigDirs(g *generate.Generator) error {
 	configDefaultPath := filepath.Join(optControllerOutputPath, "config", "default")
 	configControllerPath := filepath.Join(optControllerOutputPath, "config", "controller")
 	configRBACPath := filepath.Join(optControllerOutputPath, "config", "rbac")
+	configCRDPath := filepath.Join(optControllerOutputPath, "config", "crd")
 	if !optDryRun {
 		if _, err := ensureDir(configDefaultPath); err != nil {
 			return err
@@ -189,6 +190,9 @@ func writeConfigDirs(g *generate.Generator) error {
 			return err
 		}
 		if _, err := ensureDir(configRBACPath); err != nil {
+			return err
+		}
+		if _, err := ensureDir(configCRDPath); err != nil {
 			return err
 		}
 	}
