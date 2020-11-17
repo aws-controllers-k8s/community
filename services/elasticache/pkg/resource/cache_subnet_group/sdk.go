@@ -62,9 +62,6 @@ func (rm *resourceManager) sdkFind(
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
 
-	if len(resp.CacheSubnetGroups) == 0 {
-		return nil, ackerr.NotFound
-	}
 	found := false
 	for _, elem := range resp.CacheSubnetGroups {
 		if elem.ARN != nil {
