@@ -24,7 +24,6 @@ fi
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
 : "${ACK_GENERATE_CONFIG_PATH:=""}"
-: "${K8S_RBAC_ROLE_NAME:="ack-controller"}"
 
 USAGE="
 Usage:
@@ -77,6 +76,8 @@ from the root directory or install ack-generate using:
     fi
 fi
 SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+: "${K8S_RBAC_ROLE_NAME:="ack-$SERVICE-controller"}"
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.
@@ -133,6 +134,11 @@ pushd services/$SERVICE/pkg/resource 1>/dev/null
 
 echo "Generating RBAC manifests for $SERVICE"
 controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifacts:config=$config_output_dir/rbac
+# controller-gen rbac outputs a ClusterRole definition in a
+# $config_output_dir/rbac/role.yaml file. We have some other standard Role
+# files for a reader and writer role, so here we rename the `role.yaml` file to
+# `cluster-role-controller.yaml` to better reflect what is in that file.
+mv $config_output_dir/rbac/role.yaml $config_output_dir/rbac/cluster-role-controller.yaml
 
 popd 1>/dev/null
 

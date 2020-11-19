@@ -22,17 +22,19 @@ Role** to read or write certain **AWS resources**.
 
 **These two RBAC systems do not overlap**. The Kubernetes user that calls the
 Kubernetes API via calls to `kubectl` **has no association with an IAM Role**.
-Instead, it is the Service Account running the ACK service controller's Pod
-that is associated with an IAM Role and is thus governed by the IAM RBAC
+Instead, it is the [`ServiceAccount`][1] running the ACK service controller's
+`Pod` that is associated with an IAM Role and is thus governed by the IAM RBAC
 system.
+
+[1]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 
 ![Authorization in ACK](../images/authorization.png)
 
 !!! note "RBAC authorization mode"
     The above diagram assumes you are running Kubernetes API server with
-    the [RBAC authorization mode][1] enabled.
+    the [RBAC authorization mode][2] enabled.
 
-[1]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[2]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 
 ## Configure permissions
 
@@ -53,10 +55,10 @@ the ACK service controller is responsible for.
 By default, the following Kubernetes `Role` resources are created when
 installing an ACK service controller:
 
-* `ack.user`: a `Role` used for reading and mutating namespace-scoped custom
+* `ack-$SERVICE-writer`: a `Role` used for reading and mutating
+  namespace-scoped custom resources that the service controller manages.
+* `ack-$SERVICE-reader`: a `Role` used for reading namespaced-scoped custom
   resources that the service controller manages.
-* `ack.reader`: a `Role` used for reading namespaced-scoped custom resources
-  that the service controller manages.
 
 When installing a service controller, if the `Role` already exists (because an
 ACK controller for a different AWS service has previously been installed),
@@ -64,44 +66,36 @@ permissions to manage CRDs and CRs associated with the installed controller's
 AWS service are added to the existing `Role`.
 
 For example, if you installed the ACK service controller for AWS S3, during
-that installation process, the `ack-user` `Role` would have been granted
-read/write permissions to create CRs with a GroupKind of
+that installation process, the `ack-s3-writerr` `Role` would have been granted
+read/write permissions to create CRs with a `GroupKind` of
 `s3.services.k8s.aws/Bucket` within a specific Kubernetes `Namespace`.
-Likewise the `ack-reader` `Role` would have been granted read permissions to
-view CRs with a GroupKind of `s3.services.k8s.aws`.
+Likewise the `ack-s3-reader` `Role` would have been granted read permissions to
+view CRs with a `GroupKind` of `s3.services.k8s.aws/Bucket`.
 
 If you later installed the ACK service controller for AWS SNS, the installation
-process would have added permissions to the `ack-user` `Role` to read/write CRs
-of GroupKind `sns.services.k8s.aws/Topic` and added permissions to the
-`ack.user` `Role` to read CRs of GroupKind `sns.services.k8s.aws/Topic`.
+process would have added permissions to the `ack-sns-writer` `Role` to
+read/write CRs of `GroupKind` `sns.services.k8s.aws/Topic` and added
+permissions to the `ack-sns-reader` `Role` to read CRs of `GroupKind`
+`sns.services.k8s.aws/Topic`.
 
 If you would like to use a differently-named Kubernetes `Role` than the
 defaults, you are welcome to do so by modifying the Kubernetes manifests that
 are used as part of the installation process.
 
+#### Bind a Kubernetes User to a Kubernetes Role
+
 Once the Kubernetes `Role` resources have been created, you will want to assign
 a specific Kubernetes `User` to a particular `Role`. You do this using standard
 Kubernetes `RoleBinding` resource.
 
-For example, assume you want to have the Kubernetes `User` named "Alice" have
-the ability to create, read, delete and modify CRs that ACK service controllers
-manage in the Kubernetes "default" `Namespace`, you would create a
-`RoleBinding` that looked like this:
+For example, assume you want to have the Kubernetes `User` named "alice" have
+the ability to create, read, delete and modify S3 Buckets in the "testing"
+Kubernetes `Namespace` and the ability to just read SNS Topic CRs in the
+Kubernetes "production" `Namespace` you would execute the following commands:
 
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: ack-user
-  namespace: default
-subjects:
-- kind: User
-  name: Alice
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: ack-user
-  apiGroup: rbac.authorization.k8s.io
+```bash
+kubectl create rolebinding alice-ack-s3-writer --role ack-s3-writer --namespace testing --user alice
+kubectl create rolebinding alice-ack-sns--reader --role ack-sns-reader --namespace production --user alice
 ```
 
 As always, if you are curious whether a particular Kubernetes user can perform

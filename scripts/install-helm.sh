@@ -26,7 +26,7 @@ if ! is_installed helm; then
     __tmp_install_dir=$(mktemp -d -t install-helm-XXX)
     __helm_url="https://get.helm.sh/helm-v$__helm_version-$__platform-amd64.tar.gz"
     echo -n "installing helm from $__helm_url ... "
-    curl -L $__helm_url | tar zxf - -C $__tmp_install_dir
+    curl -q -L $__helm_url | tar zxf - -C $__tmp_install_dir
     mv $__tmp_install_dir/$__platform-amd64/helm $__tmp_install_dir/.
     chmod +x $__tmp_install_dir/helm
     sudo mv $__tmp_install_dir/helm /usr/local/bin/helm

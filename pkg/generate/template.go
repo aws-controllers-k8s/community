@@ -48,6 +48,8 @@ var (
 		"config/controller/kustomization.yaml",
 		"config/default/kustomization.yaml",
 		"config/rbac/cluster-role-binding.yaml",
+		"config/rbac/role-reader.yaml",
+		"config/rbac/role-writer.yaml",
 		"config/rbac/kustomization.yaml",
 		"config/crd/kustomization.yaml",
 	}
@@ -62,6 +64,8 @@ var (
 	releaseTemplateFiles = []string{
 		"helm/Chart.yaml",
 		"helm/values.yaml",
+		"helm/templates/role-reader.yaml",
+		"helm/templates/role-writer.yaml",
 	}
 	// ReleaseFiles is the set of template files that are generated for Helm
 	// chart releases artifacts.

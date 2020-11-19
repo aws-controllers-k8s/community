@@ -135,5 +135,10 @@ pushd $ROOT_DIR/services/$SERVICE/pkg/resource 1>/dev/null
 
 echo "Generating RBAC manifests for $SERVICE"
 controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifacts:config=$helm_output_dir/templates
+# controller-gen rbac outputs a ClusterRole definition in a
+# $config_output_dir/rbac/role.yaml file. We have some other standard Role
+# files for a reader and writer role, so here we rename the `role.yaml` file to
+# `cluster-role-controller.yaml` to better reflect what is in that file.
+mv $helm_output_dir/templates/role.yaml $helm_output_dir/templates/cluster-role-controller.yaml
 
 popd 1>/dev/null
