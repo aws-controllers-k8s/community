@@ -1,27 +1,11 @@
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   creationTimestamp: null
-  name: ack-controller
+  name: ack-ecr-writer
+  namespace: default
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - ecr.services.k8s.aws
   resources:
@@ -37,7 +21,7 @@ rules:
 - apiGroups:
   - ecr.services.k8s.aws
   resources:
-  - repositories/status
+  - repositories
   verbs:
   - get
   - patch

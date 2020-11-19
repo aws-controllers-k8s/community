@@ -4,7 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: ack-controller
+  name: ack-sns-controller
 rules:
 - apiGroups:
   - ""
@@ -23,9 +23,9 @@ rules:
   - list
   - watch
 - apiGroups:
-  - sfn.services.k8s.aws
+  - sns.services.k8s.aws
   resources:
-  - activities
+  - platformapplications
   verbs:
   - create
   - delete
@@ -35,17 +35,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - sfn.services.k8s.aws
+  - sns.services.k8s.aws
   resources:
-  - activities/status
+  - platformapplications/status
   verbs:
   - get
   - patch
   - update
 - apiGroups:
-  - sfn.services.k8s.aws
+  - sns.services.k8s.aws
   resources:
-  - statemachines
+  - platformendpoints
   verbs:
   - create
   - delete
@@ -55,9 +55,29 @@ rules:
   - update
   - watch
 - apiGroups:
-  - sfn.services.k8s.aws
+  - sns.services.k8s.aws
   resources:
-  - statemachines/status
+  - platformendpoints/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - topics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sns.services.k8s.aws
+  resources:
+  - topics/status
   verbs:
   - get
   - patch
