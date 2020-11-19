@@ -258,7 +258,7 @@ func (r *reconciler) patchResource(
 	}
 	err = r.kc.Status().Patch(
 		ctx,
-		latest.RuntimeObject(),
+		latest.RuntimeObject().DeepCopyObject(),
 		client.MergeFrom(desired.RuntimeObject()),
 	)
 	if err != nil {

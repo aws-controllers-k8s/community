@@ -1,9 +1,22 @@
 resources:
   Snapshot:
     spec_fields:
-        -
-          operation_id: CopySnapshot
-          member_name: SourceSnapshotName
+      - operation_id: CopySnapshot
+        member_name: SourceSnapshotName
+  CacheParameterGroup:
+    exceptions:
+      terminal_codes:
+        - CacheParameterGroupAlreadyExists
+        - CacheParameterGroupQuotaExceeded
+        - InvalidCacheParameterGroupState
+        - InvalidGlobalReplicationGroupState
+        - InvalidParameterCombination
+        - InvalidParameterValue
+    spec_fields:
+      - operation_id: ModifyCacheParameterGroup
+        member_name: ParameterNameValues
+    update_operation:
+      custom_method_name: customUpdateCacheParameterGroup
 operations:
   ModifyReplicationGroup:
     override_values:

@@ -27,6 +27,7 @@ import (
 	svctypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	svcresource "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource"
 
+	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/cache_parameter_group"
 	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/cache_subnet_group"
 	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/replication_group"
 	_ "github.com/aws/aws-controllers-k8s/services/elasticache/pkg/resource/snapshot"

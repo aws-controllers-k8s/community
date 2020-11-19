@@ -31,7 +31,10 @@ func (rm *resourceManager) sdkUpdate(
 	rm.setStatusDefaults(ko)
 {{ if $setOutputCustomMethodName := .CRD.SetOutputCustomMethodName .CRD.Ops.Update }}
 	// custom set output from response
-	rm.{{ $setOutputCustomMethodName }}(desired, resp, ko)
+	ko, err = rm.{{ $setOutputCustomMethodName }}(ctx, desired, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 {{ end }}
 	return &resource{ko}, nil
 }

@@ -89,17 +89,17 @@ type CacheNodeUpdateStatus struct {
 	NodeUpdateStatusModifiedDate *metav1.Time `json:"nodeUpdateStatusModifiedDate,omitempty"`
 }
 
-type CacheParameterGroup struct {
+type CacheParameterGroupStatus_SDK struct {
+	CacheParameterGroupName *string `json:"cacheParameterGroupName,omitempty"`
+	ParameterApplyStatus    *string `json:"parameterApplyStatus,omitempty"`
+}
+
+type CacheParameterGroup_SDK struct {
 	ARN                       *string `json:"arn,omitempty"`
 	CacheParameterGroupFamily *string `json:"cacheParameterGroupFamily,omitempty"`
 	CacheParameterGroupName   *string `json:"cacheParameterGroupName,omitempty"`
 	Description               *string `json:"description,omitempty"`
 	IsGlobal                  *bool   `json:"isGlobal,omitempty"`
-}
-
-type CacheParameterGroupStatus struct {
-	CacheParameterGroupName *string `json:"cacheParameterGroupName,omitempty"`
-	ParameterApplyStatus    *string `json:"parameterApplyStatus,omitempty"`
 }
 
 type CacheSecurityGroup struct {

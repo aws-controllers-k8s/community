@@ -14,6 +14,7 @@
 package replication_group
 
 import (
+	"context"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	"github.com/aws/aws-sdk-go/service/elasticache"
@@ -21,34 +22,37 @@ import (
 )
 
 func (rm *resourceManager) CustomDescribeReplicationGroupsSetOutput(
+	ctx context.Context,
 	r *resource,
 	resp *elasticache.DescribeReplicationGroupsOutput,
 	ko *svcapitypes.ReplicationGroup,
-) *svcapitypes.ReplicationGroup {
+) (*svcapitypes.ReplicationGroup, error) {
 	if len(resp.ReplicationGroups) == 0 {
-		return ko
+		return ko, nil
 	}
 	elem := resp.ReplicationGroups[0]
 	rm.customSetOutput(r, elem, ko)
-	return ko
+	return ko, nil
 }
 
 func (rm *resourceManager) CustomCreateReplicationGroupSetOutput(
+	ctx context.Context,
 	r *resource,
 	resp *elasticache.CreateReplicationGroupOutput,
 	ko *svcapitypes.ReplicationGroup,
-) *svcapitypes.ReplicationGroup {
+) (*svcapitypes.ReplicationGroup, error) {
 	rm.customSetOutput(r, resp.ReplicationGroup, ko)
-	return ko
+	return ko, nil
 }
 
 func (rm *resourceManager) CustomModifyReplicationGroupSetOutput(
+	ctx context.Context,
 	r *resource,
 	resp *elasticache.ModifyReplicationGroupOutput,
 	ko *svcapitypes.ReplicationGroup,
-) *svcapitypes.ReplicationGroup {
+) (*svcapitypes.ReplicationGroup, error) {
 	rm.customSetOutput(r, resp.ReplicationGroup, ko)
-	return ko
+	return ko, nil
 }
 
 func (rm *resourceManager) customSetOutput(
