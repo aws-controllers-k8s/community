@@ -95,7 +95,8 @@ func (rm *resourceManager) provideDelta(
 	addedParameters := []*svcapitypes.ParameterNameValue{}    // available in desired but not found in latest
 	for latestParameterName, latestParameterNameValue := range latestPametersMap {
 		desiredParameterNameValue, found := desiredPametersMap[latestParameterName]
-		if found && desiredParameterNameValue != nil {
+		if found && desiredParameterNameValue != nil &&
+			desiredParameterNameValue.ParameterValue != nil && *desiredParameterNameValue.ParameterValue != ""{
 			if *desiredParameterNameValue.ParameterValue != *latestParameterNameValue.ParameterValue {
 				// available in both desired, latest but values differ
 				modified := *desiredParameterNameValue
@@ -112,7 +113,9 @@ func (rm *resourceManager) provideDelta(
 		if !found && desiredParameterNameValue != nil {
 			// available in desired but not found in latest
 			added := *desiredParameterNameValue
-			addedParameters = append(addedParameters, &added)
+			if added.ParameterValue != nil && *added.ParameterValue != "" {
+				addedParameters = append(addedParameters, &added)
+			}
 		}
 	}
 	return removedParameters, modifiedParameters, addedParameters

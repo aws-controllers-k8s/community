@@ -567,3 +567,210 @@ wait_and_assert_replication_group_available_status() {
   sleep 35
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
+
+
+#################################################
+# variables and functions for Cache Parameter Group
+#################################################
+test_cpg_name="ack-test-cpg"
+test_cpg_description="ack-test-cpg description"
+test_cpg_parameter_1_name="activedefrag"
+test_cpg_parameter_1_value="yes"
+test_cpg_parameter_2_name="active-defrag-cycle-max"
+test_cpg_parameter_2_value="74"
+test_cpg_parameter_3_name="active-defrag-cycle-min"
+test_cpg_parameter_3_value="10"
+
+# clear_cpg_parameter_variables unsets the variables used to override default values
+clear_cpg_parameter_variables() {
+  unset cpg_name
+  unset cpg_description
+}
+
+# describes given cache_parameter_group_name using aws cli
+# expects argument 'cache_parameter_group_name'
+# return status of aws describe command can be queried to check for
+# existence of cache parameter group on server
+aws_describe_cache_parameter_group() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name"
+    exit 1
+  fi
+  local cpg_name="$1"
+  daws elasticache describe-cache-parameter-groups --cache-parameter-group-name "cpg_name"  --output json >/dev/null 2>&1
+}
+
+# describes given cache_parameter_group_name using kubectl
+# expects argument 'cache_parameter_group_name'
+# return status of kubectl get command can be queried to check for
+# existence of cache parameter group on server
+k8s_describe_cache_parameter_group() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name"
+    exit 1
+  fi
+  local cpg_name="$1"
+  kubectl get CacheParameterGroup/"$cpg_name" -o json  >/dev/null 2>&1
+}
+
+# asserts that the given cache_parameter_group_name does not exist
+# on server as well as on kubernetes cluster
+# expects argument 'cache_parameter_group_name'
+assert_cache_parameter_group_does_not_exist() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name"
+    exit 1
+  fi
+  local cpg_name="$1"
+
+  aws_describe_cache_parameter_group "$cpg_name"
+  if [[ $? -ne 255 && $? -ne 254 ]]; then
+      echo "FAIL: expected CacheParameterGroup $cpg_name to not exist in AWS ${service_name}."
+      exit 1
+  fi
+  k8s_describe_cache_parameter_group "$cpg_name"
+  if [[ $? -ne 1 ]]; then
+      echo "FAIL: expected CacheParameterGroup $cpg_name to not exist in Kubernetes cluster."
+      exit 1
+  fi
+}
+
+# asserts that the given cache_parameter_group_name exists
+# on server as well as on kubernetes cluster
+# expects argument 'cache_parameter_group_name'
+assert_cache_parameter_group_exists() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name"
+    exit 1
+  fi
+  local cpg_name="$1"
+
+  k8s_describe_cache_parameter_group "$cpg_name"
+  if [[ $? -ne 0 ]]; then
+      echo "FAIL: expected CacheParameterGroup $cpg_name to exist in Kubernetes cluster."
+      exit 1
+  fi
+  aws_describe_cache_parameter_group "$cpg_name"
+  if [[ $? -eq 255 && $? -eq 254 ]]; then
+      echo "FAIL: expected CacheParameterGroup $cpg_name to exist in AWS ${service_name}."
+      exit 1
+  fi
+}
+
+# provides yaml to create CacheParameterGroup crd
+# with no custom parameters values in it
+provide_cache_parameter_group_yaml() {
+  local cpg_name="${cpg_name:-$test_cpg_name}"
+  local cpg_description="${cpg_description:-$test_cpg_description}"
+
+  cat <<EOF
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: CacheParameterGroup
+metadata:
+  name: "$cpg_name"
+spec:
+  cacheParameterGroupName: "$cpg_name"
+  description: "$cpg_description"
+  cacheParameterGroupFamily: "redis5.0"
+EOF
+}
+
+# provides yaml to create/update CacheParameterGroup crd
+# with three custom parameters values in it
+provide_custom_cache_parameters_group_yaml() {
+  local cpg_name="${cpg_name:-$test_cpg_name}"
+  local cpg_description="${cpg_description:-$test_cpg_description}"
+  local cpg_parameter_1_name="${cpg_parameter_1_name:-$test_cpg_parameter_1_name}"
+  local cpg_parameter_1_value="${cpg_parameter_1_value:-$test_cpg_parameter_1_value}"
+  local cpg_parameter_2_name="${cpg_parameter_2_name:-$test_cpg_parameter_2_name}"
+  local cpg_parameter_2_value="${cpg_parameter_2_value:-$test_cpg_parameter_2_value}"
+  local cpg_parameter_3_name="${cpg_parameter_3_name:-$test_cpg_parameter_3_name}"
+  local cpg_parameter_3_value="${cpg_parameter_3_value:-$test_cpg_parameter_3_value}"
+  cat <<EOF
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: CacheParameterGroup
+metadata:
+  name: "$cpg_name"
+spec:
+  cacheParameterGroupName: "$cpg_name"
+  description: "$cpg_description"
+  cacheParameterGroupFamily: "redis5.0"
+  parameterNameValues:
+    - parameterName: "$cpg_parameter_1_name"
+      parameterValue: "$cpg_parameter_1_value"
+    - parameterName: "$cpg_parameter_2_name"
+      parameterValue: "$cpg_parameter_2_value"
+    - parameterName: "$cpg_parameter_3_name"
+      parameterValue: "$cpg_parameter_3_value"
+EOF
+}
+
+# provides yaml to create/update CacheParameterGroup crd
+# with one custom parameter value in it
+# yaml also contains a custom parameter whose value is ""
+provide_custom_remove_cache_parameters_group_yaml() {
+  local cpg_name="${cpg_name:-$test_cpg_name}"
+  local cpg_description="${cpg_description:-$test_cpg_description}"
+  local cpg_parameter_1_name="${cpg_parameter_1_name:-$test_cpg_parameter_1_name}"
+  local cpg_parameter_1_value="${cpg_parameter_1_value:-$test_cpg_parameter_1_value}"
+  cat <<EOF
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: CacheParameterGroup
+metadata:
+  name: "$cpg_name"
+spec:
+  cacheParameterGroupName: "$cpg_name"
+  description: "$cpg_description"
+  cacheParameterGroupFamily: "redis5.0"
+  parameterNameValues:
+    - parameterName: "$cpg_parameter_1_name"
+      parameterValue: "$cpg_parameter_1_value"
+    - parameterName: "$cpg_parameter_3_name"
+      parameterValue: ""
+EOF
+}
+
+# provides property of given cache parameter group
+# it accepts 3 arguments:
+# - cache_parameter_group_name
+# - property_selector
+# - property_source
+# supported values for source: user | system | engine-default
+aws_get_cache_parameters_property() {
+  if [[ $# -ne 3 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name property_selector property_source"
+    exit 1
+  fi
+  local cpg_name="$1"
+  local property_selector="$2"
+  local property_source="$3"
+  echo $(daws elasticache describe-cache-parameters --cache-parameter-group-name "$cpg_name" --source "$property_source" | jq -r "$property_selector")
+}
+
+# asserts given parameter value in given parameters array
+# it accepts 3 arguments
+# - actual_parameters[] - json array containing elements of structure:
+#    {
+#      "ParameterName": "activedefrag",
+#      "ParameterValue": "yes"
+#    }
+# - parameter_name
+# - expected_value
+assert_parameters_name_value() {
+  if [[ $# -ne 3 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} actual_parameters[] parameter_name expected_value"
+    exit 1
+  fi
+  local actual_parameters="$1"
+  local parameter_name="$2"
+  local expected_value="$3"
+
+  local actual_parameter_value=$(echo $actual_parameters | jq ".[]" | jq -r "select(.ParameterName == \"$parameter_name\") | .ParameterValue")
+  assert_equal "$expected_value" "$actual_parameter_value" "Expected: $expected_value found: "$actual_parameter_value" for parameter: $parameter_name" || exit 1
+}
