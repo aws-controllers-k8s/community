@@ -140,10 +140,10 @@ CLUSTER_NAME=$(cat "$TMP_DIR"/clustername)
 if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
     DEFAULT_AWS_SERVICE_DOCKER_IMG="aws-controllers-k8s:${AWS_SERVICE}-${VERSION}"
     echo -n "building $DEFAULT_AWS_SERVICE_DOCKER_IMG docker image ... "
-    ${SCRIPTS_DIR}/build-controller-image.sh -q -s ${AWS_SERVICE} -i ${DEFAULT_AWS_SERVICE_DOCKER_IMG} 1>/dev/null || exit 1
-    echo "ok."
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
-
+    export AWS_SERVICE_DOCKER_IMG
+    ${SCRIPTS_DIR}/build-controller-image.sh ${AWS_SERVICE} 1>/dev/null || exit 1
+    echo "ok."
 else
     debug_msg "skipping building the ${AWS_SERVICE} docker image, since one was specified ${AWS_SERVICE_DOCKER_IMG}"
 fi

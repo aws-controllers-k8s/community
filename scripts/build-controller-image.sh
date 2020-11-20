@@ -6,7 +6,6 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 SCRIPTS_DIR=$DIR
 DOCKERFILE_PATH=$DIR/../Dockerfile
 BUILD_CONTEXT=$DIR/..
-QUIET=false
 OPTIND=1
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
 export DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
@@ -17,44 +16,30 @@ check_is_installed docker
 
 USAGE="
 Usage:
-  $(basename "$0") [-q] [-s <AWS_SERVICE>] [-i <Docker image tag>]
+  $(basename "$0") <aws_service>
 
-Builds the Docker image for an ACK service controller.
+Builds the Docker image for an ACK service controller. 
 
-Example: $(basename "$0") -q -s ecr
+Example: $(basename "$0") ecr
 
-Options:
-  -s          Provide AWS Service name (ecr, sns, sqs, petstore, bookstore)
-  -i          Controller container image tag (Default: ack-<service>-controller:$VERSION)
-  -q          Build controller container image quietly
+<aws_service> should be an AWS Service name (ecr, sns, sqs, petstore, bookstore)
+
+Environment variables:
+  QUIET:                    Build controller container image quietly (<true|false>) 
+                            Default: false
+  AWS_SERVICE_DOCKER_IMG:   Controller container image tag 
+                            Default: aws-controllers-k8s:$AWS_SERVICE-$VERSION
 "
 
-# Process our input arguments
-while getopts "qs:i:" opt; do
-  case ${opt} in
-    q ) # Build image quietly
-        QUIET=true
-      ;;
-    s ) # AWS Service name
-        AWS_SERVICE=$(echo "${OPTARG}" | tr '[:upper:]' '[:lower:]')
-      ;;
-    i ) # Controller image tag
-        AWS_SERVICE_DOCKER_IMG="${OPTARG}"
-      ;;
-    \? )
-        echo "${USAGE}" 1>&2
-        exit
-      ;;
-  esac
-done
-
-if [ -z "$AWS_SERVICE" ]; then
-  echo "AWS_SERVICE is not defined. Use flag -s <AWS_SERVICE> to build a container image of that service"
-  echo "(Example: $(basename "$0") -q -s ecr)"
-  exit  1
+if [ $# -ne 1 ]; then
+    echo "AWS_SERVICE is not defined. Script accepts one parameter, the <AWS_SERVICE> to build a container image of that service" 1>&2
+    echo "${USAGE}"
+    exit 1
 fi
 
-DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
+AWS_SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+QUIET=${QUIET:-"false"}
+DEFAULT_AWS_SERVICE_DOCKER_IMG="aws-controllers-k8s:$AWS_SERVICE-$VERSION"
 : "${AWS_SERVICE_DOCKER_IMG:="$DEFAULT_AWS_SERVICE_DOCKER_IMG"}"
 : "${DOCKERFILE:="$DOCKERFILE_PATH"}"
 
