@@ -43,6 +43,7 @@ type CacheParameterGroupStatus struct {
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
 	IsGlobal   *bool                    `json:"isGlobal,omitempty"`
+	Parameters []*Parameter             `json:"parameters,omitempty"`
 }
 
 // CacheParameterGroup is the Schema for the CacheParameterGroups API

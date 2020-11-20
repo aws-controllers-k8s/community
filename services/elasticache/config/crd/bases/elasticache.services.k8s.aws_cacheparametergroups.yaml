@@ -118,6 +118,27 @@ spec:
                 type: array
               isGlobal:
                 type: boolean
+              parameters:
+                items:
+                  properties:
+                    allowedValues:
+                      type: string
+                    dataType:
+                      type: string
+                    description:
+                      type: string
+                    isModifiable:
+                      type: boolean
+                    minimumEngineVersion:
+                      type: string
+                    parameterName:
+                      type: string
+                    parameterValue:
+                      type: string
+                    source:
+                      type: string
+                  type: object
+                type: array
             required:
             - ackResourceMetadata
             - conditions

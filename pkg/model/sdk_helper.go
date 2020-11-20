@@ -168,11 +168,28 @@ func (a *SDKAPI) GetOperationMap(cfg *ackgenconfig.Config) *OperationMap {
 	return &opMap
 }
 
-// Given an API operation and member of API operation, return shape reference associated with the member
-func (a *SDKAPI) GetMemberShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
+// GetMemberInputShapeRef returns shape reference associated with the input member
+// for given API operation and member of API operation
+func (a *SDKAPI) GetMemberInputShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
 	for opID, op := range a.API.Operations {
 		if opID == operation && op.InputRef.Shape != nil {
 			for opMemberName, memberShapeRef := range op.InputRef.Shape.MemberRefs {
+				if opMemberName == memberName {
+					return memberShapeRef, true
+				}
+			}
+		}
+	}
+
+	return nil, false
+}
+
+// GetMemberOutputShapeRef returns shape reference associated with the output member
+// for given API operation and member of API operation
+func (a *SDKAPI) GetMemberOutputShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
+	for opID, op := range a.API.Operations {
+		if opID == operation && op.OutputRef.Shape != nil {
+			for opMemberName, memberShapeRef := range op.OutputRef.Shape.MemberRefs {
 				if opMemberName == memberName {
 					return memberShapeRef, true
 				}

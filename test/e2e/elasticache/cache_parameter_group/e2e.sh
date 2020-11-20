@@ -23,7 +23,7 @@ debug_msg "executing test: $service_name/$test_name"
 
 setup_cache_parameter_group_fields() {
   # uses non local variable for later use in tests
-  cpg_name="ack-test-cpg-2"
+  cpg_name="ack-test-cpg-1"
   cpg_description="$cpg_name description"
   cpg_parameter_1_name="activedefrag"
   cpg_parameter_1_value="yes"
@@ -41,13 +41,19 @@ setup_cache_parameter_group_fields
 ack_create_cache_parameter_group() {
   local cpg_yaml="$(provide_cache_parameter_group_yaml)"
   echo "$cpg_yaml" | kubectl apply -f -
-  sleep 5
+  sleep 10
+}
+assert_k8s_status_cache_parameters_defaults() {
+  assert_k8s_status_parameters_value_source "$cpg_name" "activedefrag" "no" "system"
+  assert_k8s_status_parameters_value_source "$cpg_name" "active-defrag-cycle-max" "75" "system"
+  assert_k8s_status_parameters_value_source "$cpg_name" "active-defrag-cycle-min" "5" "system"
 }
 
 debug_msg "Testing create Cache Parameter Group: $cpg_name."
 assert_cache_parameter_group_does_not_exist "$cpg_name"
 ack_create_cache_parameter_group
 assert_cache_parameter_group_exists "$cpg_name"
+assert_k8s_status_cache_parameters_defaults
 
 #################################################
 # modify cache parameter group
@@ -66,7 +72,7 @@ assert_no_custom_cache_parameters() {
 ack_set_custom_cache_parameters() {
   local cpg_yaml="$(provide_custom_cache_parameters_group_yaml)"
   echo "$cpg_yaml" | kubectl apply -f -
-  sleep 5
+  sleep 10
 }
 
 assert_custom_cache_parameters() {
@@ -76,9 +82,16 @@ assert_custom_cache_parameters() {
   assert_parameters_name_value "$actual_parameters" "$cpg_parameter_3_name" "$cpg_parameter_3_value"
 }
 
+assert_k8s_status_cache_parameters_custom() {
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_1_name" "$cpg_parameter_1_value" "user"
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_2_name" "$cpg_parameter_2_value" "user"
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_3_name" "$cpg_parameter_3_value" "user"
+}
+
 assert_no_custom_cache_parameters
 ack_set_custom_cache_parameters
 assert_custom_cache_parameters
+assert_k8s_status_cache_parameters_custom
 
 #########################
 ## Update parameter
@@ -103,7 +116,7 @@ ack_remove_custom_cache_parameters() {
   # keeps only parameter1. removes parameter2, sets parameter 3 to ""
   local cpg_yaml="$(provide_custom_remove_cache_parameters_group_yaml)"
   echo "$cpg_yaml" | kubectl apply -f -
-  sleep 5
+  sleep 10
 }
 
 assert_remove_custom_cache_parameters() {
@@ -119,8 +132,15 @@ assert_remove_custom_cache_parameters() {
   assert_parameters_name_value "$actual_parameters" "$cpg_parameter_3_name" "5"
 }
 
+assert_k8s_status_cache_parameters_remove_custom() {
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_1_name" "$cpg_parameter_1_value" "user"
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_2_name" "75" "system"
+  assert_k8s_status_parameters_value_source "$cpg_name" "$cpg_parameter_3_name" "5" "system"
+}
+
 ack_remove_custom_cache_parameters
 assert_remove_custom_cache_parameters
+assert_k8s_status_cache_parameters_remove_custom
 
 #################################################
 # reset cache parameter group
@@ -132,10 +152,11 @@ reset_all_custom_cache_parameters() {
   # yaml has no parameters
   local cpg_yaml="$(provide_cache_parameter_group_yaml)"
   echo "$cpg_yaml" | kubectl apply -f -
-  sleep 5
+  sleep 10
 }
 reset_all_custom_cache_parameters
 assert_no_custom_cache_parameters
+assert_k8s_status_cache_parameters_defaults
 
 #################################################
 # delete cache parameter group

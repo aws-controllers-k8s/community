@@ -61,13 +61,12 @@ func (rm *resourceManager) customUpdateCacheParameterGroup(
 	}
 	if updated {
 		rm.setStatusDefaults(latest.ko)
-		// Populate ko.Spec.ParameterNameValues with latest parameter values
-		source := "user"
-		parameterNameValues, err := rm.describeCacheParameters(ctx, desired.ko.Spec.CacheParameterGroupName, &source)
-		if err != nil {
-			return nil, err
+		// Populate latest.ko.Spec.ParameterNameValues with latest parameter values
+		// Populate latest.ko.Status.Parameters with latest detailed parameters
+		error := rm.customSetOutputDescribeCacheParameters(ctx, desired.ko.Spec.CacheParameterGroupName, latest.ko)
+		if error != nil {
+			return nil, error
 		}
-		latest.ko.Spec.ParameterNameValues = parameterNameValues
 	}
 	return latest, nil
 }
@@ -96,7 +95,7 @@ func (rm *resourceManager) provideDelta(
 	for latestParameterName, latestParameterNameValue := range latestPametersMap {
 		desiredParameterNameValue, found := desiredPametersMap[latestParameterName]
 		if found && desiredParameterNameValue != nil &&
-			desiredParameterNameValue.ParameterValue != nil && *desiredParameterNameValue.ParameterValue != ""{
+			desiredParameterNameValue.ParameterValue != nil && *desiredParameterNameValue.ParameterValue != "" {
 			if *desiredParameterNameValue.ParameterValue != *latestParameterNameValue.ParameterValue {
 				// available in both desired, latest but values differ
 				modified := *desiredParameterNameValue

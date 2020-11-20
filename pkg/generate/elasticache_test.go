@@ -766,3 +766,17 @@ func TestElasticache_Additional_CacheParameterGroup_Spec(t *testing.T) {
 	assert.Contains(crd.SpecFields, "ParameterNameValues")
 }
 
+func TestElasticache_Additional_CacheParameterGroup_Status(t *testing.T) {
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "elasticache")
+	crds, err := g.GetCRDs()
+
+	require.Nil(err)
+
+	crd := getCRDByName("CacheParameterGroup", crds)
+	require.NotNil(crd)
+
+	assert := assert.New(t)
+	assert.Contains(crd.StatusFields, "Parameters")
+}
