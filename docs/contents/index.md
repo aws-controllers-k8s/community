@@ -32,5 +32,4 @@ For help, please consider the following venues (in order):
 
 * [Search open issues](https://github.com/aws/aws-controllers-k8s/issues)
 * [File an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
-* Join our [mailing list](https://groups.google.com/forum/#!forum/aws-service-operator-user/).
 * Chat with us on the `#provider-aws` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.
