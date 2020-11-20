@@ -9,7 +9,7 @@ In the context of ACK, we consider the following roles:
 
 * __Users__ ... everyone using ACK, typically willing to provide feedback on ACK by proposing features and/or filing issues.
 * __Contributors__ ... everyone contributing code, documentation, examples, testing infra, and participating in feature proposals as well as design discussions. Code contributions will require a Developer Certificate of Origin (DCO).
-*	__Maintainers__ ... are responsible for engaging with and assisting contributors to iterate on the contributions until it reaches acceptable quality. Maintainers can decide whether the contributions can be accepeted into the project or rejected. Any active contributor meeting the project quality can be made a Maintainer by the Advisory Board.
+*	__Maintainers__ ... are responsible for engaging with and assisting contributors to iterate on the contributions until it reaches acceptable quality. Maintainers can decide whether the contributions can be accepted into the project or rejected. Any active contributor meeting the project quality can be made a Maintainer by the Advisory Board.
 *	__Advisory Board__ ... is responsible for defining the guidelines and processes that the project operates under. 
 
 The initial members of the Advisory Board are `@jaypipes` and `@mhausenblas`.
