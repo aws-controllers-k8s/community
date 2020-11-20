@@ -1,0 +1,15 @@
+resources:
+  Function:
+    exceptions:
+      codes:
+        404: ResourceNotFoundException
+    list_operation:
+      match_fields:
+        - FunctionName
+    update_operation:
+      custom_method_name: customUpdateFunction
+operations:
+  GetFunction:
+    status_fields:
+      from: Code.Location
+      to: Location

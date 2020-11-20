@@ -53,11 +53,16 @@ type Config struct {
 	SetManyOutputNotFoundErrReturn string `json:"set_many_output_notfound_err_return,omitempty"`
 }
 
+func (c *Config) MustAddStatusField() (from, to string) {
+	return "", ""
+}
+
 // OperationConfig represents instructions to the ACK code generator to
 // specify the overriding values for API operation parameters and its custom implementation.
 type OperationConfig struct {
-	CustomImplementation string            `json:"custom_implementation,omitempty"`
-	OverrideValues       map[string]string `json:"override_values"`
+	CustomImplementation string             `json:"custom_implementation,omitempty"`
+	OverrideValues       map[string]string  `json:"override_values"`
+	StatusField          *StatusFieldConfig `json:"status_field"`
 	// SetOutputCustomMethodName provides the name of the custom method on the
 	// `resourceManager` struct that will set fields on a `resource` struct
 	// depending on the output of the operation.
@@ -68,6 +73,14 @@ type OperationConfig struct {
 	// Override for operation type in case of heuristic failure
 	// An example of this is `Put...` or `Register...` API operations not being correctly classified as `Create` op type
 	OperationType string `json:"operation_type"`
+}
+
+// StatusFieldConfig .
+type StatusFieldConfig struct {
+	// Name of the field within the Operation's Output shape to grab
+	From string `json:"from"`
+	// Name of the Status struct field to populate
+	To string `json:"to"`
 }
 
 // IgnoreSpec represents instructions to the ACK code generator to

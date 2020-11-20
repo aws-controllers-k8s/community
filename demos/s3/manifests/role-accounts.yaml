@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ack-role-account-map
+  namespace: ack-system
+data:
+  "988455814387": arn:aws:iam::988455814387:role/s3FullAccess

@@ -34,6 +34,7 @@ type resourceManagerFactory struct {
 	sync.RWMutex
 	// rmCache contains resource managers for a particular AWS account ID
 	rmCache map[string]*resourceManager
+	#rmCache map[ackv1alpha1.AWSAccountID]*resourceManager
 }
 
 // ResourcePrototype returns an AWSResource that resource managers produced by

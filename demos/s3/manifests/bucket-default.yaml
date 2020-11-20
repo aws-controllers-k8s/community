@@ -1,0 +1,7 @@
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  namespace: default
+  name: test-ack-s3-bucket
+spec:
+  name: test-ack-s3-bucket

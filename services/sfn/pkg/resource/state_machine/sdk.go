@@ -17,7 +17,10 @@ package state_machine
 
 import (
 	"context"
+<<<<<<< HEAD
 	corev1 "k8s.io/api/core/v1"
+=======
+>>>>>>> ahilaly/lambda-controller
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -57,12 +60,20 @@ func (rm *resourceManager) sdkFind(
 	}
 
 	resp, respErr := rm.sdkapi.DescribeStateMachineWithContext(ctx, input)
+<<<<<<< HEAD
 	rm.metrics.RecordAPICall("READ_ONE", "DescribeStateMachine", respErr)
 	if respErr != nil {
 		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "StateMachineDoesNotExist" {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr
+=======
+	if respErr != nil {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
+			return nil, ackerr.NotFound
+		}
+		return nil, err
+>>>>>>> ahilaly/lambda-controller
 	}
 
 	// Merge in the information we read from the API call above to the copy of
@@ -150,6 +161,16 @@ func (rm *resourceManager) newDescribeRequestPayload(
 	} else {
 		res.SetStateMachineArn(rm.ARNFromName(*r.ko.Spec.Name))
 	}
+
+	return res, nil
+}
+
+// newListRequestPayload returns SDK-specific struct for the HTTP request
+// payload of the List API call for the resource
+func (rm *resourceManager) newListRequestPayload(
+	r *resource,
+) (*svcsdk.ListStateMachinesInput, error) {
+	res := &svcsdk.ListStateMachinesInput{}
 
 	return res, nil
 }

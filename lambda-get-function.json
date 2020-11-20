@@ -1,0 +1,31 @@
+{
+    "Configuration": {
+        "FunctionName": "test-ack-lambda-function",
+        "FunctionArn": "arn:aws:lambda:eu-west-2:771174509839:function:test-ack-lambda-function",
+        "Runtime": "go1.x",
+        "Role": "arn:aws:iam::771174509839:role/lambda-no-permissions",
+        "Handler": "lambda",
+        "CodeSize": 5151322,
+        "Description": "lambda created by ack lambda controller",
+        "Timeout": 3,
+        "MemorySize": 128,
+        "LastModified": "2020-10-10T10:35:06.254+0000",
+        "CodeSha256": "2sUoz7AZ1FAE9RiJjqbSkeXgLqNSCkM9atHdon9ND9o=",
+        "Version": "$LATEST",
+        "Environment": {
+            "Variables": {
+                "key1": "ack-service-controller"
+            }
+        },
+        "TracingConfig": {
+            "Mode": "PassThrough"
+        },
+        "RevisionId": "009210fc-7f1e-424e-8fd9-cc2587ebb6e7",
+        "State": "Active",
+        "LastUpdateStatus": "Successful"
+    },
+    "Code": {
+        "RepositoryType": "S3",
+        "Location": "https://awslambda-eu-west-2-tasks.s3.eu-west-2.amazonaws.com/snapshots/771174509839/test-ack-lambda-function-24921fb5-7e60-496c-b8c2-eadd9bbfd661?versionId=Bl7.ox04Kkfsc8M0YByBUnALDCcL3.xp&X-Amz-Security-Token=IQoJb3JpZ2luX2VjECoaCWV1LXdlc3QtMiJIMEYCIQC6mJ%2FiA%2F9UyXr%2FHkY90XctGF%2FLtKnrMkBvKS6m5PQXDgIhAKlfJHvpH1fc6F0SvltKhQZlCanLkQq7vq1BX5NGJpfPKrQDCGIQAhoMNDcyMDM4ODY0MTg4IgyOS7nVQYi6yF34F24qkQM3IcF3V1MkQfoHgtYYZGGh%2Fzpd3IXrD7vVMKZ9nsE%2FA5mz%2F9spNqJcIp5BR8kD1lgPXMwUA8IJBIMjl7Z5nFLpYtv3n9QreWePiEXF6giq0A8gQLCSgEqGKIevc8QENTO8DYfFC11BJdWulnyFAczsz2LRThaIo%2BCVts7mcRn8%2BBe8QNEHIpLzf9qH26R8zVWmd0%2FK3XiiEys7aepRw2JijCSYZvUfrx3UWt4Sd1%2BA07wby2QoVCvEtbJMKodRMOR84jjDf7aWXgkTb584n9rVdd0tbParSjGVF6VOezDAFabtEh1OI%2F6%2BoR7zXYRnvzd4X%2Ff6AILuFZATT68eTSJC2HFxLOZFyNwK5UaHcazgr7r2Y3VDFoG8wosAzxQoKzf60lfNOxp3uSnCiW3iajMJZVfnrmdrcJm1lrL36rZIlUMi31dNTiO%2FM2%2BPWlvuG7oTOeGOPgWI1BPT4kxaeDFSKTIgO023c96t%2BHFoGiykJM1aEB07oQbET9xwYyQC9xP%2BUt9guaykrRyKk49jWSLD0jDA6Yf8BTrqAQERSRNIvT9o7Fz%2F9EBlOq6%2BVniEls90rJCfRGl8nhrmCWx9WALsqvCt%2FC9EgkHBDFt7AfUDmSB2RznB6MbSPMgZ%2FTa%2BMFCWckUZY62PV2i5a0IedwDwwylbylWcAygRB1ICjEuA5%2BLIlk4QgqNZsPOt2M7WzdY4OOXGoleGX2kOCOnfMrqeAiXQXIf81j4ML0R3DkjaYIrnTwjZbGXqs3YtZtUIQhugZGuGB7DQ%2BSmETeXIG0bcPzTMXV7WD2rVA%2FJ79x6NaPct3fdxNa5eWlCV0bIDLAjylPB1Be2XpcRSNlW%2FSPSD2ZdLsw%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20201010T182501Z&X-Amz-SignedHeaders=host&X-Amz-Expires=600&X-Amz-Credential=ASIAW3Z5VOU6J6R3F2IZ%2F20201010%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Signature=2e5c0a448acb80d09cb5ac3109231ca9ebe17b9da3c2678402811bb02df94d84"
+    }
+}

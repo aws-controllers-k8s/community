@@ -1,0 +1,17 @@
+apiVersion: lambda.services.k8s.aws/v1alpha1
+kind: Function
+metadata:
+  name: test-function
+  namespace: default
+spec:
+  code:
+    s3Bucket: ack-testing-lambda-98756
+    s3Key: lambda.zip
+  description: lambda created by ack lambda controller
+  environment:
+    variables:
+      key1: ack-service-controller
+  functionName: test-ack-lambda-function
+  handler: lambda
+  role: arn:aws:iam::771174509839:role/lambda-no-permissions 
+  runtime: go1.x
