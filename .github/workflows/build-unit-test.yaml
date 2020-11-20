@@ -38,6 +38,7 @@ jobs:
          - elasticache
          - dynamodb
          - apigatewayv2
+         - sagemaker
     runs-on: ubuntu-latest
     steps:
       - name: checkout code

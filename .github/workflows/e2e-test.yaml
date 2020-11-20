@@ -17,6 +17,7 @@ jobs:
          - elasticache
          - dynamodb
          - apigatewayv2
+         - sagemaker
     runs-on: [self-hosted, aws-controllers-k8s]
     steps:
       - name: Set up Go 1.15
