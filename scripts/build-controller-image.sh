@@ -25,19 +25,21 @@ Example: $(basename "$0") ecr
 <aws_service> should be an AWS Service name (ecr, sns, sqs, petstore, bookstore)
 
 Environment variables:
-  QUIET:                    Build controller container image quietly (<true|false> Default: false)
-  AWS_SERVICE_DOCKER_IMG:   Controller container image tag (Default: ack-<service>-controller:$VERSION)
+  QUIET:                    Build controller container image quietly (<true|false>) 
+                            Default: false
+  AWS_SERVICE_DOCKER_IMG:   Controller container image tag 
+                            Default: aws-controllers-k8s:$AWS_SERVICE-$VERSION
 "
 
 if [ $# -ne 1 ]; then
     echo "AWS_SERVICE is not defined. Script accepts one parameter, the <AWS_SERVICE> to build a container image of that service" 1>&2
-    echo "$USAGE"
+    echo "${USAGE}"
     exit 1
 fi
 
 AWS_SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 QUIET=${QUIET:-"false"}
-DEFAULT_AWS_SERVICE_DOCKER_IMG="ack-${AWS_SERVICE}-controller:${VERSION}"
+DEFAULT_AWS_SERVICE_DOCKER_IMG="aws-controllers-k8s:$AWS_SERVICE-$VERSION"
 : "${AWS_SERVICE_DOCKER_IMG:="$DEFAULT_AWS_SERVICE_DOCKER_IMG"}"
 : "${DOCKERFILE:="$DOCKERFILE_PATH"}"
 
