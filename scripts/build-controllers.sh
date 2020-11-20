@@ -7,37 +7,21 @@ set -E
 DIR=$(cd "$(dirname "$0")"; pwd)
 source "$DIR"/lib/common.sh
 
-: "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
+ACK_GENERATE_CACHE_DIR=${ACK_GENERATE_CACHE_DIR:-"~/.cache/aws-controllers-k8s"}
 export ACK_GENERATE_CACHE_DIR
 
 USAGE="
 Usage:
-  $(basename "$0") [options] <services>
+  $(basename "$0") <services>
 
 <services> should be a space-delimited list of AWS service API
 aliases that you wish to build -- e.g. 's3 sns sqs'
 
-Options:
-  -c    Overrides the directory used for caching AWS API models
+Environment variables:
+  ACK_GENERATE_CACHE_DIR:         Overrides the directory used for caching AWS API model.
+                                  Default: ~/.cache/aws-controllers-k8s
 "
 
-while getopts ":c:" opt; do
-    case "$opt" in
-        c )
-            ACK_GENERATE_CACHE_DIR="$OPTARG"
-            ;;
-        \? )
-            echo "ERROR: Invalid option specified: -$OPTARG" 1>&2
-            echo "$USAGE"
-            exit 1
-            ;;
-        : )
-            echo "Invalid option: $OPTARG requires an argument" 1>&2
-            echo "$USAGE"
-            exit 1
-            ;;
-    esac
-done
 shift $(( OPTIND - 1))
 
 SERVICES=()
