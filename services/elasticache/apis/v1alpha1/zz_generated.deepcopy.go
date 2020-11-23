@@ -1989,6 +1989,28 @@ func (in *ReplicationGroupStatus) DeepCopyInto(out *ReplicationGroupStatus) {
 		*out = new(ReplicationGroupPendingModifiedValues)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ScaleDownModifications != nil {
+		in, out := &in.ScaleDownModifications, &out.ScaleDownModifications
+		*out = make([]*string, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(string)
+				**out = **in
+			}
+		}
+	}
+	if in.ScaleUpModifications != nil {
+		in, out := &in.ScaleUpModifications, &out.ScaleUpModifications
+		*out = make([]*string, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(string)
+				**out = **in
+			}
+		}
+	}
 	if in.SnapshottingClusterID != nil {
 		in, out := &in.SnapshottingClusterID, &out.SnapshottingClusterID
 		*out = new(string)

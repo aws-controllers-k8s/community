@@ -79,6 +79,8 @@ type ReplicationGroupStatus struct {
 	MultiAZ                    *string                                `json:"multiAZ,omitempty"`
 	NodeGroups                 []*NodeGroup                           `json:"nodeGroups,omitempty"`
 	PendingModifiedValues      *ReplicationGroupPendingModifiedValues `json:"pendingModifiedValues,omitempty"`
+	ScaleDownModifications     []*string                              `json:"scaleDownModifications,omitempty"`
+	ScaleUpModifications       []*string                              `json:"scaleUpModifications,omitempty"`
 	SnapshottingClusterID      *string                                `json:"snapshottingClusterID,omitempty"`
 	Status                     *string                                `json:"status,omitempty"`
 }

@@ -10,6 +10,11 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+    status_fields:
+      - operation_id: ListAllowedNodeTypeModifications
+        member_name: ScaleUpModifications
+      - operation_id: ListAllowedNodeTypeModifications
+        member_name: ScaleDownModifications
   Snapshot:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:
