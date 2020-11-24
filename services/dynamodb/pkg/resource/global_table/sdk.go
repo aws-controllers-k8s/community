@@ -59,7 +59,7 @@ func (rm *resourceManager) sdkFind(
 	resp, respErr := rm.sdkapi.DescribeGlobalTableWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_ONE", "DescribeGlobalTable", respErr)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "GlobalTableNotFoundException" {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr

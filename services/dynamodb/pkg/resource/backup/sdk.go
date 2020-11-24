@@ -59,7 +59,7 @@ func (rm *resourceManager) sdkFind(
 	_, respErr := rm.sdkapi.DescribeBackupWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_ONE", "DescribeBackup", respErr)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "UNKNOWN" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "BackupNotFoundException" {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr
