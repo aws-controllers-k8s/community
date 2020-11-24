@@ -41,40 +41,47 @@ k8s_resource_exists() {
 }
 
 # get_field_from_status returns the field from status of a K8s resource
-# get_field_from_status accepts three parameters. namespace (which is an optional parameter),
-# resource_name and status_field
+# get_field_from_status accepts the following parameters:
+#   $1: resource_name, format: CR_Kind/Instance
+#   $2: status_field
+#   $3 (optional): Namespace
+#   $4 (optional): Timeout to wait for the field to populate
+# To pass only timout and skip namespace use:
+# get_field_from_status resource_name status_field "" [timeout]
 get_field_from_status() {
 
-  if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
-    echo "[FAIL] Usage: get_field_from_status [namespace] resource_name status_field"
+  if [[ "$#" -lt 2 || "$#" -gt 5 ]]; then
+    echo "[FAIL] Usage: get_field_from_status resource_name status_field [namespace] [timeout]"
     exit 1
   fi
 
-  local __namespace=""
-  local __resource_name=""
-  local __status_field=""
-
-  if [[ "$#" -eq 2 ]]; then
-    __resource_name="$1"
-    __status_field="$2"
-  else
-    __namespace="$1"
-    __resource_name="$2"
-    __status_field="$3"
-  fi
+  local __resource_name="$1"
+  local __status_field="$2"
+  local __namespace="${3:-default}"
+  local __timeout="${4:-20}"
+  local __retry_interval=5
 
   local __args=""
   if [ -n "$__namespace" ]; then
       __args="$__args-n $__namespace"
   fi
 
+  local __id=""
+  while [ "$__timeout" -gt 0 ]; do
+    local __id=$(kubectl get $__args "$__resource_name" -o=json | jq -r .status."$__status_field")
+    if [[ ( -n "$__id" && "$__id" != "null" ) ]];then
+      break
+    fi
+    sleep "$__retry_interval"
+    __timeout=$(($__timeout-$__retry_interval))
+  done
 
-  local __id=$(kubectl get $__args "$__resource_name" -o=json | jq -r .status."$__status_field")
-  if [[ -z "$__id" ]];then
+  if [[ ( -z "$__id" || "$__id" == "null") ]];then
     echo "FAIL: $__resource_name resource's status does not have $__status_field field"
     exit 1
+  else
+    echo "$__id"
   fi
-  echo "$__id"
 }
 
 # k8s_controller_reload_credentials generates AWS temporary credentials

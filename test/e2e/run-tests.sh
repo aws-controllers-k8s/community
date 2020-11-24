@@ -35,7 +35,8 @@ if [ ! -d "$service_test_dir" ]; then
     exit 0
 fi
 
-service_test_files=$( find "$service_test_dir" -type f ! -name '.*' | sort )
+# find all files except under helper directory
+service_test_files=$( find "$service_test_dir" -name helper -prune -false -o -type f ! -name '.*' | sort )
 
 for service_test_file in $service_test_files; do
     test_name=$( filenoext "$service_test_file" )
