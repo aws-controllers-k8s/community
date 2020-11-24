@@ -74,6 +74,7 @@ type ReplicationGroupStatus struct {
 	ClusterEnabled             *bool                                  `json:"clusterEnabled,omitempty"`
 	ConfigurationEndpoint      *Endpoint                              `json:"configurationEndpoint,omitempty"`
 	Description                *string                                `json:"description,omitempty"`
+	Events                     []*Event                               `json:"events,omitempty"`
 	GlobalReplicationGroupInfo *GlobalReplicationGroupInfo            `json:"globalReplicationGroupInfo,omitempty"`
 	MemberClusters             []*string                              `json:"memberClusters,omitempty"`
 	MultiAZ                    *string                                `json:"multiAZ,omitempty"`

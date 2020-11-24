@@ -42,6 +42,7 @@ type CacheParameterGroupStatus struct {
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+	Events     []*Event                 `json:"events,omitempty"`
 	IsGlobal   *bool                    `json:"isGlobal,omitempty"`
 	Parameters []*Parameter             `json:"parameters,omitempty"`
 }

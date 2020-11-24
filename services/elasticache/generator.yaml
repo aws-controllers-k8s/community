@@ -3,6 +3,9 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
+    status_fields:
+      - operation_id: DescribeEvents
+        member_name: Events
   ReplicationGroup:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:
@@ -15,6 +18,8 @@ resources:
         member_name: ScaleUpModifications
       - operation_id: ListAllowedNodeTypeModifications
         member_name: ScaleDownModifications
+      - operation_id: DescribeEvents
+        member_name: Events
   Snapshot:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:
@@ -42,9 +47,13 @@ resources:
     status_fields:
       - operation_id: DescribeCacheParameters
         member_name: Parameters
+      - operation_id: DescribeEvents
+        member_name: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
 operations:
+  DescribeCacheSubnetGroups:
+    set_output_custom_method_name: CustomDescribeCacheSubnetGroupsSetOutput
   DescribeReplicationGroups:
     set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
   CreateReplicationGroup:

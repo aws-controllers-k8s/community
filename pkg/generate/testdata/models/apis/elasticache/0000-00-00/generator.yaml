@@ -1,4 +1,11 @@
 resources:
+  CacheSubnetGroup:
+    exceptions:
+      codes:
+        404: CacheSubnetGroupNotFoundFault
+    status_fields:
+      - operation_id: DescribeEvents
+        member_name: Events
   Snapshot:
     spec_fields:
       - operation_id: CopySnapshot
@@ -18,8 +25,14 @@ resources:
     status_fields:
       - operation_id: DescribeCacheParameters
         member_name: Parameters
+      - operation_id: DescribeEvents
+        member_name: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
+  ReplicationGroup:
+    status_fields:
+      - operation_id: DescribeEvents
+        member_name: Events
 operations:
   ModifyReplicationGroup:
     override_values:
