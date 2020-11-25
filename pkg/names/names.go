@@ -150,6 +150,7 @@ type Names struct {
 	Original     string
 	Camel        string
 	CamelLower   string
+	Lower        string
 	Snake        string
 }
 
@@ -158,6 +159,7 @@ func New(original string) Names {
 		Original:   original,
 		Camel:      goName(original, false, false),
 		CamelLower: goName(original, true, false),
+		Lower:      strings.ToLower(original),
 		Snake:      goName(original, false, true),
 	}
 }

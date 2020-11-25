@@ -486,12 +486,12 @@ func New(
 	if configPath == "" {
 		return defaultConfig, nil
 	}
-	contents, err := ioutil.ReadFile(configPath)
+	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return Config{}, err
 	}
 	gc := defaultConfig
-	if err = yaml.Unmarshal(contents, &gc); err != nil {
+	if err = yaml.Unmarshal(content, &gc); err != nil {
 		return Config{}, err
 	}
 	return gc, nil
