@@ -16,6 +16,8 @@ package replication_group
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-controllers-k8s/pkg/requeue"
+	"github.com/pkg/errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,8 +42,17 @@ func provideResourceManager() *resourceManager {
 
 // provideResource returns pointer to resource
 func provideResource() *resource {
+	return provideResourceWithStatus("available")
+}
+
+// provideResource returns pointer to resource
+func provideResourceWithStatus(rgStatus string) *resource {
 	return &resource{
-		ko: &svcapitypes.ReplicationGroup{},
+		ko: &svcapitypes.ReplicationGroup{
+			Status: svcapitypes.ReplicationGroupStatus{
+				Status: &rgStatus,
+			},
+		},
 	}
 }
 
@@ -215,6 +226,69 @@ func TestCustomModifyReplicationGroup(t *testing.T) {
 	t.Run("NoAction=NoDiff", func(t *testing.T) {
 		desired := provideResource()
 		latest := provideResource()
+		var diffReporter ackcompare.Reporter
+		var ctx context.Context
+		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
+		assert.Nil(res)
+		assert.Nil(err)
+	})
+}
+
+func TestCustomModifyReplicationGroup_Unavailable(t *testing.T) {
+	assert := assert.New(t)
+	// Setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("UnavailableRG=Requeue", func(t *testing.T) {
+		desired := provideResource()
+		latest := provideResourceWithStatus("modifying")
+		var diffReporter ackcompare.Reporter
+		var ctx context.Context
+		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
+		assert.Nil(res)
+		assert.NotNil(err)
+		var requeueNeededAfter *requeue.RequeueNeededAfter
+		assert.True(errors.As(err, &requeueNeededAfter))
+	})
+}
+
+func TestCustomModifyReplicationGroup_NodeGroup_Unvailable(t *testing.T) {
+	assert := assert.New(t)
+	// Setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("UnavailableNodeGroup=Requeue", func(t *testing.T) {
+		desired := provideResource()
+		latest := provideResource()
+		latest.ko.Status.NodeGroups = provideNodeGroups("1001")
+		unavailableStatus := "modifying"
+		for _, nodeGroup := range latest.ko.Status.NodeGroups {
+			nodeGroup.Status = &unavailableStatus
+		}
+		var diffReporter ackcompare.Reporter
+		var ctx context.Context
+		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
+		assert.Nil(res)
+		assert.NotNil(err)
+		var requeueNeededAfter *requeue.RequeueNeededAfter
+		assert.True(errors.As(err, &requeueNeededAfter))
+	})
+}
+
+func TestCustomModifyReplicationGroup_NodeGroup_available(t *testing.T) {
+	assert := assert.New(t)
+	// Setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("availableNodeGroup=NoDiff", func(t *testing.T) {
+		desired := provideResource()
+		desired.ko.Status.NodeGroups = provideNodeGroups("1001")
+		latest := provideResource()
+		latest.ko.Status.NodeGroups = provideNodeGroups("1001")
+		unavailableStatus := "available"
+		for _, nodeGroup := range latest.ko.Status.NodeGroups {
+			nodeGroup.Status = &unavailableStatus
+		}
 		var diffReporter ackcompare.Reporter
 		var ctx context.Context
 		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
