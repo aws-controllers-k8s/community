@@ -207,13 +207,6 @@ func (r *reconciler) sync(
 			"diff", diffReporter.String(),
 			"arn", latest.Identifiers().ARN(),
 		)
-		// Before we update the backend AWS service resources, let's first update
-		// the latest status of CR which was retrieved by ReadOne call.
-		// Else, latest read status is lost in-case Update call fails with error.
-		err = r.patchResource(ctx, desired, latest)
-		if err != nil {
-			return err
-		}
 		latest, err = rm.Update(ctx, desired, latest, diffReporter)
 		if err != nil {
 			if latest != nil {

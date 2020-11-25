@@ -96,7 +96,7 @@ func (rm *resourceManager) provideDelta(
 	for latestParameterName, latestParameterNameValue := range latestPametersMap {
 		desiredParameterNameValue, found := desiredPametersMap[latestParameterName]
 		if found && desiredParameterNameValue != nil &&
-			desiredParameterNameValue.ParameterValue != nil && *desiredParameterNameValue.ParameterValue != ""{
+			desiredParameterNameValue.ParameterValue != nil && *desiredParameterNameValue.ParameterValue != "" {
 			if *desiredParameterNameValue.ParameterValue != *latestParameterNameValue.ParameterValue {
 				// available in both desired, latest but values differ
 				modified := *desiredParameterNameValue
