@@ -568,6 +568,108 @@ wait_and_assert_replication_group_available_status() {
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
 
+#################################################
+# snapshot-specific functions
+#################################################
+# aws_wait_replication_group_deleted waits for the given snapshot to not exist in AWS
+# aws_wait_snapshot_deleted requires one argument:
+#   snapshot_id: the name of the snapshot to ensure deletion of
+aws_wait_snapshot_deleted() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} sanapshot_id"
+    exit 1
+  fi
+  local snapshot_id="$1"
+
+  local wait_failed="true"
+  for i in $(seq 0 9); do
+    sleep 30
+    local len=$(daws elasticache describe-snapshots --snapshot-name "$snapshot_id" --output json | jq -r ".Snapshots | length")
+    if [[ "$len" == 0 ]]; then
+      wait_failed="false"
+      break
+    fi
+  done
+
+  assert_equal "false" "$wait_failed" "Expected snapshot $snapshot_id to be deleted" || exit 1
+}
+
+#################################################
+# generic resource testing functions
+#################################################
+# k8s_wait_resource_synced checks the given resource for an ACK.ResourceSynced condition in its
+#   k8s status.conditions property. Times out if condition has not been met for a long time. This function
+#   is intended to be used after yaml application to await creation of a resource.
+# k8s_wait_resource_synced requires 2 arguments:
+#   k8s_resource_name: the name of the resource, e.g. "snapshots/test-snapshot"
+#   wait_periods: the number of 30-second periods to wait for the resource before timing out
+k8s_wait_resource_synced() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} k8s_resource_name wait_periods"
+    exit 1
+  fi
+
+  local k8s_resource_name="$1"
+  local wait_periods="$2"
+
+  kubectl get "$k8s_resource_name" 1>/dev/null 2>&1
+  assert_equal "0" "$?" "Resource $k8s_resource_name doesn't exist in k8s cluster" || exit 1
+
+  local wait_failed="true"
+  for i in $(seq 1 "$wait_periods"); do
+    sleep 30
+
+    # ensure we at least have .status.conditions
+    local conditions=$(kubectl get "$k8s_resource_name" -o json | jq -r -e ".status.conditions[]")
+    assert_equal "0" "$?" "Expected .status.conditions property to exist for $k8s_resource_name" || exit 1
+
+    # this condition should probably always exist, regardless of the value
+    local synced_cond=$(echo $conditions | jq -r -e 'select(.type == "ACK.ResourceSynced")')
+    assert_equal "0" "$?" "Expected ACK.ResourceSynced condition to exist for $k8s_resource_name" || exit 1
+
+    # check value of condition; continue if not yet set True
+    local cond_status=$(echo $synced_cond | jq -r -e ".status")
+    if [[ "$cond_status" == "True" ]]; then
+      wait_failed="false"
+      break
+    fi
+  done
+
+  assert_equal "false" "$wait_failed" "Wait for resource $k8s_resource_name to be synced timed out" || exit 1
+}
+
+# k8s_check_resource_terminal_condition_true asserts that the terminal condition of the given resource
+#   exists, has status "True", and that the message associated with the terminal condition matches the
+#   one provided.
+# k8s_check_resource_terminal_condition_true requires 2 arguments:
+#   k8s_resource_name: the name of the resource, e.g. "snapshots/test-snapshot"
+#   expected_substring: a substring of the expected message associated with the terminal condition
+k8s_check_resource_terminal_condition_true() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
+    exit 1
+  fi
+  local k8s_resource_name="$1"
+  local expected_substring="$2"
+
+  local resource_json=$(kubectl get "$k8s_resource_name" -o json)
+  assert_equal "0" "$?" "Expected $k8s_resource_name to exist in k8s cluster" || exit 1
+
+  local terminal_cond=$(echo $resource_json | jq -r -e ".status.conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
+  assert_equal "0" "$?" "Expected resource $k8s_resource_name to have a terminal condition" || exit 1
+
+  local status=$(echo $terminal_cond | jq -r ".status")
+  assert_equal "True" "$status" "expected status of terminal condition to be True for resource $k8s_resource_name" || exit 1
+
+  local cond_msg=$(echo $terminal_cond | jq -r ".message")
+  if [[ $cond_msg != *"$expected_substring"* ]]; then
+    echo "FAIL: resource $k8s_resource_name has terminal condition set True, but with message different than expected"
+    exit 1
+  fi
+}
 
 #################################################
 # variables and functions for Cache Parameter Group

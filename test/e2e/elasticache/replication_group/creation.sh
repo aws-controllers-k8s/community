@@ -3,7 +3,7 @@
 # replication group creation tests: testing valid and invalid inputs
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ROOT_DIR="$THIS_DIR/../../../../.."
+ROOT_DIR="$THIS_DIR/../../../.."
 SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$SCRIPTS_DIR/lib/common.sh"
@@ -16,6 +16,7 @@ check_is_installed jq "Please install jq before running this script."
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test group: $service_name/$test_name------------------------------"
+debug_msg "selected AWS region: $AWS_REGION"
 
 # attempt creation of replication group with numeric name: negative test, expect failure
 test_create_rg_numeric_name() {
