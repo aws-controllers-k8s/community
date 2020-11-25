@@ -757,9 +757,6 @@ func (r *CRD) GoCodeSetInput(
 
 		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
-			continue
-		}
 
 		// we construct variables containing temporary storage for sub-elements
 		// and sub-fields that are structs. Names of fields are "f" appended by
@@ -1258,9 +1255,6 @@ func (r *CRD) goCodeSetInputForContainer(
 			for memberIndex, memberName := range shape.MemberNames() {
 				memberShapeRef := shape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
-				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
-					continue
-				}
 				cleanMemberNames := names.New(memberName)
 				cleanMemberName := cleanMemberNames.Camel
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
@@ -1671,9 +1665,6 @@ func (r *CRD) GoCodeSetOutput(
 		}
 
 		sourceMemberShape := sourceMemberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
-			continue
-		}
 
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
@@ -1873,9 +1864,6 @@ func (r *CRD) goCodeSetOutputReadMany(
 	for memberIndex, memberName := range sourceElemShape.MemberNames() {
 		sourceMemberShapeRef := sourceElemShape.MemberRefs[memberName]
 		sourceMemberShape := sourceMemberShapeRef.Shape
-		if r.genCfg.IsIgnoredShape(sourceMemberShape.ShapeName) {
-			continue
-		}
 		sourceAdaptedVarName := "elem." + memberName
 		if r.IsPrimaryARNField(memberName) {
 			out += fmt.Sprintf(
@@ -2199,9 +2187,6 @@ func (r *CRD) goCodeSetOutputForContainer(
 				memberVarName := fmt.Sprintf("%sf%d", targetVarName, memberIndex)
 				memberShapeRef := sourceShape.MemberRefs[memberName]
 				memberShape := memberShapeRef.Shape
-				if r.genCfg.IsIgnoredShape(memberShape.ShapeName) {
-					continue
-				}
 				cleanNames := names.New(memberName)
 				sourceAdaptedVarName := sourceVarName + "." + memberName
 				out += fmt.Sprintf(

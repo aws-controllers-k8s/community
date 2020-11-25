@@ -87,9 +87,6 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			if memberShapeRef.Shape == nil {
 				return nil, ackmodel.ErrNilShapePointer
 			}
-			if g.cfg.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
 			renamedName, _ := crd.InputFieldRename(
 				createOp.Name, memberName,
 			)
@@ -128,9 +125,6 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			}
 		}
 		for memberName, memberShapeRef := range outputShape.MemberRefs {
-			if g.cfg.IsIgnoredShape(memberShapeRef.Shape.ShapeName) {
-				continue
-			}
 			if memberShapeRef.Shape == nil {
 				return nil, ackmodel.ErrNilShapePointer
 			}
@@ -237,9 +231,6 @@ func (g *Generator) GetTypeDefs() ([]*ackmodel.TypeDef, map[string]string, error
 			// Neither are exceptions
 			continue
 		}
-		if g.cfg.IsIgnoredShape(shapeName) {
-			continue
-		}
 		tdefNames := names.New(shapeName)
 		if g.SDKAPI.HasConflictingTypeName(shapeName, g.cfg) {
 			tdefNames.Camel += ackmodel.ConflictingNameSuffix
@@ -250,9 +241,6 @@ func (g *Generator) GetTypeDefs() ([]*ackmodel.TypeDef, map[string]string, error
 		for memberName, memberRef := range shape.MemberRefs {
 			memberNames := names.New(memberName)
 			memberShape := memberRef.Shape
-			if g.cfg.IsIgnoredShape(memberShape.ShapeName) {
-				continue
-			}
 			if !g.IsShapeUsedInCRDs(memberShape.ShapeName) {
 				continue
 			}
@@ -374,6 +362,36 @@ func (g *Generator) GetEnumDefs() ([]*ackmodel.EnumDef, error) {
 	return edefs, nil
 }
 
+// ApplyShapeIgnoreRules removes the ignored shapes and fields from the API object
+// so that they are not considered in any of the calculations of code generator.
+func (g *Generator) ApplyShapeIgnoreRules() {
+	if g.cfg == nil || g.SDKAPI == nil {
+		return
+	}
+	for sdkShapeId, shape := range g.SDKAPI.API.Shapes {
+		for _, fieldpath := range g.cfg.Ignore.FieldPaths {
+			sn := strings.Split(fieldpath, ".")[0]
+			fn := strings.Split(fieldpath, ".")[1]
+			if shape.ShapeName != sn {
+				continue
+			}
+			delete(shape.MemberRefs, fn)
+		}
+		for _, sn := range g.cfg.Ignore.ShapeNames {
+			if shape.ShapeName == sn {
+				delete(g.SDKAPI.API.Shapes, sdkShapeId)
+				continue
+			}
+			// NOTE(muvaf): We need to remove the usage of the shape as well.
+			for sdkMemberId, memberRef := range shape.MemberRefs {
+				if memberRef.ShapeName == sn {
+					delete(shape.MemberRefs, sdkMemberId)
+				}
+			}
+		}
+	}
+}
+
 // New returns a new Generator struct for a supplied API model.
 // Optionally, pass a file path to a generator config file that can be used to
 // instruct the code generator how to handle the API properly
@@ -384,18 +402,19 @@ func New(
 	templateBasePath string,
 	defaultConfig ackgenconfig.Config,
 ) (*Generator, error) {
-	gc, err := ackgenconfig.New(configPath, defaultConfig)
+	cfg, err := ackgenconfig.New(configPath, defaultConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	return &Generator{
+	g := &Generator{
 		SDKAPI: SDKAPI,
 		// TODO(jaypipes): Handle cases where service alias and service ID
 		// don't match (Step Functions)
 		serviceAlias:     SDKAPI.ServiceID(),
 		apiVersion:       apiVersion,
 		templateBasePath: templateBasePath,
-		cfg:              &gc,
-	}, nil
+		cfg:              &cfg,
+	}
+	g.ApplyShapeIgnoreRules()
+	return g, nil
 }

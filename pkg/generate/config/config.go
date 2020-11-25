@@ -82,6 +82,10 @@ type IgnoreSpec struct {
 	// Set of shapes to ignore when constructing API type definitions and
 	// associated SDK code for structs that have these shapes as members
 	ShapeNames []string `json:"shape_names"`
+	// Set of field paths to ignore. The name here should be the original name of
+	// the field as it appears in AWS SDK objects. You can refer to a field by
+	// giving its "<shape_name>.<field_name>". For example, "CreateApiInput.Name".
+	FieldPaths []string `json:"field_paths"`
 }
 
 // ResourceConfig represents instructions to the ACK code generator
@@ -356,15 +360,6 @@ func (c *Config) SetAttributesSingleAttribute(resourceName string) bool {
 		return false
 	}
 	return resGenConfig.UnpackAttributesMapConfig.SetAttributesSingleAttribute
-}
-
-// IsIgnoredShape returns true if the supplied shape name should be ignored by the
-// code generator, false otherwise
-func (c *Config) IsIgnoredShape(shapeName string) bool {
-	if c == nil || len(c.Ignore.ShapeNames) == 0 {
-		return false
-	}
-	return util.InStrings(shapeName, c.Ignore.ShapeNames)
 }
 
 // OverrideValues gives list of member values to override.
