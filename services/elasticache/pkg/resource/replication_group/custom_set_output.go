@@ -18,6 +18,7 @@ import (
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	"github.com/aws/aws-sdk-go/service/elasticache"
+	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -93,4 +94,32 @@ func (rm *resourceManager) customSetOutput(
 		resourceSyncedCondition.Status = syncConditionStatus
 	}
 
+	if rgStatus != nil && (*rgStatus == "available" || *rgStatus == "snapshotting") {
+		input, err := rm.newListAllowedNodeTypeModificationsPayLoad(respRG)
+
+		if err == nil {
+			resp, apiErr := rm.sdkapi.ListAllowedNodeTypeModifications(input)
+			// Overwrite the values for ScaleUp and ScaleDown
+			if apiErr == nil {
+				ko.Status.ScaleDownModifications = resp.ScaleDownModifications
+				ko.Status.ScaleUpModifications = resp.ScaleUpModifications
+			}
+		}
+	} else {
+		ko.Status.ScaleDownModifications = nil
+		ko.Status.ScaleUpModifications = nil
+	}
+}
+
+// newListAllowedNodeTypeModificationsPayLoad returns an SDK-specific struct for the HTTP request
+// payload of the ListAllowedNodeTypeModifications API call.
+func (rm *resourceManager) newListAllowedNodeTypeModificationsPayLoad(respRG *elasticache.ReplicationGroup) (
+	*svcsdk.ListAllowedNodeTypeModificationsInput, error) {
+	res := &svcsdk.ListAllowedNodeTypeModificationsInput{}
+
+	if respRG.ReplicationGroupId != nil {
+		res.SetReplicationGroupId(*respRG.ReplicationGroupId)
+	}
+
+	return res, nil
 }
