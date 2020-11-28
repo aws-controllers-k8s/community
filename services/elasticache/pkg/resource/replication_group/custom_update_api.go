@@ -35,12 +35,22 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 ) (*resource, error) {
 
 	latestRGStatus := latest.ko.Status.Status
-	if latestRGStatus != nil && *latestRGStatus != "available" {
+
+	allNodeGroupsAvailable := true
+	if latest.ko.Status.NodeGroups != nil {
+		for _, nodeGroup := range latest.ko.Status.NodeGroups {
+			if nodeGroup.Status == nil || *nodeGroup.Status != "available" {
+				allNodeGroupsAvailable = false
+				break
+			}
+		}
+	}
+	if latestRGStatus == nil || *latestRGStatus != "available" || !allNodeGroupsAvailable {
 		return nil, requeue.NeededAfter(
 			errors.New("Replication Group can not be modified, it is not in 'available' state."),
 			requeue.DefaultRequeueAfterDuration)
 	}
-
+	
 	// Order of operations when diffs map to multiple updates APIs:
 	// 1. When automaticFailoverEnabled differs:
 	//		if automaticFailoverEnabled == false; do nothing in this custom logic, let the modify execute first.
