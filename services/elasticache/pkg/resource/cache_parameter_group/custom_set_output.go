@@ -32,14 +32,12 @@ func (rm *resourceManager) CustomDescribeCacheParameterGroupsSetOutput(
 		return ko, nil
 	}
 	cpg := resp.CacheParameterGroups[0]
-	source := "user"
-	parameterNameValues, err := rm.describeCacheParameters(ctx, cpg.CacheParameterGroupName, &source)
-	if err != nil {
-		return nil, err
+	// Populate latest.ko.Spec.ParameterNameValues with latest parameter values
+	// Populate latest.ko.Status.Parameters with latest detailed parameters
+	error := rm.customSetOutputDescribeCacheParameters(ctx, cpg.CacheParameterGroupName, ko)
+	if error != nil {
+		return nil, error
 	}
-
-	ko.Spec.ParameterNameValues = parameterNameValues
-
 	return ko, nil
 }
 

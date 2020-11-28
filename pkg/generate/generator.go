@@ -103,7 +103,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 		specFieldConfigs, ok := g.cfg.SpecFieldConfigs(crdName)
 		if ok {
 			for _, specField := range specFieldConfigs {
-				memberShapeRef, found := g.SDKAPI.GetMemberShapeRef(specField.OperationID, specField.MemberName)
+				memberShapeRef, found := g.SDKAPI.GetMemberInputShapeRef(specField.OperationID, specField.MemberName)
 				if found {
 					crd.AddSpecField(names.New(specField.MemberName), memberShapeRef)
 				}
@@ -148,7 +148,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 		// Now add the additional Status fields that are required from other API operations.
 		if statusFieldConfigs, ok := g.cfg.StatusFieldConfigs(crdName); ok {
 			for _, statusField := range statusFieldConfigs {
-				memberShapeRef, found := g.SDKAPI.GetMemberShapeRef(statusField.OperationID, statusField.MemberName)
+				memberShapeRef, found := g.SDKAPI.GetMemberOutputShapeRef(statusField.OperationID, statusField.MemberName)
 				if found {
 					crd.AddStatusField(names.New(statusField.MemberName), memberShapeRef)
 				}

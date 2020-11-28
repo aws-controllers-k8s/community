@@ -22,13 +22,46 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// customSetOutputDescribeCacheParameters queries cache parameters for given cache parameter group
+// and sets parameter name, value for 'user' source type parameters in supplied ko.Spec
+// and sets detailed parameters for both 'user', 'system' source types parameters in supplied ko.Status
+func (rm *resourceManager) customSetOutputDescribeCacheParameters(
+	ctx context.Context,
+	cacheParameterGroupName *string,
+	ko *svcapitypes.CacheParameterGroup,
+) error {
+	// Populate latest.ko.Spec.ParameterNameValues with latest 'user' parameter values
+	source := "user"
+	parameters, err := rm.describeCacheParameters(ctx, cacheParameterGroupName, &source)
+	if err != nil {
+		return err
+	}
+	parameterNameValues := []*svcapitypes.ParameterNameValue{}
+	for _, p := range parameters {
+		sp := svcapitypes.ParameterNameValue{
+			ParameterName:  p.ParameterName,
+			ParameterValue: p.ParameterValue,
+		}
+		parameterNameValues = append(parameterNameValues, &sp)
+	}
+	ko.Spec.ParameterNameValues = parameterNameValues
+
+	// Populate latest.ko.Status.Parameters with latest all (user, system) detailed parameters
+	parameters, err = rm.describeCacheParameters(ctx, cacheParameterGroupName, nil)
+	if err != nil {
+		return err
+	}
+	ko.Status.Parameters = parameters
+	return nil
+}
+
 // describeCacheParameters returns Cache Parameters for given Cache Parameter Group name and source
 func (rm *resourceManager) describeCacheParameters(
 	ctx context.Context,
 	cacheParameterGroupName *string,
 	source *string,
-) ([]*svcapitypes.ParameterNameValue, error) {
-	parameterNameValues := []*svcapitypes.ParameterNameValue{}
+) ([]*svcapitypes.Parameter, error) {
+	parameters := []*svcapitypes.Parameter{}
 	var paginationMarker *string = nil
 	for {
 		input, err := rm.newDescribeCacheParametersRequestPayload(cacheParameterGroupName, source, paginationMarker)
@@ -48,13 +81,17 @@ func (rm *resourceManager) describeCacheParameters(
 			break
 		}
 		for _, p := range response.Parameters {
-			name := *p.ParameterName
-			value := *p.ParameterValue
-			sp := svcapitypes.ParameterNameValue{
-				ParameterName:  &name,
-				ParameterValue: &value,
+			sp := svcapitypes.Parameter{
+				ParameterName:        p.ParameterName,
+				ParameterValue:       p.ParameterValue,
+				Source:               p.Source,
+				Description:          p.Description,
+				IsModifiable:         p.IsModifiable,
+				DataType:             p.DataType,
+				AllowedValues:        p.AllowedValues,
+				MinimumEngineVersion: p.MinimumEngineVersion,
 			}
-			parameterNameValues = append(parameterNameValues, &sp)
+			parameters = append(parameters, &sp)
 		}
 		paginationMarker = response.Marker
 		if paginationMarker == nil || *paginationMarker == "" ||
@@ -63,7 +100,7 @@ func (rm *resourceManager) describeCacheParameters(
 		}
 	}
 
-	return parameterNameValues, nil
+	return parameters, nil
 }
 
 // newDescribeCacheParametersRequestPayload returns SDK-specific struct for the HTTP request

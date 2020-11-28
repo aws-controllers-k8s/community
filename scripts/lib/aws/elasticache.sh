@@ -774,3 +774,71 @@ assert_parameters_name_value() {
   local actual_parameter_value=$(echo $actual_parameters | jq ".[]" | jq -r "select(.ParameterName == \"$parameter_name\") | .ParameterValue")
   assert_equal "$expected_value" "$actual_parameter_value" "Expected: $expected_value found: "$actual_parameter_value" for parameter: $parameter_name" || exit 1
 }
+
+# k8s_get_cpg_field retrieves the JSON of the requested status field for Cache Parameter Group
+# k8s_get_cpg_field requires 2 arguments:
+# - cache_parameter_group_name
+# - property_selector: jq_filter – the status field of interest, e.g. ".status.parameters[].parameterName"
+k8s_get_cpg_field() {
+  if [[ $# -ne 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name jq_filter"
+    exit 1
+  fi
+  local cpg_name="$1"
+  local jq_filter="$2"
+  echo $(kubectl get CacheParameterGroup/"$cpg_name" -o json | jq -r "$jq_filter")
+}
+
+# asserts given parameter field value in given parameters array for given parameter
+# it accepts 4 arguments
+# - actual_parameters[] - json array containing elements of structure, example:
+#      {
+#          "allowedValues": "yes,no",
+#          "dataType": "string",
+#          "description": "Enabled active memory defragmentation",
+#          "isModifiable": true,
+#          "minimumEngineVersion": "5.0.0",
+#          "parameterName": "activedefrag",
+#          "parameterValue": "yes",
+#          "source": "user"
+#      },
+# - parameter_name
+# - field_name_to_validate
+# - expected_field_value
+assert_parameters_details() {
+  if [[ $# -ne 4 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} actual_parameters[] parameter_name field_name_to_validate expected_field_value"
+    exit 1
+  fi
+  local actual_parameters="$1"
+  local parameter_name="$2"
+  local field_name_to_validate="$3"
+  local expected_field_value="$4"
+
+  local actual_parameter_value=$(echo $actual_parameters | jq ".[]" | jq -r "select(.parameterName == \"$parameter_name\") | .$field_name_to_validate")
+  assert_equal "$expected_field_value" "$actual_parameter_value" "Expected: $expected_field_value found: "$actual_parameter_value" for parameter: $parameter_name" || exit 1
+}
+
+# assert_k8s_status_parameters_value_source asserts that given parameter value, source matches the expected values
+# it expects 4 arguments:
+# - cache_parameter_group_name
+# - parameter_name
+# - expected_parameter_value
+# - expected_source_type
+assert_k8s_status_parameters_value_source() {
+  if [[ $# -ne 4 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cache_parameter_group_name parameter_name expected_parameter_value expected_source_type"
+    exit 1
+  fi
+  local cpg_name="$1"
+  local parameter_name="$2"
+  local expected_parameter_value="$3"
+  local expected_source_type="$4"
+
+  local status_parameters=$(k8s_get_cpg_field "$cpg_name" ".status.parameters")
+  assert_parameters_details "$status_parameters" "$parameter_name" "parameterValue" "$expected_parameter_value"
+  assert_parameters_details "$status_parameters" "$parameter_name" "source" "$expected_source_type"
+}
