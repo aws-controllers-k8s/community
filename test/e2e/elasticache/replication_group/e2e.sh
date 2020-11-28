@@ -20,6 +20,7 @@ check_is_installed jq "Please install jq before running this script."
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test: $service_name/$test_name"
+debug_msg "selected AWS region: $AWS_REGION"
 
 setup_replication_group_fields() {
   # uses non local variable for later use in tests
