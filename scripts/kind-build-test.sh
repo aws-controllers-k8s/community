@@ -55,7 +55,7 @@ fi
 
 function clean_up {
     if [[ "$PRESERVE" == false ]]; then
-        "${SCRIPTS_DIR}"/delete-kind-cluster.sh -c "$TMP_DIR" || :
+        "${SCRIPTS_DIR}"/delete-kind-cluster.sh "$TMP_DIR" || :
         return
     fi
     echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
