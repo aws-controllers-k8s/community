@@ -12,10 +12,6 @@ Deletes a kind cluster and context dir
 Example: delete-cluster build/tmp-cluster-1234
 
 <cluster_context_directory> Cluster context directory
-
-Environment variables:
-  OVERRIDE_PATH:            Override path w/ your own kubectl and kind binaries (<0|1>) 
-                            Default: 0
 "
 
 if [ $# -ne 1 ]; then
@@ -26,10 +22,6 @@ fi
 
 TMP_DIR="$1"
 CLUSTER_NAME=$(cat $TMP_DIR/clustername)
-OVERRIDE_PATH=${OVERRIDE_PATH:-0}
-
-# Override path with your own kubectl and kind binaries
-[[ $OVERRIDE_PATH = 1 ]] && export PATH=$PATH:$TMP_DIR
 
 echo "🥑 Deleting k8s cluster using \"kind\""
 kind delete cluster --name "$CLUSTER_NAME"
