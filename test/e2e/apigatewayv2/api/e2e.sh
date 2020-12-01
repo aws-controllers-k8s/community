@@ -62,6 +62,7 @@ sleep 5
 apigwv2_create_lambda_authorizer "$authorizer_function_name" "$authorizer_role_name"
 
 apigwv2_create_http_api_and_validate "$api_name"
+apigwv2_update_http_api_and_validate "$api_name"
 apigwv2_create_integration_and_validate "$api_name" "$integration_name"
 apigwv2_create_authorizer_and_validate "$api_name" "$authorizer_name" "$authorizer_function_name"
 apigwv2_create_route_and_validate "$api_name" "$route_name" "$route_key" "$integration_name" "$authorizer_name"
