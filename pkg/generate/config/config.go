@@ -22,15 +22,6 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
-var Default = Config{
-	PrefixConfig: PrefixConfig{
-		SpecField:   ".Spec",
-		StatusField: ".Status",
-	},
-	IncludeACKMetadata:             true,
-	SetManyOutputNotFoundErrReturn: "return nil, ackerr.NotFound",
-}
-
 // Config represents instructions to the ACK code generator for a particular
 // AWS service API
 type Config struct {

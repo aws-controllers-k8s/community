@@ -15,12 +15,16 @@ package command
 
 import (
 	"fmt"
-	"github.com/aws/aws-controllers-k8s/pkg/model"
-	"os"
+	"io/ioutil"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-controllers-k8s/pkg/crossplane"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+	"github.com/pkg/errors"
+
+	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	cpgenerate "github.com/aws/aws-controllers-k8s/pkg/generate/crossplane"
 
 	"github.com/spf13/cobra"
 )
@@ -63,11 +67,44 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 			return fmt.Errorf("cannot get the API model for service %s", svcAlias)
 		}
 	}
-	var opts []crossplane.GenerationOption
 	cfgPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
-	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
-		opts = append(opts, crossplane.WithGeneratorConfigFilePath(cfgPath))
+	g, err := generate.New(
+		sdkAPI, optGenVersion, cfgPath, cpgenerate.DefaultConfig,
+	)
+	if err != nil {
+		return err
 	}
-	g := crossplane.NewGeneration(svcAlias, optGenVersion, providerDir, optTemplatesDir, sdkAPI, opts...)
-	return g.Generate()
+
+	ts, err := cpgenerate.Crossplane(g, optTemplatesDir)
+	if err != nil {
+		return err
+	}
+
+	if err = ts.Execute(); err != nil {
+		return err
+	}
+
+	for path, contents := range ts.Executed() {
+		if optDryRun {
+			fmt.Printf("============================= %s ======================================\n", path)
+			fmt.Println(strings.TrimSpace(contents.String()))
+			continue
+		}
+		outPath := filepath.Join(providerDir, path)
+		outDir := filepath.Dir(outPath)
+		if _, err := ensureDir(outDir); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
+			return err
+		}
+	}
+	apiPath := filepath.Join(providerDir, "apis", optGenVersion)
+	controllerPath := filepath.Join(providerDir, "pkg", "controller")
+	// TODO(muvaf): goimports don't allow to be included as a library. Make sure
+	// goimports binary exists.
+	if err := exec.Command("goimports", "-w", apiPath, controllerPath).Run(); err != nil {
+		return errors.Wrap(err, "cannot run goimports")
+	}
+	return nil
 }
