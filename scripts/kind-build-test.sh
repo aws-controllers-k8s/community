@@ -12,18 +12,16 @@ TEST_DIR="$ROOT_DIR/test"
 TEST_E2E_DIR="$TEST_DIR/e2e"
 TEST_RELEASE_DIR="$TEST_DIR/release"
 
-OPTIND=1
-CLUSTER_NAME_BASE="test"
+CLUSTER_NAME_BASE=${CLUSTER_NAME_BASE:-"test"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
 AWS_REGION=${AWS_REGION:-"us-west-2"}
 AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 ACK_LOG_LEVEL="debug"
 DELETE_CLUSTER_ARGS=""
-K8S_VERSION="1.16"
-PRESERVE=false
+K8S_VERSION=${K8S_VERSION:-"1.16"}
+PRESERVE=${PRESERVE:-"false"}
 START=$(date +%s)
-TMP_DIR=""
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
 
@@ -64,63 +62,40 @@ function clean_up {
 
 USAGE="
 Usage:
-  $(basename "$0") -s <SERVICE> -r <ROLE> [-p] [-c <CLUSTER_CONTEXT_DIR>] [-i <AWS Docker image name>] [-v K8S_VERSION]
-
+  export AWS_ROLE_ARN=\"\$ROLE_ARN\"
+  $(basename "$0") <AWS_SERVICE>
+  
 Builds the Docker image for an ACK service controller, loads the Docker image
 into a KinD Kubernetes cluster, creates the Deployment artifact for the ACK
 service controller and executes a set of tests.
 
-Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\"
+Example: export AWS_ROLE_ARN=\"\$ROLE_ARN\"; $(basename "$0") ecr 
 
-Options:
-  -c          Cluster context directory, if operating on an existing cluster
-  -p          Preserve kind k8s cluster for inspection
-  -i          Provide AWS Service docker image
-  -r          Provide AWS Role ARN for functional testing on local KinD Cluster
-  -s          Provide AWS Service name (ecr, sns, sqs, etc)
-  -v          Kubernetes Version (Default: 1.16) [1.14, 1.15, 1.16, 1.17, and 1.18]
+<AWS_SERVICE> should be an AWS Service name (ecr, sns, sqs, petstore, bookstore)
+
+Environment variables:
+  AWS_ROLE_ARN:             Provide AWS Role ARN for functional testing on local KinD Cluster. Mandatory.
+  PRESERVE:                 Preserve kind k8s cluster for inspection (<true|false>) 
+                            Default: false
+  AWS_SERVICE_DOCKER_IMG:   Provide AWS Service docker image 
+                            Default: aws-controllers-k8s:$AWS_SERVICE-$VERSION
+  TMP_DIR                   Cluster context directory, if operating on an existing cluster
+                            Default: $ROOT_DIR/build/tmp-$CLUSTER_NAME
+  K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, and 1.18]           
+                            Default: 1.16
 "
 
-# Process our input arguments
-while getopts "ps:r:i:c:v:" opt; do
-  case ${opt} in
-    p ) # PRESERVE K8s Cluster
-        PRESERVE=true
-      ;;
-    s ) # AWS Service name
-        AWS_SERVICE=$(echo "${OPTARG}" | tr '[:upper:]' '[:lower:]')
-      ;;
-    r ) # AWS ROLE ARN
-        AWS_ROLE_ARN="${OPTARG}"
-      ;;
-    i ) # AWS Service Docker Image
-        AWS_SERVICE_DOCKER_IMG="${OPTARG}"
-      ;;
-    c ) # Cluster context directory to operate on existing cluster
-        TMP_DIR="${OPTARG}"
-      ;;
-    b ) # Base cluster name
-        CLUSTER_NAME_BASE="${OPTARG}"
-      ;;
-    v ) # K8s VERSION
-        K8S_VERSION="${OPTARG}"
-      ;;
-    \? )
-        echo "${USAGE}" 1>&2
-        exit
-      ;;
-  esac
-done
-
-if [ -z "$AWS_SERVICE" ]; then
-    echo "AWS_SERVICE is not defined. Use flag -s <AWS_SERVICE> to build that docker images of that service and load into Kind"
-    echo "(Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\")"
-    exit  1
+if [ $# -ne 1 ]; then
+    echo "AWS_SERVICE is not defined. Script accepts one parameter, <AWS_SERVICE> to build that docker images of that service and load into Kind" 1>&2
+    echo "${USAGE}"
+    exit 1
 fi
 
+AWS_SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
 if [ -z "$AWS_ROLE_ARN" ]; then
-    echo "AWS_ROLE_ARN is not defined. Use flag -r <AWS_ROLE_ARN> to indicate the ARN of the IAM Role to use in testing"
-    echo "(Example: $(basename "$0") -p -s ecr -r \"\$ROLE_ARN\")"
+    echo "AWS_ROLE_ARN is not defined. Set <AWS_ROLE_ARN> env variable to indicate the ARN of the IAM Role to use in testing"
+    echo "${USAGE}"
     exit  1
 fi
 
