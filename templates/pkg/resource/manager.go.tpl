@@ -179,7 +179,7 @@ func (rm *resourceManager) onError(
 ) (acktypes.AWSResource, error) {
 	r1, updated := rm.updateConditions(r, err)
 	if !updated {
-		return nil, err
+		return r, err
 	}
 	for _, condition := range r1.Conditions() {
 		if condition.Type == ackv1alpha1.ConditionTypeTerminal &&
