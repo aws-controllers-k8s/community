@@ -46,6 +46,43 @@ EOF
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-api --api-id=$__api_id' but got $?" || exit 1
 }
 
+# apigwv2_update_http_api_and_validate updates an http-api and validates that api
+# got updated in AWS.
+# update_http_api_and_validate accepts one required parameter api_name
+apigwv2_update_http_api_and_validate() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to create_http_api_and_validate"
+    echo "Usage: apigwv2_update_http_api_and_validate api_name"
+    exit 1
+  fi
+
+  local __api_name="$1"
+  local __api_resource_name=api/"$1"
+  local __updated_name="$__api_name"V2
+
+  ## create api resource
+  cat <<EOF | kubectl apply -f - >/dev/null
+  apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+  kind: API
+  metadata:
+    name: "$__api_name"
+  spec:
+    name: "$__updated_name"
+    protocolType: HTTP
+EOF
+
+  sleep 10
+
+  ## retreive api-id from resource status
+  debug_msg "retrieve api-id from $__api_resource_name resource's status"
+  local __api_id=$(get_field_from_status "$__api_resource_name" "apiID")
+
+  ## validate that api name was updated using apigatewayv2 get-api operation
+  debug_msg "apigatewayv2 get-api with api-id $__api_id"
+  local __name_in_aws=$(daws apigatewayv2 get-api --api-id="$__api_id" | jq -r .Name)
+  assert_equal "$__updated_name" "$__name_in_aws" "Expected api name to be updated to $__updated_name but got $__name_in_aws" || exit 1
+}
+
 # apigwv2_delete_http_api_and_validate deletes an http-api and validates that api
 # does not exist anymore in AWS.
 # delete_http_api_and_validate accepts one required parameter api_name
