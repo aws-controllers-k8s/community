@@ -4,7 +4,7 @@
 # Kubernetes cluster, installs the built ACK service controller into that
 # Kubernetes cluster and runs a set of tests
 
-set -Eo pipefail
+set -euxo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
@@ -53,13 +53,13 @@ if [ "z$AWS_ACCOUNT_ID" == "z" ]; then
     AWS_ACCOUNT_ID=$( aws_account_id )
 fi
 
-function clean_up {
-    if [[ "$PRESERVE" == false ]]; then
-        "${SCRIPTS_DIR}"/delete-kind-cluster.sh "$TMP_DIR" || :
-        return
-    fi
-    echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
-}
+# function clean_up {
+#     if [[ "$PRESERVE" == false ]]; then
+#         "${SCRIPTS_DIR}"/delete-kind-cluster.sh "$TMP_DIR" || :
+#         return
+#     fi
+#     echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
+# }
 
 
 USAGE="
@@ -155,7 +155,7 @@ echo "ok."
 
 export KUBECONFIG="${TMP_DIR}/kubeconfig"
 
-trap "clean_up" EXIT
+# trap "clean_up" EXIT
 
 export AWS_ACCOUNT_ID
 export AWS_REGION

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-set -Euo pipefail
-trap 'on_error $LINENO' ERR
+set -euxo pipefail
+# trap 'on_error $LINENO' ERR
 
 echo "Generating CRDs"
 

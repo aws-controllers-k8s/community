@@ -1,5 +1,6 @@
 
 #!/usr/bin/env bash
+set -euxo pipefail
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$THIS_DIR/../../.."
@@ -30,20 +31,20 @@ print_k8s_ack_controller_pod_logs() {
 }
 
 # Cleans up all k8s resources created during tests
-cleanup() {
+# cleanup() {
   # We want to run every command in this function, even if some fail.
-  set +e
-  delete_all_resources
-  if [[ ("$CLEANUP_EXECUTION_ROLE_ARN" = true) ]]; then
-    sagemaker_delete_execution_role $SAGEMAKER_EXECUTION_ROLE_NAME
-  fi
-  if [[ "$CLEANUP_DATA_BUCKET" = true ]]; then
-    sagemaker_delete_data_bucket $SAGEMAKER_DATA_BUCKET
-  fi
-  print_k8s_ack_controller_pod_logs
-}
+#   set +e
+#   delete_all_resources
+#   if [[ ("$CLEANUP_EXECUTION_ROLE_ARN" = true) ]]; then
+#     sagemaker_delete_execution_role $SAGEMAKER_EXECUTION_ROLE_NAME
+#   fi
+#   if [[ "$CLEANUP_DATA_BUCKET" = true ]]; then
+#     sagemaker_delete_data_bucket $SAGEMAKER_DATA_BUCKET
+#   fi
+#   print_k8s_ack_controller_pod_logs
+# }
 
-trap cleanup EXIT
+# trap cleanup EXIT
 
 # Cleans up all k8s resources created during tests
 # Parameter:
