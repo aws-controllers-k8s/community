@@ -42,9 +42,9 @@ test_snapshot_CRUD() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # proceed to CRUD test: create first snapshot
   local cc_id="$rg_id-001"
@@ -59,7 +59,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 5
 
   # create second snapshot from first to trigger copy-snapshot API
   local snapshot_yaml=$(cat <<EOF
@@ -73,7 +73,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $copied_snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # test deletion
   kubectl delete snapshots/"$snapshot_name"
@@ -100,9 +100,9 @@ test_snapshot_CMD_creates() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # case 1: specify only the replication group - should fail as RG snapshot not permitted for CMD RG
   local snapshot_name="snapshot-cmd"
@@ -143,7 +143,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -167,9 +167,9 @@ test_snapshot_CME_creates() {
   replicas_per_node_group=1
   automatic_failover_enabled="true"
   multi_az_enabled="true"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # case 1: specify only RG
   local snapshot_name="snapshot-cme"
@@ -186,7 +186,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -209,7 +209,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -241,9 +241,9 @@ test_snapshot_create_KMS() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # create snapshot while specifying KMS key
   local snapshot_name="snapshot-kms"
@@ -262,7 +262,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"

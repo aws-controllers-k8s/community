@@ -45,11 +45,11 @@ $yaml_base
       - $sg_id
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   local primary_cluster=$(aws_get_replication_group_json "$rg_id" | jq -r -e ".MemberClusters[0]")
   assert_equal "0" "$?" "Could not find cache cluster for replication group $rg_id" || exit 1
   daws elasticache describe-cache-clusters --cache-cluster-id "$primary_cluster" | jq -r '.CacheClusters[0]' | grep "$sg_id"
@@ -67,19 +67,19 @@ test_rg_deletion_multiple() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure first RG successfully created and available
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # generate and apply yaml for creation of second replication group
   rg_id="rg-deletion-2"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure second RG successfully created and available
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # delete and wait for deletion to complete
   kubectl delete ReplicationGroup --all 2>/dev/null

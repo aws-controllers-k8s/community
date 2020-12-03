@@ -29,18 +29,18 @@ test_modify_rg_cmd_scale_out() {
   num_node_groups="1"
   replicas_per_node_group="0"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 1
   k8s_assert_replication_group_replica_count "$rg_id" 0
 
   # update config and apply: attempt to scale out
   # config application should actually succeed in this case, but leave RG with Terminal Condition set True
   num_node_groups=2
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure terminal condition exists, is set true, and has expected message
@@ -59,20 +59,20 @@ test_modify_rg_cmd_scale_up() {
   num_node_groups=1
   replicas_per_node_group=3
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   aws_assert_replication_group_property "$rg_id" ".CacheNodeType" "cache.t3.micro"
 
   # update config and apply: scale up to larger instance
   cache_node_type="cache.t3.small"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # wait and assert new state
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   aws_assert_replication_group_property "$rg_id" ".CacheNodeType" "cache.t3.small"
 }
 
@@ -99,11 +99,11 @@ $yaml_base
         - us-east-1a
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 2
   k8s_assert_replication_group_replica_count "$rg_id" 1
   k8s_assert_replication_group_total_node_count "$rg_id" 4
@@ -132,11 +132,11 @@ $yaml_base
         - us-east-1a
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # wait and assert new resource state
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 3
   k8s_assert_replication_group_replica_count "$rg_id" 2
   k8s_assert_replication_group_total_node_count "$rg_id" 9
@@ -171,11 +171,11 @@ $yaml_base
         replicaCount: 2
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 2
   k8s_assert_replication_group_total_node_count "$rg_id" 5 #skip checking each node group for now
 
@@ -206,11 +206,11 @@ $yaml_base
         replicaCount: 1
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # wait and assert new resource state
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 3
   k8s_assert_replication_group_total_node_count "$rg_id" 7
 }
@@ -238,11 +238,11 @@ $yaml_base
         - us-east-1b
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 2
   k8s_assert_replication_group_replica_count "$rg_id" 1
   k8s_assert_replication_group_total_node_count "$rg_id" 4
@@ -267,18 +267,18 @@ $yaml_base
         - us-east-1b
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # wait and assert resource state
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" 3
   k8s_assert_replication_group_replica_count "$rg_id" 1
   k8s_assert_replication_group_total_node_count "$rg_id" 6
 }
 
 # run tests
-test_modify_rg_cmd_scale_out # currently failing, terminal condition frequently toggles (is this desired behavior?)
+test_modify_rg_cmd_scale_out
 test_modify_rg_cmd_scale_up
 test_modify_rg_cme_scale_out_add_replica # failing, terminal condition shows "2 validation errors" after new config - issue with distribution of AZs in test case?
 test_modify_rg_cme_scale_out_uneven_shards

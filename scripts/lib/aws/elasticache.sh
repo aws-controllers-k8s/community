@@ -554,17 +554,24 @@ check_rg_terminal_condition_true() {
   done
 }
 
-# wait_and_assert_replication_group_available_status should be called after applying a yaml for replication group
-#   creation to ensure the resource is available. It checks the underlying AWS resource directly but also checks the
-#   availability of the resource via Kubernetes. If any of these checks fail the script will exit with a nonzero
-#   error code.
-# wait_and_assert_replication_group_available_status requires no direct arguments but requires rg_id and service_name
-#   to be set to the name of the replication group of interest and "elasticache", respectively
-wait_and_assert_replication_group_available_status() {
+# wait_and_assert_replication_group_synced_and_available should be called after applying a yaml for replication group
+#   creation to ensure the resource is synced and available. It waits until the resource is synced (i.e. the
+#   ACK.ResourceSynced condition in k8s is set True), then asserts the replication group's status both in
+#   AWS and k8s. If any of these checks fail the script will exit with a nonzero error code.
+# wait_and_assert_replication_group_synced_and_available requires one argument:
+#   rg_id: the name of the replication group to wait for
+wait_and_assert_replication_group_synced_and_available() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} rg_id"
+    exit 1
+  fi
+  local rg_id="$1"
+
+  # wait for resourced to be synced (or time out), then assert availability in aws and k8s
   sleep 5
-  aws_wait_replication_group_available "$rg_id" "FAIL: expected replication group $rg_id to have been created in ${service_name}"
+  k8s_wait_resource_synced "replicationgroups/$rg_id" 60
   aws_assert_replication_group_status "$rg_id" "available"
-  sleep 35
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
 
@@ -593,82 +600,6 @@ aws_wait_snapshot_deleted() {
   done
 
   assert_equal "false" "$wait_failed" "Expected snapshot $snapshot_id to be deleted" || exit 1
-}
-
-#################################################
-# generic resource testing functions
-#################################################
-# k8s_wait_resource_synced checks the given resource for an ACK.ResourceSynced condition in its
-#   k8s status.conditions property. Times out if condition has not been met for a long time. This function
-#   is intended to be used after yaml application to await creation of a resource.
-# k8s_wait_resource_synced requires 2 arguments:
-#   k8s_resource_name: the name of the resource, e.g. "snapshots/test-snapshot"
-#   wait_periods: the number of 30-second periods to wait for the resource before timing out
-k8s_wait_resource_synced() {
-  if [[ $# -ne 2 ]]; then
-    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "Usage: ${FUNCNAME[0]} k8s_resource_name wait_periods"
-    exit 1
-  fi
-
-  local k8s_resource_name="$1"
-  local wait_periods="$2"
-
-  kubectl get "$k8s_resource_name" 1>/dev/null 2>&1
-  assert_equal "0" "$?" "Resource $k8s_resource_name doesn't exist in k8s cluster" || exit 1
-
-  local wait_failed="true"
-  for i in $(seq 1 "$wait_periods"); do
-    sleep 30
-
-    # ensure we at least have .status.conditions
-    local conditions=$(kubectl get "$k8s_resource_name" -o json | jq -r -e ".status.conditions[]")
-    assert_equal "0" "$?" "Expected .status.conditions property to exist for $k8s_resource_name" || exit 1
-
-    # this condition should probably always exist, regardless of the value
-    local synced_cond=$(echo $conditions | jq -r -e 'select(.type == "ACK.ResourceSynced")')
-    assert_equal "0" "$?" "Expected ACK.ResourceSynced condition to exist for $k8s_resource_name" || exit 1
-
-    # check value of condition; continue if not yet set True
-    local cond_status=$(echo $synced_cond | jq -r -e ".status")
-    if [[ "$cond_status" == "True" ]]; then
-      wait_failed="false"
-      break
-    fi
-  done
-
-  assert_equal "false" "$wait_failed" "Wait for resource $k8s_resource_name to be synced timed out" || exit 1
-}
-
-# k8s_check_resource_terminal_condition_true asserts that the terminal condition of the given resource
-#   exists, has status "True", and that the message associated with the terminal condition matches the
-#   one provided.
-# k8s_check_resource_terminal_condition_true requires 2 arguments:
-#   k8s_resource_name: the name of the resource, e.g. "snapshots/test-snapshot"
-#   expected_substring: a substring of the expected message associated with the terminal condition
-k8s_check_resource_terminal_condition_true() {
-  if [[ $# -ne 2 ]]; then
-    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "Usage: ${FUNCNAME[0]} replication_group_id expected_substring"
-    exit 1
-  fi
-  local k8s_resource_name="$1"
-  local expected_substring="$2"
-
-  local resource_json=$(kubectl get "$k8s_resource_name" -o json)
-  assert_equal "0" "$?" "Expected $k8s_resource_name to exist in k8s cluster" || exit 1
-
-  local terminal_cond=$(echo $resource_json | jq -r -e ".status.conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
-  assert_equal "0" "$?" "Expected resource $k8s_resource_name to have a terminal condition" || exit 1
-
-  local status=$(echo $terminal_cond | jq -r ".status")
-  assert_equal "True" "$status" "expected status of terminal condition to be True for resource $k8s_resource_name" || exit 1
-
-  local cond_msg=$(echo $terminal_cond | jq -r ".message")
-  if [[ $cond_msg != *"$expected_substring"* ]]; then
-    echo "FAIL: resource $k8s_resource_name has terminal condition set True, but with message different than expected"
-    exit 1
-  fi
 }
 
 #################################################
