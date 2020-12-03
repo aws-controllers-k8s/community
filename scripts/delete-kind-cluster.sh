@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euxo pipefail
 
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 

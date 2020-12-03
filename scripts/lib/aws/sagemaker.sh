@@ -1,5 +1,6 @@
 
 #!/usr/bin/env bash
+set -Eeuxo pipefail
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$THIS_DIR/../../.."
