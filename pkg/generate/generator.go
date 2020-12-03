@@ -16,29 +16,53 @@ package generate
 import (
 	"sort"
 	"strings"
-	ttpl "text/template"
 
 	ackgenconfig "github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/templateset"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
-// Generator creates the ACK service controller Kubernetes API types (CRDs) and
-// the service controller implementation/SDK linkage
+// Generator contains the ACK model for the generator to process and apply
+// templates against
 type Generator struct {
-	SDKAPI           *ackmodel.SDKAPI
-	serviceAlias     string
-	apiVersion       string
-	templateBasePath string
-	templates        map[string]*ttpl.Template
-	crds             []*ackmodel.CRD
-	typeDefs         []*ackmodel.TypeDef
-	typeImports      map[string]string
-	typeRenames      map[string]string
+	SDKAPI       *ackmodel.SDKAPI
+	serviceAlias string
+	apiVersion   string
+	crds         []*ackmodel.CRD
+	typeDefs     []*ackmodel.TypeDef
+	typeImports  map[string]string
+	typeRenames  map[string]string
 	// Instructions to the code generator how to handle the API and its
 	// resources
 	cfg *ackgenconfig.Config
+}
+
+// MetaVars returns a MetaVars struct populated with metadata about the AWS
+// service API
+func (g *Generator) MetaVars() templateset.MetaVars {
+	return templateset.MetaVars{
+		ServiceAlias:            g.serviceAlias,
+		ServiceID:               g.SDKAPI.ServiceID(),
+		ServiceIDClean:          g.SDKAPI.ServiceIDClean(),
+		APIGroup:                g.SDKAPI.APIGroup(),
+		APIVersion:              g.apiVersion,
+		SDKAPIInterfaceTypeName: g.SDKAPI.SDKAPIInterfaceTypeName(),
+		CRDNames:                g.crdNames(),
+	}
+}
+
+// crdNames returns all crd names lowercased and in plural
+func (g *Generator) crdNames() []string {
+	var crdConfigs []string
+
+	crds, _ := g.GetCRDs()
+	for _, crd := range crds {
+		crdConfigs = append(crdConfigs, strings.ToLower(crd.Plural))
+	}
+
+	return crdConfigs
 }
 
 // GetCRDs returns a slice of `ackmodel.CRD` structs that describe the
@@ -368,7 +392,7 @@ func (g *Generator) ApplyShapeIgnoreRules() {
 	if g.cfg == nil || g.SDKAPI == nil {
 		return
 	}
-	for sdkShapeId, shape := range g.SDKAPI.API.Shapes {
+	for sdkShapeID, shape := range g.SDKAPI.API.Shapes {
 		for _, fieldpath := range g.cfg.Ignore.FieldPaths {
 			sn := strings.Split(fieldpath, ".")[0]
 			fn := strings.Split(fieldpath, ".")[1]
@@ -379,13 +403,13 @@ func (g *Generator) ApplyShapeIgnoreRules() {
 		}
 		for _, sn := range g.cfg.Ignore.ShapeNames {
 			if shape.ShapeName == sn {
-				delete(g.SDKAPI.API.Shapes, sdkShapeId)
+				delete(g.SDKAPI.API.Shapes, sdkShapeID)
 				continue
 			}
 			// NOTE(muvaf): We need to remove the usage of the shape as well.
-			for sdkMemberId, memberRef := range shape.MemberRefs {
+			for sdkMemberID, memberRef := range shape.MemberRefs {
 				if memberRef.ShapeName == sn {
-					delete(shape.MemberRefs, sdkMemberId)
+					delete(shape.MemberRefs, sdkMemberID)
 				}
 			}
 		}
@@ -399,7 +423,6 @@ func New(
 	SDKAPI *ackmodel.SDKAPI,
 	apiVersion string,
 	configPath string,
-	templateBasePath string,
 	defaultConfig ackgenconfig.Config,
 ) (*Generator, error) {
 	cfg, err := ackgenconfig.New(configPath, defaultConfig)
@@ -410,10 +433,9 @@ func New(
 		SDKAPI: SDKAPI,
 		// TODO(jaypipes): Handle cases where service alias and service ID
 		// don't match (Step Functions)
-		serviceAlias:     SDKAPI.ServiceID(),
-		apiVersion:       apiVersion,
-		templateBasePath: templateBasePath,
-		cfg:              &cfg,
+		serviceAlias: SDKAPI.ServiceID(),
+		apiVersion:   apiVersion,
+		cfg:          &cfg,
 	}
 	g.ApplyShapeIgnoreRules()
 	return g, nil

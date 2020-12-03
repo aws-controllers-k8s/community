@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
-	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	ackgenerate "github.com/aws/aws-controllers-k8s/pkg/generate/ack"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -85,43 +85,35 @@ func generateRelease(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	g, err := generate.New(
-		sdkAPI, latestAPIVersion, optGeneratorConfigPath, optTemplatesDir, config.Default,
+		sdkAPI, latestAPIVersion, optGeneratorConfigPath, ackgenerate.DefaultConfig,
+	)
+	if err != nil {
+		return err
+	}
+	ts, err := ackgenerate.Release(
+		g, optTemplatesDir,
+		releaseVersion, optImageRepository, optServiceAccountName,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err = writeReleaseFiles(g, releaseVersion); err != nil {
+	if err = ts.Execute(); err != nil {
 		return err
 	}
-	return nil
-}
 
-func writeReleaseFiles(g *generate.Generator, releaseVersion string) error {
-	configHelmPath := filepath.Join(optReleaseOutputPath, "helm")
-	configHelmTemplatesPath := filepath.Join(optReleaseOutputPath, "helm", "templates")
-	if !optDryRun {
-		if _, err := ensureDir(configHelmPath); err != nil {
-			return err
-		}
-		if _, err := ensureDir(configHelmTemplatesPath); err != nil {
-			return err
-		}
-	}
-	for _, target := range generate.ReleaseFiles {
-		b, err := g.GenerateReleaseFile(
-			target, releaseVersion, optImageRepository, optServiceAccountName,
-		)
-		if err != nil {
-			return err
-		}
+	for path, contents := range ts.Executed() {
 		if optDryRun {
-			fmt.Println("============================= " + target + " ======================================")
-			fmt.Println(strings.TrimSpace(b.String()))
+			fmt.Printf("============================= %s ======================================\n", path)
+			fmt.Println(strings.TrimSpace(contents.String()))
 			continue
 		}
-		path := filepath.Join(optReleaseOutputPath, target)
-		if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
+		outPath := filepath.Join(optReleaseOutputPath, path)
+		outDir := filepath.Dir(outPath)
+		if _, err := ensureDir(outDir); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
 		}
 	}
