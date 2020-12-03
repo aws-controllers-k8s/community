@@ -28,6 +28,7 @@ import (
 	svcresource "github.com/aws/aws-controllers-k8s/services/sagemaker/pkg/resource"
 
 	_ "github.com/aws/aws-controllers-k8s/services/sagemaker/pkg/resource/model"
+	_ "github.com/aws/aws-controllers-k8s/services/sagemaker/pkg/resource/training_job"
 )
 
 var (

@@ -1114,14 +1114,14 @@ const (
 	TrainingJobSortByOptions_FinalObjectiveMetricValue TrainingJobSortByOptions = "FinalObjectiveMetricValue"
 )
 
-type TrainingJobStatus string
+type TrainingJobStatus_SDK string
 
 const (
-	TrainingJobStatus_InProgress TrainingJobStatus = "InProgress"
-	TrainingJobStatus_Completed  TrainingJobStatus = "Completed"
-	TrainingJobStatus_Failed     TrainingJobStatus = "Failed"
-	TrainingJobStatus_Stopping   TrainingJobStatus = "Stopping"
-	TrainingJobStatus_Stopped    TrainingJobStatus = "Stopped"
+	TrainingJobStatus_SDK_InProgress TrainingJobStatus_SDK = "InProgress"
+	TrainingJobStatus_SDK_Completed  TrainingJobStatus_SDK = "Completed"
+	TrainingJobStatus_SDK_Failed     TrainingJobStatus_SDK = "Failed"
+	TrainingJobStatus_SDK_Stopping   TrainingJobStatus_SDK = "Stopping"
+	TrainingJobStatus_SDK_Stopped    TrainingJobStatus_SDK = "Stopped"
 )
 
 type TransformInstanceType string

@@ -20,12 +20,12 @@ init_sagemaker_test_vars() {
   AWS_SERVICE="sagemaker"
   CLEANUP_EXECUTION_ROLE_ARN=false
   CLEANUP_DATA_BUCKET=false
+  ack_ctrl_pod_id=$( controller_pod_id )
 }
 
 # print_k8s_ack_controller_pod_logs prints kubernetes ack controller pod logs
 # this function depends upon testutil.sh
 print_k8s_ack_controller_pod_logs() {
-  local ack_ctrl_pod_id=$( controller_pod_id )
   kubectl logs -n ack-system "$ack_ctrl_pod_id"
 }
 
@@ -51,10 +51,11 @@ trap cleanup EXIT
 function delete_all_resources()
 {
   local __namespace="${1:-default}"
-  kubectl delete -n "$__namespace" model --all  
+  kubectl delete -n "$__namespace" model --all 
+  kubectl delete -n "$__namespace" trainingjob --all
 }
 
-# Create a IAM Role for SageMaker to assume on your behalf.
+# Create an IAM Role for SageMaker to assume on your behalf.
 # Parameter:
 #   $1: role_name
 sagemaker_create_execution_role() {
@@ -65,12 +66,12 @@ sagemaker_create_execution_role() {
 
   local __role_name="$1"
   daws iam create-role --role-name "$__role_name" --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "sagemaker.amazonaws.com"}, "Action": "sts:AssumeRole"}]}' >/dev/null
-  assert_equal "0" "$?" "Expected success from aws iam create-role --role-name $__role_name but got $?" || exit 1
+  assert_equal "0" "$?" "Expected success from aws iam create-role --role-name $__role_name, got $?" || exit 1
 
   daws iam attach-role-policy --role-name "$__role_name" --policy-arn 'arn:aws:iam::aws:policy/AmazonSageMakerFullAccess' >/dev/null
-  assert_equal "0" "$?" "Expected success from aws iam attach-role-policy --role-name $__role_name but got $?" || exit 1
+  assert_equal "0" "$?" "Expected success from aws iam attach-role-policy --role-name $__role_name, got $?" || exit 1
   daws iam attach-role-policy --role-name "$__role_name" --policy-arn 'arn:aws:iam::aws:policy/AmazonS3FullAccess' >/dev/null
-  assert_equal "0" "$?" "Expected success from aws iam attach-role-policy --role-name $__role_name but got $?" || exit 1
+  assert_equal "0" "$?" "Expected success from aws iam attach-role-policy --role-name $__role_name, got $?" || exit 1
   
   local __role_arn=$(daws iam get-role --role-name "$__role_name" | jq -r ".Role.Arn")
   echo "$__role_arn"
@@ -110,7 +111,7 @@ sagemaker_create_data_bucket() {
   fi
 
   assert_equal "0" "$?" "Expected success from aws s3api create-bucket --bucket $__bucket_name but got $?" || exit 1
-  daws s3 sync s3://$S3_DATA_SOURCE_BUCKET s3://$__bucket_name
+  daws s3 sync s3://$S3_DATA_SOURCE_BUCKET s3://$__bucket_name --only-show-errors 
   assert_equal "0" "$?" "Expected success from aws s3 sync s3://$S3_DATA_SOURCE_BUCKET s3://$__bucket_name but got $?" || exit 1
 }
 
@@ -119,6 +120,7 @@ sagemaker_create_data_bucket() {
 #   $1: bucket_name
 sagemaker_delete_data_bucket() {
   local __bucket_name="$1"
+  aws s3 rm --recursive s3://$__bucket_name --only-show-errors
   aws s3 rb s3://$__bucket_name --force
 }
 
@@ -195,9 +197,150 @@ assert_aws_sagemaker_model_arn() {
   local model_response=$(daws sagemaker describe-model --model-name "$model_name" --region "$AWS_REGION")
   local aws_model_arn=$(echo "$model_response" | jq -r '.ModelArn')
   if [[ ( -z "$aws_model_arn" || "$expected_model_arn" != "$aws_model_arn" ) ]]; then
-    debug_msg "ERROR: ModelArn did not match/not found for $model_name"
+    debug_msg "[ERROR] ModelArn did not match/not found for $model_name"
     return 1
   fi
 
   return 0
+}
+
+# is_aws_sagemaker_trainingjob_exists() returns 0 if an TrainingJob with the supplied name
+# exists, 1 otherwise.
+#
+# training_job_created TRAINING_JOB_NAME
+# Arguments:
+#
+#   TRAINING_JOB_NAME  required string for the name of the bucket to check
+#
+# Usage:
+#
+#   if ! training_job_created "$training_job_name"; then
+#       echo "Training Job $training_job_name does not exist!"
+#   fi
+is_aws_sagemaker_trainingjob_exists() {
+  if [[ "$#" -lt 1 || -z ${AWS_REGION+x} ]]; then
+    echo "[FAIL] Usage: is_aws_sagemaker_trainingjob_exists training_job_name. Expects AWS_REGION to be set"
+    exit 1
+  fi
+  local __training_job_name="$1"
+
+  local __training_job_status="$(daws sagemaker describe-training-job --region "$AWS_REGION" --training-job-name $__training_job_name --output json | jq .TrainingJobStatus)"
+
+  if [[ $? -eq 0 ]]; then
+      echo "$__training_job_name found!"
+      return 0
+  else
+      echo "$__training_job_name not found!"
+      return 1
+  fi
+}
+
+# assert_aws_sagemaker_trainingjob_arn() verifies the SageMaker ARN of the TrainingJob with the supplied name.
+#
+# assert_aws_sagemaker_trainingjob_arn TRAINING_JOB_NAME
+# Arguments:
+#
+#   TRAINING_JOB_NAME  required string for the name of the trainingJob to check
+#   EXPECTED_TRAINING_JOB_ARN The expected training job arn from the k8s status
+assert_aws_sagemaker_trainingjob_arn() {
+  if [[ "$#" -lt 1 || -z ${AWS_REGION+x} ]]; then
+    echo "[FAIL] Usage: assert_aws_sagemaker_trainingjob_arn training_job_name expected_training_job_arn. Expects AWS_REGION to be set"
+    exit 1
+  fi
+
+  local __training_job_name="$1"
+  local __expected_training_job_arn="$2"
+  local training_job_response=$(daws sagemaker describe-training-job --region "$AWS_REGION" --training-job-name $__training_job_name)
+  local __aws_training_job_arn=$(echo "$training_job_response" | jq -r '.TrainingJobArn')
+  if [[ ( -z "$__aws_training_job_arn" || $__expected_training_job_arn != $__aws_training_job_arn ) ]]; then
+    debug_msg "[ERROR] TrainingJobArn did not match/not found for $__training_job_name"
+    return 1
+  fi
+
+  return 0
+}
+
+# get_aws_sagemaker_trainingjob_status() prints the SageMaker status of the TrainingJob with the supplied name.
+# If the job is not found, it returns a 1.
+#
+# get_aws_sagemaker_trainingjob_status TRAINING_JOB_NAME
+# Arguments:
+#
+#   TRAINING_JOB_NAME  required string for the name of the trainingJob to check
+#
+# Usage:
+#
+#   local training_job_status=$(get_aws_sagemaker_trainingjob_status "${__training_job_name}")
+get_aws_sagemaker_trainingjob_status() {
+  if [[ "$#" -lt 1 || -z ${AWS_REGION+x} ]]; then
+    echo "[FAIL] Usage: get_aws_sagemaker_trainingjob_status training_job_name. Expects AWS_REGION to be set"
+    exit 1
+  fi
+
+  local __training_job_name="$1"
+  local __training_job_status="$(daws sagemaker describe-training-job --region "$AWS_REGION" --training-job-name $__training_job_name --output json | jq .TrainingJobStatus)"
+
+  if [ -z "${__training_job_status}" ]; then
+    echo "[ERROR] trainingJob $__training_job_status not found"
+    return 1
+  else
+    echo "${__training_job_status}"
+    return 0
+  fi
+}
+
+# assert_aws_sagemaker_trainingjob_created() checks if the SageMaker status of the TrainingJob with the supplied name is in creating or created.
+# If not, it returns a 1.
+#
+# assert_aws_sagemaker_trainingjob_created TRAINING_JOB_NAME
+# Arguments:
+#
+#   TRAINING_JOB_NAME  required string for the name of the trainingJob to check
+#
+# Usage:
+#
+#   if ! assert_aws_sagemaker_trainingjob_created "$training_job_name"; then
+#       echo "Training Job $training_job_name was not created, Check logs!"
+#   fi
+assert_aws_sagemaker_trainingjob_created() {
+  local __training_job_name="$1"
+  local __training_job_status=$(echo $(get_aws_sagemaker_trainingjob_status "${__training_job_name}"))
+   
+  if [[ ( \"InProgress\" = $__training_job_status || \"Completed\" = $__training_job_status ) ]]; then
+    debug_msg "[SUCCESS] TrainingJob $__training_job_name created and has status ${__training_job_status}"
+    return 0
+  else
+    debug_msg "[ERROR] TrainingJob $__training_job_name was not created and has status ${__training_job_status}"
+    return 1
+  fi
+}
+
+# assert_aws_sagemaker_trainingjob_stopped() checks if the SageMaker status of the TrainingJob with the supplied name is in creating or created.
+# If not, it returns a 1.
+#
+# assert_aws_sagemaker_trainingjob_stopped TRAINING_JOB_NAME
+# Arguments:
+#
+#   TRAINING_JOB_NAME  required string for the name of the trainingJob to check
+#
+# Usage:
+#
+#   if ! assert_aws_sagemaker_trainingjob_stopped "$training_job_name"; then
+#       echo "Training Job $training_job_name was not stopped, Check logs!"
+#   fi
+assert_aws_sagemaker_trainingjob_stopped() {
+  local __training_job_name="$1"
+  local __training_job_status=$(get_aws_sagemaker_trainingjob_status "${__training_job_name}")  
+  
+  # TODO: should the first condition be considered a failure ? 
+  if [[ \"Completed\" = $__training_job_status ]]; then
+    debug_msg "[WARNING] TrainingJob $__training_job_status has ${__training_job_status} status, cannot stop now."
+    return 0
+  elif [[ ( \"Stopping\" = $__training_job_status || \"Stopped\" = $__training_job_status ) ]]; then
+    debug_msg "[SUCCESS] TrainingJob $__training_job_name stopped and has status ${__training_job_status}"
+    return 0
+  else 
+    debug_msg "[ERROR] TrainingJob $__training_job_name was not stopped and has status ${__training_job_status}"
+    return 1
+  fi
 }

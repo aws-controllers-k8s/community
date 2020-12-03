@@ -182,13 +182,13 @@ kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
 sleep 10
 echo "ok."
 
+export KUBECONFIG
+
+$TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
+$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
+
 echo "======================================================================================================"
 echo "To poke around your test cluster manually:"
 echo "export KUBECONFIG=$TMP_DIR/kubeconfig"
 echo "kubectl get pods -A"
 echo "======================================================================================================"
-
-export KUBECONFIG
-
-$TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
-$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE

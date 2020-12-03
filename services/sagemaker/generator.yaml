@@ -1,4 +1,21 @@
+operations:
+  StopTrainingJob:
+    operation_type: Delete
+    resource_name: TrainingJob
 resources:
+  TrainingJob:
+    exceptions:
+      codes:
+        404: ValidationException
+    status_fields:
+    - operation_id: DescribeTrainingJob
+      source_name: TrainingJobStatus
+    - operation_id: DescribeTrainingJob
+      source_name: SecondaryStatus
+    - operation_id: DescribeTrainingJob
+      source_name: FailureReason
+    - operation_id: DescribeTrainingJob
+      source_name: DebugRuleEvaluationStatuses
   Model:
     exceptions:
       codes:
@@ -25,7 +42,6 @@ ignore:
       - PresignedDomainUrl
       - PresignedNotebookInstanceUrl
       - ProcessingJob
-      - TrainingJob
       - TransformJob
       - TrialComponent
       - Trial
