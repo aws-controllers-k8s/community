@@ -4,7 +4,7 @@ set -E
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 SCRIPTS_DIR=$DIR
-DEFAULT_DOCKER_REPOSITORY="aws-controllers-k8s"
+DEFAULT_DOCKER_REPOSITORY="amazon/aws-controllers-k8s"
 DOCKER_REPOSITORY=${DOCKER_REPOSITORY:-$DEFAULT_DOCKER_REPOSITORY}
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
 
