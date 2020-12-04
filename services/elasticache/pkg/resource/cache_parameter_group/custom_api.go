@@ -20,6 +20,13 @@ import (
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
 	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	// The number of minutes worth of events to retrieve.
+	// 14 days in minutes
+	eventsDuration = 20160
 )
 
 // customSetOutputDescribeCacheParameters queries cache parameters for given cache parameter group
@@ -52,7 +59,58 @@ func (rm *resourceManager) customSetOutputDescribeCacheParameters(
 		return err
 	}
 	ko.Status.Parameters = parameters
+	err = rm.customSetOutputSupplementAPIs(ctx, cacheParameterGroupName, ko)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (rm *resourceManager) customSetOutputSupplementAPIs(
+	ctx context.Context,
+	cacheParameterGroupName *string,
+	ko *svcapitypes.CacheParameterGroup,
+) error {
+	events, err := rm.provideEvents(ctx, cacheParameterGroupName, 20)
+	if err != nil {
+		return err
+	}
+	ko.Status.Events = events
+	return nil
+}
+
+func (rm *resourceManager) provideEvents(
+	ctx context.Context,
+	cacheParameterGroupName *string,
+	maxRecords int64,
+) ([]*svcapitypes.Event, error) {
+	input := &svcsdk.DescribeEventsInput{}
+	input.SetSourceType("cache-parameter-group")
+	input.SetSourceIdentifier(*cacheParameterGroupName)
+	input.SetMaxRecords(maxRecords)
+	input.SetDuration(eventsDuration)
+	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	events := []*svcapitypes.Event{}
+	if resp.Events != nil {
+		for _, respEvent := range resp.Events {
+			event := &svcapitypes.Event{}
+			if respEvent.Message != nil {
+				event.Message = respEvent.Message
+			}
+			if respEvent.Date != nil {
+				eventDate := metav1.NewTime(*respEvent.Date)
+				event.Date = &eventDate
+			}
+			// Not copying redundant source id (replication id)
+			// and source type (replication group)
+			// into each event object
+			events = append(events, event)
+		}
+	}
+	return events, nil
 }
 
 // describeCacheParameters returns Cache Parameters for given Cache Parameter Group name and source
