@@ -811,3 +811,19 @@ func TestElasticache_Additional_CacheSubnetGroup_Status(t *testing.T) {
 	assert := assert.New(t)
 	assert.Contains(crd.StatusFields, "Events")
 }
+
+func TestElasticache_Additional_ReplicationGroup_Status_RenameField(t *testing.T) {
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "elasticache")
+	crds, err := g.GetCRDs()
+
+	require.Nil(err)
+
+	crd := getCRDByName("ReplicationGroup", crds)
+	require.NotNil(crd)
+
+	assert := assert.New(t)
+	assert.Contains(crd.StatusFields, "AllowedScaleUpModifications")
+	assert.Contains(crd.StatusFields, "AllowedScaleDownModifications")
+}

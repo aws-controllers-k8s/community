@@ -1956,6 +1956,28 @@ func (in *ReplicationGroupStatus) DeepCopyInto(out *ReplicationGroupStatus) {
 			}
 		}
 	}
+	if in.AllowedScaleDownModifications != nil {
+		in, out := &in.AllowedScaleDownModifications, &out.AllowedScaleDownModifications
+		*out = make([]*string, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(string)
+				**out = **in
+			}
+		}
+	}
+	if in.AllowedScaleUpModifications != nil {
+		in, out := &in.AllowedScaleUpModifications, &out.AllowedScaleUpModifications
+		*out = make([]*string, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(string)
+				**out = **in
+			}
+		}
+	}
 	if in.AuthTokenEnabled != nil {
 		in, out := &in.AuthTokenEnabled, &out.AuthTokenEnabled
 		*out = new(bool)
@@ -2032,28 +2054,6 @@ func (in *ReplicationGroupStatus) DeepCopyInto(out *ReplicationGroupStatus) {
 		in, out := &in.PendingModifiedValues, &out.PendingModifiedValues
 		*out = new(ReplicationGroupPendingModifiedValues)
 		(*in).DeepCopyInto(*out)
-	}
-	if in.ScaleDownModifications != nil {
-		in, out := &in.ScaleDownModifications, &out.ScaleDownModifications
-		*out = make([]*string, len(*in))
-		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(string)
-				**out = **in
-			}
-		}
-	}
-	if in.ScaleUpModifications != nil {
-		in, out := &in.ScaleUpModifications, &out.ScaleUpModifications
-		*out = make([]*string, len(*in))
-		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(string)
-				**out = **in
-			}
-		}
 	}
 	if in.SnapshottingClusterID != nil {
 		in, out := &in.SnapshottingClusterID, &out.SnapshottingClusterID

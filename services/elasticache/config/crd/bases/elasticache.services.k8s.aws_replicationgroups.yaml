@@ -164,6 +164,14 @@ spec:
                 required:
                 - ownerAccountID
                 type: object
+              allowedScaleDownModifications:
+                items:
+                  type: string
+                type: array
+              allowedScaleUpModifications:
+                items:
+                  type: string
+                type: array
               authTokenEnabled:
                 type: boolean
               authTokenLastModifiedDate:
@@ -306,14 +314,6 @@ spec:
                         type: object
                     type: object
                 type: object
-              scaleDownModifications:
-                items:
-                  type: string
-                type: array
-              scaleUpModifications:
-                items:
-                  type: string
-                type: array
               snapshottingClusterID:
                 type: string
               status:

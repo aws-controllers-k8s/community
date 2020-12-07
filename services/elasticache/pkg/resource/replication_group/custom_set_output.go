@@ -113,13 +113,13 @@ func (rm *resourceManager) customSetOutput(
 			rm.metrics.RecordAPICall("READ_MANY", "ListAllowedNodeTypeModifications", apiErr)
 			// Overwrite the values for ScaleUp and ScaleDown
 			if apiErr == nil {
-				ko.Status.ScaleDownModifications = resp.ScaleDownModifications
-				ko.Status.ScaleUpModifications = resp.ScaleUpModifications
+				ko.Status.AllowedScaleDownModifications = resp.ScaleDownModifications
+				ko.Status.AllowedScaleUpModifications = resp.ScaleUpModifications
 			}
 		}
 	} else {
-		ko.Status.ScaleDownModifications = nil
-		ko.Status.ScaleUpModifications = nil
+		ko.Status.AllowedScaleDownModifications = nil
+		ko.Status.AllowedScaleUpModifications = nil
 	}
 }
 
