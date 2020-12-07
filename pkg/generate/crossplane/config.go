@@ -13,9 +13,15 @@
 
 package crossplane
 
-import "github.com/aws/aws-controllers-k8s/pkg/generate/config"
+import (
+	"strings"
+	"text/template"
 
-// DefaultConfig is the default config object for Crossplane controllers.
+	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
+)
+
+// DefaultConfig is the default config object for Initialize controllers.
 var DefaultConfig = config.Config{
 	PrefixConfig: config.PrefixConfig{
 		SpecField:   ".Spec.ForProvider",
@@ -23,4 +29,75 @@ var DefaultConfig = config.Config{
 	},
 	IncludeACKMetadata:             false,
 	SetManyOutputNotFoundErrReturn: "return cr",
+}
+
+var (
+	// APIFilePairs is the list of files that will be generated for every AWS API,
+	// such as apigatewayv2 or dynamodb.
+	APIFilePairs = map[string]string{
+		"apis/doc.go.tpl":               "apis/%s/%s/zz_doc.go",
+		"apis/enums.go.tpl":             "apis/%s/%s/zz_enums.go",
+		"apis/groupversion_info.go.tpl": "apis/%s/%s/zz_groupversion_info.go",
+		"apis/types.go.tpl":             "apis/%s/%s/zz_types.go",
+	}
+	// ControllerFilePairs is the list of files that will be generated once for
+	// every controller.
+	ControllerFilePairs = map[string]string{
+		"pkg/controller.go.tpl":  "pkg/controller/%s/%s/zz_controller.go",
+		"pkg/conversions.go.tpl": "pkg/controller/%s/%s/zz_conversions.go",
+		// TODO(muvaf): Hooks file needs to be generated only once.
+		"pkg/hooks.go.tpl": "pkg/controller/%s/%s/hooks.go",
+	}
+	// CRDFilePairs is the list of files that will be generated once for every CRD
+	// in apis folder.
+	CRDFilePairs = map[string]string{
+		"apis/crd.go.tpl": "apis/%s/%s/zz_%s.go",
+	}
+	// IncludePaths are templates snippets that are imported by other templates.
+	IncludePaths = []string{
+		"boilerplate.go.tpl",
+		"apis/enum_def.go.tpl",
+		"apis/type_def.go.tpl",
+		"pkg/sdk_find_read_one.go.tpl",
+		"pkg/sdk_find_read_many.go.tpl",
+	}
+	// CopyPaths is the list of files that will be copied as is.
+	CopyPaths = []string{}
+)
+
+var TemplateFuncs = template.FuncMap{
+	"ToLower": strings.ToLower,
+	"ResourceExceptionCode": func(r *model.CRD, httpStatusCode int) string {
+		return r.ExceptionCode(httpStatusCode)
+	},
+	"GoCodeSetExceptionMessagePrefixCheck": func(r *model.CRD, httpStatusCode int) string {
+		return r.GoCodeSetExceptionMessagePrefixCheck(httpStatusCode)
+	},
+	"GoCodeSetReadOneOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
+		return r.GoCodeSetOutput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
+	},
+	"GoCodeSetReadOneInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetInput(model.OpTypeGet, sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeSetReadManyOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
+		return r.GoCodeSetOutput(model.OpTypeList, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
+	},
+	"GoCodeSetReadManyInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetInput(model.OpTypeList, sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeSetCreateOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
+		return r.GoCodeSetOutput(model.OpTypeCreate, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
+	},
+	"GoCodeSetCreateInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetInput(model.OpTypeCreate, sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeSetUpdateInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetInput(model.OpTypeUpdate, sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeSetDeleteInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetInput(model.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
+	},
+	"Empty": func(subject string) bool {
+		return strings.TrimSpace(subject) == ""
+	},
 }

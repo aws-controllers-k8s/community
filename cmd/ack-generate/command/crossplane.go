@@ -16,20 +16,21 @@ package command
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
-	cpgenerate "github.com/aws/aws-controllers-k8s/pkg/generate/crossplane"
-
-	"github.com/spf13/cobra"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/crossplane"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/templateset"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
-// crossplaneCmd is the command that generates Crossplane API types
+// crossplaneCmd is the command that generates Initialize API types
 var crossplaneCmd = &cobra.Command{
 	Use:   "crossplane <service>",
 	Short: "Generate Crossplane Provider",
@@ -67,24 +68,29 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 			return fmt.Errorf("cannot get the API model for service %s", svcAlias)
 		}
 	}
-	cfgPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
+	cfgPath := ""
+	gcPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
+	if _, err := os.Stat(gcPath); !os.IsNotExist(err) {
+		cfgPath = gcPath
+	}
 	g, err := generate.New(
-		sdkAPI, optGenVersion, cfgPath, cpgenerate.DefaultConfig,
+		sdkAPI, optGenVersion, cfgPath, crossplane.DefaultConfig,
 	)
 	if err != nil {
 		return err
 	}
-
-	ts, err := cpgenerate.Crossplane(g, optTemplatesDir)
+	ts := templateset.New(optTemplatesDir, crossplane.IncludePaths, crossplane.CopyPaths, crossplane.TemplateFuncs)
+	generation := crossplane.NewGeneration(g, ts,
+		crossplane.WithInitializer(crossplane.AddAPIFiles),
+		crossplane.WithInitializer(crossplane.AddCRDFiles),
+		crossplane.WithInitializer(crossplane.AddControllerFiles),
+	)
+	output, err := generation.Run()
 	if err != nil {
 		return err
 	}
 
-	if err = ts.Execute(); err != nil {
-		return err
-	}
-
-	for path, contents := range ts.Executed() {
+	for path, contents := range output {
 		if optDryRun {
 			fmt.Printf("============================= %s ======================================\n", path)
 			fmt.Println(strings.TrimSpace(contents.String()))
@@ -95,12 +101,19 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 		if _, err := ensureDir(outDir); err != nil {
 			return err
 		}
+		// TODO(muvaf): Hooks file should be generated only once as boilerplate.
+		// We will revisit to make it so lean that we don't need to generate it.
+		if strings.Contains(outPath, "hooks.go") {
+			if _, err := os.Stat(outPath); !os.IsNotExist(err) {
+				continue
+			}
+		}
 		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
 		}
 	}
-	apiPath := filepath.Join(providerDir, "apis", optGenVersion)
-	controllerPath := filepath.Join(providerDir, "pkg", "controller")
+	apiPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion)
+	controllerPath := filepath.Join(providerDir, "pkg", "controller", svcAlias)
 	// TODO(muvaf): goimports don't allow to be included as a library. Make sure
 	// goimports binary exists.
 	if err := exec.Command("goimports", "-w", apiPath, controllerPath).Run(); err != nil {
