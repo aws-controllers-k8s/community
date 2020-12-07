@@ -101,11 +101,11 @@ test_create_rg_single_shard_no_replicas() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 }
 
 # create RG with custom node group specification where ID isn't surrounded by quotes: negative test,
@@ -165,11 +165,11 @@ $yaml_base
           - us-east-1a
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 }
 
 # create RG with custom param group
@@ -192,11 +192,11 @@ $yaml_base
     cacheParameterGroupName: pgtest
 EOF
 )
-  output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
+  echo "$rg_yaml" | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
 
   # ensure resource successfully created and available, check resource is as expected
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   aws_assert_rg_param_group "$rg_id" "pgtest"
 }
 
