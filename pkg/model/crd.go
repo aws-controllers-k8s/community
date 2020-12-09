@@ -584,7 +584,7 @@ func (r *CRD) goCodeRequiredFieldsMissingFromShape(
 		resVarPath := koVarName
 		_, found := r.SpecFields[memberName]
 		if found {
-			resVarPath = resVarPath + ".Spec." + cleanMemberName
+			resVarPath = resVarPath + r.genCfg.PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			_, found = r.StatusFields[memberName]
 			if !found {
@@ -597,7 +597,7 @@ func (r *CRD) goCodeRequiredFieldsMissingFromShape(
 				)
 				panic(msg)
 			}
-			resVarPath = resVarPath + ".Status." + cleanMemberName
+			resVarPath = resVarPath + r.genCfg.PrefixConfig.StatusField + "." + cleanMemberName
 		}
 		missing = append(missing, fmt.Sprintf("%s == nil", resVarPath))
 	}
@@ -725,7 +725,7 @@ func (r *CRD) GoCodeSetInput(
 			fieldConfig := attrMapConfig.Fields[fieldName]
 			fieldNames := names.New(fieldName)
 			if !fieldConfig.IsReadOnly {
-				sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+				sourceAdaptedVarName := sourceVarName + r.genCfg.PrefixConfig.SpecField + "." + fieldNames.Camel
 				out += fmt.Sprintf(
 					"%sif %s != nil {\n",
 					indent, sourceAdaptedVarName,
@@ -1055,14 +1055,14 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 		sourceVarPath := sourceVarName
 		field, found := r.SpecFields[memberName]
 		if found {
-			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+			sourceVarPath = sourceVarName + r.genCfg.PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			field, found = r.StatusFields[memberName]
 			if !found {
 				// If it isn't in our spec/status fields, just ignore it
 				continue
 			}
-			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+			sourceVarPath = sourceVarPath + r.genCfg.PrefixConfig.StatusField + "." + cleanMemberName
 		}
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n",
@@ -1214,7 +1214,7 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 				fieldConfig := attrMapConfig.Fields[fieldName]
 				fieldNames := names.New(fieldName)
 				if !fieldConfig.IsReadOnly {
-					sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+					sourceAdaptedVarName := sourceVarName + r.genCfg.PrefixConfig.SpecField + "." + fieldNames.Camel
 					out += fmt.Sprintf(
 						"%sif %s != nil {\n",
 						indent, sourceAdaptedVarName,
@@ -1241,14 +1241,14 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 		sourceVarPath := sourceVarName
 		field, found := r.SpecFields[memberName]
 		if found {
-			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+			sourceVarPath = sourceVarName + r.genCfg.PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			field, found = r.StatusFields[memberName]
 			if !found {
 				// If it isn't in our spec/status fields, just ignore it
 				continue
 			}
-			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+			sourceVarPath = sourceVarPath + r.genCfg.PrefixConfig.SpecField + "." + cleanMemberName
 		}
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n",
@@ -2219,10 +2219,11 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 		fieldNames := names.New(fieldName)
 		if fieldConfig.IsReadOnly {
+			adaptiveTargetVarName := targetVarName + r.genCfg.PrefixConfig.StatusField
 			out += fmt.Sprintf(
 				"%s%s.%s = %s.Attributes[\"%s\"]\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 				fieldNames.Camel,
 				sourceVarName,
 				fieldName,

@@ -60,6 +60,7 @@ var (
 		"apis/type_def.go.tpl",
 		"pkg/sdk_find_read_one.go.tpl",
 		"pkg/sdk_find_read_many.go.tpl",
+		"pkg/sdk_find_get_attributes.go.tpl",
 	}
 	// CopyPaths is the list of files that will be copied as is.
 	CopyPaths = []string{}
@@ -96,6 +97,15 @@ var TemplateFuncs = template.FuncMap{
 	},
 	"GoCodeSetDeleteInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 		return r.GoCodeSetInput(model.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeGetAttributesSetInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeGetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeSetAttributesSetInput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeSetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
+	},
+	"GoCodeGetAttributesSetOutput": func(r *model.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+		return r.GoCodeGetAttributesSetOutput(sourceVarName, targetVarName, indentLevel)
 	},
 	"Empty": func(subject string) bool {
 		return strings.TrimSpace(subject) == ""

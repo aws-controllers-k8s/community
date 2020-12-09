@@ -56,7 +56,7 @@ type external struct {
 	kube   client.Client
 	client svcsdkapi.{{ .SDKAPIInterfaceTypeName }}API
 }
-
+{{ if or .CRD.Ops.ReadOne .CRD.Ops.GetAttributes .CRD.Ops.ReadMany }}
 func (e *external) Observe(ctx context.Context, mg cpresource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*svcapitypes.{{ .CRD.Names.Camel }})
 	if !ok {
@@ -74,6 +74,12 @@ func (e *external) Observe(ctx context.Context, mg cpresource.Managed) (managed.
 {{- if .CRD.Ops.ReadOne }}
 	input := Generate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(cr)
 	resp, err := e.client.{{ .CRD.Ops.ReadOne.Name }}WithContext(ctx, input)
+  if err != nil {
+    return managed.ExternalObservation{ResourceExists: false}, errors.Wrap(cpresource.Ignore(IsNotFound, err), errDescribe)
+  }
+{{- else if .CRD.Ops.GetAttributes }}
+	input := Generate{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }}(cr)
+	resp, err := e.client.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
   if err != nil {
     return managed.ExternalObservation{ResourceExists: false}, errors.Wrap(cpresource.Ignore(IsNotFound, err), errDescribe)
   }
@@ -98,7 +104,10 @@ func (e *external) Observe(ctx context.Context, mg cpresource.Managed) (managed.
 		ResourceLateInitialized: !cmp.Equal(&cr.Spec.ForProvider, currentSpec),
 	}, nil)
 }
-
+{{ else }}
+// {{ .CRD.Names.Camel }} API does not natively implement a Get call. It should
+// be handled with custom code.
+{{ end }}
 func (e *external) Create(ctx context.Context, mg cpresource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*svcapitypes.{{ .CRD.Names.Camel }})
 	if !ok {
@@ -128,18 +137,15 @@ func (e *external) Update(ctx context.Context, mg cpresource.Managed) (managed.E
 	return e.postUpdate(ctx, cr, managed.ExternalUpdate{}, nil)
 }
 
+{{- if .CRD.Ops.Delete }}
 func (e *external) Delete(ctx context.Context, mg cpresource.Managed) error {
 	cr, ok := mg.(*svcapitypes.{{ .CRD.Names.Camel }})
 	if !ok {
 		return errors.New(errUnexpectedObject)
 	}
 	cr.Status.SetConditions(runtimev1alpha1.Deleting())
-	{{- if .CRD.Ops.Delete }}
   input := Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr)
   _, err := e.client.{{ .CRD.Ops.Delete.Name }}WithContext(ctx, input)
 	return errors.Wrap(cpresource.Ignore(IsNotFound, err), errDelete)
-  {{- else }}
-  	// TODO(jaypipes): Figure this out...
-  	return nil
-  {{ end }}
 }
+{{ end }}

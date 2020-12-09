@@ -19,11 +19,11 @@ import (
 
 // NOTE(muvaf): We return pointers in case the function needs to start with an
 // empty object, hence need to return a new pointer.
-// TODO(muvaf): We can generate one-time boilerplate for these hooks but currently
-// ACK doesn't support not generating if file exists.
 
 {{ if .CRD.Ops.ReadOne }}
     {{- template "sdk_find_read_one" . }}
+{{- else if .CRD.Ops.GetAttributes }}
+    {{- template "sdk_find_get_attributes" . }}
 {{- else if .CRD.Ops.ReadMany }}
     {{- template "sdk_find_read_many" . }}
 {{- end }}

@@ -8,10 +8,12 @@ import (
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+
 
 	svcapitypes "github.com/crossplane/provider-aws/apis/{{ .ServiceIDClean }}/{{ .APIVersion}}"
 )
@@ -28,22 +30,44 @@ func Setup{{ .CRD.Names.Camel }}(mgr ctrl.Manager, l logging.Logger) error {
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
-
+{{ if or .CRD.Ops.ReadOne .CRD.Ops.GetAttributes .CRD.Ops.ReadMany }}
 func (*external) preObserve(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}) error {
 	return nil
 }
 
 {{- if .CRD.Ops.ReadOne }}
-func (*external) postObserve(_ context.Context, _ *svcapitypes.{{ .CRD.Names.Camel }}, _ *svcsdk.{{ .CRD.Ops.ReadOne.OutputRef.Shape.ShapeName }}, obs managed.ExternalObservation, err error) (managed.ExternalObservation, error) {
+func (*external) postObserve(_ context.Context, cr *svcapitypes.{{ .CRD.Names.Camel }}, _ *svcsdk.{{ .CRD.Ops.ReadOne.OutputRef.Shape.ShapeName }}, obs managed.ExternalObservation, err error) (managed.ExternalObservation, error) {
+	if err != nil {
+  		return managed.ExternalObservation{}, err
+  	}
+  cr.SetConditions(runtimev1alpha1.Available())
 	return obs, err
 }
+{{- else if .CRD.Ops.GetAttributes }}
+func (*external) postObserve(_ context.Context, cr *svcapitypes.{{ .CRD.Names.Camel }}, _ *svcsdk.{{ .CRD.Ops.GetAttributes.OutputRef.Shape.ShapeName }}, obs managed.ExternalObservation, err error) (managed.ExternalObservation, error) {
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+	cr.SetConditions(runtimev1alpha1.Available())
+	return obs, nil
+}
 {{- else if .CRD.Ops.ReadMany }}
-func (*external) postObserve(_ context.Context, _ *svcapitypes.{{ .CRD.Names.Camel }}, _ *svcsdk.{{ .CRD.Ops.ReadMany.OutputRef.Shape.ShapeName }}, obs managed.ExternalObservation, err error) (managed.ExternalObservation, error) {
+func (*external) postObserve(_ context.Context, cr *svcapitypes.{{ .CRD.Names.Camel }}, _ *svcsdk.{{ .CRD.Ops.ReadMany.OutputRef.Shape.ShapeName }}, obs managed.ExternalObservation, err error) (managed.ExternalObservation, error) {
+	if err != nil {
+  		return managed.ExternalObservation{}, err
+  	}
+  cr.SetConditions(runtimev1alpha1.Available())
 	return obs, err
 }
 
 func (*external) filterList(_ *svcapitypes.{{ .CRD.Names.Camel }}, list *svcsdk.{{ .CRD.Ops.ReadMany.OutputRef.Shape.ShapeName }}) *svcsdk.{{ .CRD.Ops.ReadMany.OutputRef.Shape.ShapeName }} {
 	return list
+}
+{{ end }}
+{{ else }}
+func (e *external) Observe(ctx context.Context, mg cpresource.Managed) (managed.ExternalObservation, error) {
+	// TODO: implement me!
+	return managed.ExternalObservation{}, nil
 }
 {{ end }}
 
@@ -77,6 +101,22 @@ func preGenerate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(_ *svcapitypes.{
 }
 
 func postGenerate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(_ *svcapitypes.{{ .CRD.Names.Camel }}, obj *svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }})*svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }} {
+	return obj
+}
+{{- else if .CRD.Ops.GetAttributes }}
+func lateInitialize(*svcapitypes.{{ .CRD.Names.Camel }}Parameters,*svcsdk.{{ .CRD.Ops.GetAttributes.OutputRef.Shape.ShapeName }}) error {
+	return nil
+}
+
+func isUpToDate(*svcapitypes.{{ .CRD.Names.Camel }},*svcsdk.{{ .CRD.Ops.GetAttributes.OutputRef.Shape.ShapeName }}) bool {
+	return true
+}
+
+func preGenerate{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }}(_ *svcapitypes.{{ .CRD.Names.Camel }}, obj *svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }})*svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }} {
+	return obj
+}
+
+func postGenerate{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }}(_ *svcapitypes.{{ .CRD.Names.Camel }}, obj *svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }})*svcsdk.{{ .CRD.Ops.GetAttributes.InputRef.Shape.ShapeName }} {
 	return obj
 }
 {{- else if .CRD.Ops.ReadMany }}
@@ -113,5 +153,10 @@ func preGenerate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(_ *svcapitypes.{{
 
 func postGenerate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(_ *svcapitypes.{{ .CRD.Names.Camel }}, obj *svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}) *svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }} {
 	return obj
+}
+{{- else  }}
+func (e *external) Delete(ctx context.Context, mg cpresource.Managed) error {
+	// TODO: implement me!
+	return nil
 }
 {{- end }}

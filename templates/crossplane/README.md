@@ -8,4 +8,4 @@ go run -tags codegen cmd/ack-generate/main.go crossplane apis ecr --provider-dir
 ```
 
 Then you will need to run `go generate ./...` in `provider-dir` so that `kubebuiler`
-and other generation tools can generate the rest of machinerty for CRDs and Crossplane.
+and other generation tools can generate the rest of machinery for CRDs and Crossplane.
