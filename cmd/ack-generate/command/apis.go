@@ -19,11 +19,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 
-	"github.com/aws/aws-controllers-k8s/pkg/generate"
-	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	generate "github.com/aws/aws-controllers-k8s/pkg/generate"
+	ackgenerate "github.com/aws/aws-controllers-k8s/pkg/generate/ack"
 	"github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -84,138 +83,36 @@ func generateAPIs(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("service %s not found", svcAlias)
 		}
 	}
-	if !optDryRun {
-		apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
-		if _, err := ensureDir(apisVersionPath); err != nil {
-			return err
-		}
-	}
 	g, err := generate.New(
-		sdkAPI, optGenVersion, optGeneratorConfigPath, optTemplatesDir, config.Default,
+		sdkAPI, optGenVersion, optGeneratorConfigPath, ackgenerate.DefaultConfig,
 	)
 	if err != nil {
 		return err
 	}
-
-	crds, err := g.GetCRDs()
-	if err != nil {
-		return err
-	}
-	typeDefs, _, err := g.GetTypeDefs()
-	if err != nil {
-		return err
-	}
-	enumDefs, err := g.GetEnumDefs()
+	ts, err := ackgenerate.APIs(g, optTemplatesDir)
 	if err != nil {
 		return err
 	}
 
-	if err = writeDocGo(g); err != nil {
+	if err = ts.Execute(); err != nil {
 		return err
 	}
 
-	if err = writeGroupVersionInfoGo(g); err != nil {
-		return err
-	}
-
-	if err = writeEnumsGo(g, enumDefs); err != nil {
-		return err
-	}
-
-	if err = writeTypesGo(g, typeDefs); err != nil {
-		return err
-	}
-
-	for _, crd := range crds {
-		if err = writeCRDGo(g, crd); err != nil {
+	apisVersionPath = filepath.Join(optAPIsOutputPath, svcAlias, "apis", optGenVersion)
+	for path, contents := range ts.Executed() {
+		if optDryRun {
+			fmt.Printf("============================= %s ======================================\n", path)
+			fmt.Println(strings.TrimSpace(contents.String()))
+			continue
+		}
+		outPath := filepath.Join(apisVersionPath, path)
+		outDir := filepath.Dir(outPath)
+		if _, err := ensureDir(outDir); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func writeDocGo(g *generate.Generator) error {
-	b, err := g.GenerateAPIFile("doc")
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= doc.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(apisVersionPath, "doc.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeGroupVersionInfoGo(g *generate.Generator) error {
-	b, err := g.GenerateAPIFile("groupversion_info")
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= groupversion_info.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(apisVersionPath, "groupversion_info.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeEnumsGo(
-	g *generate.Generator,
-	enumDefs []*model.EnumDef,
-) error {
-	if len(enumDefs) == 0 {
-		return nil
-	}
-	b, err := g.GenerateAPIFile("enums")
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= enums.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(apisVersionPath, "enums.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeTypesGo(
-	g *generate.Generator,
-	typeDefs []*model.TypeDef,
-) error {
-	if len(typeDefs) == 0 {
-		return nil
-	}
-	b, err := g.GenerateAPIFile("types")
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= types.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(apisVersionPath, "types.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeCRDGo(
-	g *generate.Generator,
-	crd *model.CRD,
-) error {
-	b, err := g.GenerateCRDFile(crd.Names.Original)
-	if err != nil {
-		return err
-	}
-	crdFileName := strcase.ToSnake(crd.Kind) + ".go"
-	if optDryRun {
-		fmt.Printf("============================= %s ======================================\n", crdFileName)
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(apisVersionPath, crdFileName)
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
 }

@@ -27,7 +27,7 @@ import (
 	k8sversion "k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
-	"github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	ackgenerate "github.com/aws/aws-controllers-k8s/pkg/generate/ack"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
@@ -81,133 +81,32 @@ func generateController(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	g, err := generate.New(
-		sdkAPI, latestAPIVersion, optGeneratorConfigPath, optTemplatesDir, config.Default,
+		sdkAPI, latestAPIVersion, optGeneratorConfigPath, ackgenerate.DefaultConfig,
 	)
 	if err != nil {
 		return err
 	}
-
-	crds, err := g.GetCRDs()
+	ts, err := ackgenerate.Controller(g, optTemplatesDir)
 	if err != nil {
 		return err
 	}
 
-	if !optDryRun {
-		cmdControllerPath = filepath.Join(optControllerOutputPath, "cmd", "controller")
-		if _, err := ensureDir(cmdControllerPath); err != nil {
-			return err
-		}
-		pkgResourcePath = filepath.Join(optControllerOutputPath, "pkg", "resource")
-		if _, err := ensureDir(pkgResourcePath); err != nil {
-			return err
-		}
-	}
-	if err = writeControllerMainGo(g, crds); err != nil {
+	if err = ts.Execute(); err != nil {
 		return err
 	}
-	if err = writeResourcePackage(g, crds); err != nil {
-		return err
-	}
-	if err = writeConfigDirs(g); err != nil {
-		return err
-	}
-	return nil
-}
 
-func writeControllerMainGo(g *generate.Generator, crds []*ackmodel.CRD) error {
-	b, err := g.GenerateCmdControllerMainFile()
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= cmd/controller/main.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(cmdControllerPath, "main.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeResourcePackage(g *generate.Generator, crds []*ackmodel.CRD) error {
-	targets := []string{
-		"descriptor",
-		"identifiers",
-		"manager",
-		"manager_factory",
-		"resource",
-		"sdk",
-	}
-	for _, crd := range crds {
-		pkgCRDResourcePath := filepath.Join(pkgResourcePath, crd.Names.Snake)
-		if !optDryRun {
-			if _, err := ensureDir(pkgCRDResourcePath); err != nil {
-				return err
-			}
-		}
-		for _, target := range targets {
-			b, err := g.GenerateResourcePackageFile(crd.Names.Original, target)
-			if err != nil {
-				return err
-			}
-			if optDryRun {
-				fmt.Println("============================= pkg/resource/" + crd.Names.Snake + "/" + target + ".go ======================================")
-				fmt.Println(strings.TrimSpace(b.String()))
-				return nil
-			}
-			path := filepath.Join(pkgResourcePath, crd.Names.Snake, target+".go")
-			if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
-				return err
-			}
-		}
-	}
-	return writeResourcePackageRegistryGo(g)
-}
-
-func writeResourcePackageRegistryGo(g *generate.Generator) error {
-	b, err := g.GenerateResourceRegistryFile()
-	if err != nil {
-		return err
-	}
-	if optDryRun {
-		fmt.Println("============================= pkg/resource/registry.go ======================================")
-		fmt.Println(strings.TrimSpace(b.String()))
-		return nil
-	}
-	path := filepath.Join(pkgResourcePath, "registry.go")
-	return ioutil.WriteFile(path, b.Bytes(), 0666)
-}
-
-func writeConfigDirs(g *generate.Generator) error {
-	configDefaultPath := filepath.Join(optControllerOutputPath, "config", "default")
-	configControllerPath := filepath.Join(optControllerOutputPath, "config", "controller")
-	configRBACPath := filepath.Join(optControllerOutputPath, "config", "rbac")
-	configCRDPath := filepath.Join(optControllerOutputPath, "config", "crd")
-	if !optDryRun {
-		if _, err := ensureDir(configDefaultPath); err != nil {
-			return err
-		}
-		if _, err := ensureDir(configControllerPath); err != nil {
-			return err
-		}
-		if _, err := ensureDir(configRBACPath); err != nil {
-			return err
-		}
-		if _, err := ensureDir(configCRDPath); err != nil {
-			return err
-		}
-	}
-	for _, target := range generate.ConfigFiles {
-		b, err := g.GenerateConfigFile(target)
-		if err != nil {
-			return err
-		}
+	for path, contents := range ts.Executed() {
 		if optDryRun {
-			fmt.Println("============================= " + target + " ======================================")
-			fmt.Println(strings.TrimSpace(b.String()))
-			return nil
+			fmt.Printf("============================= %s ======================================\n", path)
+			fmt.Println(strings.TrimSpace(contents.String()))
+			continue
 		}
-		path := filepath.Join(optControllerOutputPath, target)
-		if err := ioutil.WriteFile(path, b.Bytes(), 0666); err != nil {
+		outPath := filepath.Join(optControllerOutputPath, path)
+		outDir := filepath.Dir(outPath)
+		if _, err := ensureDir(outDir); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
 		}
 	}
