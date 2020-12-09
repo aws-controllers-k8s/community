@@ -90,6 +90,7 @@ func (rm *resourceManager) provideEvents(
 	input.SetMaxRecords(maxRecords)
 	input.SetDuration(eventsDuration)
 	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-CacheParameterGroup", err)
 	if err != nil {
 		return nil, err
 	}
