@@ -210,7 +210,8 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case {{ range $x, $terminalCode := .CRD.TerminalExceptionCodes -}}{{ if ne ($x) (0) }}, {{ end }} "{{ $terminalCode }}"{{ end }}:
+	case {{ range $x, $terminalCode := .CRD.TerminalExceptionCodes -}}{{ if ne ($x) (0) }},
+		{{ end }} "{{ $terminalCode }}"{{ end }}:
 		return true
 	default:
 		return false

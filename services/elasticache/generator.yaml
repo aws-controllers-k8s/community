@@ -3,6 +3,11 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
+      terminal_codes:
+        - CacheSubnetGroupQuotaExceeded
+        - CacheSubnetQuotaExceededFault
+        - SubnetInUse
+        - InvalidSubnet
     status_fields:
       - operation_id: DescribeEvents
         member_name: Events
@@ -13,6 +18,18 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+        - InsufficientCacheClusterCapacity
+        - CacheSecurityGroupNotFound
+        - CacheSubnetGroupNotFoundFault
+        - ClusterQuotaForCustomerExceeded
+        - NodeQuotaForClusterExceeded
+        - NodeQuotaForCustomerExceeded
+        - InvalidVPCNetworkStateFault
+        - TagQuotaPerResourceExceeded
+        - NodeGroupsPerReplicationGroupQuotaExceeded
+        - InvalidCacheSecurityGroupState
+        - CacheParameterGroupNotFound
+        - InvalidKMSKeyFault
     status_fields:
       - operation_id: ListAllowedNodeTypeModifications
         member_name: ScaleUpModifications
@@ -27,6 +44,11 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+        - SnapshotAlreadyExistsFault
+        - CacheClusterNotFound
+        - ReplicationGroupNotFoundFault
+        - SnapshotQuotaExceededFault
+        - SnapshotFeatureNotSupportedFault
     spec_fields:
         - operation_id: CopySnapshot
           member_name: SourceSnapshotName

@@ -519,7 +519,14 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case "InvalidParameter", "InvalidParameterValue", "InvalidParameterCombination":
+	case "InvalidParameter",
+		"InvalidParameterValue",
+		"InvalidParameterCombination",
+		"SnapshotAlreadyExistsFault",
+		"CacheClusterNotFound",
+		"ReplicationGroupNotFoundFault",
+		"SnapshotQuotaExceededFault",
+		"SnapshotFeatureNotSupportedFault":
 		return true
 	default:
 		return false

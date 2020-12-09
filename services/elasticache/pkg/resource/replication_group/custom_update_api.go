@@ -50,7 +50,7 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 			errors.New("Replication Group can not be modified, it is not in 'available' state."),
 			requeue.DefaultRequeueAfterDuration)
 	}
-	
+
 	// Order of operations when diffs map to multiple updates APIs:
 	// 1. When automaticFailoverEnabled differs:
 	//		if automaticFailoverEnabled == false; do nothing in this custom logic, let the modify execute first.
