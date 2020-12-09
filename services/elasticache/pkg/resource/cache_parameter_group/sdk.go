@@ -282,7 +282,12 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case "CacheParameterGroupAlreadyExists", "CacheParameterGroupQuotaExceeded", "InvalidCacheParameterGroupState", "InvalidGlobalReplicationGroupState", "InvalidParameterCombination", "InvalidParameterValue":
+	case "CacheParameterGroupAlreadyExists",
+		"CacheParameterGroupQuotaExceeded",
+		"InvalidCacheParameterGroupState",
+		"InvalidGlobalReplicationGroupState",
+		"InvalidParameterCombination",
+		"InvalidParameterValue":
 		return true
 	default:
 		return false

@@ -978,7 +978,21 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case "InvalidParameter", "InvalidParameterValue", "InvalidParameterCombination":
+	case "InvalidParameter",
+		"InvalidParameterValue",
+		"InvalidParameterCombination",
+		"InsufficientCacheClusterCapacity",
+		"CacheSecurityGroupNotFound",
+		"CacheSubnetGroupNotFoundFault",
+		"ClusterQuotaForCustomerExceeded",
+		"NodeQuotaForClusterExceeded",
+		"NodeQuotaForCustomerExceeded",
+		"InvalidVPCNetworkStateFault",
+		"TagQuotaPerResourceExceeded",
+		"NodeGroupsPerReplicationGroupQuotaExceeded",
+		"InvalidCacheSecurityGroupState",
+		"CacheParameterGroupNotFound",
+		"InvalidKMSKeyFault":
 		return true
 	default:
 		return false
