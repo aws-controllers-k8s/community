@@ -230,6 +230,7 @@ func (rm *resourceManager) increaseReplicaCount(
 		return nil, err
 	}
 	resp, respErr := rm.sdkapi.IncreaseReplicaCountWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "IncreaseReplicaCount", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -246,6 +247,7 @@ func (rm *resourceManager) decreaseReplicaCount(
 		return nil, err
 	}
 	resp, respErr := rm.sdkapi.DecreaseReplicaCountWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "DecreaseReplicaCount", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -262,6 +264,7 @@ func (rm *resourceManager) updateShardConfiguration(
 		return nil, err
 	}
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupShardConfigurationWithContext(ctx, input)
+	rm.metrics.RecordAPICall("UPDATE", "ModifyReplicationGroupShardConfiguration", respErr)
 	if respErr != nil {
 		return nil, respErr
 	}

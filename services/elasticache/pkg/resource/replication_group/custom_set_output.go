@@ -110,6 +110,7 @@ func (rm *resourceManager) customSetOutput(
 
 		if err == nil {
 			resp, apiErr := rm.sdkapi.ListAllowedNodeTypeModifications(input)
+			rm.metrics.RecordAPICall("READ_MANY", "ListAllowedNodeTypeModifications", apiErr)
 			// Overwrite the values for ScaleUp and ScaleDown
 			if apiErr == nil {
 				ko.Status.ScaleDownModifications = resp.ScaleDownModifications
@@ -160,6 +161,7 @@ func (rm *resourceManager) provideEvents(
 	input.SetMaxRecords(maxRecords)
 	input.SetDuration(eventsDuration)
 	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-ReplicationGroup", err)
 	if err != nil {
 		return nil, err
 	}
