@@ -1,13 +1,16 @@
 resources:
   Table:
     exceptions:
-      codes:
-        404: ResourceNotFoundException
+      errors:
+        404:
+          code: ResourceNotFoundException
   GlobalTable:
     exceptions:
-      codes:
-        404: GlobalTableNotFoundException
+      errors:
+        404:
+          code: GlobalTableNotFoundException
   Backup:
     exceptions:
-      codes:
-        404: BackupNotFoundException
+      errors:
+        404:
+          code: BackupNotFoundException

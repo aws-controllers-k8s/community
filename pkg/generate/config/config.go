@@ -274,11 +274,28 @@ type FieldConfig struct {
 // the EC2 API, where the API model has no information at all about error
 // responses for any operation)
 type ExceptionsConfig struct {
-	// Codes is a map of HTTP status code to the name of the Exception shape
+	// Errors is a map of HTTP status code to information about the Exception
 	// that corresponds to that HTTP status code for this resource
-	Codes map[int]string `json:"codes"`
+	Errors map[int]ErrorConfig `json:"errors"`
 	// Set of aws exception codes that are terminal exceptions for this resource
 	TerminalCodes []string `json:"terminal_codes"`
+}
+
+// ErrorConfig contains instructions to the code generator about the exception
+// corresponding to a HTTP status code
+type ErrorConfig struct {
+	// Code corresponds to name of Exception returned by AWS API.
+	// In AWS Go SDK terms - awsErr.Code()
+	Code string `json:"code"`
+	// MessagePrefix is an optional string field to be checked as prefix of the
+	// exception message in addition to exception name. This is needed for HTTP codes
+	// where the exception name alone is not sufficient to determine the type of error.
+	// Example: SageMaker service throws ValidationException if job does not exist
+	// as well as if IAM role does not have sufficient permission to fetch the dataset
+	// For the former controller should proceed with creation of job whereas the
+	// later is a terminal state.
+	// In Go SDK terms - awsErr.Message()
+	MessagePrefix *string `json:"message_prefix,omitempty"`
 }
 
 // RenamesConfig contains instructions to the code generator how to rename

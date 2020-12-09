@@ -441,10 +441,8 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	if r.genCfg != nil {
 		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
 		if found && resGenConfig.Exceptions != nil {
-			for httpCode, excCode := range resGenConfig.Exceptions.Codes {
-				if httpCode == httpStatusCode {
-					return excCode
-				}
+			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present {
+				return excConfig.Code
 			}
 		}
 	}
@@ -485,6 +483,29 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 		}
 	}
 	return "UNKNOWN"
+}
+
+// GoCodeSetExceptionMessagePrefixCheck returns Go code that contains a
+// condition to check if the message_prefix specified for a particular HTTP status code
+// in generator config is a prefix for the exception message returned by AWS API.
+// If message_prefix field was not specified for this HTTP code in generator config,
+// we return an empty string
+//
+// Sample Output:
+//
+// && strings.HasPrefix(awsErr.Message(), "Could not find model")
+func (r *CRD) GoCodeSetExceptionMessagePrefixCheck(httpStatusCode int) string {
+	if r.genCfg != nil {
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.Exceptions != nil {
+			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present &&
+				resGenConfig.Exceptions.Errors[httpStatusCode].MessagePrefix != nil {
+				return fmt.Sprintf("&& strings.HasPrefix(awsErr.Message(), \"%s\") ",
+					*excConfig.MessagePrefix)
+			}
+		}
+	}
+	return ""
 }
 
 // GoCodeRequiredFieldsMissingFromShape returns Go code that contains a
