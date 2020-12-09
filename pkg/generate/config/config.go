@@ -151,10 +151,13 @@ type AdditionalFieldConfig struct {
 	// OperationID refers to the ID of the API Operation where we will
 	// determine the field's Go type.
 	OperationID string `json:"operation_id,omitempty"`
-	// MemberName refers to the name of the member of the
+	// SourceName refers to the name of the member of the
 	// Input shape in the Operation identified by OperationID that
 	// we will take as our additional spec/status field.
-	MemberName string `json:"member_name"`
+	SourceName string `json:"source_name"`
+	// TargetName refers to the name that will be used instead of
+	// SourceName in the status.
+	TargetName string `json:"target_name,omitempty"`
 }
 
 type PrefixConfig struct {

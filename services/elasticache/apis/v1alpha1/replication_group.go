@@ -67,23 +67,23 @@ type ReplicationGroupStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions                 []*ackv1alpha1.Condition               `json:"conditions"`
-	AuthTokenEnabled           *bool                                  `json:"authTokenEnabled,omitempty"`
-	AuthTokenLastModifiedDate  *metav1.Time                           `json:"authTokenLastModifiedDate,omitempty"`
-	AutomaticFailover          *string                                `json:"automaticFailover,omitempty"`
-	ClusterEnabled             *bool                                  `json:"clusterEnabled,omitempty"`
-	ConfigurationEndpoint      *Endpoint                              `json:"configurationEndpoint,omitempty"`
-	Description                *string                                `json:"description,omitempty"`
-	Events                     []*Event                               `json:"events,omitempty"`
-	GlobalReplicationGroupInfo *GlobalReplicationGroupInfo            `json:"globalReplicationGroupInfo,omitempty"`
-	MemberClusters             []*string                              `json:"memberClusters,omitempty"`
-	MultiAZ                    *string                                `json:"multiAZ,omitempty"`
-	NodeGroups                 []*NodeGroup                           `json:"nodeGroups,omitempty"`
-	PendingModifiedValues      *ReplicationGroupPendingModifiedValues `json:"pendingModifiedValues,omitempty"`
-	ScaleDownModifications     []*string                              `json:"scaleDownModifications,omitempty"`
-	ScaleUpModifications       []*string                              `json:"scaleUpModifications,omitempty"`
-	SnapshottingClusterID      *string                                `json:"snapshottingClusterID,omitempty"`
-	Status                     *string                                `json:"status,omitempty"`
+	Conditions                    []*ackv1alpha1.Condition               `json:"conditions"`
+	AllowedScaleDownModifications []*string                              `json:"allowedScaleDownModifications,omitempty"`
+	AllowedScaleUpModifications   []*string                              `json:"allowedScaleUpModifications,omitempty"`
+	AuthTokenEnabled              *bool                                  `json:"authTokenEnabled,omitempty"`
+	AuthTokenLastModifiedDate     *metav1.Time                           `json:"authTokenLastModifiedDate,omitempty"`
+	AutomaticFailover             *string                                `json:"automaticFailover,omitempty"`
+	ClusterEnabled                *bool                                  `json:"clusterEnabled,omitempty"`
+	ConfigurationEndpoint         *Endpoint                              `json:"configurationEndpoint,omitempty"`
+	Description                   *string                                `json:"description,omitempty"`
+	Events                        []*Event                               `json:"events,omitempty"`
+	GlobalReplicationGroupInfo    *GlobalReplicationGroupInfo            `json:"globalReplicationGroupInfo,omitempty"`
+	MemberClusters                []*string                              `json:"memberClusters,omitempty"`
+	MultiAZ                       *string                                `json:"multiAZ,omitempty"`
+	NodeGroups                    []*NodeGroup                           `json:"nodeGroups,omitempty"`
+	PendingModifiedValues         *ReplicationGroupPendingModifiedValues `json:"pendingModifiedValues,omitempty"`
+	SnapshottingClusterID         *string                                `json:"snapshottingClusterID,omitempty"`
+	Status                        *string                                `json:"status,omitempty"`
 }
 
 // ReplicationGroup is the Schema for the ReplicationGroups API
