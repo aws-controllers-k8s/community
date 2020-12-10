@@ -16,9 +16,9 @@ package metrics
 import (
 	"strconv"
 
-	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
-
 	"github.com/prometheus/client_golang/prometheus"
+
+	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 )
 
 var (
@@ -45,11 +45,6 @@ var (
 		},
 	)
 )
-
-func init() {
-	prometheus.MustRegister(outboundAPIRequestsTotal)
-	prometheus.MustRegister(outboundAPIRequestsErrorTotal)
-}
 
 // Metrics contains the set of Prometheus metric objects used to store counter
 // and histograms for a variety of data points
@@ -91,6 +86,17 @@ func (m *Metrics) RecordAPICall(
 				"status_code": strconv.Itoa(statusCode),
 			},
 		).Inc()
+	}
+}
+
+// Collectors simply provides an iterator over the `prometheus.Collector`
+// interface pointers of the underlying metrics. This allows a
+// `prometheus.Registerer` (like controller-runtime's metrics.Registry) to
+// register the metrics.
+func (m *Metrics) Collectors() []prometheus.Collector {
+	return []prometheus.Collector{
+		m.obAPIRequestTotal,
+		m.obAPIRequestErrorTotal,
 	}
 }
 
