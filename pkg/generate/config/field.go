@@ -37,6 +37,10 @@ type FieldConfig struct {
 	// IsReadOnly indicates the field's value can not be set by a Kubernetes
 	// user; in other words, the field should go in the CR's Status struct
 	IsReadOnly bool `json:"is_read_only"`
+	// IsPrintable determines whether the field should be included in the
+	// AdditionalPrinterColumns list to be included in the `kubectl get`
+	// response.
+	IsPrintable bool `json:"is_printable"`
 	// ContainsOwnerAccountID indicates the field contains the AWS Account ID
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
