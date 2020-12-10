@@ -104,7 +104,8 @@ if [ -z "$TMP_DIR" ]; then
     CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
     CLUSTER_NAME="ack-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
     TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
-    $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}" -v "${K8S_VERSION}"
+    export K8S_VERSION
+    $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}"
 fi
 export PATH=$TMP_DIR:$PATH
 
