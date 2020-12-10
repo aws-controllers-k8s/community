@@ -69,7 +69,7 @@ DEFAULT_DEBUG_PREFIX="DEBUG: "
 # set. An optional second argument indicates the "indentation level" for the
 # message. If the indentation level argument is missing, we look for the
 # existence of an environs variable called "indent_level" and use that.
-# An optional third argument offers offers additional output if DEBUG is 
+# An optional third argument offers additional output if DEBUG is 
 # set to true. 
 debug_msg() {
     local __msg=${1:-}
