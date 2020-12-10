@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
@@ -58,6 +59,20 @@ func (c *ServiceController) GetReconcilers() []acktypes.AWSResourceReconciler {
 // WithLogger sets up the service controller with the supplied logger
 func (c *ServiceController) WithLogger(log logr.Logger) *ServiceController {
 	c.log = log
+	return c
+}
+
+// WithPrometheusRegistry registers all ACK service controller metrics with the
+// supplied prometheus Registry
+func (c *ServiceController) WithPrometheusRegistry(
+	reg prometheus.Registerer,
+) *ServiceController {
+	if c.metrics == nil {
+		return c
+	}
+	for _, collector := range c.metrics.Collectors() {
+		reg.MustRegister(collector)
+	}
 	return c
 }
 

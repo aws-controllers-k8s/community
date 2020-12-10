@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrlrt "sigs.k8s.io/controller-runtime"
+	ctrlrtmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	svctypes "github.com/aws/aws-controllers-k8s/services/s3/apis/v1alpha1"
 	svcresource "github.com/aws/aws-controllers-k8s/services/s3/pkg/resource"
@@ -83,6 +84,8 @@ func main() {
 		ctrlrt.Log,
 	).WithResourceManagerFactories(
 		svcresource.GetManagerFactories(),
+	).WithPrometheusRegistry(
+		ctrlrtmetrics.Registry,
 	)
 	if err = sc.BindControllerManager(mgr, ackCfg); err != nil {
 		setupLog.Error(

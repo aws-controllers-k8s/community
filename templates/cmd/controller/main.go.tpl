@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrlrt "sigs.k8s.io/controller-runtime"
+	ctrlrtmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	svcresource "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/pkg/resource"
 	svctypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/apis/{{ .APIVersion }}"
@@ -20,9 +21,9 @@ import (
 
 var (
 	awsServiceAPIGroup = "{{ .APIGroup }}"
-	awsServiceAlias    = "{{ .ServiceIDClean }}"
-	scheme             = runtime.NewScheme()
-	setupLog           = ctrlrt.Log.WithName("setup")
+	awsServiceAlias	= "{{ .ServiceIDClean }}"
+	scheme			 = runtime.NewScheme()
+	setupLog		   = ctrlrt.Log.WithName("setup")
 )
 
 func init() {
@@ -45,10 +46,10 @@ func main() {
 	}
 
 	mgr, err := ctrlrt.NewManager(ctrlrt.GetConfigOrDie(), ctrlrt.Options{
-		Scheme:             scheme,
-		Port:               ackCfg.BindPort,
+		Scheme:			 scheme,
+		Port:			   ackCfg.BindPort,
 		MetricsBindAddress: ackCfg.MetricsAddr,
-		LeaderElection:     ackCfg.EnableLeaderElection,
+		LeaderElection:	 ackCfg.EnableLeaderElection,
 		LeaderElectionID:   awsServiceAPIGroup,
 	})
 	if err != nil {
@@ -71,6 +72,8 @@ func main() {
 		ctrlrt.Log,
 	).WithResourceManagerFactories(
 		svcresource.GetManagerFactories(),
+	).WithPrometheusRegistry(
+		ctrlrtmetrics.Registry,
 	)
 	if err = sc.BindControllerManager(mgr, ackCfg); err != nil {
 		setupLog.Error(
