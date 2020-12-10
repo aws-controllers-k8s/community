@@ -68,7 +68,9 @@ DEFAULT_DEBUG_PREFIX="DEBUG: "
 # debug_msg prints out a supplied message if the DEBUG environs variable is
 # set. An optional second argument indicates the "indentation level" for the
 # message. If the indentation level argument is missing, we look for the
-# existence of an environs variable called "indent_level" and use that
+# existence of an environs variable called "indent_level" and use that.
+# An optional third argument offers offers additional output if DEBUG is 
+# set to true. 
 debug_msg() {
     local __msg=${1:-}
     local __indent_level=${2:-}
@@ -80,6 +82,9 @@ debug_msg() {
     __indent=""
     if [ -n "$__indent_level" ]; then
         __indent="$( for each in $( seq 0 $__indent_level ); do printf " "; done )"
+    fi
+    if [[ "${DEBUG}" = "true" ]]; then
+        set -x
     fi
     echo "$__debug_prefix$__indent$__msg"
 }

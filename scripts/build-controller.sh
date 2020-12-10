@@ -2,7 +2,7 @@
 
 # A script that builds a single ACK service controller for an AWS service API
 
-set -euxo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

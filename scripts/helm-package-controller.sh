@@ -3,7 +3,7 @@
 # A script that creates a Helm chart package for a specific ACK service
 # controller
 
-set -euxo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

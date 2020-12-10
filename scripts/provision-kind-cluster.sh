@@ -3,7 +3,7 @@
 # A script that provisions a KinD Kubernetes cluster for local development and
 # testing
 
-set -euxo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

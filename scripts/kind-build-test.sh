@@ -4,7 +4,7 @@
 # Kubernetes cluster, installs the built ACK service controller into that
 # Kubernetes cluster and runs a set of tests
 
-set -Eeuxo pipefail
+set -Eeo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
