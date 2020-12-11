@@ -24,7 +24,7 @@ func (rm *resourceManager) sdkUpdate(
 	_, respErr := rm.sdkapi.{{ .CRD.Ops.SetAttributes.Name }}WithContext(ctx, input)
 	rm.metrics.RecordAPICall("SET_ATTRIBUTES", "{{ .CRD.Ops.SetAttributes.Name }}", respErr)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {{ GoCodeSetExceptionMessagePrefixCheck .CRD 404 }}{
 			// Technically, this means someone deleted the backend resource in
 			// between the time we got a result back from sdkFind() and here...
 			return nil, ackerr.NotFound

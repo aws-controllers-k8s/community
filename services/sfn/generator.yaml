@@ -1,9 +1,11 @@
 resources:
   StateMachine:
     exceptions:
-      codes:
-        404: StateMachineDoesNotExist
+      errors:
+        404:
+          code: StateMachineDoesNotExist
   Activity:
     exceptions:
-      codes:
-        404: ActivityDoesNotExist
+      errors:
+        404:
+          code: ActivityDoesNotExist

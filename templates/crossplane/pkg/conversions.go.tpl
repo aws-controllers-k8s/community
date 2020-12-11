@@ -46,5 +46,5 @@ func Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .
 // IsNotFound returns whether the given error is of type NotFound or not.
 func IsNotFound(err error) bool {
 	awsErr, ok := err.(awserr.Error)
-	return ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}"
+	return ok && awsErr.Code() == "{{ ResourceExceptionCode .CRD 404 }}" {{ GoCodeSetExceptionMessagePrefixCheck .CRD 404 }}
 }

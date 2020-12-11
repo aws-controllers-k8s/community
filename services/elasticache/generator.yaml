@@ -1,8 +1,9 @@
 resources:
   CacheSubnetGroup:
     exceptions:
-      codes:
-        404: CacheSubnetGroupNotFoundFault
+      errors:
+        404:
+          code: CacheSubnetGroupNotFoundFault
       terminal_codes:
         - CacheSubnetGroupQuotaExceeded
         - CacheSubnetQuotaExceededFault
