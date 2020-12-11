@@ -179,7 +179,7 @@ func TestSQS_Queue(t *testing.T) {
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
-	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
+	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko", 1))
 
 	expRequiredFieldsCode := `
 	return r.ko.Status.QueueURL == nil

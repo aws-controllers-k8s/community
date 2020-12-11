@@ -212,7 +212,7 @@ func TestSNS_Topic(t *testing.T) {
 	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["TopicArn"])
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
-	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
+	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko", 1))
 
 	// The Go code for checking the GetTopicAttributes Input shape's required
 	// fields needs to return false when any required field is missing in the

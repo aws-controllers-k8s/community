@@ -2164,6 +2164,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
+	adaptiveTargetVarName := targetVarName + r.genCfg.PrefixConfig.StatusField
 
 	// did we output an ACKResourceMetadata guard and constructor snippet?
 	mdGuardOut := false
@@ -2177,7 +2178,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 		if r.IsPrimaryARNField(fieldName) {
 			if !mdGuardOut {
 				out += goCodeACKResourceMetadataGuardConstructor(
-					targetVarName, indentLevel,
+					adaptiveTargetVarName, indentLevel,
 				)
 				mdGuardOut = true
 			}
@@ -2190,7 +2191,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 			out += fmt.Sprintf(
 				"%s%s.ACKResourceMetadata.ARN = &tmpARN\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 			)
 			continue
 		}
@@ -2199,7 +2200,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 		if fieldConfig.ContainsOwnerAccountID {
 			if !mdGuardOut {
 				out += goCodeACKResourceMetadataGuardConstructor(
-					targetVarName, indentLevel,
+					adaptiveTargetVarName, indentLevel,
 				)
 				mdGuardOut = true
 			}
@@ -2212,14 +2213,13 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 			out += fmt.Sprintf(
 				"%s%s.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 			)
 			continue
 		}
 
 		fieldNames := names.New(fieldName)
 		if fieldConfig.IsReadOnly {
-			adaptiveTargetVarName := targetVarName + r.genCfg.PrefixConfig.StatusField
 			out += fmt.Sprintf(
 				"%s%s.%s = %s.Attributes[\"%s\"]\n",
 				indent,

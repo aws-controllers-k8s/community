@@ -14,7 +14,7 @@ func (rm *resourceManager) sdkFind(
 	if err != nil {
 		return nil, err
 	}
-{{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko.Status" 1 }}
+{{ $setCode := GoCodeGetAttributesSetOutput .CRD "resp" "ko" 1 }}
 	{{ if not ( Empty $setCode ) }}resp{{ else }}_{{ end }}, respErr := rm.sdkapi.{{ .CRD.Ops.GetAttributes.Name }}WithContext(ctx, input)
 	rm.metrics.RecordAPICall("GET_ATTRIBUTES", "{{ .CRD.Ops.GetAttributes.Name }}", respErr)
 	if respErr != nil {
