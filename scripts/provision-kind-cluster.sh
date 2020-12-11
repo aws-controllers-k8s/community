@@ -29,7 +29,7 @@ Usage:
 
 Provisions a KinD cluster for local development and testing.
 
-Example: export K8S_VERSION=1.18; $(basename "$0") my-test
+Example: $(basename "$0") my-test
 
 Environment variables:
   K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, and 1.18]           
