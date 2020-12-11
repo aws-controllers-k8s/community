@@ -47,6 +47,8 @@ spec:
         - "$(ACK_LOG_LEVEL)"
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         name: controller
+        ports:
+          - containerPort: {{ .Values.deployment.containerPort }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         env:

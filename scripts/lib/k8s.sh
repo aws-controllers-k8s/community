@@ -107,3 +107,45 @@ k8s_controller_reload_credentials() {
   sleep 15
   echo "ok."
 }
+
+# k8_get_pod_status returns status of the supplied pod name
+# it requires 1 argument: pod name
+k8_get_pod_status() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} pod_name"
+    exit 1
+  fi
+  local pod_name="$1"
+  echo $(kubectl get pods -n ack-system -o json | jq -r -e ".items[] | select(.metadata.name | contains(\"$pod_name\")) | .status.phase")
+}
+
+# k8_wait_for_pod_status waits for pod status for the given timeout interval (seconds)
+# it requires 3 arguments:
+# - pod name
+# - expected status
+# - timeout interval (in seconds)
+k8_wait_for_pod_status() {
+  if [[ $# -ne 3 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} pod_name expected_status timeout_interval"
+    exit 1
+  fi
+  local pod_name="$1"
+  local expected_status="$2"
+  local timeout_interval="$3"
+
+  local x=0
+  while true; do
+    sleep 1
+    x=$(( x + 1 ))
+    local actual_status=$(k8_get_pod_status "$pod_name")
+    if [ "$expected_status" == "$actual_status" ]; then
+      return 0
+    fi
+    if [[ $x -gt $timeout_interval ]]; then
+      break
+    fi
+  done
+  return 1
+}

@@ -26,6 +26,7 @@ import (
 var (
 	controllerConfigTemplatePaths = []string{
 		"config/controller/deployment.yaml.tpl",
+		"config/controller/service.yaml.tpl",
 		"config/controller/kustomization.yaml.tpl",
 		"config/default/kustomization.yaml.tpl",
 		"config/rbac/cluster-role-binding.yaml.tpl",
