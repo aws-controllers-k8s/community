@@ -73,7 +73,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $copied_snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$copied_snapshot_name" 10
 
   # test deletion
   kubectl delete snapshots/"$snapshot_name"
@@ -126,7 +126,7 @@ EOF)
   kubectl delete snapshots/"$snapshot_name"
   aws_wait_snapshot_deleted "$snapshot_name"
 
-  # case 2: specify both RG and cache cluster ID (should succeed)
+  # case 2: specify cache cluster ID (should succeed)
   local snapshot_name="snapshot-cmd"
   daws elasticache delete-snapshot --snapshot-name "$snapshot_name" 1>/dev/null 2>&1
   sleep 10
@@ -138,7 +138,6 @@ metadata:
   name: $snapshot_name
 spec:
   snapshotName: $snapshot_name
-  replicationGroupID: $rg_id
   cacheClusterID: $cc_id
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
@@ -192,11 +191,11 @@ EOF)
   kubectl delete snapshots/"$snapshot_name"
   aws_wait_snapshot_deleted "$snapshot_name"
 
-  # case 2: specify both RG and cache cluster ID
+  # case 2: specify cache cluster ID should fail with error
   local snapshot_name="snapshot-cme"
   daws elasticache delete-snapshot --snapshot-name "$snapshot_name" 1>/dev/null 2>&1
   sleep 10
-  local cc_id="$rg_id-001"
+  local cc_id="$rg_id-0001-001"   # Replication group has two node group, picking first node group.
   local snapshot_yaml=$(cat <<EOF
 apiVersion: elasticache.services.k8s.aws/v1alpha1
 kind: Snapshot
@@ -204,12 +203,12 @@ metadata:
   name: $snapshot_name
 spec:
   snapshotName: $snapshot_name
-  replicationGroupID: $rg_id
   cacheClusterID: $cc_id
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  sleep 35 # give time for server validation
+  k8s_check_resource_terminal_condition_true "snapshots/$snapshot_name" "Cannot snapshot a cache cluster with cluster-mode enabled. Please specify a replication group instead"
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
