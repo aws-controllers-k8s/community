@@ -6,3 +6,9 @@ updates:
       interval: "weekly"
     allow:
       - dependency-name: "github.com/aws/aws-sdk-go"
+  - package-ecosystem: "pip"
+    directory: "test/e2e/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-name: "boto*"
