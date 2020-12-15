@@ -221,17 +221,8 @@ func (rm *resourceManager) newListRequestPayload(
 ) (*svcsdk.DescribeSnapshotsInput, error) {
 	res := &svcsdk.DescribeSnapshotsInput{}
 
-	if r.ko.Spec.CacheClusterID != nil {
-		res.SetCacheClusterId(*r.ko.Spec.CacheClusterID)
-	}
-	if r.ko.Spec.ReplicationGroupID != nil {
-		res.SetReplicationGroupId(*r.ko.Spec.ReplicationGroupID)
-	}
 	if r.ko.Spec.SnapshotName != nil {
 		res.SetSnapshotName(*r.ko.Spec.SnapshotName)
-	}
-	if r.ko.Status.SnapshotSource != nil {
-		res.SetSnapshotSource(*r.ko.Status.SnapshotSource)
 	}
 
 	return res, nil
