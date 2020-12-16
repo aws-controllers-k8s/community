@@ -1,8 +1,9 @@
 resources:
   Repository:
     exceptions:
-      codes:
-        404: RepositoryNotFoundException
+      errors:
+        404:
+          code: RepositoryNotFoundException
     list_operation:
       match_fields:
         - RepositoryName

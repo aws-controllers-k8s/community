@@ -42,9 +42,9 @@ test_snapshot_CRUD() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # proceed to CRUD test: create first snapshot
   local cc_id="$rg_id-001"
@@ -59,7 +59,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 5
 
   # create second snapshot from first to trigger copy-snapshot API
   local snapshot_yaml=$(cat <<EOF
@@ -73,7 +73,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $copied_snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$copied_snapshot_name" 10
 
   # test deletion
   kubectl delete snapshots/"$snapshot_name"
@@ -100,9 +100,9 @@ test_snapshot_CMD_creates() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # case 1: specify only the replication group - should fail as RG snapshot not permitted for CMD RG
   local snapshot_name="snapshot-cmd"
@@ -126,7 +126,7 @@ EOF)
   kubectl delete snapshots/"$snapshot_name"
   aws_wait_snapshot_deleted "$snapshot_name"
 
-  # case 2: specify both RG and cache cluster ID (should succeed)
+  # case 2: specify cache cluster ID (should succeed)
   local snapshot_name="snapshot-cmd"
   daws elasticache delete-snapshot --snapshot-name "$snapshot_name" 1>/dev/null 2>&1
   sleep 10
@@ -138,12 +138,11 @@ metadata:
   name: $snapshot_name
 spec:
   snapshotName: $snapshot_name
-  replicationGroupID: $rg_id
   cacheClusterID: $cc_id
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -167,9 +166,9 @@ test_snapshot_CME_creates() {
   replicas_per_node_group=1
   automatic_failover_enabled="true"
   multi_az_enabled="true"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # case 1: specify only RG
   local snapshot_name="snapshot-cme"
@@ -186,17 +185,17 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
   aws_wait_snapshot_deleted "$snapshot_name"
 
-  # case 2: specify both RG and cache cluster ID
+  # case 2: specify cache cluster ID should fail with error
   local snapshot_name="snapshot-cme"
   daws elasticache delete-snapshot --snapshot-name "$snapshot_name" 1>/dev/null 2>&1
   sleep 10
-  local cc_id="$rg_id-001"
+  local cc_id="$rg_id-0001-001"   # Replication group has two node group, picking first node group.
   local snapshot_yaml=$(cat <<EOF
 apiVersion: elasticache.services.k8s.aws/v1alpha1
 kind: Snapshot
@@ -204,12 +203,12 @@ metadata:
   name: $snapshot_name
 spec:
   snapshotName: $snapshot_name
-  replicationGroupID: $rg_id
   cacheClusterID: $cc_id
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  sleep 35 # give time for server validation
+  k8s_check_resource_terminal_condition_true "snapshots/$snapshot_name" "Cannot snapshot a cache cluster with cluster-mode enabled. Please specify a replication group instead"
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -241,9 +240,9 @@ test_snapshot_create_KMS() {
   replicas_per_node_group=0
   automatic_failover_enabled="false"
   multi_az_enabled="false"
-  output_msg=$(provide_replication_group_yaml | kubectl apply -f - 2>&1)
+  provide_replication_group_yaml | kubectl apply -f - 2>&1
   exit_if_rg_config_application_failed $? "$rg_id"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
 
   # create snapshot while specifying KMS key
   local snapshot_name="snapshot-kms"
@@ -262,7 +261,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 20
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"

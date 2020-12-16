@@ -54,7 +54,7 @@ ack_create_replication_group() {
 }
 
 ack_create_replication_group
-wait_and_assert_replication_group_available_status
+wait_and_assert_replication_group_synced_and_available "$rg_id"
 
 #################################################
 # modify replication group
@@ -67,7 +67,7 @@ ack_modify_replication_group() {
   ack_apply_replication_group_yaml
 }
 ack_modify_replication_group
-wait_and_assert_replication_group_available_status
+wait_and_assert_replication_group_synced_and_available "$rg_id"
 k8s_assert_replication_group_status_property "$rg_id" ".description" "$rg_description"
 
 #################################################
@@ -79,7 +79,7 @@ test_update_shards_count_increase() {
   num_node_groups="3" # increases from 2 to 3
   debug_msg "Testing modify replication group: $rg_id shards count to new value: $num_node_groups."
   ack_apply_replication_group_yaml
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" "$num_node_groups"  # assert updated value
 }
 test_update_shards_count_increase
@@ -90,7 +90,7 @@ test_update_shards_count_decrease() {
   num_node_groups="2" # decreases from 3 to 2
   debug_msg "Testing modify replication group: $rg_id shards count to new value: $num_node_groups."
   ack_apply_replication_group_with_node_groups_yaml
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_shard_count "$rg_id" "$num_node_groups"  # assert updated value
 }
 test_update_shards_count_decrease
@@ -107,7 +107,7 @@ ack_modify_replication_group_replica_count() {
 test_update_replica_count() {
   k8s_assert_replication_group_replica_count "$rg_id" "$replicas_per_node_group"  # assert current value
   ack_modify_replication_group_replica_count "$1"
-  wait_and_assert_replication_group_available_status
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
   k8s_assert_replication_group_replica_count "$rg_id" "$replicas_per_node_group"  # assert updated value
 }
 ### increase replicas count

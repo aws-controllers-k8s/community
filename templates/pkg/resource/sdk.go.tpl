@@ -4,6 +4,7 @@ package {{ .CRD.Names.Snake }}
 
 import (
 	"context"
+	"strings"
 	corev1 "k8s.io/api/core/v1"
 {{- if .CRD.TypeImports }}
 {{- range $packagePath, $alias := .CRD.TypeImports }}
@@ -25,6 +26,7 @@ import (
 // Hack to avoid import errors during build...
 var (
 	_ = &metav1.Time{}
+	_ = strings.ToLower("")
 	_ = &aws.JSONValue{}
 	_ = &svcsdk.{{ .SDKAPIInterfaceTypeName}}{}
 	_ = &svcapitypes.{{ .CRD.Names.Camel }}{}
@@ -210,7 +212,8 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case {{ range $x, $terminalCode := .CRD.TerminalExceptionCodes -}}{{ if ne ($x) (0) }}, {{ end }} "{{ $terminalCode }}"{{ end }}:
+	case {{ range $x, $terminalCode := .CRD.TerminalExceptionCodes -}}{{ if ne ($x) (0) }},
+		{{ end }} "{{ $terminalCode }}"{{ end }}:
 		return true
 	default:
 		return false

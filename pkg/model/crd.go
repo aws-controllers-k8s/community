@@ -186,6 +186,44 @@ func (r *CRD) InputFieldRename(
 	)
 }
 
+// AdditionStatusFieldRename returns the renamed field for the additional Status field
+// that has been added.
+func (r *CRD) AdditionStatusFieldRename(
+	origFieldName string) (*string, bool) {
+	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+
+	if !found {
+		return nil, false
+	}
+
+	for _, statusField := range resGenConfig.StatusFields {
+		if statusField.TargetName == origFieldName {
+			return &statusField.TargetName, true
+		}
+	}
+
+	return nil, false
+}
+
+// AdditionSpecFieldRename returns the renamed field for the additional Spec field
+// that has been added.
+func (r *CRD) AdditionSpecFieldRename(
+	origFieldName string) (*string, bool) {
+	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+
+	if !found {
+		return nil, false
+	}
+
+	for _, specField := range resGenConfig.StatusFields {
+		if specField.TargetName == origFieldName {
+			return &specField.TargetName, true
+		}
+	}
+
+	return nil, false
+}
+
 func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	// There are shapes that are called things like DBProxyStatus that are
 	// fields in a DBProxy CRD... we need to ensure the type names don't
@@ -403,10 +441,8 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 	if r.genCfg != nil {
 		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
 		if found && resGenConfig.Exceptions != nil {
-			for httpCode, excCode := range resGenConfig.Exceptions.Codes {
-				if httpCode == httpStatusCode {
-					return excCode
-				}
+			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present {
+				return excConfig.Code
 			}
 		}
 	}
@@ -447,6 +483,29 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 		}
 	}
 	return "UNKNOWN"
+}
+
+// GoCodeSetExceptionMessagePrefixCheck returns Go code that contains a
+// condition to check if the message_prefix specified for a particular HTTP status code
+// in generator config is a prefix for the exception message returned by AWS API.
+// If message_prefix field was not specified for this HTTP code in generator config,
+// we return an empty string
+//
+// Sample Output:
+//
+// && strings.HasPrefix(awsErr.Message(), "Could not find model")
+func (r *CRD) GoCodeSetExceptionMessagePrefixCheck(httpStatusCode int) string {
+	if r.genCfg != nil {
+		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+		if found && resGenConfig.Exceptions != nil {
+			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present &&
+				resGenConfig.Exceptions.Errors[httpStatusCode].MessagePrefix != nil {
+				return fmt.Sprintf("&& strings.HasPrefix(awsErr.Message(), \"%s\") ",
+					*excConfig.MessagePrefix)
+			}
+		}
+	}
+	return ""
 }
 
 // GoCodeRequiredFieldsMissingFromShape returns Go code that contains a
@@ -688,6 +747,21 @@ func (r *CRD) GoCodeSetInput(
 	for memberIndex, memberName := range inputShape.MemberNames() {
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
+		}
+
+		// Rename additional Spec or Status fields that are added.
+		{
+			renamedSpecField, renamed := r.AdditionSpecFieldRename(memberName)
+
+			if renamed {
+				memberName = *renamedSpecField
+			}
+
+			renamedStatusField, renamed := r.AdditionStatusFieldRename(memberName)
+
+			if renamed {
+				memberName = *renamedStatusField
+			}
 		}
 
 		if override {

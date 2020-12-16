@@ -1,5 +1,6 @@
 resources:
   Deployment:
     exceptions:
-      codes:
-        404: DeploymentDoesNotExistException
+      errors:
+        404:
+          code: DeploymentDoesNotExistException

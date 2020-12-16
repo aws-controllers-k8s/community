@@ -20,6 +20,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/elasticache"
 	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	// The number of minutes worth of events to retrieve.
+	// 14 days in minutes
+	eventsDuration = 20160
 )
 
 func (rm *resourceManager) CustomDescribeReplicationGroupsSetOutput(
@@ -33,6 +40,10 @@ func (rm *resourceManager) CustomDescribeReplicationGroupsSetOutput(
 	}
 	elem := resp.ReplicationGroups[0]
 	rm.customSetOutput(r, elem, ko)
+	err := rm.customSetOutputSupplementAPIs(ctx, r, elem, ko)
+	if err != nil {
+		return nil, err
+	}
 	return ko, nil
 }
 
@@ -99,15 +110,16 @@ func (rm *resourceManager) customSetOutput(
 
 		if err == nil {
 			resp, apiErr := rm.sdkapi.ListAllowedNodeTypeModifications(input)
+			rm.metrics.RecordAPICall("READ_MANY", "ListAllowedNodeTypeModifications", apiErr)
 			// Overwrite the values for ScaleUp and ScaleDown
 			if apiErr == nil {
-				ko.Status.ScaleDownModifications = resp.ScaleDownModifications
-				ko.Status.ScaleUpModifications = resp.ScaleUpModifications
+				ko.Status.AllowedScaleDownModifications = resp.ScaleDownModifications
+				ko.Status.AllowedScaleUpModifications = resp.ScaleUpModifications
 			}
 		}
 	} else {
-		ko.Status.ScaleDownModifications = nil
-		ko.Status.ScaleUpModifications = nil
+		ko.Status.AllowedScaleDownModifications = nil
+		ko.Status.AllowedScaleUpModifications = nil
 	}
 }
 
@@ -122,4 +134,53 @@ func (rm *resourceManager) newListAllowedNodeTypeModificationsPayLoad(respRG *el
 	}
 
 	return res, nil
+}
+
+func (rm *resourceManager) customSetOutputSupplementAPIs(
+	ctx context.Context,
+	r *resource,
+	respRG *elasticache.ReplicationGroup,
+	ko *svcapitypes.ReplicationGroup,
+) error {
+	events, err := rm.provideEvents(ctx, r.ko.Spec.ReplicationGroupID, 20)
+	if err != nil {
+		return err
+	}
+	ko.Status.Events = events
+	return nil
+}
+
+func (rm *resourceManager) provideEvents(
+	ctx context.Context,
+	replicationGroupId *string,
+	maxRecords int64,
+) ([]*svcapitypes.Event, error) {
+	input := &elasticache.DescribeEventsInput{}
+	input.SetSourceType("replication-group")
+	input.SetSourceIdentifier(*replicationGroupId)
+	input.SetMaxRecords(maxRecords)
+	input.SetDuration(eventsDuration)
+	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-ReplicationGroup", err)
+	if err != nil {
+		return nil, err
+	}
+	events := []*svcapitypes.Event{}
+	if resp.Events != nil {
+		for _, respEvent := range resp.Events {
+			event := &svcapitypes.Event{}
+			if respEvent.Message != nil {
+				event.Message = respEvent.Message
+			}
+			if respEvent.Date != nil {
+				eventDate := metav1.NewTime(*respEvent.Date)
+				event.Date = &eventDate
+			}
+			// Not copying redundant source id (replication id)
+			// and source type (replication group)
+			// into each event object
+			events = append(events, event)
+		}
+	}
+	return events, nil
 }

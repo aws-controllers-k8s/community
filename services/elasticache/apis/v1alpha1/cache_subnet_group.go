@@ -41,6 +41,7 @@ type CacheSubnetGroupStatus struct {
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
 	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+	Events     []*Event                 `json:"events,omitempty"`
 	Subnets    []*Subnet                `json:"subnets,omitempty"`
 	VPCID      *string                  `json:"vpcID,omitempty"`
 }

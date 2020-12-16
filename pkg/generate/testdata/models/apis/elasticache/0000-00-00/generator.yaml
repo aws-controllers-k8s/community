@@ -1,8 +1,15 @@
 resources:
+  CacheSubnetGroup:
+    exceptions:
+      codes:
+        404: CacheSubnetGroupNotFoundFault
+    status_fields:
+      - operation_id: DescribeEvents
+        source_name: Events
   Snapshot:
     spec_fields:
       - operation_id: CopySnapshot
-        member_name: SourceSnapshotName
+        source_name: SourceSnapshotName
   CacheParameterGroup:
     exceptions:
       terminal_codes:
@@ -14,12 +21,24 @@ resources:
         - InvalidParameterValue
     spec_fields:
       - operation_id: ModifyCacheParameterGroup
-        member_name: ParameterNameValues
+        source_name: ParameterNameValues
     status_fields:
       - operation_id: DescribeCacheParameters
-        member_name: Parameters
+        source_name: Parameters
+      - operation_id: DescribeEvents
+        source_name: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
+  ReplicationGroup:
+    status_fields:
+      - operation_id: DescribeEvents
+        source_name: Events
+      - operation_id: ListAllowedNodeTypeModifications
+        source_name: ScaleUpModifications
+        target_name: AllowedScaleUpModifications
+      - operation_id: ListAllowedNodeTypeModifications
+        source_name: ScaleDownModifications
+        target_name: AllowedScaleDownModifications
 operations:
   ModifyReplicationGroup:
     override_values:

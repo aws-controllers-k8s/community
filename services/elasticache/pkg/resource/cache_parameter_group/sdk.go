@@ -18,6 +18,7 @@ package cache_parameter_group
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -32,6 +33,7 @@ import (
 // Hack to avoid import errors during build...
 var (
 	_ = &metav1.Time{}
+	_ = strings.ToLower("")
 	_ = &aws.JSONValue{}
 	_ = &svcsdk.ElastiCache{}
 	_ = &svcapitypes.CacheParameterGroup{}
@@ -282,7 +284,12 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 		return false
 	}
 	switch awsErr.Code() {
-	case "CacheParameterGroupAlreadyExists", "CacheParameterGroupQuotaExceeded", "InvalidCacheParameterGroupState", "InvalidGlobalReplicationGroupState", "InvalidParameterCombination", "InvalidParameterValue":
+	case "CacheParameterGroupAlreadyExists",
+		"CacheParameterGroupQuotaExceeded",
+		"InvalidCacheParameterGroupState",
+		"InvalidGlobalReplicationGroupState",
+		"InvalidParameterCombination",
+		"InvalidParameterValue":
 		return true
 	default:
 		return false

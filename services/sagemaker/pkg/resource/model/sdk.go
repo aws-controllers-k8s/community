@@ -18,6 +18,7 @@ package model
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
@@ -32,6 +33,7 @@ import (
 // Hack to avoid import errors during build...
 var (
 	_ = &metav1.Time{}
+	_ = strings.ToLower("")
 	_ = &aws.JSONValue{}
 	_ = &svcsdk.SageMaker{}
 	_ = &svcapitypes.Model{}
@@ -59,7 +61,7 @@ func (rm *resourceManager) sdkFind(
 	resp, respErr := rm.sdkapi.DescribeModelWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_ONE", "DescribeModel", respErr)
 	if respErr != nil {
-		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "ValidationException" {
+		if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "ValidationException" && strings.HasPrefix(awsErr.Message(), "Could not find model") {
 			return nil, ackerr.NotFound
 		}
 		return nil, respErr

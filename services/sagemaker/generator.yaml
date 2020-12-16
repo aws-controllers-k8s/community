@@ -1,8 +1,10 @@
 resources:
   Model:
     exceptions:
-      codes:
-        404: ValidationException
+      errors:
+        404:
+          code: ValidationException
+          message_prefix: Could not find model
 ignore:
     resource_names:
       - Algorithm

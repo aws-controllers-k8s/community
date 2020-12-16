@@ -1,8 +1,17 @@
 resources:
   CacheSubnetGroup:
     exceptions:
-      codes:
-        404: CacheSubnetGroupNotFoundFault
+      errors:
+        404:
+          code: CacheSubnetGroupNotFoundFault
+      terminal_codes:
+        - CacheSubnetGroupQuotaExceeded
+        - CacheSubnetQuotaExceededFault
+        - SubnetInUse
+        - InvalidSubnet
+    status_fields:
+      - operation_id: DescribeEvents
+        source_name: Events
   ReplicationGroup:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:
@@ -10,11 +19,27 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+        - InsufficientCacheClusterCapacity
+        - CacheSecurityGroupNotFound
+        - CacheSubnetGroupNotFoundFault
+        - ClusterQuotaForCustomerExceeded
+        - NodeQuotaForClusterExceeded
+        - NodeQuotaForCustomerExceeded
+        - InvalidVPCNetworkStateFault
+        - TagQuotaPerResourceExceeded
+        - NodeGroupsPerReplicationGroupQuotaExceeded
+        - InvalidCacheSecurityGroupState
+        - CacheParameterGroupNotFound
+        - InvalidKMSKeyFault
     status_fields:
       - operation_id: ListAllowedNodeTypeModifications
-        member_name: ScaleUpModifications
+        source_name: ScaleUpModifications
+        target_name: AllowedScaleUpModifications
       - operation_id: ListAllowedNodeTypeModifications
-        member_name: ScaleDownModifications
+        source_name: ScaleDownModifications
+        target_name: AllowedScaleDownModifications
+      - operation_id: DescribeEvents
+        source_name: Events
   Snapshot:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:
@@ -22,9 +47,14 @@ resources:
         - InvalidParameter
         - InvalidParameterValue
         - InvalidParameterCombination
+        - SnapshotAlreadyExistsFault
+        - CacheClusterNotFound
+        - ReplicationGroupNotFoundFault
+        - SnapshotQuotaExceededFault
+        - SnapshotFeatureNotSupportedFault
     spec_fields:
         - operation_id: CopySnapshot
-          member_name: SourceSnapshotName
+          source_name: SourceSnapshotName
     update_operation:
       custom_method_name: customUpdateSnapshot
   CacheParameterGroup:
@@ -38,13 +68,17 @@ resources:
         - InvalidParameterValue
     spec_fields:
       - operation_id: ModifyCacheParameterGroup
-        member_name: ParameterNameValues
+        source_name: ParameterNameValues
     status_fields:
       - operation_id: DescribeCacheParameters
-        member_name: Parameters
+        source_name: Parameters
+      - operation_id: DescribeEvents
+        source_name: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
 operations:
+  DescribeCacheSubnetGroups:
+    set_output_custom_method_name: CustomDescribeCacheSubnetGroupsSetOutput
   DescribeReplicationGroups:
     set_output_custom_method_name: CustomDescribeReplicationGroupsSetOutput
   CreateReplicationGroup:
