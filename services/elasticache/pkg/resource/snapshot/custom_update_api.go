@@ -25,5 +25,5 @@ func (rm *resourceManager) customUpdateSnapshot(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-	return desired, nil
+	return latest, nil
 }

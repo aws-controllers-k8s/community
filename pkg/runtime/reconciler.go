@@ -156,15 +156,15 @@ func (r *reconciler) sync(
 
 	latest, err := rm.ReadOne(ctx, desired)
 	if err != nil {
-		if latest != nil {
-			// this indicates, that even though ReadOne failed
-			// there is some changes available in the latest.RuntimeObject()
-			// (example: ko.Status.Conditions) which have been
-			// updated in the resource
-			// Thus, patchResource() call should be made here
-			_ = r.patchResource(ctx, desired, latest)
-		}
 		if err != ackerr.NotFound {
+			if latest != nil {
+				// this indicates, that even though ReadOne failed
+				// there is some changes available in the latest.RuntimeObject()
+				// (example: ko.Status.Conditions) which have been
+				// updated in the resource
+				// Thus, patchResource() call should be made here
+				_ = r.patchResource(ctx, desired, latest)
+			}
 			return err
 		}
 		if isAdopted {
