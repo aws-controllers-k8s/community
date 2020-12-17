@@ -102,3 +102,7 @@ ignore:
     - GlobalReplicationGroup
     - CacheCluster
     - CacheSecurityGroup
+  field_paths:
+    - DescribeSnapshotsInput.CacheClusterId
+    - DescribeSnapshotsInput.ReplicationGroupId
+    - DescribeSnapshotsInput.SnapshotSource
