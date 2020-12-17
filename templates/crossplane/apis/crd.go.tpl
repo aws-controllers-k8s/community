@@ -11,7 +11,7 @@ import (
 {{ end }}
 
 {{- end }}
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -34,7 +34,7 @@ type {{ .CRD.Kind }}Parameters struct {
 
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}
 type {{ .CRD.Kind }}Spec struct {
-	runtimev1alpha1.ResourceSpec `json:",inline"`
+	xpv1.ResourceSpec `json:",inline"`
 	ForProvider {{ .CRD.Kind }}Parameters `json:"forProvider"`
 }
 
@@ -50,7 +50,7 @@ type {{ .CRD.Kind }}Observation struct {
 
 // {{ .CRD.Kind }}Status defines the observed state of {{ .CRD.Kind }}.
 type {{ .CRD.Kind }}Status struct {
-	runtimev1alpha1.ResourceStatus `json:",inline"`
+	xpv1.ResourceStatus `json:",inline"`
 	AtProvider {{ .CRD.Kind }}Observation `json:"atProvider"`
 }
 

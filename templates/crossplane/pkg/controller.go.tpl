@@ -21,7 +21,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	cpresource "github.com/crossplane/crossplane-runtime/pkg/resource"
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 
 	svcapitypes "github.com/crossplane/provider-aws/apis/{{ .ServiceIDClean }}/{{ .APIVersion}}"
 	awsclient "github.com/crossplane/provider-aws/pkg/clients"
@@ -104,7 +104,7 @@ func (e *external) Create(ctx context.Context, mg cpresource.Managed) (managed.E
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedObject)
 	}
-	cr.Status.SetConditions(runtimev1alpha1.Creating())
+	cr.Status.SetConditions(xpv1.Creating())
 	if err := e.preCreate(ctx, cr); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "pre-create failed")
 	}
@@ -133,7 +133,7 @@ func (e *external) Delete(ctx context.Context, mg cpresource.Managed) error {
 	if !ok {
 		return errors.New(errUnexpectedObject)
 	}
-	cr.Status.SetConditions(runtimev1alpha1.Deleting())
+	cr.Status.SetConditions(xpv1.Deleting())
 	{{- if .CRD.Ops.Delete }}
   input := Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr)
   _, err := e.client.{{ .CRD.Ops.Delete.Name }}WithContext(ctx, input)
