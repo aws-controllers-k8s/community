@@ -22,7 +22,6 @@ debug_msg "selected AWS region: $AWS_REGION"
 test_create_rg_specify_sg() {
 
   # create security group in default VPC to use
-  k8s_controller_reload_credentials "elasticache"
   local vpc_json=$(daws ec2 describe-vpcs | jq -r '.Vpcs[] | select( .IsDefault == true )')
   local default_vpc_id=$(echo "$vpc_json" | jq -r '.VpcId')
   daws ec2 create-security-group --group-name "test-sg-default" --description "sg for automated elasticache ACK test" --vpc-id "$default_vpc_id" 1>/dev/null 2>&1

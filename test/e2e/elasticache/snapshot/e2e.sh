@@ -59,7 +59,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 5
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 5 "$service_name"
 
   # create second snapshot from first to trigger copy-snapshot API
   local snapshot_yaml=$(cat <<EOF
@@ -73,7 +73,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $copied_snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$copied_snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$copied_snapshot_name" 10 "$service_name"
 
   # test deletion
   kubectl delete snapshots/"$snapshot_name"
@@ -142,7 +142,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10 "$service_name"
 
   # delete snapshot for case 2 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -185,7 +185,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10 "$service_name"
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"
@@ -261,7 +261,7 @@ spec:
 EOF)
   echo "$snapshot_yaml" | kubectl apply -f -
   assert_equal "0" "$?" "Expected application of $snapshot_name to succeed" || exit 1
-  k8s_wait_resource_synced "snapshots/$snapshot_name" 10
+  k8s_wait_resource_synced "snapshots/$snapshot_name" 10 "$service_name"
 
   # delete snapshot for case 1 if creation succeeded
   kubectl delete snapshots/"$snapshot_name"

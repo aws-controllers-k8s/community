@@ -570,7 +570,7 @@ wait_and_assert_replication_group_synced_and_available() {
 
   # wait for resourced to be synced (or time out), then assert availability in aws and k8s
   sleep 5
-  k8s_wait_resource_synced "replicationgroups/$rg_id" 60
+  k8s_wait_resource_synced "replicationgroups/$rg_id" 60 "$service_name"
   aws_assert_replication_group_status "$rg_id" "available"
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
