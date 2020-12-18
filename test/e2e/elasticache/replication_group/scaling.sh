@@ -12,6 +12,7 @@ source "$SCRIPTS_DIR/lib/testutil.sh"
 source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 
 check_is_installed jq "Please install jq before running this script."
+AWS_REGION=${AWS_REGION:-"us-west-2"}
 
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
@@ -84,19 +85,20 @@ test_modify_rg_cme_scale_out_add_replica() {
   clear_rg_parameter_variables
   rg_id="rg-cme-scale-out-add-replica"
   num_node_groups="2"
-  replicas_per_node_group="1"
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
+        - ${AWS_REGION}a
+        replicaCount: 1
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -110,26 +112,28 @@ EOF
 
   # update config and apply: scale out and add replicas
   num_node_groups="3"
-  replicas_per_node_group="2"
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
-        - us-east-1a
+        - ${AWS_REGION}b
+        - ${AWS_REGION}a
+        replicaCount: 2
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
-        - us-east-1b
+        - ${AWS_REGION}a
+        - ${AWS_REGION}b
+        replicaCount: 2
       - nodeGroupID: "0030"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
-        - us-east-1a
+        - ${AWS_REGION}b
+        - ${AWS_REGION}a
+        replicaCount: 2
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -159,15 +163,15 @@ $yaml_base
     multiAZEnabled: true
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
         replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
-        - us-east-1c
+        - ${AWS_REGION}a
+        - ${AWS_REGION}c
         replicaCount: 2
 EOF
 )
@@ -189,20 +193,20 @@ $yaml_base
     multiAZEnabled: true
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
         replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
-        - us-east-1c
+        - ${AWS_REGION}a
+        - ${AWS_REGION}c
         replicaCount: 2
       - nodeGroupID: "0030"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
         replicaCount: 1
 EOF
 )
@@ -223,19 +227,20 @@ test_modify_rg_cme_scale_out_basic() {
   clear_rg_parameter_variables
   rg_id="rg-cme-scale-out-basic"
   num_node_groups="2"
-  replicas_per_node_group="1"
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -249,22 +254,25 @@ EOF
 
    # update config and apply: scale out
   num_node_groups="3"
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
       - nodeGroupID: "0030"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1

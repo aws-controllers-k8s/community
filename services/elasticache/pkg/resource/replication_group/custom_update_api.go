@@ -19,6 +19,7 @@ import (
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
 	"github.com/pkg/errors"
+	"sort"
 
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
@@ -37,6 +38,7 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 	latestRGStatus := latest.ko.Status.Status
 
 	allNodeGroupsAvailable := true
+	nodeGroupMembersCount := 0
 	if latest.ko.Status.NodeGroups != nil {
 		for _, nodeGroup := range latest.ko.Status.NodeGroups {
 			if nodeGroup.Status == nil || *nodeGroup.Status != "available" {
@@ -44,10 +46,28 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 				break
 			}
 		}
+		for _, nodeGroup := range latest.ko.Status.NodeGroups {
+			if nodeGroup.NodeGroupMembers == nil {
+				continue
+			}
+			nodeGroupMembersCount = nodeGroupMembersCount + len(nodeGroup.NodeGroupMembers)
+		}
 	}
+
 	if latestRGStatus == nil || *latestRGStatus != "available" || !allNodeGroupsAvailable {
 		return nil, requeue.NeededAfter(
 			errors.New("Replication Group can not be modified, it is not in 'available' state."),
+			requeue.DefaultRequeueAfterDuration)
+	}
+
+	memberClustersCount := 0
+	if latest.ko.Status.MemberClusters != nil {
+		memberClustersCount = len(latest.ko.Status.MemberClusters)
+	}
+	if memberClustersCount != nodeGroupMembersCount {
+		return nil, requeue.NeededAfter(
+			errors.New("Replication Group can not be modified, "+
+				"need to wait for member clusters and node group members."),
 			requeue.DefaultRequeueAfterDuration)
 	}
 
@@ -57,20 +77,20 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 	// 		else if automaticFailoverEnabled == true then following logic should execute first.
 	// 2. When multiAZ differs
 	// 		if multiAZ = true  then below is fine.
-	// 		else if multiAZ = false ; do nothing in custom logic
+	// 		else if multiAZ = false ; do nothing in custom logic, let the modify execute.
 	// 3. updateReplicaCount() is invoked Before updateShardConfiguration()
 	//		because both accept availability zones, however the number of
 	//		values depend on replica count.
 	if desired.ko.Spec.AutomaticFailoverEnabled != nil && *desired.ko.Spec.AutomaticFailoverEnabled == false {
 		latestAutomaticFailoverEnabled := latest.ko.Status.AutomaticFailover != nil && *latest.ko.Status.AutomaticFailover == "enabled"
 		if latestAutomaticFailoverEnabled != *desired.ko.Spec.AutomaticFailoverEnabled {
-			return nil, nil
+			return rm.modifyReplicationGroup(ctx, desired, latest)
 		}
 	}
 	if desired.ko.Spec.MultiAZEnabled != nil && *desired.ko.Spec.MultiAZEnabled == false {
 		latestMultiAZEnabled := latest.ko.Status.MultiAZ != nil && *latest.ko.Status.MultiAZ == "enabled"
 		if latestMultiAZEnabled != *desired.ko.Spec.MultiAZEnabled {
-			return nil, nil
+			return rm.modifyReplicationGroup(ctx, desired, latest)
 		}
 	}
 
@@ -87,7 +107,46 @@ func (rm *resourceManager) CustomModifyReplicationGroup(
 		return rm.updateShardConfiguration(ctx, desired, latest)
 	}
 
-	// no updates
+	return rm.modifyReplicationGroup(ctx, desired, latest)
+}
+
+// modifyReplicationGroup updates replication group
+// it handles properties that put replication group in
+// modifying state if these are supplied to modify API
+// irrespective of apply immediately.
+func (rm *resourceManager) modifyReplicationGroup(
+	ctx context.Context,
+	desired *resource,
+	latest *resource,
+) (*resource, error) {
+	// Method currently handles SecurityGroupIDs, EngineVersion
+	// Avoid making unnecessary DescribeCacheCluster API call if both fields are nil in spec.
+	if desired.ko.Spec.SecurityGroupIDs == nil && desired.ko.Spec.EngineVersion == nil {
+		// no updates done
+		return nil, nil
+	}
+
+	// Get details using describe cache cluster to compute diff
+	latestCacheCluster, err := rm.describeCacheCluster(ctx, latest)
+	if err != nil {
+		return nil, err
+	}
+
+	// SecurityGroupIds, EngineVersion
+	if rm.securityGroupIdsDiffer(desired, latest, latestCacheCluster) ||
+		rm.engineVersionDiffer(desired, latest, latestCacheCluster) {
+		input := rm.newModifyReplicationGroupRequestPayload(desired, latest, latestCacheCluster)
+		resp, respErr := rm.sdkapi.ModifyReplicationGroupWithContext(ctx, input)
+		rm.metrics.RecordAPICall("UPDATE", "ModifyReplicationGroup", respErr)
+		if respErr != nil {
+			rm.log.V(1).Info("Error during ModifyReplicationGroup", "error", respErr)
+			return nil, respErr
+		}
+
+		return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
+	}
+
+	// no updates done
 	return nil, nil
 }
 
@@ -139,8 +198,12 @@ func (rm *resourceManager) diffReplicasPerNodeGroup(
 			if latestShard.NodeGroupID != nil {
 				nodeGroupID = *latestShard.NodeGroupID
 			}
-			fmt.Printf("ReplicasPerNodeGroup differs for NodeGroup: %s, desired = %d, latest: %d",
-				nodeGroupID, int(*desiredSpec.ReplicasPerNodeGroup), latestReplicaCount)
+			rm.log.V(1).Info(
+				"ReplicasPerNodeGroup differs",
+				"NodeGroup", nodeGroupID,
+				"desired", int(*desiredSpec.ReplicasPerNodeGroup),
+				"latest", latestReplicaCount,
+			)
 			return desiredReplicaCount - latestReplicaCount
 		}
 	}
@@ -182,8 +245,12 @@ func (rm *resourceManager) diffReplicasNodeGroupConfiguration(
 			continue
 		}
 		if desiredShardReplicaCount := int(*desiredShard.ReplicaCount); desiredShardReplicaCount != latestShardReplicaCount {
-			fmt.Sprintf("ReplicaCount differs for NodeGroupID: %s, desired = %d, latest: %d",
-				*desiredShard.NodeGroupID, int(*desiredShard.ReplicaCount), latestShardReplicaCount)
+			rm.log.V(1).Info(
+				"ReplicaCount differs",
+				"NodeGroup", *desiredShard.NodeGroupID,
+				"desired", int(*desiredShard.ReplicaCount),
+				"latest", latestShardReplicaCount,
+			)
 			return desiredShardReplicaCount - latestShardReplicaCount
 		}
 	}
@@ -232,6 +299,7 @@ func (rm *resourceManager) increaseReplicaCount(
 	resp, respErr := rm.sdkapi.IncreaseReplicaCountWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "IncreaseReplicaCount", respErr)
 	if respErr != nil {
+		rm.log.V(1).Info("Error during IncreaseReplicaCount", "error", respErr)
 		return nil, respErr
 	}
 	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
@@ -249,6 +317,7 @@ func (rm *resourceManager) decreaseReplicaCount(
 	resp, respErr := rm.sdkapi.DecreaseReplicaCountWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "DecreaseReplicaCount", respErr)
 	if respErr != nil {
+		rm.log.V(1).Info("Error during DecreaseReplicaCount", "error", respErr)
 		return nil, respErr
 	}
 	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
@@ -266,6 +335,7 @@ func (rm *resourceManager) updateShardConfiguration(
 	resp, respErr := rm.sdkapi.ModifyReplicationGroupShardConfigurationWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "ModifyReplicationGroupShardConfiguration", respErr)
 	if respErr != nil {
+		rm.log.V(1).Info("Error during ModifyReplicationGroupShardConfiguration", "error", respErr)
 		return nil, respErr
 	}
 	return rm.provideUpdatedResource(desired, resp.ReplicationGroup)
@@ -488,6 +558,175 @@ func (rm *resourceManager) newUpdateShardConfigurationRequestPayload(
 	}
 
 	return res, nil
+}
+
+// getAnyCacheClusterIDFromNodeGroups returns a cache cluster ID from supplied node groups.
+// Any cache cluster Id which is not nil is returned.
+func (rm *resourceManager) getAnyCacheClusterIDFromNodeGroups(
+	nodeGroups []*svcapitypes.NodeGroup,
+) *string {
+	if nodeGroups == nil {
+		return nil
+	}
+
+	var cacheClusterId *string = nil
+	for _, nodeGroup := range nodeGroups {
+		if nodeGroup.NodeGroupMembers == nil {
+			continue
+		}
+		for _, nodeGroupMember := range nodeGroup.NodeGroupMembers {
+			if nodeGroupMember.CacheClusterID == nil {
+				continue
+			}
+			cacheClusterId = nodeGroupMember.CacheClusterID
+			break
+		}
+		if cacheClusterId != nil {
+			break
+		}
+	}
+	return cacheClusterId
+}
+
+// describeCacheCluster provides CacheCluster object
+// per the supplied latest Replication Group Id
+// it invokes DescribeCacheClusters API to do so
+func (rm *resourceManager) describeCacheCluster(
+	ctx context.Context,
+	latest *resource,
+) (*svcsdk.CacheCluster, error) {
+	input := &svcsdk.DescribeCacheClustersInput{}
+
+	latestStatus := latest.ko.Status
+	if latestStatus.NodeGroups == nil {
+		return nil, nil
+	}
+	cacheClusterId := rm.getAnyCacheClusterIDFromNodeGroups(latestStatus.NodeGroups)
+	if cacheClusterId == nil {
+		return nil, nil
+	}
+
+	input.SetCacheClusterId(*cacheClusterId)
+	resp, respErr := rm.sdkapi.DescribeCacheClustersWithContext(ctx, input)
+	rm.metrics.RecordAPICall("READ_MANY", "DescribeCacheClusters", respErr)
+	if respErr != nil {
+		rm.log.V(1).Info("Error during DescribeCacheClusters", "error", respErr)
+		return nil, respErr
+	}
+	if resp.CacheClusters == nil {
+		return nil, nil
+	}
+
+	for _, cc := range resp.CacheClusters {
+		if cc == nil {
+			continue
+		}
+		return cc, nil
+	}
+	return nil, nil
+}
+
+// securityGroupIdsDiffer return true if
+// Security Group Ids differ between desired spec and latest (from cache cluster) status
+func (rm *resourceManager) securityGroupIdsDiffer(
+	desired *resource,
+	latest *resource,
+	latestCacheCluster *svcsdk.CacheCluster,
+) bool {
+	if desired.ko.Spec.SecurityGroupIDs == nil {
+		return false
+	}
+
+	desiredIds := []*string{}
+	for _, id := range desired.ko.Spec.SecurityGroupIDs {
+		if id == nil {
+			continue
+		}
+		var value string
+		value = *id
+		desiredIds = append(desiredIds, &value)
+	}
+	sort.Slice(desiredIds, func(i, j int) bool {
+		return *desiredIds[i] < *desiredIds[j]
+	})
+
+	latestIds := []*string{}
+	if latestCacheCluster != nil && latestCacheCluster.SecurityGroups != nil {
+		for _, latestSG := range latestCacheCluster.SecurityGroups {
+			if latestSG == nil {
+				continue
+			}
+			var value string
+			value = *latestSG.SecurityGroupId
+			latestIds = append(latestIds, &value)
+		}
+	}
+	sort.Slice(latestIds, func(i, j int) bool {
+		return *latestIds[i] < *latestIds[j]
+	})
+
+	if len(desiredIds) != len(latestIds) {
+		return true // differ
+	}
+	for index, desiredId := range desiredIds {
+		if *desiredId != *latestIds[index] {
+			return true // differ
+		}
+	}
+	// no difference
+	return false
+}
+
+// newModifyReplicationGroupRequestPayload provides request input object
+func (rm *resourceManager) newModifyReplicationGroupRequestPayload(
+	desired *resource,
+	latest *resource,
+	latestCacheCluster *svcsdk.CacheCluster,
+) *svcsdk.ModifyReplicationGroupInput {
+	input := &svcsdk.ModifyReplicationGroupInput{}
+
+	input.SetApplyImmediately(true)
+	if desired.ko.Spec.ReplicationGroupID != nil {
+		input.SetReplicationGroupId(*desired.ko.Spec.ReplicationGroupID)
+	}
+
+	if rm.securityGroupIdsDiffer(desired, latest, latestCacheCluster) &&
+		desired.ko.Spec.SecurityGroupIDs != nil {
+		ids := []*string{}
+		for _, id := range desired.ko.Spec.SecurityGroupIDs {
+			var value string
+			value = *id
+			ids = append(ids, &value)
+		}
+		input.SetSecurityGroupIds(ids)
+	}
+
+	if rm.engineVersionDiffer(desired, latest, latestCacheCluster) &&
+		desired.ko.Spec.EngineVersion != nil {
+		input.SetEngineVersion(*desired.ko.Spec.EngineVersion)
+	}
+
+	return input
+}
+
+// engineVersionDiffer return true if
+// Engine Version differs between desired spec and latest (from cache cluster) status
+func (rm *resourceManager) engineVersionDiffer(
+	desired *resource,
+	latest *resource,
+	latestCacheCluster *svcsdk.CacheCluster,
+) bool {
+	if desired.ko.Spec.EngineVersion == nil {
+		return false
+	}
+	desiredEV := *desired.ko.Spec.EngineVersion
+
+	var latestEV string = ""
+	if latestCacheCluster != nil && latestCacheCluster.EngineVersion != nil {
+		latestEV = *latestCacheCluster.EngineVersion
+	}
+
+	return desiredEV != latestEV
 }
 
 // This method copies the data from given replicationGroup by populating it into copy of supplied resource

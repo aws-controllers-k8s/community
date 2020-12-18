@@ -841,9 +841,6 @@ func (rm *resourceManager) newUpdateRequestPayload(
 		}
 		res.SetCacheSecurityGroupNames(f7)
 	}
-	if r.ko.Spec.EngineVersion != nil {
-		res.SetEngineVersion(*r.ko.Spec.EngineVersion)
-	}
 	if r.ko.Spec.MultiAZEnabled != nil {
 		res.SetMultiAZEnabled(*r.ko.Spec.MultiAZEnabled)
 	}
@@ -861,15 +858,6 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	}
 	if r.ko.Spec.ReplicationGroupID != nil {
 		res.SetReplicationGroupId(*r.ko.Spec.ReplicationGroupID)
-	}
-	if r.ko.Spec.SecurityGroupIDs != nil {
-		f17 := []*string{}
-		for _, f17iter := range r.ko.Spec.SecurityGroupIDs {
-			var f17elem string
-			f17elem = *f17iter
-			f17 = append(f17, &f17elem)
-		}
-		res.SetSecurityGroupIds(f17)
 	}
 	if r.ko.Spec.SnapshotRetentionLimit != nil {
 		res.SetSnapshotRetentionLimit(*r.ko.Spec.SnapshotRetentionLimit)

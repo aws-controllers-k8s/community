@@ -92,6 +92,7 @@ func (rm *resourceManager) provideEvents(
 	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-CacheParameterGroup", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during DescribeEvents-CacheParameterGroup", "error", err)
 		return nil, err
 	}
 	events := []*svcapitypes.Event{}
@@ -133,6 +134,7 @@ func (rm *resourceManager) describeCacheParameters(
 			if awsErr, ok := ackerr.AWSError(respErr); ok && awsErr.Code() == "CacheParameterGroupNotFound" {
 				return nil, ackerr.NotFound
 			}
+			rm.log.V(1).Info("Error during DescribeCacheParameters", "error", respErr)
 			return nil, respErr
 		}
 
@@ -198,6 +200,7 @@ func (rm *resourceManager) resetAllParameters(
 	_, err := rm.sdkapi.ResetCacheParameterGroupWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "ResetCacheParameterGroup-ResetAllParameters", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during ResetCacheParameterGroup-ResetAllParameters", "error", err)
 		return false, err
 	}
 	return true, nil
@@ -228,6 +231,7 @@ func (rm *resourceManager) resetParameters(
 	_, err := rm.sdkapi.ResetCacheParameterGroupWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "ResetCacheParameterGroup", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during ResetCacheParameterGroup", "error", err)
 		return false, err
 	}
 	return true, nil
@@ -288,6 +292,7 @@ func (rm *resourceManager) modifyCacheParameterGroup(
 	_, err := rm.sdkapi.ModifyCacheParameterGroupWithContext(ctx, input)
 	rm.metrics.RecordAPICall("UPDATE", "ModifyCacheParameterGroup", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during ModifyCacheParameterGroup", "error", err)
 		return false, err
 	}
 	return true, nil

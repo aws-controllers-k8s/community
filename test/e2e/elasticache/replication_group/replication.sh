@@ -13,6 +13,8 @@ source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 
 check_is_installed jq "Please install jq before running this script."
 
+AWS_REGION=${AWS_REGION:-"us-west-2"}
+
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test group: $service_name/$test_name------------------------------"
@@ -181,15 +183,15 @@ test_modify_rg_increase_replica_specify_az() {
   clear_rg_parameter_variables
   rg_id="rg-inc-replica-specify-az"
   num_node_groups=1
-  replicas_per_node_group=1
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-          - us-east-1b
+          - ${AWS_REGION}b
+        replicaCount: 1
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -202,16 +204,16 @@ EOF
   k8s_assert_replication_group_total_node_count "$rg_id" 2
 
   # update config and apply: increase replica count, specify additional AZ
-  replicas_per_node_group=2
-  yaml_base="$(provide_replication_group_yaml)"
+  yaml_base="$(provide_replication_group_yaml_for_replica_config)"
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-          - us-east-1b
-          - us-east-1a
+          - ${AWS_REGION}b
+          - ${AWS_REGION}a
+        replicaCount: 2
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -233,19 +235,20 @@ test_modify_rg_cme_scale_up_add_replicas() {
   rg_id="rg-cme-scale-up-add-replicas"
   cache_node_type="cache.t3.micro"
   num_node_groups="2"
-  replicas_per_node_group="1"
-  yaml_base=$(provide_replication_group_yaml)
+  yaml_base=$(provide_replication_group_yaml_for_replica_config)
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
+        - ${AWS_REGION}b
+        replicaCount: 1
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
+        - ${AWS_REGION}a
+        replicaCount: 1
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -259,22 +262,23 @@ EOF
   aws_assert_replication_group_property "$rg_id" ".CacheNodeType" "cache.t3.micro"
 
   # update config and apply: scale out and add replicas
-  replicas_per_node_group="2"
   cache_node_type="cache.t3.small"
-  yaml_base=$(provide_replication_group_yaml "$rg_id")
+  yaml_base=$(provide_replication_group_yaml_for_replica_config "$rg_id")
   rg_yaml=$(cat <<EOF
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-        - us-east-1b
-        - us-east-1a
+        - ${AWS_REGION}b
+        - ${AWS_REGION}a
+        replicaCount: 2
       - nodeGroupID: "0020"
-        primaryAvailabilityZone: us-east-1b
+        primaryAvailabilityZone: ${AWS_REGION}b
         replicaAvailabilityZones:
-        - us-east-1a
-        - us-east-1b
+        - ${AWS_REGION}a
+        - ${AWS_REGION}b
+        replicaCount: 2
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1
@@ -345,10 +349,11 @@ test_rg_failover_roles() {
 test_modify_rg_negative_replicas
 test_modify_rg_enable_auto_failover
 test_modify_rg_remove_replica_with_af_enabled
-test_modify_rg_remove_replica_disable_af # failing due to member cluster count check even when ResourceSynced is True
-test_modify_rg_enable_af_add_replicas # failing: "inverse" to deletion case as expected; nodes present in memberClusters but not the node group
-test_modify_rg_increase_replica_specify_az # failing: Terminal condition with "1 validation error found"
-test_modify_rg_cme_scale_up_add_replicas # failing: Terminal condition with "2 validation errors" (yaml issue?)
+
+test_modify_rg_remove_replica_disable_af
+test_modify_rg_enable_af_add_replicas
+test_modify_rg_increase_replica_specify_az
+test_modify_rg_cme_scale_up_add_replicas
 test_rg_failover_roles
 
 k8s_perform_rg_test_cleanup

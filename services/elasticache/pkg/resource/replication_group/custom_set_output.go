@@ -75,10 +75,32 @@ func (rm *resourceManager) customSetOutput(
 	if ko.Status.Conditions == nil {
 		ko.Status.Conditions = []*ackv1alpha1.Condition{}
 	}
+
+	allNodeGroupsAvailable := true
+	nodeGroupMembersCount := 0
+	memberClustersCount := 0
+	if respRG.NodeGroups != nil {
+		for _, nodeGroup := range respRG.NodeGroups {
+			if nodeGroup.Status == nil || *nodeGroup.Status != "available" {
+				allNodeGroupsAvailable = false
+				break
+			}
+		}
+		for _, nodeGroup := range respRG.NodeGroups {
+			if nodeGroup.NodeGroupMembers == nil {
+				continue
+			}
+			nodeGroupMembersCount = nodeGroupMembersCount + len(nodeGroup.NodeGroupMembers)
+		}
+	}
+	if respRG.MemberClusters != nil {
+		memberClustersCount = len(respRG.MemberClusters)
+	}
+
 	rgStatus := respRG.Status
 	syncConditionStatus := corev1.ConditionUnknown
 	if rgStatus != nil {
-		if *rgStatus == "available" ||
+		if (*rgStatus == "available" && allNodeGroupsAvailable && memberClustersCount == nodeGroupMembersCount) ||
 			*rgStatus == "create-failed" {
 			syncConditionStatus = corev1.ConditionTrue
 		} else {
@@ -163,6 +185,7 @@ func (rm *resourceManager) provideEvents(
 	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-ReplicationGroup", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during DescribeEvents-ReplicationGroup", "error", err)
 		return nil, err
 	}
 	events := []*svcapitypes.Event{}

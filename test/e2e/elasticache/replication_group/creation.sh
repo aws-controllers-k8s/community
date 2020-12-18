@@ -12,7 +12,7 @@ source "$SCRIPTS_DIR/lib/testutil.sh"
 source "$SCRIPTS_DIR/lib/aws/elasticache.sh"
 
 check_is_installed jq "Please install jq before running this script."
-
+AWS_REGION=${AWS_REGION:-"us-west-2"}
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test group: $service_name/$test_name------------------------------"
@@ -131,7 +131,7 @@ test_create_rg_specify_node_group_no_quotes() {
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: 1020
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
 EOF
 )
   output_msg=$(echo "$rg_yaml" | kubectl apply -f - 2>&1)
@@ -165,10 +165,10 @@ test_create_rg_custom_node_config() {
 $yaml_base
     nodeGroupConfiguration:
       - nodeGroupID: "0010"
-        primaryAvailabilityZone: us-east-1a
+        primaryAvailabilityZone: ${AWS_REGION}a
         replicaAvailabilityZones:
-          - us-east-1b
-          - us-east-1a
+          - ${AWS_REGION}b
+          - ${AWS_REGION}a
 EOF
 )
   echo "$rg_yaml" | kubectl apply -f - 2>&1

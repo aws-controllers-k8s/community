@@ -9,6 +9,9 @@ resources:
         - CacheSubnetQuotaExceededFault
         - SubnetInUse
         - InvalidSubnet
+        - InvalidParameter
+        - InvalidParameterValue
+        - InvalidParameterCombination
     fields:
       Events:
         is_read_only: true
@@ -125,3 +128,5 @@ ignore:
     - DescribeSnapshotsInput.CacheClusterId
     - DescribeSnapshotsInput.ReplicationGroupId
     - DescribeSnapshotsInput.SnapshotSource
+    - ModifyReplicationGroupInput.SecurityGroupIds
+    - ModifyReplicationGroupInput.EngineVersion

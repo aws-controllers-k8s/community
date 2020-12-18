@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
 	"github.com/pkg/errors"
+	"go.uber.org/zap/zapcore"
+	ctrlrtzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,18 +33,29 @@ import (
 // Helper methods to setup tests
 // provideResourceManager returns pointer to resourceManager
 func provideResourceManager() *resourceManager {
+	zapOptions := ctrlrtzap.Options{
+		Development: true,
+		Level:       zapcore.InfoLevel,
+	}
+	fakeLogger := ctrlrtzap.New(ctrlrtzap.UseFlagOptions(&zapOptions))
 	return &resourceManager{
 		rr:           nil,
 		awsAccountID: "",
 		awsRegion:    "",
 		sess:         nil,
 		sdkapi:       nil,
+		log:          fakeLogger,
 	}
 }
 
 // provideResource returns pointer to resource
 func provideResource() *resource {
 	return provideResourceWithStatus("available")
+}
+
+// provideCacheCluster returns pointer to CacheCluster
+func provideCacheCluster() *svcsdk.CacheCluster {
+	return &svcsdk.CacheCluster{}
 }
 
 // provideResource returns pointer to resource
@@ -59,6 +72,21 @@ func provideResourceWithStatus(rgStatus string) *resource {
 // provideNodeGroups provides NodeGroups array for given node IDs
 func provideNodeGroups(IDs ...string) []*svcapitypes.NodeGroup {
 	return provideNodeGroupsWithReplicas(3, IDs...)
+}
+
+// provideMemberClusters returns the member cluster Ids from given node groups
+func provideMemberClusters(nodeGroups []*svcapitypes.NodeGroup) []*string {
+	if nodeGroups == nil {
+		return nil
+	}
+	memberClusters := []*string{}
+	for _, nodeGroup := range nodeGroups {
+		for _, member := range nodeGroup.NodeGroupMembers {
+			cacheClusterId := *member.CacheClusterID
+			memberClusters = append(memberClusters, &cacheClusterId)
+		}
+	}
+	return memberClusters
 }
 
 // provideNodeGroupsWithReplicas provides NodeGroups array for given node IDs
@@ -91,12 +119,16 @@ func provideNodeGroupMembers(nodeID *string, membersCount int) []*svcapitypes.No
 	members := []*svcapitypes.NodeGroupMember{}
 	// primary
 	primary := &svcapitypes.NodeGroupMember{}
+	cacheClusterId := fmt.Sprintf("RG-%s-00%d", *nodeID, 1)
+	primary.CacheClusterID = &cacheClusterId
 	primary.CurrentRole = &rolePrimary
 	primary.PreferredAvailabilityZone = availabilityZones[0]
 	members = append(members, primary)
 	// replicas
 	for i := 1; i <= membersCount-1; i++ {
 		replica := &svcapitypes.NodeGroupMember{}
+		cacheClusterId := fmt.Sprintf("RG-%s-00%d", *nodeID, i+1)
+		replica.CacheClusterID = &cacheClusterId
 		replica.CacheNodeID = nodeID
 		replica.CurrentRole = &roleReplica
 		replica.PreferredAvailabilityZone = availabilityZones[i]
@@ -275,8 +307,38 @@ func TestCustomModifyReplicationGroup_NodeGroup_Unvailable(t *testing.T) {
 	})
 }
 
+func TestCustomModifyReplicationGroup_NodeGroup_MemberClusters_mismatch(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	// Setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("nodeGroup_memberClustersMismatch=Diff", func(t *testing.T) {
+		desired := provideResource()
+		desired.ko.Status.NodeGroups = provideNodeGroups("1001", "1002")
+		latest := provideResource()
+		latest.ko.Status.NodeGroups = provideNodeGroups("1001", "1002")
+		latest.ko.Status.MemberClusters = provideMemberClusters(latest.ko.Status.NodeGroups)
+		surplusMemberCluster := "RG-Surplus-Member-Cluster"
+		latest.ko.Status.MemberClusters = append(latest.ko.Status.MemberClusters, &surplusMemberCluster)
+		availableStatus := "available"
+		for _, nodeGroup := range latest.ko.Status.NodeGroups {
+			nodeGroup.Status = &availableStatus
+		}
+		var diffReporter ackcompare.Reporter
+		var ctx context.Context
+		require.NotNil(latest.ko.Status.MemberClusters)
+		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
+		assert.Nil(res)
+		assert.NotNil(err) // due to surplus member cluster
+		var requeueNeededAfter *requeue.RequeueNeededAfter
+		assert.True(errors.As(err, &requeueNeededAfter))
+	})
+}
+
 func TestCustomModifyReplicationGroup_NodeGroup_available(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	// Setup
 	rm := provideResourceManager()
 	// Tests
@@ -285,12 +347,14 @@ func TestCustomModifyReplicationGroup_NodeGroup_available(t *testing.T) {
 		desired.ko.Status.NodeGroups = provideNodeGroups("1001")
 		latest := provideResource()
 		latest.ko.Status.NodeGroups = provideNodeGroups("1001")
-		unavailableStatus := "available"
+		latest.ko.Status.MemberClusters = provideMemberClusters(latest.ko.Status.NodeGroups)
+		availableStatus := "available"
 		for _, nodeGroup := range latest.ko.Status.NodeGroups {
-			nodeGroup.Status = &unavailableStatus
+			nodeGroup.Status = &availableStatus
 		}
 		var diffReporter ackcompare.Reporter
 		var ctx context.Context
+		require.NotNil(latest.ko.Status.MemberClusters)
 		res, err := rm.CustomModifyReplicationGroup(ctx, desired, latest, &diffReporter)
 		assert.Nil(res)
 		assert.Nil(err)
@@ -799,5 +863,132 @@ func TestNewUpdateShardConfigurationRequestPayload(t *testing.T) {
 		}
 		assert.Nil(payload.NodeGroupsToRemove)
 		assert.Nil(err)
+	})
+}
+
+// TestSecurityGroupIdsDiffer tests scenarios to check if desired, latest (from cache cluster)
+// security group ids configuration differs.
+func TestSecurityGroupIdsDiffer(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	// setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("NoDiff=NoSpec_NoStatus", func(t *testing.T) {
+		desiredRG := provideResource()
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		require.Nil(desiredRG.ko.Spec.SecurityGroupIDs)
+		require.Nil(latestCacheCluster.SecurityGroups)
+		differ := rm.securityGroupIdsDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("NoDiff=NoSpec_HasStatus", func(t *testing.T) {
+		desiredRG := provideResource()
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestCacheCluster.SecurityGroups = provideCacheClusterSecurityGroups("sg-001, sg-002")
+		require.Nil(desiredRG.ko.Spec.SecurityGroupIDs)
+		require.NotNil(latestCacheCluster.SecurityGroups)
+		differ := rm.securityGroupIdsDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("NoDiff=Spec_Status_Match", func(t *testing.T) {
+		desiredRG := provideResource()
+		sg1 := "sg-001"
+		sg2 := "sg-002"
+		desiredRG.ko.Spec.SecurityGroupIDs = []*string{&sg1, &sg2}
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestCacheCluster.SecurityGroups = provideCacheClusterSecurityGroups(sg2, sg1) // same but out of order
+		require.NotNil(desiredRG.ko.Spec.SecurityGroupIDs)
+		require.NotNil(latestCacheCluster.SecurityGroups)
+		differ := rm.securityGroupIdsDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("Diff=Spec_Status_MisMatch", func(t *testing.T) {
+		desiredRG := provideResource()
+		sg1 := "sg-001"
+		sg2 := "sg-002"
+		desiredRG.ko.Spec.SecurityGroupIDs = []*string{&sg1}
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestCacheCluster.SecurityGroups = provideCacheClusterSecurityGroups(sg2, sg1) // sg2 is additional
+		require.NotNil(desiredRG.ko.Spec.SecurityGroupIDs)
+		require.NotNil(latestCacheCluster.SecurityGroups)
+		differ := rm.securityGroupIdsDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.True(differ)
+	})
+}
+
+// provideNodeGroupsWithReplicas provides NodeGroups array for given node IDs
+// each node group is populated with supplied numbers of replica nodes and a primary node.
+func provideCacheClusterSecurityGroups(IDs ...string) []*svcsdk.SecurityGroupMembership {
+	securityGroups := []*svcsdk.SecurityGroupMembership{}
+	for _, ID := range IDs {
+		securityGroupId := ID
+		status := "available"
+		securityGroups = append(securityGroups, &svcsdk.SecurityGroupMembership{
+			SecurityGroupId: &securityGroupId,
+			Status:          &status,
+		})
+	}
+	return securityGroups
+}
+
+// TestEngineVersionDiffer tests scenarios to check if desired, latest (from cache cluster)
+// Engine Version configuration differs.
+func TestEngineVersionDiffer(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	// setup
+	rm := provideResourceManager()
+	// Tests
+	t.Run("NoDiff=NoSpec_NoStatus", func(t *testing.T) {
+		desiredRG := provideResource()
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		require.Nil(desiredRG.ko.Spec.SecurityGroupIDs)
+		require.Nil(latestCacheCluster.SecurityGroups)
+		differ := rm.engineVersionDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("NoDiff=NoSpec_HasStatus", func(t *testing.T) {
+		desiredRG := provideResource()
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestEV := "test-engine-version"
+		latestCacheCluster.EngineVersion = &latestEV
+		require.Nil(desiredRG.ko.Spec.EngineVersion)
+		require.NotNil(latestCacheCluster.EngineVersion)
+		differ := rm.engineVersionDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("NoDiff=Spec_Status_Match", func(t *testing.T) {
+		desiredRG := provideResource()
+		latestEV := "test-engine-version"
+		desiredRG.ko.Spec.EngineVersion = &latestEV
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestCacheCluster.EngineVersion = &latestEV
+		require.NotNil(desiredRG.ko.Spec.EngineVersion)
+		require.NotNil(latestCacheCluster.EngineVersion)
+		differ := rm.engineVersionDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.False(differ)
+	})
+	t.Run("Diff=Spec_Status_MisMatch", func(t *testing.T) {
+		desiredRG := provideResource()
+		desiredEV := "desired-test-engine-version"
+		desiredRG.ko.Spec.EngineVersion = &desiredEV
+		latestRG := provideResource()
+		latestCacheCluster := provideCacheCluster()
+		latestEV := "latest-test-engine-version"
+		latestCacheCluster.EngineVersion = &latestEV
+
+		require.NotNil(desiredRG.ko.Spec.EngineVersion)
+		require.NotNil(latestCacheCluster.EngineVersion)
+		require.NotEqual(*desiredRG.ko.Spec.EngineVersion, *latestCacheCluster.EngineVersion)
+		differ := rm.engineVersionDiffer(desiredRG, latestRG, latestCacheCluster)
+		assert.True(differ)
 	})
 }

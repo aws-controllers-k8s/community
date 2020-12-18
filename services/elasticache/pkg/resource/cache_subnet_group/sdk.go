@@ -392,7 +392,10 @@ func (rm *resourceManager) terminalAWSError(err error) bool {
 	case "CacheSubnetGroupQuotaExceeded",
 		"CacheSubnetQuotaExceededFault",
 		"SubnetInUse",
-		"InvalidSubnet":
+		"InvalidSubnet",
+		"InvalidParameter",
+		"InvalidParameterValue",
+		"InvalidParameterCombination":
 		return true
 	default:
 		return false

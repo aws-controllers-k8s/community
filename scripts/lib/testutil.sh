@@ -97,10 +97,10 @@ k8s_wait_resource_synced() {
   local wait_failed="true"
   for i in $(seq 1 "$wait_periods"); do
     # Test role credentials expire after 15 minutes (Refer: aws.sh::aws_generate_temp_creds)
-    # Ensure that credentials are reloaded at the beginning and after every 15 minutes.
+    # Ensure that credentials are reloaded after first iteration and after every 15 minutes.
     # else the controller fails to get the latest details from aws service api
     # and the test fails on sync status.
-    if [[ "$((i % 15))" == "0" || "$i" == "1" ]]; then
+    if [[ "$((i % 15))" == "0" || "$i" == "2" ]]; then
       k8s_controller_reload_credentials "$service_name"
     fi
     debug_msg "waiting for resource $k8s_resource_name to be synced ($i)"
