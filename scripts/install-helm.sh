@@ -9,7 +9,7 @@
 #
 # NOTE: uses `sudo mv` to relocate a downloaded binary to /usr/local/bin/helm
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

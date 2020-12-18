@@ -15,7 +15,7 @@
 #
 # See: https://github.com/kubernetes-sigs/controller-tools/issues/500
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

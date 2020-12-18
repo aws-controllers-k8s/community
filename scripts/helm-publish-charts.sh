@@ -5,7 +5,7 @@
 # the updated Helm packages and repository index to the gh-pages branch of the
 # upstream source repository.
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

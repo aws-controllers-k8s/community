@@ -3,7 +3,7 @@
 # A script that builds release artifacts for a single ACK service controller
 # for an AWS service API
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

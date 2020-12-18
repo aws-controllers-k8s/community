@@ -4,7 +4,7 @@
 # for our interfaces to use in unit testing. This script installs mockery into
 # the bin/mockery path and really should just be used in testing scripts.
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
