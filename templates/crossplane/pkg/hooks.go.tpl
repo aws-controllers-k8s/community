@@ -85,7 +85,7 @@ func lateInitialize(*svcapitypes.{{ .CRD.Names.Camel }}Parameters,*svcsdk.{{ .CR
 	return nil
 }
 
-func isUpToDate(*svcapitypes.{{ .CRD.Names.Camel }},*svcsdk.{{ .CRD.Ops.ReadOne.OutputRef.Shape.ShapeName }}) bool {
+func isUpToDate(*svcapitypes.{{ .CRD.Names.Camel }},*svcsdk.{{ .CRD.Ops.ReadMany.OutputRef.Shape.ShapeName }}) bool {
 	return true
 }
 

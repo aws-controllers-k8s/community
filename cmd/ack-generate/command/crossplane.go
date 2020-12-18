@@ -16,6 +16,7 @@ package command
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -95,12 +96,24 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 		if _, err := ensureDir(outDir); err != nil {
 			return err
 		}
+		// NOTE(muvaf): We should not overwrite if hooks.go already exists
+		// since hooks.go contains any custom code that developers have
+		// modified for this resource.
+		if strings.HasSuffix(outPath, "hooks.go") {
+			_, err := os.Stat(outPath)
+			if err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			if !os.IsNotExist(err) {
+				continue
+			}
+		}
 		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
 		}
 	}
-	apiPath := filepath.Join(providerDir, "apis", optGenVersion)
-	controllerPath := filepath.Join(providerDir, "pkg", "controller")
+	apiPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion)
+	controllerPath := filepath.Join(providerDir, "pkg", "controller", svcAlias)
 	// TODO(muvaf): goimports don't allow to be included as a library. Make sure
 	// goimports binary exists.
 	if err := exec.Command("goimports", "-w", apiPath, controllerPath).Run(); err != nil {
