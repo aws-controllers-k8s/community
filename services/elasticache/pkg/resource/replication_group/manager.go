@@ -23,6 +23,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,6 +41,9 @@ import (
 // resourceManager is responsible for providing a consistent way to perform
 // CRUD operations in a backend AWS service API for Book custom resources.
 type resourceManager struct {
+	// cfg is a copy of the ackcfg.Config object passed on start of the service
+	// controller
+	cfg ackcfg.Config
 	// log refers to the logr.Logger object handling logging for the service
 	// controller
 	log logr.Logger
@@ -166,6 +170,7 @@ func (rm *resourceManager) ARNFromName(name string) string {
 // newResourceManager returns a new struct implementing
 // acktypes.AWSResourceManager
 func newResourceManager(
+	cfg ackcfg.Config,
 	log logr.Logger,
 	metrics *ackmetrics.Metrics,
 	rr acktypes.AWSResourceReconciler,
@@ -174,6 +179,7 @@ func newResourceManager(
 	region ackv1alpha1.AWSRegion,
 ) (*resourceManager, error) {
 	return &resourceManager{
+		cfg:          cfg,
 		log:          log,
 		metrics:      metrics,
 		rr:           rr,

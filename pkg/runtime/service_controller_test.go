@@ -34,6 +34,7 @@ import (
 	k8sscheme "sigs.k8s.io/controller-runtime/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 
 	mocks "github.com/aws/aws-controllers-k8s/mocks/pkg/types"
@@ -116,7 +117,7 @@ func TestServiceController(t *testing.T) {
 	require.Empty(recons)
 
 	mgr := &fakeManager{}
-	cfg := ackrt.Config{}
+	cfg := ackcfg.Config{}
 	err := sc.BindControllerManager(mgr, cfg)
 	require.Nil(err)
 

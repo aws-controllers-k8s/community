@@ -21,6 +21,7 @@ import (
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 )
 
@@ -73,6 +74,7 @@ type AWSResourceManagerFactory interface {
 	// ManagerFor returns an AWSResourceManager that manages AWS resources on
 	// behalf of a particular AWS account and in a specific AWS region
 	ManagerFor(
+		ackcfg.Config, // passed by-value to avoid mutation by consumers
 		logr.Logger,
 		*ackmetrics.Metrics,
 		AWSResourceReconciler,

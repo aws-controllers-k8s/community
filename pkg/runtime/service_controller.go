@@ -20,6 +20,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
@@ -100,7 +101,7 @@ func (c *ServiceController) WithResourceManagerFactories(
 // BindControllerManager takes a `controller-runtime.Manager`, creates all the
 // AWSResourceReconcilers needed for the service and binds all of the
 // reconcilers within the service controller with that manager
-func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager, cfg Config) error {
+func (c *ServiceController) BindControllerManager(mgr ctrlrt.Manager, cfg ackcfg.Config) error {
 	c.metaLock.Lock()
 	defer c.metaLock.Unlock()
 	for _, rmf := range c.rmFactories {

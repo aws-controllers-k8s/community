@@ -5,6 +5,7 @@ package main
 import (
 	"os"
 
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,7 +33,7 @@ func init() {
 }
 
 func main() {
-	var ackCfg ackrt.Config
+	var ackCfg ackcfg.Config
 	ackCfg.BindFlags()
 	flag.Parse()
 	ackCfg.SetupLogger()

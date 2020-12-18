@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	ackmetrics "github.com/aws/aws-controllers-k8s/pkg/metrics"
 	"github.com/aws/aws-controllers-k8s/pkg/requeue"
@@ -46,7 +47,7 @@ type reconciler struct {
 	rmf     acktypes.AWSResourceManagerFactory
 	rd      acktypes.AWSResourceDescriptor
 	log     logr.Logger
-	cfg     Config
+	cfg     ackcfg.Config
 	cache   ackrtcache.Caches
 	metrics *ackmetrics.Metrics
 }
@@ -123,7 +124,9 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 		"region", region,
 	)
 
-	rm, err := r.rmf.ManagerFor(r.log, r.metrics, r, sess, acctID, region)
+	rm, err := r.rmf.ManagerFor(
+		r.cfg, r.log, r.metrics, r, sess, acctID, region,
+	)
 	if err != nil {
 		return err
 	}
@@ -444,7 +447,7 @@ func (r *reconciler) getRegion(
 func NewReconciler(
 	rmf acktypes.AWSResourceManagerFactory,
 	log logr.Logger,
-	cfg Config,
+	cfg ackcfg.Config,
 	metrics *ackmetrics.Metrics,
 ) acktypes.AWSResourceReconciler {
 	return &reconciler{

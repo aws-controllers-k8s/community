@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package runtime
+package config
 
 import (
 	"errors"
@@ -32,6 +32,7 @@ const (
 	flagLogLevel             = "log-level"
 )
 
+// Config contains configuration otpions for ACK service controllers
 type Config struct {
 	BindPort                 int
 	MetricsAddr              string
@@ -42,6 +43,7 @@ type Config struct {
 	LogLevel                 string
 }
 
+// BindFlags defines CLI/runtime configuration options
 func (cfg *Config) BindFlags() {
 	flag.IntVar(
 		&cfg.BindPort, flagBindPort,
@@ -82,6 +84,7 @@ func (cfg *Config) BindFlags() {
 	)
 }
 
+// SetupLogger initializes the logger used in the service controller
 func (cfg *Config) SetupLogger() {
 	var lvl zapcore.LevelEnabler
 
@@ -99,6 +102,7 @@ func (cfg *Config) SetupLogger() {
 	ctrlrt.SetLogger(zap.New(zap.UseFlagOptions(&zapOptions)))
 }
 
+// Validate ensures the options are valid
 func (cfg *Config) Validate() error {
 	if cfg.AccountID == "" {
 		return errors.New("unable to start service controller as account ID is nil. Please pass --aws-account-id flag")
