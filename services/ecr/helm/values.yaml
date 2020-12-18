@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: amazon/aws-controllers-k8s
+  repository: public.ecr.aws/aws-controllers-k8s/controller
   tag: ecr-v0.0.1
   pullPolicy: IfNotPresent
   pullSecrets: []

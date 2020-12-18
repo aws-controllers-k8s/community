@@ -9,6 +9,7 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
 TEMPLATES_DIR="$ROOT_DIR/templates"
+DEFAULT_IMAGE_REPOSITORY="public.ecr.aws/aws-controllers-k8s/controller"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
@@ -28,7 +29,7 @@ fi
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
 : "${ACK_GENERATE_CONFIG_PATH:=""}"
 : "${ACK_GENERATE_OUTPUT_PATH:=""}"
-: "${ACK_GENERATE_IMAGE_REPOSITORY:="amazon/aws-controllers-k8s"}"
+: "${ACK_GENERATE_IMAGE_REPOSITORY:=$DEFAULT_IMAGE_REPOSITORY}"
 
 USAGE="
 Usage:
@@ -57,7 +58,7 @@ Environment variables:
                                         Default: services/{SERVICE}
   ACK_GENERATE_IMAGE_REPOSITORY:        Specify a Docker image repository to use
                                         for release artifacts
-                                        Default: amazon/aws-controllers-k8s
+                                        Default: $DEFAULT_IMAGE_REPOSITORY
   ACK_GENERATE_SERVICE_ACCOUNT_NAME:    Name of the Kubernetes Service Account and
                                         Cluster Role to use in Helm chart.
                                         Default: $ACK_GENERATE_SERVICE_ACCOUNT_NAME
