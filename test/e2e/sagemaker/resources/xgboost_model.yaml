@@ -1,0 +1,14 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: Model
+metadata:
+  name: $MODEL_NAME
+spec:
+  modelName: $MODEL_NAME
+  primaryContainer:
+    containerHostname: xgboost
+    modelDataURL: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model/xgboost-mnist-model.tar.gz
+    image: $XGBOOST_IMAGE_URI
+  executionRoleARN: $SAGEMAKER_EXECUTION_ROLE_ARN
+  tags:
+    - key: key
+      value: value
