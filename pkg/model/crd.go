@@ -186,44 +186,6 @@ func (r *CRD) InputFieldRename(
 	)
 }
 
-// AdditionStatusFieldRename returns the renamed field for the additional Status field
-// that has been added.
-func (r *CRD) AdditionStatusFieldRename(
-	origFieldName string) (*string, bool) {
-	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
-
-	if !found {
-		return nil, false
-	}
-
-	for _, statusField := range resGenConfig.StatusFields {
-		if statusField.TargetName == origFieldName {
-			return &statusField.TargetName, true
-		}
-	}
-
-	return nil, false
-}
-
-// AdditionSpecFieldRename returns the renamed field for the additional Spec field
-// that has been added.
-func (r *CRD) AdditionSpecFieldRename(
-	origFieldName string) (*string, bool) {
-	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
-
-	if !found {
-		return nil, false
-	}
-
-	for _, specField := range resGenConfig.StatusFields {
-		if specField.TargetName == origFieldName {
-			return &specField.TargetName, true
-		}
-	}
-
-	return nil, false
-}
-
 func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	// There are shapes that are called things like DBProxyStatus that are
 	// fields in a DBProxy CRD... we need to ensure the type names don't
@@ -747,21 +709,6 @@ func (r *CRD) GoCodeSetInput(
 	for memberIndex, memberName := range inputShape.MemberNames() {
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
 			continue
-		}
-
-		// Rename additional Spec or Status fields that are added.
-		{
-			renamedSpecField, renamed := r.AdditionSpecFieldRename(memberName)
-
-			if renamed {
-				memberName = *renamedSpecField
-			}
-
-			renamedStatusField, renamed := r.AdditionStatusFieldRename(memberName)
-
-			if renamed {
-				memberName = *renamedStatusField
-			}
 		}
 
 		if override {
