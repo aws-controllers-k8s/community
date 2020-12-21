@@ -3,13 +3,18 @@ resources:
     exceptions:
       codes:
         404: CacheSubnetGroupNotFoundFault
-    status_fields:
-      - operation_id: DescribeEvents
-        source_name: Events
+    fields:
+      Events:
+        is_read_only: true
+        from:
+          operation: DescribeEvents
+          path: Events
   Snapshot:
-    spec_fields:
-      - operation_id: CopySnapshot
-        source_name: SourceSnapshotName
+    fields:
+      SourceSnapshotName:
+        from:
+          operation: CopySnapshot
+          path: SourceSnapshotName
   CacheParameterGroup:
     exceptions:
       terminal_codes:
@@ -19,26 +24,40 @@ resources:
         - InvalidGlobalReplicationGroupState
         - InvalidParameterCombination
         - InvalidParameterValue
-    spec_fields:
-      - operation_id: ModifyCacheParameterGroup
-        source_name: ParameterNameValues
-    status_fields:
-      - operation_id: DescribeCacheParameters
-        source_name: Parameters
-      - operation_id: DescribeEvents
-        source_name: Events
+    fields:
+      ParameterNameValues:
+        from:
+          operation: ModifyCacheParameterGroup
+          path: ParameterNameValues
+      Parameters:
+        is_read_only: true
+        from:
+          operation: DescribeCacheParameters
+          path: Parameters
+      Events:
+        is_read_only: true
+        from:
+          operation: DescribeEvents
+          path: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
   ReplicationGroup:
-    status_fields:
-      - operation_id: DescribeEvents
-        source_name: Events
-      - operation_id: ListAllowedNodeTypeModifications
-        source_name: ScaleUpModifications
-        target_name: AllowedScaleUpModifications
-      - operation_id: ListAllowedNodeTypeModifications
-        source_name: ScaleDownModifications
-        target_name: AllowedScaleDownModifications
+    fields:
+      AllowedScaleUpModifications:
+        is_read_only: true
+        from:
+          operation: ListAllowedNodeTypeModifications
+          path: ScaleUpModifications
+      AllowedScaleDownModifications:
+        is_read_only: true
+        from:
+          operation: ListAllowedNodeTypeModifications
+          path: ScaleDownModifications
+      Events:
+        is_read_only: true
+        from:
+          operation: DescribeEvents
+          path: Events
 operations:
   ModifyReplicationGroup:
     override_values:

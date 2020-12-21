@@ -14,6 +14,7 @@
 package generate
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -123,18 +124,31 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			crd.AddSpecField(memberNames, memberShapeRef)
 		}
 
-		// Now add the additional Spec fields that are required from other API operations.
-		specFieldConfigs, ok := g.cfg.SpecFieldConfigs(crdName)
-		if ok {
-			for _, specField := range specFieldConfigs {
-				memberShapeRef, found := g.SDKAPI.GetMemberInputShapeRef(specField.OperationID, specField.SourceName)
-				if found {
-					memberName := names.New(specField.SourceName)
-					if specField.TargetName != "" {
-						memberName = names.New(specField.TargetName)
-					}
-					crd.AddSpecField(memberName, memberShapeRef)
-				}
+		// Now any additional Spec fields that are required from other API
+		// operations.
+		for targetFieldName, fieldConfig := range g.cfg.ResourceFields(crdName) {
+			if fieldConfig.IsReadOnly {
+				// It's a Status field...
+				continue
+			}
+			if fieldConfig.From == nil {
+				// Isn't an additional Spec field...
+				continue
+			}
+			from := fieldConfig.From
+			memberShapeRef, found := g.SDKAPI.GetMemberInputShapeRef(
+				from.Operation, from.Path,
+			)
+			if found {
+				memberNames := names.New(targetFieldName)
+				crd.AddSpecField(memberNames, memberShapeRef)
+			} else {
+				// This is a compile-time failure, just bomb out...
+				msg := fmt.Sprintf(
+					"unknown additional Spec field with Op: %s and Path: %s",
+					from.Operation, from.Path,
+				)
+				panic(msg)
 			}
 		}
 
@@ -173,17 +187,31 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			crd.AddStatusField(memberNames, memberShapeRef)
 		}
 
-		// Now add the additional Status fields that are required from other API operations.
-		if statusFieldConfigs, ok := g.cfg.StatusFieldConfigs(crdName); ok {
-			for _, statusField := range statusFieldConfigs {
-				memberShapeRef, found := g.SDKAPI.GetMemberOutputShapeRef(statusField.OperationID, statusField.SourceName)
-				if found {
-					memberName := names.New(statusField.SourceName)
-					if statusField.TargetName != "" {
-						memberName = names.New(statusField.TargetName)
-					}
-					crd.AddStatusField(memberName, memberShapeRef)
-				}
+		// Now add the additional Status fields that are required from other
+		// API operations.
+		for targetFieldName, fieldConfig := range g.cfg.ResourceFields(crdName) {
+			if !fieldConfig.IsReadOnly {
+				// It's a Spec field...
+				continue
+			}
+			if fieldConfig.From == nil {
+				// Isn't an additional Status field...
+				continue
+			}
+			from := fieldConfig.From
+			memberShapeRef, found := g.SDKAPI.GetMemberOutputShapeRef(
+				from.Operation, from.Path,
+			)
+			if found {
+				memberNames := names.New(targetFieldName)
+				crd.AddStatusField(memberNames, memberShapeRef)
+			} else {
+				// This is a compile-time failure, just bomb out...
+				msg := fmt.Sprintf(
+					"unknown additional Status field with Op: %s and Path: %s",
+					from.Operation, from.Path,
+				)
+				panic(msg)
 			}
 		}
 

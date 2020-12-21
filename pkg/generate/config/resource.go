@@ -63,13 +63,10 @@ type ResourceConfig struct {
 	// `resourceManager` struct that will set Conditions on a `resource` struct
 	// depending on the status of the resource.
 	UpdateConditionsCustomMethodName string `json:"update_conditions_custom_method_name,omitempty"`
-
-	// SpecFields is a list of instructions about additional Spec fields
-	// on this Resource
-	SpecFields []*AdditionalFieldConfig `json:"spec_fields"`
-	// StatusFields is a list of instructions about additional Status fields
-	// on this Resource
-	StatusFields []*AdditionalFieldConfig `json:"status_fields"`
+	// Fields is a map, keyed by the field name, of instructions for how the
+	// code generator should interpret and handle a particular field in the
+	// resource.
+	Fields map[string]*FieldConfig `json:"fields"`
 	// Compare contains instructions for the code generation to generate custom
 	// comparison logic.
 	Compare *CompareConfig `json:"compare,omitempty"`
@@ -273,30 +270,18 @@ func (c *Config) OverrideValues(operationName string) (map[string]string, bool) 
 	return oConfig.OverrideValues, ok
 }
 
-// SpecFieldConfigs gives map of operation and their MemberFields to
-// add to spec.
-func (c *Config) SpecFieldConfigs(resourceName string) ([]*AdditionalFieldConfig, bool) {
+// ResourceFields returns a map, keyed by target/renamed field name, of
+// FieldConfig struct pointers that instruct the code generator how to handle
+// the interpretation of special Resource fields (both Spec and Status)
+func (c *Config) ResourceFields(resourceName string) map[string]*FieldConfig {
 	if c == nil {
-		return nil, false
+		return map[string]*FieldConfig{}
 	}
 	resourceConfig, ok := c.Resources[resourceName]
 	if !ok {
-		return nil, false
+		return map[string]*FieldConfig{}
 	}
-	return resourceConfig.SpecFields, ok
-}
-
-// StatusFieldConfigs gives map of operation and their MemberFields to
-// add to status.
-func (c *Config) StatusFieldConfigs(resourceName string) ([]*AdditionalFieldConfig, bool) {
-	if c == nil {
-		return nil, false
-	}
-	resourceConfig, ok := c.Resources[resourceName]
-	if !ok {
-		return nil, false
-	}
-	return resourceConfig.StatusFields, ok
+	return resourceConfig.Fields
 }
 
 // GetCompareIgnoredFields returns the list of field path to ignore when

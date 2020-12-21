@@ -13,20 +13,21 @@
 
 package config
 
-// AdditionalFieldConfig instructs the code generator how to handle an additional
-// field in the Resource's SpecFields/StatusFields collection. This additional field
-// can source its value from a shape in a different API Operation.
-type AdditionalFieldConfig struct {
-	// OperationID refers to the ID of the API Operation where we will
+// SourceFieldConfig instructs the code generator how to handle a field in the
+// Resource's SpecFields/StatusFields collection that takes its value from an
+// abnormal source -- in other words, not the Create operation's Input or
+// Output shape.
+//
+// This additional field can source its value from a shape in a different API
+// Operation entirely.
+type SourceFieldConfig struct {
+	// Operation refers to the ID of the API Operation where we will
 	// determine the field's Go type.
-	OperationID string `json:"operation_id,omitempty"`
-	// SourceName refers to the name of the member of the
-	// Input shape in the Operation identified by OperationID that
-	// we will take as our additional spec/status field.
-	SourceName string `json:"source_name"`
-	// TargetName refers to the name that will be used instead of
-	// SourceName in the status.
-	TargetName string `json:"target_name,omitempty"`
+	Operation string `json:"operation"`
+	// Path refers to the field path of the member of the Input or Output
+	// shape in the Operation identified by OperationID that we will take as
+	// our additional spec/status field's value.
+	Path string `json:"path"`
 }
 
 // FieldConfig contains instructions to the code generator about how
@@ -40,4 +41,7 @@ type FieldConfig struct {
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
 	ContainsOwnerAccountID bool `json:"contains_owner_account_id"`
+	// From instructs the code generator that the value of the field should
+	// be retrieved from the specified operation and member path
+	From *SourceFieldConfig `json:"from,omitempty"`
 }
