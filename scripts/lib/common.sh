@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # setting the -x option if debugging is true
-if [[ "${DEBUG}" = "true" ]]; then
+if [[ "${DEBUG:-"false"}" = "true" ]]; then
     set -x
 fi
 
