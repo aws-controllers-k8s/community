@@ -1,20 +1,4 @@
 resources:
-  TrainingJob:
-    exceptions:
-      codes:
-        404: ValidationException
-    status_fields:
-    - operation_id: DescribeTrainingJob
-      source_name: TrainingJobStatus
-      printable_column: true
-    - operation_id: DescribeTrainingJob
-      source_name: SecondaryStatus
-      printable_column: true
-    - operation_id: DescribeTrainingJob
-      source_name: FailureReason
-      printable_column: true
-    - operation_id: DescribeTrainingJob
-      source_name: DebugRuleEvaluationStatuses
   Model:
     exceptions:
       errors:
