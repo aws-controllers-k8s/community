@@ -44,4 +44,7 @@ type FieldConfig struct {
 	// From instructs the code generator that the value of the field should
 	// be retrieved from the specified operation and member path
 	From *SourceFieldConfig `json:"from,omitempty"`
+	// Required indicates whether this field is a required member or not.
+	// This field is used to configure '+kubebuilder:validation:Required' on API object's members.
+	Required *bool `json:"required,omitempty"`
 }
