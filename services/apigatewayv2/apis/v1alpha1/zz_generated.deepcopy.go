@@ -256,6 +256,16 @@ func (in *APISpec) DeepCopyInto(out *APISpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Basepath != nil {
+		in, out := &in.Basepath, &out.Basepath
+		*out = new(string)
+		**out = **in
+	}
+	if in.Body != nil {
+		in, out := &in.Body, &out.Body
+		*out = new(string)
+		**out = **in
+	}
 	if in.CorsConfiguration != nil {
 		in, out := &in.CorsConfiguration, &out.CorsConfiguration
 		*out = new(Cors)
@@ -278,6 +288,11 @@ func (in *APISpec) DeepCopyInto(out *APISpec) {
 	}
 	if in.DisableSchemaValidation != nil {
 		in, out := &in.DisableSchemaValidation, &out.DisableSchemaValidation
+		*out = new(bool)
+		**out = **in
+	}
+	if in.FailOnWarnings != nil {
+		in, out := &in.FailOnWarnings, &out.FailOnWarnings
 		*out = new(bool)
 		**out = **in
 	}
