@@ -297,6 +297,7 @@ func (r *CRD) AddPrintableColumn(
 	// Printable columns must be primitives supported by the OpenAPI list of data
 	// types as defined by
 	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types
+	// This maps Go type to OpenAPI type.
 	acceptableColumnMaps := map[string]string{
 		"string":  "string",
 		"boolean": "boolean",

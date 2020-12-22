@@ -40,7 +40,7 @@ type FieldConfig struct {
 	// IsPrintable determines whether the field should be included in the
 	// AdditionalPrinterColumns list to be included in the `kubectl get`
 	// response.
-	IsPrintable bool `json:"is_printable"`
+	IsPrintable bool `json:"is_printable,omitempty"`
 	// ContainsOwnerAccountID indicates the field contains the AWS Account ID
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.

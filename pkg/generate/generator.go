@@ -143,7 +143,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 				memberNames := names.New(targetFieldName)
 				field := crd.AddSpecField(memberNames, memberShapeRef)
 
-				if specField.PrintableColumn {
+				if fieldConfig.IsPrintable {
 					crd.AddSpecPrintableColumn(field)
 				}
 			} else {
@@ -210,7 +210,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 				memberNames := names.New(targetFieldName)
 				field := crd.AddStatusField(memberNames, memberShapeRef)
 
-				if statusField.PrintableColumn {
+				if fieldConfig.IsPrintable {
 					crd.AddStatusPrintableColumn(field)
 				}
 			} else {
