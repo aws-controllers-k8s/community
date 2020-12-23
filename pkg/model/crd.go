@@ -57,6 +57,14 @@ func (ops CRDOps) IterOps() []*awssdkmodel.Operation {
 	return res
 }
 
+// CRDPrinterColumn represents a single field in the CRD's Spec or Status objects
+type CRDPrinterColumn struct {
+	CRD      *CRD
+	Name     string
+	Type     string
+	JSONPath string
+}
+
 // CRDField represents a single field in the CRD's Spec or Status objects
 type CRDField struct {
 	CRD               *CRD
@@ -118,6 +126,10 @@ type CRD struct {
 	Kind   string
 	Plural string
 	Ops    CRDOps
+	// AdditionalPrinterColumns is an array of CRDPrinterColumn objects
+	// representing the printer column settings for the CRD
+	// AdditionalPrinterColumns field.
+	AdditionalPrinterColumns []*CRDPrinterColumn
 	// SpecFields is a map, keyed by the **original SDK member name** of
 	// CRDField objects representing those fields in the CRD's Spec struct
 	// field.
@@ -241,10 +253,11 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
-) {
-	fieldConfigs := r.genCfg.ResourceFields(r.Names.Original)
+) *CRDField {
+  fieldConfigs := r.genCfg.ResourceFields(r.Names.Original)
 	crdField := newCRDField(r, memberNames, shapeRef, fieldConfigs[memberNames.Original])
 	r.SpecFields[memberNames.Original] = crdField
+	return crdField
 }
 
 // AddStatusField adds a new CRDField of a given name and shape into the Status
@@ -252,9 +265,10 @@ func (r *CRD) AddSpecField(
 func (r *CRD) AddStatusField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
-) {
+) *CRDField {
 	crdField := newCRDField(r, memberNames, shapeRef, nil)
 	r.StatusFields[memberNames.Original] = crdField
+	return crdField
 }
 
 // AddTypeImport adds an entry in the CRD's TypeImports map for an import line
@@ -277,6 +291,80 @@ func (r *CRD) SpecFieldNames() []string {
 	}
 	sort.Strings(res)
 	return res
+}
+
+// AddPrintableColumn adds an entry to the list of additional printer columns
+// using the given path and field types.
+func (r *CRD) AddPrintableColumn(
+	field *CRDField,
+	jsonPath string,
+) *CRDPrinterColumn {
+	fieldColumnType := field.GoTypeElem
+
+	// Printable columns must be primitives supported by the OpenAPI list of data
+	// types as defined by
+	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types
+	// This maps Go type to OpenAPI type.
+	acceptableColumnMaps := map[string]string{
+		"string":  "string",
+		"boolean": "boolean",
+		"int":     "integer",
+		"int8":    "integer",
+		"int16":   "integer",
+		"int32":   "integer",
+		"int64":   "integer",
+		"uint":    "integer",
+		"uint8":   "integer",
+		"uint16":  "integer",
+		"uint32":  "integer",
+		"uint64":  "integer",
+		"uintptr": "integer",
+		"float32": "number",
+		"float64": "number",
+	}
+	printColumnType, exists := acceptableColumnMaps[fieldColumnType]
+
+	if !exists {
+		msg := fmt.Sprintf(
+			"GENERATION FAILURE! Unable to generate a printer column for the field %s that has type %s.",
+			field.Names.Camel, fieldColumnType,
+		)
+		panic(msg)
+		return nil
+	}
+
+	column := &CRDPrinterColumn{
+		CRD:      r,
+		Name:     field.Names.Camel,
+		Type:     printColumnType,
+		JSONPath: jsonPath,
+	}
+	r.AdditionalPrinterColumns = append(r.AdditionalPrinterColumns, column)
+	return column
+}
+
+// AddSpecPrintableColumn adds an entry to the list of additional printer columns
+// using the path of the given spec field.
+func (r *CRD) AddSpecPrintableColumn(
+	field *CRDField,
+) *CRDPrinterColumn {
+	return r.AddPrintableColumn(
+		field,
+		//TODO(nithomso): Ideally we'd use `r.genCfg.PrefixConfig.SpecField` but it uses uppercase
+		fmt.Sprintf("%s.%s", ".spec", field.Names.CamelLower),
+	)
+}
+
+// AddStatusPrintableColumn adds an entry to the list of additional printer columns
+// using the path of the given status field.
+func (r *CRD) AddStatusPrintableColumn(
+	field *CRDField,
+) *CRDPrinterColumn {
+	return r.AddPrintableColumn(
+		field,
+		//TODO(nithomso): Ideally we'd use `r.genCfg.PrefixConfig.StatusField` but it uses uppercase
+		fmt.Sprintf("%s.%s", ".status", field.Names.CamelLower),
+	)
 }
 
 // UnpacksAttributesMap returns true if the underlying API has
@@ -2438,14 +2526,15 @@ func NewCRD(
 	kind := crdNames.Camel
 	plural := pluralize.Plural(kind)
 	return &CRD{
-		sdkAPI:       sdkAPI,
-		genCfg:       genCfg,
-		Names:        crdNames,
-		Kind:         kind,
-		Plural:       plural,
-		Ops:          crdOps,
-		SpecFields:   map[string]*CRDField{},
-		StatusFields: map[string]*CRDField{},
+		sdkAPI:                   sdkAPI,
+		genCfg:                   genCfg,
+		Names:                    crdNames,
+		Kind:                     kind,
+		Plural:                   plural,
+		Ops:                      crdOps,
+		AdditionalPrinterColumns: make([]*CRDPrinterColumn, 0),
+		SpecFields:               map[string]*CRDField{},
+		StatusFields:             map[string]*CRDField{},
 	}
 }
 
