@@ -73,7 +73,8 @@ func Release(
 		serviceAccountName,
 	}
 	for _, path := range releaseTemplatePaths {
-		if err := ts.Add(path, path, releaseVars); err != nil {
+		outPath := strings.TrimSuffix(path, ".tpl")
+		if err := ts.Add(outPath, path, releaseVars); err != nil {
 			return nil, err
 		}
 	}
