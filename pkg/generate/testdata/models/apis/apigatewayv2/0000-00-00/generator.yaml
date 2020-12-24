@@ -14,9 +14,9 @@ resources:
           operation: ImportApi
           path: FailOnWarnings
       Name:
-        required: false
+        is_required: false
       ProtocolType:
-        required: false
+        is_required: false
     update_operation:
       custom_method_name: customUpdateApi
 operations:

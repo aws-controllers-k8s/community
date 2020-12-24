@@ -108,9 +108,6 @@ func generateRelease(cmd *cobra.Command, args []string) error {
 			fmt.Println(strings.TrimSpace(contents.String()))
 			continue
 		}
-		if filepath.Ext(path) == ".tpl" {
-			path = strings.TrimSuffix(path, ".tpl")
-		}
 		outPath := filepath.Join(optReleaseOutputPath, path)
 		outDir := filepath.Dir(outPath)
 		if _, err := ensureDir(outDir); err != nil {
