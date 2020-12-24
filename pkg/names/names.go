@@ -98,6 +98,7 @@ var (
 		{"Kms", "KMS", "kms", nil},
 		{"Mfa", "MFA", "mfa", nil},
 		{"Sdk", "SDK", "sdk", nil},
+		{"Sha256", "SHA256", "sha256", nil},
 		{"Sqs", "SQS", "sns", nil},
 		{"Sse", "SSE", "sse", nil},
 		{"Ssl", "SSL", "ssl", nil},

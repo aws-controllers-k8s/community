@@ -1,0 +1,13 @@
+resources:
+  Function:
+    fields:
+      CodeLocation:
+        is_read_only: true
+        from:
+          operation: GetFunction
+          path: Code.Location
+      CodeRepositoryType:
+        is_read_only: true
+        from:
+          operation: GetFunction
+          path: Code.RepositoryType
