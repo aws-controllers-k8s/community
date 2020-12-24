@@ -136,7 +136,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 				continue
 			}
 			from := fieldConfig.From
-			memberShapeRef, found := g.SDKAPI.GetMemberInputShapeRef(
+			memberShapeRef, found := g.SDKAPI.GetInputShapeRef(
 				from.Operation, from.Path,
 			)
 			if found {
@@ -203,7 +203,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 				continue
 			}
 			from := fieldConfig.From
-			memberShapeRef, found := g.SDKAPI.GetMemberOutputShapeRef(
+			memberShapeRef, found := g.SDKAPI.GetOutputShapeRef(
 				from.Operation, from.Path,
 			)
 			if found {

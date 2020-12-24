@@ -168,35 +168,53 @@ func (a *SDKAPI) GetOperationMap(cfg *ackgenconfig.Config) *OperationMap {
 	return &opMap
 }
 
-// GetMemberInputShapeRef returns shape reference associated with the input member
-// for given API operation and member of API operation
-func (a *SDKAPI) GetMemberInputShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
-	for opID, op := range a.API.Operations {
-		if opID == operation && op.InputRef.Shape != nil {
-			for opMemberName, memberShapeRef := range op.InputRef.Shape.MemberRefs {
-				if opMemberName == memberName {
-					return memberShapeRef, true
-				}
-			}
-		}
+// GetInputShapeRef finds a ShapeRef for a supplied member path (dot-notation)
+// for given API operation
+func (a *SDKAPI) GetInputShapeRef(
+	opID string,
+	path string,
+) (*awssdkmodel.ShapeRef, bool) {
+	op, ok := a.API.Operations[opID]
+	if !ok {
+		return nil, false
 	}
-
-	return nil, false
+	return getMemberByPath(op.InputRef.Shape, path)
 }
 
-// GetMemberOutputShapeRef returns shape reference associated with the output member
-// for given API operation and member of API operation
-func (a *SDKAPI) GetMemberOutputShapeRef(operation string, memberName string) (*awssdkmodel.ShapeRef, bool) {
-	for opID, op := range a.API.Operations {
-		if opID == operation && op.OutputRef.Shape != nil {
-			for opMemberName, memberShapeRef := range op.OutputRef.Shape.MemberRefs {
-				if opMemberName == memberName {
-					return memberShapeRef, true
-				}
-			}
-		}
+// GetOutputShapeRef finds a ShapeRef for a supplied member path (dot-notation)
+// for given API operation
+func (a *SDKAPI) GetOutputShapeRef(
+	opID string,
+	path string,
+) (*awssdkmodel.ShapeRef, bool) {
+	op, ok := a.API.Operations[opID]
+	if !ok {
+		return nil, false
 	}
+	return getMemberByPath(op.OutputRef.Shape, path)
+}
 
+// getMemberByPath returns a ShapeRef given a root Shape and a dot-notation
+// object search path
+func getMemberByPath(
+	shape *awssdkmodel.Shape,
+	path string,
+) (*awssdkmodel.ShapeRef, bool) {
+	elements := strings.Split(path, ".")
+	last := len(elements) - 1
+	for x, elem := range elements {
+		if shape == nil {
+			return nil, false
+		}
+		shapeRef, ok := shape.MemberRefs[elem]
+		if !ok {
+			return nil, false
+		}
+		if x == last {
+			return shapeRef, true
+		}
+		shape = shapeRef.Shape
+	}
 	return nil, false
 }
 
