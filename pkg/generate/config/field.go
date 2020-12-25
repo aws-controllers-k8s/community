@@ -20,6 +20,81 @@ package config
 //
 // This additional field can source its value from a shape in a different API
 // Operation entirely.
+//
+// The data type (Go type) that a field is assigned during code generation
+// depends on whether the field is part of the Create Operation's Input shape
+// which go into the Resource's Spec fields collection, or the Create
+// Operation's Output shape which, if not present in the Input shape, means the
+// field goes into the Resource's Status fields collection).
+//
+// Each Resource typically also has a ReadOne Operation. The ACK service
+// controller will call this ReadOne Operation to get the latest observed state
+// of a particular resource in the backend AWS API service. The service
+// controller sets the observed Resource's Spec and Status fields from the
+// Output shape of the ReadOne Operation. The code generator is responsible for
+// producing the Go code that performs these "setter" methods on the Resource.
+// The way the code generator determines how to set the Spec or Status fields
+// from the Output shape's member fields is by looking at the data type of the
+// Spec or Status field with the same name as the Output shape's member field.
+//
+// Importantly, in producing this "setter" Go code the code generator **assumes
+// that the data types (Go types) in the source (the Output shape's member
+// field) and target (the Spec or Status field) are the same**.
+//
+// There are some APIs, however, where the Go type of the field in the Create
+// Operation's Input shape is actually different from the same-named field in
+// the ReadOne Operation's Output shape. A good example of this is the Lambda
+// CreateFunction API call, which has a `Code` member of its Input shape that
+// looks like this:
+//
+// "Code": {
+//   "ImageUri": "string",
+//   "S3Bucket": "string",
+//   "S3Key": "string",
+//   "S3ObjectVersion": "string",
+//   "ZipFile": blob
+// },
+//
+// The GetFunction API call's Output shape has a same-named field called
+// `Code` in it, but this field looks like this:
+//
+// "Code": {
+//   "ImageUri": "string",
+//   "Location": "string",
+//   "RepositoryType": "string",
+//   "ResolvedImageUri": "string"
+// },
+//
+// This presents a conundrum to the ACK code generator, which, as noted above,
+// assumes the data types of same-named fields in the Create Operation's Input
+// shape and ReadOne Operation's Output shape are the same.
+//
+// The SourceFieldConfig struct allows us to explain to the code generator
+// how to handle situations like this.
+//
+// For the Lambda Function Resource's `Code` field, we can inform the code
+// generator to create three new Status fields (readonly) from the `Location`,
+// `RepositoryType` and `ResolvedImageUri` fields in the `Code` member of the
+// ReadOne Operation's Output shape:
+//
+// resources:
+//   Function:
+//     fields:
+//       CodeLocation:
+//         is_read_only: true
+//         from:
+//           operation: GetFunction
+//           path: Code.Location
+//       CodeRepositoryType:
+//         is_read_only: true
+//         from:
+//           operation: GetFunction
+//           path: Code.RepositoryType
+//       CodeRegisteredImageURI:
+//         is_read_only: true
+//         from:
+//           operation: GetFunction
+//           path: Code.RegisteredImageUri
 type SourceFieldConfig struct {
 	// Operation refers to the ID of the API Operation where we will
 	// determine the field's Go type.
