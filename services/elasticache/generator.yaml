@@ -12,7 +12,7 @@ resources:
     fields:
       Events:
         is_read_only: true
-        setFrom:
+        from:
           operation: DescribeEvents
           path: Events
   ReplicationGroup:
