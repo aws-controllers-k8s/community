@@ -18,6 +18,8 @@ debug_msg "executing test: $service_name/$test_name"
 
 api_name="ack-test-$service_name-api"
 api_resource_name="api/$api_name"
+import_api_name="import-$api_name"
+import_api_resource_name="api/$import_api_name"
 integration_name="ack-test-$service_name-integration"
 integration_resource_name="integration/$integration_name"
 route_name="ack-test-$service_name-route"
@@ -51,6 +53,11 @@ if k8s_resource_exists "$authorizer_resource_name"; then
     exit 1
 fi
 
+if k8s_resource_exists "$import_api_resource_name"; then
+    echo "FATAL: expected $import_api_resource_name to not exist. Did previous test run cleanup?"
+    exit 1
+fi
+
 if k8s_resource_exists "$api_resource_name"; then
     echo "FATAL: expected $api_resource_name to not exist. Did previous test run cleanup?"
     exit 1
@@ -61,6 +68,8 @@ apigwv2_setup_iam_resources_for_authorizer "$authorizer_role_name"
 sleep 5
 apigwv2_create_lambda_authorizer "$authorizer_function_name" "$authorizer_role_name"
 
+apigwv2_import_http_api_and_validate "$import_api_name"
+apigwv2_reimport_http_api_and_validate "$import_api_name"
 apigwv2_create_http_api_and_validate "$api_name"
 apigwv2_update_http_api_and_validate "$api_name"
 apigwv2_create_integration_and_validate "$api_name" "$integration_name"
@@ -78,6 +87,7 @@ apigwv2_delete_route_and_validate "$api_name" "$route_name"
 apigwv2_delete_integration_and_validate "$api_name" "$integration_name"
 apigwv2_delete_authorizer_and_validate "$api_name" "$authorizer_name"
 apigwv2_delete_http_api_and_validate "$api_name"
+apigwv2_delete_http_api_and_validate "$import_api_name"
 
 apigwv2_delete_authorizer_lambda "$authorizer_function_name"
 apigwv2_clean_up_iam_resources_for_authorizer "$authorizer_role_name"

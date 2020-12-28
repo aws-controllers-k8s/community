@@ -1,0 +1,24 @@
+resources:
+  Api:
+    fields:
+      Body:
+        from:
+          operation: ImportApi
+          path: Body
+      Basepath:
+        from:
+          operation: ImportApi
+          path: Basepath
+      FailOnWarnings:
+        from:
+          operation: ImportApi
+          path: FailOnWarnings
+      Name:
+        is_required: false
+      ProtocolType:
+        is_required: false
+    update_operation:
+      custom_method_name: customUpdateApi
+operations:
+  CreateApi:
+    custom_implementation: customCreateApi

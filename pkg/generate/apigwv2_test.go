@@ -50,6 +50,34 @@ func TestAPIGatewayV2_GetTypeDefs(t *testing.T) {
 	assert.Equal("API_SDK", tdef.Names.Camel)
 }
 
+func TestAPIGatewayV2_Api(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	g := testutil.NewGeneratorForService(t, "apigatewayv2")
+
+	crds, err := g.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("Api", crds)
+	require.NotNil(crd)
+
+	assert.Equal("API", crd.Names.Camel)
+	assert.Equal("api", crd.Names.CamelLower)
+	assert.Equal("api", crd.Names.Snake)
+
+	assert.NotNil(crd.SpecFields["Name"])
+	assert.NotNil(crd.SpecFields["ProtocolType"])
+	// Body, Basepath and FailOnWarnings fields from ImportApi operation should get added to APISpec
+	assert.NotNil(crd.SpecFields["Body"])
+	assert.NotNil(crd.SpecFields["Basepath"])
+	assert.NotNil(crd.SpecFields["FailOnWarnings"])
+
+	// The required property should get overriden for Name and ProtocolType fields.
+	assert.False(crd.SpecFields["Name"].IsRequired())
+	assert.False(crd.SpecFields["ProtocolType"].IsRequired())
+}
+
 func TestAPIGatewayV2_Route(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)

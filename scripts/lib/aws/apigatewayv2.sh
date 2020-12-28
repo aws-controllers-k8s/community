@@ -46,6 +46,114 @@ EOF
   assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-api --api-id=$__api_id' but got $?" || exit 1
 }
 
+# apigwv2_import_http_api_and_validate creates an http-api and validates that api
+# exists in AWS.
+# import_http_api_and_validate accepts one required parameter api_name
+apigwv2_import_http_api_and_validate() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to apigwv2_import_http_api_and_validate"
+    echo "Usage: apigwv2_import_http_api_and_validate api_name"
+    exit 1
+  fi
+
+  local __api_name="$1"
+  local __api_resource_name=api/"$1"
+
+  ## create api resource
+  cat <<EOF | kubectl apply -f - >/dev/null
+  apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+  kind: API
+  metadata:
+    name: "$__api_name"
+  spec:
+    body: '{
+              "openapi": "3.0.1",
+              "info": {
+                "title": "ack-apigwv2-import-test",
+                "version": "v1"
+              },
+              "paths": {
+                "/": {
+                  "get": {
+                    "x-amazon-apigateway-integration": {
+                      "uri": "http://example.com",
+                      "httpMethod": "GET",
+                      "type": "HTTP_PROXY",
+                      "payloadFormatVersion": "1.0"
+                    }
+                  }
+                }
+              },
+              "components": {}
+          }'
+EOF
+
+  sleep 10
+
+  ## validate that api-id was populated in resource status
+  debug_msg "retrieve api-id from $__api_resource_name resource's status"
+  local __api_id=$(get_field_from_status "$__api_resource_name" "apiID")
+
+  ## validate that api was created using apigatewayv2 get-api operation
+  debug_msg "apigatewayv2 get-api with api-id $__api_id"
+  daws apigatewayv2 get-api --api-id="$__api_id" > /dev/null
+  assert_equal "0" "$?" "Expected success from 'apigatewayv2 get-api --api-id=$__api_id' but got $?" || exit 1
+}
+
+# apigwv2_reimport_http_api_and_validate updates an http-api and validates that api
+# was updated in AWS.
+# reimport_http_api_and_validate accepts one required parameter api_name
+apigwv2_reimport_http_api_and_validate() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to apigwv2_reimport_http_api_and_validate"
+    echo "Usage: apigwv2_reimport_http_api_and_validate api_name"
+    exit 1
+  fi
+
+  local __api_name="$1"
+  local __api_resource_name=api/"$1"
+
+  ## create api resource
+  cat <<EOF | kubectl apply -f - >/dev/null
+  apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+  kind: API
+  metadata:
+    name: "$__api_name"
+  spec:
+    body: '{
+              "openapi": "3.0.1",
+              "info": {
+                "title": "updated-ack-apigwv2-import-test",
+                "version": "v1"
+              },
+              "paths": {
+                "/": {
+                  "get": {
+                    "x-amazon-apigateway-integration": {
+                      "uri": "http://example.com",
+                      "httpMethod": "GET",
+                      "type": "HTTP_PROXY",
+                      "payloadFormatVersion": "1.0"
+                    }
+                  }
+                }
+              },
+              "components": {}
+          }'
+EOF
+
+  sleep 10
+
+  ## validate that api-id was populated in resource status
+  debug_msg "retrieve api-id from $__api_resource_name resource's status"
+  local __api_id=$(get_field_from_status "$__api_resource_name" "apiID")
+
+  ## validate that api was updated using apigatewayv2 get-api operation
+  debug_msg "apigatewayv2 get-api with api-id $__api_id"
+  local __updated_api_name=$( daws apigatewayv2 get-api --api-id="$__api_id" | jq -r .Name)
+  assert_equal "updated-ack-apigwv2-import-test" "$__updated_api_name" "Expected the api-name to be updated to 'updated-ack-apigwv2-import-test' but got $__updated_api_name" || exit 1
+}
+
 # apigwv2_update_http_api_and_validate updates an http-api and validates that api
 # got updated in AWS.
 # update_http_api_and_validate accepts one required parameter api_name
