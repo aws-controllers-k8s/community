@@ -38,6 +38,10 @@ spec:
             properties:
               apiKeySelectionExpression:
                 type: string
+              basepath:
+                type: string
+              body:
+                type: string
               corsConfiguration:
                 properties:
                   allowCredentials:
@@ -70,6 +74,8 @@ spec:
                 type: boolean
               disableSchemaValidation:
                 type: boolean
+              failOnWarnings:
+                type: boolean
               name:
                 type: string
               protocolType:
@@ -86,9 +92,6 @@ spec:
                 type: string
               version:
                 type: string
-            required:
-            - name
-            - protocolType
             type: object
           status:
             description: APIStatus defines the observed state of API

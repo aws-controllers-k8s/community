@@ -191,4 +191,6 @@ echo "==========================================================================
 export KUBECONFIG
 
 $TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
-$TEST_E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
+#$TEST_E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
+# switching to old e2e runs temporarily until docker test runs are successful.
+$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE

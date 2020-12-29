@@ -215,6 +215,10 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
+	customResp, customRespErr := rm.customCreateApi(ctx, r)
+	if customResp != nil || customRespErr != nil {
+		return customResp, customRespErr
+	}
 	input, err := rm.newCreateRequestPayload(r)
 	if err != nil {
 		return nil, err
@@ -372,145 +376,7 @@ func (rm *resourceManager) sdkUpdate(
 	latest *resource,
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
-
-	input, err := rm.newUpdateRequestPayload(desired)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, respErr := rm.sdkapi.UpdateApiWithContext(ctx, input)
-	rm.metrics.RecordAPICall("UPDATE", "UpdateApi", respErr)
-	if respErr != nil {
-		return nil, respErr
-	}
-	// Merge in the information we read from the API call above to the copy of
-	// the original Kubernetes object we passed to the function
-	ko := desired.ko.DeepCopy()
-
-	if resp.ApiEndpoint != nil {
-		ko.Status.APIEndpoint = resp.ApiEndpoint
-	}
-	if resp.ApiGatewayManaged != nil {
-		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
-	}
-	if resp.ApiId != nil {
-		ko.Status.APIID = resp.ApiId
-	}
-	if resp.CreatedDate != nil {
-		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
-	}
-	if resp.ImportInfo != nil {
-		f9 := []*string{}
-		for _, f9iter := range resp.ImportInfo {
-			var f9elem string
-			f9elem = *f9iter
-			f9 = append(f9, &f9elem)
-		}
-		ko.Status.ImportInfo = f9
-	}
-	if resp.Warnings != nil {
-		f15 := []*string{}
-		for _, f15iter := range resp.Warnings {
-			var f15elem string
-			f15elem = *f15iter
-			f15 = append(f15, &f15elem)
-		}
-		ko.Status.Warnings = f15
-	}
-
-	rm.setStatusDefaults(ko)
-
-	return &resource{ko}, nil
-}
-
-// newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
-// payload of the Update API call for the resource
-func (rm *resourceManager) newUpdateRequestPayload(
-	r *resource,
-) (*svcsdk.UpdateApiInput, error) {
-	res := &svcsdk.UpdateApiInput{}
-
-	if r.ko.Status.APIID != nil {
-		res.SetApiId(*r.ko.Status.APIID)
-	}
-	if r.ko.Spec.APIKeySelectionExpression != nil {
-		res.SetApiKeySelectionExpression(*r.ko.Spec.APIKeySelectionExpression)
-	}
-	if r.ko.Spec.CorsConfiguration != nil {
-		f2 := &svcsdk.Cors{}
-		if r.ko.Spec.CorsConfiguration.AllowCredentials != nil {
-			f2.SetAllowCredentials(*r.ko.Spec.CorsConfiguration.AllowCredentials)
-		}
-		if r.ko.Spec.CorsConfiguration.AllowHeaders != nil {
-			f2f1 := []*string{}
-			for _, f2f1iter := range r.ko.Spec.CorsConfiguration.AllowHeaders {
-				var f2f1elem string
-				f2f1elem = *f2f1iter
-				f2f1 = append(f2f1, &f2f1elem)
-			}
-			f2.SetAllowHeaders(f2f1)
-		}
-		if r.ko.Spec.CorsConfiguration.AllowMethods != nil {
-			f2f2 := []*string{}
-			for _, f2f2iter := range r.ko.Spec.CorsConfiguration.AllowMethods {
-				var f2f2elem string
-				f2f2elem = *f2f2iter
-				f2f2 = append(f2f2, &f2f2elem)
-			}
-			f2.SetAllowMethods(f2f2)
-		}
-		if r.ko.Spec.CorsConfiguration.AllowOrigins != nil {
-			f2f3 := []*string{}
-			for _, f2f3iter := range r.ko.Spec.CorsConfiguration.AllowOrigins {
-				var f2f3elem string
-				f2f3elem = *f2f3iter
-				f2f3 = append(f2f3, &f2f3elem)
-			}
-			f2.SetAllowOrigins(f2f3)
-		}
-		if r.ko.Spec.CorsConfiguration.ExposeHeaders != nil {
-			f2f4 := []*string{}
-			for _, f2f4iter := range r.ko.Spec.CorsConfiguration.ExposeHeaders {
-				var f2f4elem string
-				f2f4elem = *f2f4iter
-				f2f4 = append(f2f4, &f2f4elem)
-			}
-			f2.SetExposeHeaders(f2f4)
-		}
-		if r.ko.Spec.CorsConfiguration.MaxAge != nil {
-			f2.SetMaxAge(*r.ko.Spec.CorsConfiguration.MaxAge)
-		}
-		res.SetCorsConfiguration(f2)
-	}
-	if r.ko.Spec.CredentialsARN != nil {
-		res.SetCredentialsArn(*r.ko.Spec.CredentialsARN)
-	}
-	if r.ko.Spec.Description != nil {
-		res.SetDescription(*r.ko.Spec.Description)
-	}
-	if r.ko.Spec.DisableExecuteAPIEndpoint != nil {
-		res.SetDisableExecuteApiEndpoint(*r.ko.Spec.DisableExecuteAPIEndpoint)
-	}
-	if r.ko.Spec.DisableSchemaValidation != nil {
-		res.SetDisableSchemaValidation(*r.ko.Spec.DisableSchemaValidation)
-	}
-	if r.ko.Spec.Name != nil {
-		res.SetName(*r.ko.Spec.Name)
-	}
-	if r.ko.Spec.RouteKey != nil {
-		res.SetRouteKey(*r.ko.Spec.RouteKey)
-	}
-	if r.ko.Spec.RouteSelectionExpression != nil {
-		res.SetRouteSelectionExpression(*r.ko.Spec.RouteSelectionExpression)
-	}
-	if r.ko.Spec.Target != nil {
-		res.SetTarget(*r.ko.Spec.Target)
-	}
-	if r.ko.Spec.Version != nil {
-		res.SetVersion(*r.ko.Spec.Version)
-	}
-
-	return res, nil
+	return rm.customUpdateApi(ctx, desired, latest, diffReporter)
 }
 
 // sdkDelete deletes the supplied resource in the backend AWS service API

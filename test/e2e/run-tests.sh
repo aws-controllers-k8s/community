@@ -2,8 +2,11 @@
 
 set -eo pipefail
 
-THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+E2E_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ROOT_DIR="$E2E_DIR/../.."
+SCRIPTS_DIR="$ROOT_DIR/scripts"
 
+source "$SCRIPTS_DIR/lib/common.sh"
 USAGE="
 Usage:
   $(basename "$0") <service>
@@ -23,7 +26,7 @@ fi
 
 SERVICE="$1"
 
-service_test_dir="$THIS_DIR/$SERVICE"
+service_test_dir="$E2E_DIR/$SERVICE"
 
 if [ ! -d "$service_test_dir" ]; then
     echo "No tests for service $SERVICE"

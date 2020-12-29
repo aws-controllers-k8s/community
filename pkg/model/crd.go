@@ -76,9 +76,15 @@ type CRDField struct {
 	FieldConfig       *ackgenconfig.FieldConfig
 }
 
-//IsRequired return if the shape is marked as required in AWS SDK Private model
-//we use this to append kubebuilder:validation:Required markers to validate using the CRD validation schema
+// IsRequired checks the FieldConfig for CRDField and returns if the field is
+// marked as required or not.
+// If there is no required override present for this field in FieldConfig, IsRequired will
+// return if the shape is marked as required in AWS SDK Private model
+// We use this to append kubebuilder:validation:Required markers to validate using the CRD validation schema
 func (crdField *CRDField) IsRequired() bool {
+	if crdField.FieldConfig != nil && crdField.FieldConfig.IsRequired != nil {
+		return *crdField.FieldConfig.IsRequired
+	}
 	return util.InStrings(crdField.Names.ModelOrginal, crdField.CRD.Ops.Create.InputRef.Shape.Required)
 }
 
@@ -248,7 +254,8 @@ func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
 ) *CRDField {
-	crdField := newCRDField(r, memberNames, shapeRef, nil)
+	fieldConfigs := r.genCfg.ResourceFields(r.Names.Original)
+	crdField := newCRDField(r, memberNames, shapeRef, fieldConfigs[memberNames.Original])
 	r.SpecFields[memberNames.Original] = crdField
 	return crdField
 }
