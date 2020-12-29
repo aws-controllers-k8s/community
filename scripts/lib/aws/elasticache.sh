@@ -157,7 +157,7 @@ provide_replication_group_yaml() {
   local rg_name="$rg_id"
   local rg_description="${rg_description:-$test_default_replication_group_desc}"
   local automatic_failover_enabled="${automatic_failover_enabled:-$test_default_replication_group_automatic_failover_enabled}"
-  local cache_node_type="${cache_node_type:=$test_default_replication_group_cache_node_type}"
+  local cache_node_type="${cache_node_type:-$test_default_replication_group_cache_node_type}"
   local num_node_groups="${num_node_groups:-$test_default_replication_group_num_node_groups}"
   local replicas_per_node_group="${replicas_per_node_group:-$test_default_replication_group_replicas_per_node_group}"
   local multi_az_enabled="${multi_az_enabled:-$test_default_replication_group_multi_az_enabled}"

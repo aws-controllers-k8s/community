@@ -35,8 +35,8 @@ fi
 
 SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
-: "${PACKAGE_OUTPUT_PATH:="$BUILD_DIR/release/$SERVICE"}"
-: "${CHART_INPUT_PATH:="$ROOT_DIR/services/$SERVICE/helm"}"
+PACKAGE_OUTPUT_PATH=${PACKAGE_OUTPUT_PATH:-"$BUILD_DIR/release/$SERVICE"}
+CHART_INPUT_PATH=${CHART_INPUT_PATH:-"$ROOT_DIR/services/$SERVICE/helm"}
 
 if [[ ! -d "$CHART_INPUT_PATH" ]]; then
     echo "Chart input path: $CHART_INPUT_PATH does not exist."
