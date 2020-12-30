@@ -24,12 +24,12 @@ if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
     exit 1
 fi
 
-: "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
-: "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
-: "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
-: "${ACK_GENERATE_CONFIG_PATH:=""}"
-: "${ACK_GENERATE_OUTPUT_PATH:=""}"
-: "${ACK_GENERATE_IMAGE_REPOSITORY:=$DEFAULT_IMAGE_REPOSITORY}"
+ACK_GENERATE_CACHE_DIR=${ACK_GENERATE_CACHE_DIR:-"~/.cache/aws-controllers-k8s"}
+ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-"$BIN_DIR/ack-generate"}
+ACK_GENERATE_API_VERSION=${ACK_GENERATE_API_VERSION:-"v1alpha1"}
+ACK_GENERATE_CONFIG_PATH=${ACK_GENERATE_CONFIG_PATH:-""}
+ACK_GENERATE_OUTPUT_PATH=${ACK_GENERATE_OUTPUT_PATH:-""}
+ACK_GENERATE_IMAGE_REPOSITORY=${ACK_GENERATE_IMAGE_REPOSITORY:-"$DEFAULT_IMAGE_REPOSITORY"}
 
 USAGE="
 Usage:
@@ -92,8 +92,8 @@ from the root directory or install ack-generate using:
 fi
 SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 RELEASE_VERSION="$2"
-: "${K8S_RBAC_ROLE_NAME:="ack-$SERVICE-controller"}"
-: "${ACK_GENERATE_SERVICE_ACCOUNT_NAME:="ack-$SERVICE-controller"}"
+K8S_RBAC_ROLE_NAME=${K8S_RBAC_ROLE_NAME:-"ack-$SERVICE-controller"}
+ACK_GENERATE_SERVICE_ACCOUNT_NAME=${ACK_GENERATE_SERVICE_ACCOUNT_NAME:-"ack-$SERVICE-controller"}
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.

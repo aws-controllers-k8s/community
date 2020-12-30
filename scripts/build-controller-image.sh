@@ -40,8 +40,8 @@ fi
 AWS_SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 QUIET=${QUIET:-"false"}
 DEFAULT_AWS_SERVICE_DOCKER_IMG="aws-controllers-k8s:$AWS_SERVICE-$VERSION"
-: "${AWS_SERVICE_DOCKER_IMG:="$DEFAULT_AWS_SERVICE_DOCKER_IMG"}"
-: "${DOCKERFILE:="$DOCKERFILE_PATH"}"
+AWS_SERVICE_DOCKER_IMG=${AWS_SERVICE_DOCKER_IMG:-"$DEFAULT_AWS_SERVICE_DOCKER_IMG"}
+DOCKERFILE=${DOCKERFILE:-"$DOCKERFILE_PATH"}
 
 if [[ $QUIET = "false" ]]; then
     echo "building '$AWS_SERVICE' controller docker image with tag: ${AWS_SERVICE_DOCKER_IMG}"
