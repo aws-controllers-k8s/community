@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-DIR=$(cd "$(dirname "$0")"; pwd)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SCRIPTS_DIR=$DIR
 DOCKERFILE_PATH=$DIR/../Dockerfile
 BUILD_CONTEXT=$DIR/..
