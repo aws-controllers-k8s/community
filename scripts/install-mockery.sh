@@ -6,7 +6,7 @@
 
 set -eo pipefail
 
-SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
+SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
 

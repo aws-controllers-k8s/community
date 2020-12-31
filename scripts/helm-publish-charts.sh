@@ -7,7 +7,7 @@
 
 set -eo pipefail
 
-SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
+SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 SERVICES_DIR="$ROOT_DIR/services"
 DEFAULT_HELM_REGISTRY="public.ecr.aws/aws-controllers-k8s"

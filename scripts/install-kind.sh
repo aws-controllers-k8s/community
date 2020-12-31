@@ -11,7 +11,7 @@
 
 set -eo pipefail
 
-SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
+SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 DEFAULT_KIND_VERSION="0.9.0"
 
