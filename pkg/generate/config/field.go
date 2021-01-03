@@ -116,6 +116,14 @@ type FieldConfig struct {
 	// AdditionalPrinterColumns list to be included in the `kubectl get`
 	// response.
 	IsPrintable bool `json:"is_printable"`
+	// Required indicates whether this field is a required member or not.
+	// This field is used to configure '+kubebuilder:validation:Required' on API object's members.
+	IsRequired *bool `json:"is_required,omitempty"`
+	// IsName indicates the field represents the name/string identifier field
+	// for the resource.  This allows the generator config to override the
+	// default behaviour of considering a field called "Name" or
+	// "{Resource}Name" or "{Resource}Id" as the "name field" for the resource.
+	IsName bool `json:"is_name"`
 	// ContainsOwnerAccountID indicates the field contains the AWS Account ID
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
@@ -123,7 +131,4 @@ type FieldConfig struct {
 	// From instructs the code generator that the value of the field should
 	// be retrieved from the specified operation and member path
 	From *SourceFieldConfig `json:"from,omitempty"`
-	// Required indicates whether this field is a required member or not.
-	// This field is used to configure '+kubebuilder:validation:Required' on API object's members.
-	IsRequired *bool `json:"is_required,omitempty"`
 }

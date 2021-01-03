@@ -386,8 +386,10 @@ func (r *CRD) NameField() string {
 	if r.cfg != nil {
 		rConfig, found := r.cfg.Resources[r.Names.Original]
 		if found {
-			if rConfig.NameField != nil {
-				return *rConfig.NameField
+			for fName, fConfig := range rConfig.Fields {
+				if fConfig.IsName {
+					return fName
+				}
 			}
 		}
 	}

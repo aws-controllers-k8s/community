@@ -20,12 +20,6 @@ import (
 // ResourceConfig represents instructions to the ACK code generator
 // for a particular CRD/resource on an AWS service API
 type ResourceConfig struct {
-	// NameField is the name of the Member of the Create Input shape that
-	// represents the name/string identifier field for the resource. If this
-	// isn't set, then the generator will look for a field called "Name" or
-	// "{Resource}Name" or "{Resource}Id" because, well, because we can never
-	// have nice things.
-	NameField *string `json:"name_field,omitempty"`
 	// UnpackAttributeMapConfig contains instructions for converting a raw
 	// `map[string]*string` into real fields on a CRD's Spec or Status object
 	UnpackAttributesMapConfig *UnpackAttributesMapConfig `json:"unpack_attributes_map,omitempty"`
