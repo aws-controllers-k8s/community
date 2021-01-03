@@ -70,7 +70,7 @@ type CRDPrinterColumn struct {
 // CRD describes a single top-level resource in an AWS service API
 type CRD struct {
 	sdkAPI *SDKAPI
-	genCfg *ackgenconfig.Config
+	cfg    *ackgenconfig.Config
 	Names  names.Names
 	Kind   string
 	Plural string
@@ -146,10 +146,10 @@ func (r *CRD) InputFieldRename(
 	opID string,
 	origFieldName string,
 ) (string, bool) {
-	if r.genCfg == nil {
+	if r.cfg == nil {
 		return origFieldName, false
 	}
-	return r.genCfg.ResourceInputFieldRename(
+	return r.cfg.ResourceInputFieldRename(
 		r.Names.Original, opID, origFieldName,
 	)
 }
@@ -166,7 +166,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	if shape.Type == "structure" {
 		cleanNames := names.New(gte)
 		gte = cleanNames.Camel
-		if r.sdkAPI.HasConflictingTypeName(gte, r.genCfg) {
+		if r.sdkAPI.HasConflictingTypeName(gte, r.cfg) {
 			gte += "_SDK"
 		}
 		gt = "*" + gte
@@ -176,7 +176,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		mgte, mgt, _ := r.cleanGoType(shape.MemberRef.Shape)
 		cleanNames := names.New(mgte)
 		gte = cleanNames.Camel
-		if r.sdkAPI.HasConflictingTypeName(mgte, r.genCfg) {
+		if r.sdkAPI.HasConflictingTypeName(mgte, r.cfg) {
 			gte += "_SDK"
 		}
 
@@ -204,7 +204,7 @@ func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
 ) *Field {
-	fieldConfigs := r.genCfg.ResourceFields(r.Names.Original)
+	fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
 	f := newField(r, memberNames, shapeRef, fieldConfigs[memberNames.Original])
 	r.SpecFields[memberNames.Original] = f
 	return f
@@ -300,7 +300,7 @@ func (r *CRD) AddSpecPrintableColumn(
 ) *CRDPrinterColumn {
 	return r.AddPrintableColumn(
 		field,
-		//TODO(nithomso): Ideally we'd use `r.genCfg.PrefixConfig.SpecField` but it uses uppercase
+		//TODO(nithomso): Ideally we'd use `r.cfg.PrefixConfig.SpecField` but it uses uppercase
 		fmt.Sprintf("%s.%s", ".spec", field.Names.CamelLower),
 	)
 }
@@ -312,7 +312,7 @@ func (r *CRD) AddStatusPrintableColumn(
 ) *CRDPrinterColumn {
 	return r.AddPrintableColumn(
 		field,
-		//TODO(nithomso): Ideally we'd use `r.genCfg.PrefixConfig.StatusField` but it uses uppercase
+		//TODO(nithomso): Ideally we'd use `r.cfg.PrefixConfig.StatusField` but it uses uppercase
 		fmt.Sprintf("%s.%s", ".status", field.Names.CamelLower),
 	)
 }
@@ -322,12 +322,12 @@ func (r *CRD) AddStatusPrintableColumn(
 // schema'd fields to a raw `map[string]*string` for this resource (see SNS and
 // SQS APIs)
 func (r *CRD) UnpacksAttributesMap() bool {
-	return r.genCfg.UnpacksAttributesMap(r.Names.Original)
+	return r.cfg.UnpacksAttributesMap(r.Names.Original)
 }
 
 // CompareIgnoredFields returns the list of fields compare logic should ignore
 func (r *CRD) CompareIgnoredFields() []string {
-	return r.genCfg.GetCompareIgnoredFields(r.Names.Original)
+	return r.cfg.GetCompareIgnoredFields(r.Names.Original)
 }
 
 // SetAttributesSingleAttribute returns true if the supplied resource name has
@@ -336,17 +336,17 @@ func (r *CRD) CompareIgnoredFields() []string {
 // the SNS SetPlatformApplicationAttributes API call, which sets multiple
 // attributes at once. :shrug:
 func (r *CRD) SetAttributesSingleAttribute() bool {
-	return r.genCfg.SetAttributesSingleAttribute(r.Names.Original)
+	return r.cfg.SetAttributesSingleAttribute(r.Names.Original)
 }
 
 // UnpackAttributes grabs instructions about fields that are represented in the
 // AWS API as a `map[string]*string` but are actually real, schema'd fields and
 // adds Field definitions for those fields.
 func (r *CRD) UnpackAttributes() {
-	if !r.genCfg.UnpacksAttributesMap(r.Names.Original) {
+	if !r.cfg.UnpacksAttributesMap(r.Names.Original) {
 		return
 	}
-	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+	attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	for fieldName, fieldConfig := range attrMapConfig.Fields {
 		if r.IsPrimaryARNField(fieldName) {
 			// ignore since this is handled by Status.ACKResourceMetadata.ARN
@@ -365,7 +365,7 @@ func (r *CRD) UnpackAttributes() {
 // IsPrimaryARNField returns true if the supplied field name is likely the resource's
 // ARN identifier field.
 func (r *CRD) IsPrimaryARNField(fieldName string) bool {
-	if r.genCfg != nil && !r.genCfg.IncludeACKMetadata {
+	if r.cfg != nil && !r.cfg.IncludeACKMetadata {
 		return false
 	}
 	return strings.EqualFold(fieldName, "arn") ||
@@ -381,10 +381,10 @@ func (r *CRD) SetOutputCustomMethodName(
 	if op == nil {
 		return nil
 	}
-	if r.genCfg == nil {
+	if r.cfg == nil {
 		return nil
 	}
-	resGenConfig, found := r.genCfg.Operations[op.Name]
+	resGenConfig, found := r.cfg.Operations[op.Name]
 	if !found {
 		return nil
 	}
@@ -401,11 +401,11 @@ func (r *CRD) GetCustomImplementation(
 	// The type of operation
 	op *awssdkmodel.Operation,
 ) string {
-	if op == nil || r.genCfg == nil {
+	if op == nil || r.cfg == nil {
 		return ""
 	}
 
-	operationConfig, found := r.genCfg.Operations[op.Name]
+	operationConfig, found := r.cfg.Operations[op.Name]
 	if !found {
 		return ""
 	}
@@ -416,10 +416,10 @@ func (r *CRD) GetCustomImplementation(
 // UpdateConditionsCustomMethodName returns custom update conditions operation
 // as *string for custom resource, if specified in generator config
 func (r *CRD) UpdateConditionsCustomMethodName() string {
-	if r.genCfg == nil {
+	if r.cfg == nil {
 		return ""
 	}
-	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	resGenConfig, found := r.cfg.Resources[r.Names.Original]
 	if !found {
 		return ""
 	}
@@ -429,10 +429,10 @@ func (r *CRD) UpdateConditionsCustomMethodName() string {
 // TerminalExceptionCodes returns terminal exception codes as
 // []string for custom resource, if specified in generator config
 func (r *CRD) TerminalExceptionCodes() []string {
-	if r.genCfg == nil {
+	if r.cfg == nil {
 		return nil
 	}
-	resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	resGenConfig, found := r.cfg.Resources[r.Names.Original]
 	if found && resGenConfig.Exceptions != nil {
 		return resGenConfig.Exceptions.TerminalCodes
 	}
@@ -445,8 +445,8 @@ func (r *CRD) TerminalExceptionCodes() []string {
 // a particular HTTP status code, we return that, otherwise we look through the
 // API model definitions looking for a match
 func (r *CRD) ExceptionCode(httpStatusCode int) string {
-	if r.genCfg != nil {
-		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	if r.cfg != nil {
+		resGenConfig, found := r.cfg.Resources[r.Names.Original]
 		if found && resGenConfig.Exceptions != nil {
 			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present {
 				return excConfig.Code
@@ -502,8 +502,8 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 //
 // && strings.HasPrefix(awsErr.Message(), "Could not find model")
 func (r *CRD) GoCodeSetExceptionMessagePrefixCheck(httpStatusCode int) string {
-	if r.genCfg != nil {
-		resGenConfig, found := r.genCfg.Resources[r.Names.Original]
+	if r.cfg != nil {
+		resGenConfig, found := r.cfg.Resources[r.Names.Original]
 		if found && resGenConfig.Exceptions != nil {
 			if excConfig, present := resGenConfig.Exceptions.Errors[httpStatusCode]; present &&
 				resGenConfig.Exceptions.Errors[httpStatusCode].MessagePrefix != nil {
@@ -721,7 +721,7 @@ func (r *CRD) GoCodeSetInput(
 		// attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
 		// attrMap["Policy"] = r.ko.Spec.Policy
 		// res.SetAttributes(attrMap)
-		attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+		attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 		out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 		sortedAttrFieldNames := []string{}
 		for fieldName := range attrMapConfig.Fields {
@@ -749,7 +749,7 @@ func (r *CRD) GoCodeSetInput(
 		out += fmt.Sprintf("%s%s.SetAttributes(attrMap)\n", indent, targetVarName)
 	}
 
-	opConfig, override := r.genCfg.OverrideValues(op.Name)
+	opConfig, override := r.cfg.OverrideValues(op.Name)
 
 	for memberIndex, memberName := range inputShape.MemberNames() {
 		if r.UnpacksAttributesMap() && memberName == "Attributes" {
@@ -810,14 +810,14 @@ func (r *CRD) GoCodeSetInput(
 		sourceAdaptedVarName := sourceVarName
 		f, found = r.SpecFields[renamedName]
 		if found {
-			sourceAdaptedVarName += r.genCfg.PrefixConfig.SpecField
+			sourceAdaptedVarName += r.cfg.PrefixConfig.SpecField
 		} else {
 			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			sourceAdaptedVarName += r.genCfg.PrefixConfig.StatusField
+			sourceAdaptedVarName += r.cfg.PrefixConfig.StatusField
 		}
 		sourceAdaptedVarName += "." + f.Names.Camel
 
@@ -970,7 +970,7 @@ func (r *CRD) GoCodeGetAttributesSetInput(
 	indent := strings.Repeat("\t", indentLevel)
 
 	inputFieldOverrides := map[string][]string{}
-	attrCfg := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+	attrCfg := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	if attrCfg.GetAttributesInput != nil {
 		for memberName, override := range attrCfg.GetAttributesInput.Overrides {
 			inputFieldOverrides[memberName] = override.Values
@@ -1195,7 +1195,7 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 			//     attrMap["Policy"] = r.ko.Spec.Policy
 			// }
 			// res.SetAttributes(attrMap)
-			attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+			attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 			out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 			sortedAttrFieldNames := []string{}
 			for fieldName := range attrMapConfig.Fields {
@@ -1263,8 +1263,8 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 
 // NameField returns the name of the "Name" or string identifier field in the Spec
 func (r *CRD) NameField() string {
-	if r.genCfg != nil {
-		rConfig, found := r.genCfg.Resources[r.Names.Original]
+	if r.cfg != nil {
+		rConfig, found := r.cfg.Resources[r.Names.Original]
 		if found {
 			if rConfig.NameField != nil {
 				return *rConfig.NameField
@@ -1288,10 +1288,10 @@ func (r *CRD) NameField() string {
 // for updating the resource state, if any has been specified in the generator
 // config
 func (r *CRD) CustomUpdateMethodName() string {
-	if r.genCfg == nil {
+	if r.cfg == nil {
 		return ""
 	}
-	rConfig, found := r.genCfg.Resources[r.Names.Original]
+	rConfig, found := r.cfg.Resources[r.Names.Original]
 	if found {
 		if rConfig.UpdateOperation != nil {
 			return rConfig.UpdateOperation.CustomMethodName
@@ -1583,7 +1583,7 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 		goPkg = parts[0]
 		hadPkg = true
 	}
-	renames := r.sdkAPI.GetTypeRenames(r.genCfg)
+	renames := r.sdkAPI.GetTypeRenames(r.cfg)
 	altTypeName, renamed := renames[goTypeNoPkg]
 	if renamed {
 		goTypeNoPkg = altTypeName
@@ -1818,7 +1818,7 @@ func (r *CRD) GoCodeSetOutput(
 		targetAdaptedVarName := targetVarName
 		f, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
+			targetAdaptedVarName += r.cfg.PrefixConfig.SpecField
 			if !performSpecUpdate {
 				continue
 			}
@@ -1828,7 +1828,7 @@ func (r *CRD) GoCodeSetOutput(
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
+			targetAdaptedVarName += r.cfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = f.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
@@ -2052,14 +2052,14 @@ func (r *CRD) goCodeSetOutputReadMany(
 		targetAdaptedVarName := targetVarName
 		f, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
+			targetAdaptedVarName += r.cfg.PrefixConfig.SpecField
 		} else {
 			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
+			targetAdaptedVarName += r.cfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = f.ShapeRef
 		out += fmt.Sprintf(
@@ -2150,7 +2150,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	//      return nil, ackerr.NotFound
 	//  }
 	out += fmt.Sprintf("%sif !found {\n", indent)
-	out += fmt.Sprintf("%s\t%s\n", indent, r.genCfg.SetManyOutputNotFoundErrReturn)
+	out += fmt.Sprintf("%s\t%s\n", indent, r.cfg.SetManyOutputNotFoundErrReturn)
 	out += fmt.Sprintf("%s}\n", indent)
 	return out
 }
@@ -2159,7 +2159,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 // names in the List operation's Output shape's element Shape that we should
 // check a corresponding value in the target Spec exists.
 func (r *CRD) listOpMatchFieldNames() []string {
-	return r.genCfg.ListOpMatchFieldNames(r.Names.Original)
+	return r.cfg.ListOpMatchFieldNames(r.Names.Original)
 }
 
 // goCodeACKResourceMetadataGuardConstructor returns Go code representing a
@@ -2237,7 +2237,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 	// did we output an ACKResourceMetadata guard and constructor snippet?
 	mdGuardOut := false
-	attrMapConfig := r.genCfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+	attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
 	sortedAttrFieldNames := []string{}
 	for fieldName := range attrMapConfig.Fields {
 		sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
@@ -2636,7 +2636,7 @@ func replacePkgName(
 // single top-level resource in an AWS service API
 func NewCRD(
 	sdkAPI *SDKAPI,
-	genCfg *ackgenconfig.Config,
+	cfg *ackgenconfig.Config,
 	crdNames names.Names,
 	ops Ops,
 ) *CRD {
@@ -2645,7 +2645,7 @@ func NewCRD(
 	plural := pluralize.Plural(kind)
 	return &CRD{
 		sdkAPI:                   sdkAPI,
-		genCfg:                   genCfg,
+		cfg:                      cfg,
 		Names:                    crdNames,
 		Kind:                     kind,
 		Plural:                   plural,
