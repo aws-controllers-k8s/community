@@ -89,7 +89,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			continue
 		}
 		crdNames := names.New(crdName)
-		crdOps := ackmodel.CRDOps{
+		ops := ackmodel.Ops{
 			Create:        createOps[crdName],
 			ReadOne:       readOneOps[crdName],
 			ReadMany:      readManyOps[crdName],
@@ -98,8 +98,8 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			GetAttributes: getAttributesOps[crdName],
 			SetAttributes: setAttributesOps[crdName],
 		}
-		g.RemoveIgnoredOperations(&crdOps)
-		crd := ackmodel.NewCRD(g.SDKAPI, g.cfg, crdNames, crdOps)
+		g.RemoveIgnoredOperations(&ops)
+		crd := ackmodel.NewCRD(g.SDKAPI, g.cfg, crdNames, ops)
 
 		// OK, begin to gather the CRDFields that will go into the Spec struct.
 		// These fields are those members of the Create operation's Input
@@ -232,29 +232,30 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 	return crds, nil
 }
 
-// RemoveIgnoredOperations updates CRDOps argument by setting those operations to nil
-// that are configured to be ignored in generator config for the AWS service
-func (g *Generator) RemoveIgnoredOperations(crdOps *ackmodel.CRDOps) {
-	if g.cfg.IsIgnoredOperation(crdOps.Create) {
-		crdOps.Create = nil
+// RemoveIgnoredOperations updates Ops argument by setting those
+// operations to nil that are configured to be ignored in generator config for
+// the AWS service
+func (g *Generator) RemoveIgnoredOperations(ops *ackmodel.Ops) {
+	if g.cfg.IsIgnoredOperation(ops.Create) {
+		ops.Create = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.ReadOne) {
-		crdOps.ReadOne = nil
+	if g.cfg.IsIgnoredOperation(ops.ReadOne) {
+		ops.ReadOne = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.ReadMany) {
-		crdOps.ReadMany = nil
+	if g.cfg.IsIgnoredOperation(ops.ReadMany) {
+		ops.ReadMany = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.Update) {
-		crdOps.Update = nil
+	if g.cfg.IsIgnoredOperation(ops.Update) {
+		ops.Update = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.Delete) {
-		crdOps.Delete = nil
+	if g.cfg.IsIgnoredOperation(ops.Delete) {
+		ops.Delete = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.GetAttributes) {
-		crdOps.GetAttributes = nil
+	if g.cfg.IsIgnoredOperation(ops.GetAttributes) {
+		ops.GetAttributes = nil
 	}
-	if g.cfg.IsIgnoredOperation(crdOps.SetAttributes) {
-		crdOps.SetAttributes = nil
+	if g.cfg.IsIgnoredOperation(ops.SetAttributes) {
+		ops.SetAttributes = nil
 	}
 }
 

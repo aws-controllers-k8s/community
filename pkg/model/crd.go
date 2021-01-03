@@ -27,7 +27,8 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
-type CRDOps struct {
+// Ops are the CRUD operations controlling a particular resource
+type Ops struct {
 	Create        *awssdkmodel.Operation
 	ReadOne       *awssdkmodel.Operation
 	ReadMany      *awssdkmodel.Operation
@@ -37,7 +38,8 @@ type CRDOps struct {
 	SetAttributes *awssdkmodel.Operation
 }
 
-func (ops CRDOps) IterOps() []*awssdkmodel.Operation {
+// IterOps returns a slice of Operations for a resource
+func (ops Ops) IterOps() []*awssdkmodel.Operation {
 	res := []*awssdkmodel.Operation{}
 	if ops.Create != nil {
 		res = append(res, ops.Create)
@@ -72,7 +74,8 @@ type CRD struct {
 	Names  names.Names
 	Kind   string
 	Plural string
-	Ops    CRDOps
+	// Ops are the CRUD operations controlling this resource
+	Ops Ops
 	// AdditionalPrinterColumns is an array of CRDPrinterColumn objects
 	// representing the printer column settings for the CRD
 	// AdditionalPrinterColumns field.
@@ -2635,7 +2638,7 @@ func NewCRD(
 	sdkAPI *SDKAPI,
 	genCfg *ackgenconfig.Config,
 	crdNames names.Names,
-	crdOps CRDOps,
+	ops Ops,
 ) *CRD {
 	pluralize := pluralize.NewClient()
 	kind := crdNames.Camel
@@ -2646,7 +2649,7 @@ func NewCRD(
 		Names:                    crdNames,
 		Kind:                     kind,
 		Plural:                   plural,
-		Ops:                      crdOps,
+		Ops:                      ops,
 		AdditionalPrinterColumns: make([]*CRDPrinterColumn, 0),
 		SpecFields:               map[string]*Field{},
 		StatusFields:             map[string]*Field{},
