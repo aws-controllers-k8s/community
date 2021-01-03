@@ -59,8 +59,8 @@ func (ops Ops) IterOps() []*awssdkmodel.Operation {
 	return res
 }
 
-// CRDPrinterColumn represents a single field in the CRD's Spec or Status objects
-type CRDPrinterColumn struct {
+// PrinterColumn represents a single field in the CRD's Spec or Status objects
+type PrinterColumn struct {
 	CRD      *CRD
 	Name     string
 	Type     string
@@ -76,10 +76,10 @@ type CRD struct {
 	Plural string
 	// Ops are the CRUD operations controlling this resource
 	Ops Ops
-	// AdditionalPrinterColumns is an array of CRDPrinterColumn objects
+	// AdditionalPrinterColumns is an array of PrinterColumn objects
 	// representing the printer column settings for the CRD
 	// AdditionalPrinterColumns field.
-	AdditionalPrinterColumns []*CRDPrinterColumn
+	AdditionalPrinterColumns []*PrinterColumn
 	// SpecFields is a map, keyed by the **original SDK member name** of
 	// Field objects representing those fields in the CRD's Spec struct
 	// field.
@@ -248,7 +248,7 @@ func (r *CRD) SpecFieldNames() []string {
 func (r *CRD) AddPrintableColumn(
 	field *Field,
 	jsonPath string,
-) *CRDPrinterColumn {
+) *PrinterColumn {
 	fieldColumnType := field.GoTypeElem
 
 	// Printable columns must be primitives supported by the OpenAPI list of data
@@ -283,7 +283,7 @@ func (r *CRD) AddPrintableColumn(
 		return nil
 	}
 
-	column := &CRDPrinterColumn{
+	column := &PrinterColumn{
 		CRD:      r,
 		Name:     field.Names.Camel,
 		Type:     printColumnType,
@@ -297,7 +297,7 @@ func (r *CRD) AddPrintableColumn(
 // using the path of the given spec field.
 func (r *CRD) AddSpecPrintableColumn(
 	field *Field,
-) *CRDPrinterColumn {
+) *PrinterColumn {
 	return r.AddPrintableColumn(
 		field,
 		//TODO(nithomso): Ideally we'd use `r.cfg.PrefixConfig.SpecField` but it uses uppercase
@@ -309,7 +309,7 @@ func (r *CRD) AddSpecPrintableColumn(
 // using the path of the given status field.
 func (r *CRD) AddStatusPrintableColumn(
 	field *Field,
-) *CRDPrinterColumn {
+) *PrinterColumn {
 	return r.AddPrintableColumn(
 		field,
 		//TODO(nithomso): Ideally we'd use `r.cfg.PrefixConfig.StatusField` but it uses uppercase
@@ -2650,7 +2650,7 @@ func NewCRD(
 		Kind:                     kind,
 		Plural:                   plural,
 		Ops:                      ops,
-		AdditionalPrinterColumns: make([]*CRDPrinterColumn, 0),
+		AdditionalPrinterColumns: make([]*PrinterColumn, 0),
 		SpecFields:               map[string]*Field{},
 		StatusFields:             map[string]*Field{},
 	}
