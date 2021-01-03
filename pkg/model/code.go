@@ -253,15 +253,17 @@ func (r *CRD) GoCodeSetInput(
 		// attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
 		// attrMap["Policy"] = r.ko.Spec.Policy
 		// res.SetAttributes(attrMap)
-		attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+		fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
 		out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 		sortedAttrFieldNames := []string{}
-		for fieldName := range attrMapConfig.Fields {
-			sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+		for fName, fConfig := range fieldConfigs {
+			if fConfig.IsAttribute {
+				sortedAttrFieldNames = append(sortedAttrFieldNames, fName)
+			}
 		}
 		sort.Strings(sortedAttrFieldNames)
 		for _, fieldName := range sortedAttrFieldNames {
-			fieldConfig := attrMapConfig.Fields[fieldName]
+			fieldConfig := fieldConfigs[fieldName]
 			fieldNames := names.New(fieldName)
 			if !fieldConfig.IsReadOnly {
 				sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
@@ -727,15 +729,17 @@ func (r *CRD) GoCodeSetAttributesSetInput(
 			//     attrMap["Policy"] = r.ko.Spec.Policy
 			// }
 			// res.SetAttributes(attrMap)
-			attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+			fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
 			out += fmt.Sprintf("%sattrMap := map[string]*string{}\n", indent)
 			sortedAttrFieldNames := []string{}
-			for fieldName := range attrMapConfig.Fields {
-				sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+			for fName, fConfig := range fieldConfigs {
+				if fConfig.IsAttribute {
+					sortedAttrFieldNames = append(sortedAttrFieldNames, fName)
+				}
 			}
 			sort.Strings(sortedAttrFieldNames)
 			for _, fieldName := range sortedAttrFieldNames {
-				fieldConfig := attrMapConfig.Fields[fieldName]
+				fieldConfig := fieldConfigs[fieldName]
 				fieldNames := names.New(fieldName)
 				if !fieldConfig.IsReadOnly {
 					sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
@@ -1723,10 +1727,12 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 	// did we output an ACKResourceMetadata guard and constructor snippet?
 	mdGuardOut := false
-	attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
+	fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
 	sortedAttrFieldNames := []string{}
-	for fieldName := range attrMapConfig.Fields {
-		sortedAttrFieldNames = append(sortedAttrFieldNames, fieldName)
+	for fName, fConfig := range fieldConfigs {
+		if fConfig.IsAttribute {
+			sortedAttrFieldNames = append(sortedAttrFieldNames, fName)
+		}
 	}
 	sort.Strings(sortedAttrFieldNames)
 	for _, fieldName := range sortedAttrFieldNames {
@@ -1751,7 +1757,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 			continue
 		}
 
-		fieldConfig := attrMapConfig.Fields[fieldName]
+		fieldConfig := fieldConfigs[fieldName]
 		if fieldConfig.IsOwnerAccountID {
 			if !mdGuardOut {
 				out += goCodeACKResourceMetadataGuardConstructor(

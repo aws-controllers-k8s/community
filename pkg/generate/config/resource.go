@@ -108,24 +108,6 @@ type CompareConfig struct {
 // This structure instructs the code generator about the above real, schema'd
 // fields that are masquerading as raw key/value pairs.
 type UnpackAttributesMapConfig struct {
-	// Fields contains a map, keyed by the original Attribute Key, of
-	// FieldConfig instructions for Attributes that should be
-	// considered actual CRD fields.
-	//
-	// Some fields are ReadWrite -- i.e. the Kubernetes user has the ability to
-	// set/update these fields on their CR -- and therefore go in the Spec
-	// struct of the CR
-	//
-	// Other fields are ReadeOnly -- i.e. the Kubernetes user cannot update the
-	// value of these fields.
-	//
-	// Note that any Attribute keys *not* listed here will be **excluded** from
-	// the representation of the CR's Status struct. If there is an Attribute
-	// -- e.g. an SNS Topic's `SubscriptionsDeleted` attribute -- that has
-	// information that is constantly changing and does not represent
-	// information to the ACK service controller that is useful for determining
-	// observed versus desired state -- then do NOT list that attribute here.
-	Fields map[string]FieldConfig `json:"fields"`
 	// SetAttributesSingleAttribute indicates that the SetAttributes API call
 	// doesn't actually set multiple attributes but rather must be called
 	// multiple times, once for each attribute that needs to change. See SNS
@@ -233,7 +215,17 @@ func (c *Config) UnpacksAttributesMap(resourceName string) bool {
 		return false
 	}
 	resGenConfig, found := c.Resources[resourceName]
-	return found && resGenConfig.UnpackAttributesMapConfig != nil
+	if found {
+		if resGenConfig.UnpackAttributesMapConfig != nil {
+			return true
+		}
+		for _, fConfig := range resGenConfig.Fields {
+			if fConfig.IsAttribute {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // SetAttributesSingleAttribute returns true if the supplied resource name has

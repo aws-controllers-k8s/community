@@ -109,6 +109,14 @@ type SourceFieldConfig struct {
 // to interpret the value of an Attribute and how to map it to a CRD's Spec or
 // Status field
 type FieldConfig struct {
+	// IsAttribute informs the code generator that this field is part of an
+	// "Attributes Map".
+	//
+	// Some resources for some service APIs follow a pattern or using an
+	// "Attributes" `map[string]*string` that contains real, schema'd fields of
+	// the primary resource, and that those fields should be "unpacked" from
+	// the raw map and into CRD's Spec and Status struct fields.
+	IsAttribute bool `json:"is_attribute"`
 	// IsReadOnly indicates the field's value can not be set by a Kubernetes
 	// user; in other words, the field should go in the CR's Status struct
 	IsReadOnly bool `json:"is_read_only"`

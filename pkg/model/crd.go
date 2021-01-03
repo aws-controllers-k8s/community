@@ -301,14 +301,17 @@ func (r *CRD) UnpackAttributes() {
 	if !r.cfg.UnpacksAttributesMap(r.Names.Original) {
 		return
 	}
-	attrMapConfig := r.cfg.Resources[r.Names.Original].UnpackAttributesMapConfig
-	for fieldName, fieldConfig := range attrMapConfig.Fields {
+	fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
+	for fieldName, fieldConfig := range fieldConfigs {
+		if !fieldConfig.IsAttribute {
+			continue
+		}
 		if r.IsPrimaryARNField(fieldName) {
 			// ignore since this is handled by Status.ACKResourceMetadata.ARN
 			continue
 		}
 		fieldNames := names.New(fieldName)
-		f := newField(r, fieldNames, nil, &fieldConfig)
+		f := newField(r, fieldNames, nil, fieldConfig)
 		if !fieldConfig.IsReadOnly {
 			r.SpecFields[fieldName] = f
 		} else {
