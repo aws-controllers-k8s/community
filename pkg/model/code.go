@@ -1752,7 +1752,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 		}
 
 		fieldConfig := attrMapConfig.Fields[fieldName]
-		if fieldConfig.ContainsOwnerAccountID {
+		if fieldConfig.IsOwnerAccountID {
 			if !mdGuardOut {
 				out += goCodeACKResourceMetadataGuardConstructor(
 					targetVarName, indentLevel,

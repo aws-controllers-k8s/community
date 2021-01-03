@@ -124,10 +124,10 @@ type FieldConfig struct {
 	// default behaviour of considering a field called "Name" or
 	// "{Resource}Name" or "{Resource}Id" as the "name field" for the resource.
 	IsName bool `json:"is_name"`
-	// ContainsOwnerAccountID indicates the field contains the AWS Account ID
+	// IsOwnerAccountID indicates the field contains the AWS Account ID
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
-	ContainsOwnerAccountID bool `json:"contains_owner_account_id"`
+	IsOwnerAccountID bool `json:"is_owner_account_id"`
 	// From instructs the code generator that the value of the field should
 	// be retrieved from the specified operation and member path
 	From *SourceFieldConfig `json:"from,omitempty"`
