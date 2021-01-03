@@ -19,7 +19,7 @@ import (
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
 
-func attrCamelNames(fields map[string]*ackmodel.CRDField) []string {
+func attrCamelNames(fields map[string]*ackmodel.Field) []string {
 	res := []string{}
 	for _, attr := range fields {
 		res = append(res, attr.Names.Camel)

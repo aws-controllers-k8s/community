@@ -65,59 +65,6 @@ type CRDPrinterColumn struct {
 	JSONPath string
 }
 
-// CRDField represents a single field in the CRD's Spec or Status objects
-type CRDField struct {
-	CRD               *CRD
-	Names             names.Names
-	GoType            string
-	GoTypeElem        string
-	GoTypeWithPkgName string
-	ShapeRef          *awssdkmodel.ShapeRef
-	FieldConfig       *ackgenconfig.FieldConfig
-}
-
-// IsRequired checks the FieldConfig for CRDField and returns if the field is
-// marked as required or not.
-// If there is no required override present for this field in FieldConfig, IsRequired will
-// return if the shape is marked as required in AWS SDK Private model
-// We use this to append kubebuilder:validation:Required markers to validate using the CRD validation schema
-func (crdField *CRDField) IsRequired() bool {
-	if crdField.FieldConfig != nil && crdField.FieldConfig.IsRequired != nil {
-		return *crdField.FieldConfig.IsRequired
-	}
-	return util.InStrings(crdField.Names.ModelOrginal, crdField.CRD.Ops.Create.InputRef.Shape.Required)
-}
-
-// newCRDField returns a pointer to a new CRDField object
-func newCRDField(
-	crd *CRD,
-	fieldNames names.Names,
-	shapeRef *awssdkmodel.ShapeRef,
-	cfg *ackgenconfig.FieldConfig,
-) *CRDField {
-	var gte, gt, gtwp string
-	var shape *awssdkmodel.Shape
-	if shapeRef != nil {
-		shape = shapeRef.Shape
-	}
-	if shape != nil {
-		gte, gt, gtwp = crd.cleanGoType(shape)
-	} else {
-		gte = "string"
-		gt = "*string"
-		gtwp = "*string"
-	}
-	return &CRDField{
-		CRD:               crd,
-		Names:             fieldNames,
-		ShapeRef:          shapeRef,
-		GoType:            gt,
-		GoTypeElem:        gte,
-		GoTypeWithPkgName: gtwp,
-		FieldConfig:       cfg,
-	}
-}
-
 // CRD describes a single top-level resource in an AWS service API
 type CRD struct {
 	sdkAPI *SDKAPI
@@ -131,14 +78,14 @@ type CRD struct {
 	// AdditionalPrinterColumns field.
 	AdditionalPrinterColumns []*CRDPrinterColumn
 	// SpecFields is a map, keyed by the **original SDK member name** of
-	// CRDField objects representing those fields in the CRD's Spec struct
+	// Field objects representing those fields in the CRD's Spec struct
 	// field.
-	SpecFields map[string]*CRDField
+	SpecFields map[string]*Field
 	// StatusFields is a map, keyed by the **original SDK member name** of
-	// CRDField objects representing those fields in the CRD's Status struct
+	// Field objects representing those fields in the CRD's Status struct
 	// field. Note that there are no fields in StatusFields that are also in
 	// SpecFields.
-	StatusFields map[string]*CRDField
+	StatusFields map[string]*Field
 	// TypeImports is a map, keyed by an import string, with the map value
 	// being the import alias
 	TypeImports map[string]string
@@ -248,27 +195,27 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	return gte, gt, gtwp
 }
 
-// AddSpecField adds a new CRDField of a given name and shape into the Spec
+// AddSpecField adds a new Field of a given name and shape into the Spec
 // field of a CRD
 func (r *CRD) AddSpecField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
-) *CRDField {
+) *Field {
 	fieldConfigs := r.genCfg.ResourceFields(r.Names.Original)
-	crdField := newCRDField(r, memberNames, shapeRef, fieldConfigs[memberNames.Original])
-	r.SpecFields[memberNames.Original] = crdField
-	return crdField
+	f := newField(r, memberNames, shapeRef, fieldConfigs[memberNames.Original])
+	r.SpecFields[memberNames.Original] = f
+	return f
 }
 
-// AddStatusField adds a new CRDField of a given name and shape into the Status
+// AddStatusField adds a new Field of a given name and shape into the Status
 // field of a CRD
 func (r *CRD) AddStatusField(
 	memberNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
-) *CRDField {
-	crdField := newCRDField(r, memberNames, shapeRef, nil)
-	r.StatusFields[memberNames.Original] = crdField
-	return crdField
+) *Field {
+	f := newField(r, memberNames, shapeRef, nil)
+	r.StatusFields[memberNames.Original] = f
+	return f
 }
 
 // AddTypeImport adds an entry in the CRD's TypeImports map for an import line
@@ -296,7 +243,7 @@ func (r *CRD) SpecFieldNames() []string {
 // AddPrintableColumn adds an entry to the list of additional printer columns
 // using the given path and field types.
 func (r *CRD) AddPrintableColumn(
-	field *CRDField,
+	field *Field,
 	jsonPath string,
 ) *CRDPrinterColumn {
 	fieldColumnType := field.GoTypeElem
@@ -346,7 +293,7 @@ func (r *CRD) AddPrintableColumn(
 // AddSpecPrintableColumn adds an entry to the list of additional printer columns
 // using the path of the given spec field.
 func (r *CRD) AddSpecPrintableColumn(
-	field *CRDField,
+	field *Field,
 ) *CRDPrinterColumn {
 	return r.AddPrintableColumn(
 		field,
@@ -358,7 +305,7 @@ func (r *CRD) AddSpecPrintableColumn(
 // AddStatusPrintableColumn adds an entry to the list of additional printer columns
 // using the path of the given status field.
 func (r *CRD) AddStatusPrintableColumn(
-	field *CRDField,
+	field *Field,
 ) *CRDPrinterColumn {
 	return r.AddPrintableColumn(
 		field,
@@ -391,7 +338,7 @@ func (r *CRD) SetAttributesSingleAttribute() bool {
 
 // UnpackAttributes grabs instructions about fields that are represented in the
 // AWS API as a `map[string]*string` but are actually real, schema'd fields and
-// adds CRDField definitions for those fields.
+// adds Field definitions for those fields.
 func (r *CRD) UnpackAttributes() {
 	if !r.genCfg.UnpacksAttributesMap(r.Names.Original) {
 		return
@@ -403,11 +350,11 @@ func (r *CRD) UnpackAttributes() {
 			continue
 		}
 		fieldNames := names.New(fieldName)
-		crdField := newCRDField(r, fieldNames, nil, &fieldConfig)
+		f := newField(r, fieldNames, nil, &fieldConfig)
 		if !fieldConfig.IsReadOnly {
-			r.SpecFields[fieldName] = crdField
+			r.SpecFields[fieldName] = f
 		} else {
-			r.StatusFields[fieldName] = crdField
+			r.StatusFields[fieldName] = f
 		}
 	}
 }
@@ -855,21 +802,21 @@ func (r *CRD) GoCodeSetInput(
 		renamedName, _ := r.InputFieldRename(op.Name, memberName)
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
-		var crdField *CRDField
+		var f *Field
 		var found bool
 		sourceAdaptedVarName := sourceVarName
-		crdField, found = r.SpecFields[renamedName]
+		f, found = r.SpecFields[renamedName]
 		if found {
 			sourceAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 		} else {
-			crdField, found = r.StatusFields[memberName]
+			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
 			sourceAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
-		sourceAdaptedVarName += "." + crdField.Names.Camel
+		sourceAdaptedVarName += "." + f.Names.Camel
 
 		memberShapeRef, _ := inputShape.MemberRefs[memberName]
 		memberShape := memberShapeRef.Shape
@@ -1862,25 +1809,25 @@ func (r *CRD) GoCodeSetOutput(
 
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
-		var crdField *CRDField
+		var f *Field
 		var found bool
 		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
-		crdField, found = r.SpecFields[memberName]
+		f, found = r.SpecFields[memberName]
 		if found {
 			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 			if !performSpecUpdate {
 				continue
 			}
 		} else {
-			crdField, found = r.StatusFields[memberName]
+			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
 			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
-		targetMemberShapeRef = crdField.ShapeRef
+		targetMemberShapeRef = f.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
 		// storage of complex member field values
 		//
@@ -1924,7 +1871,7 @@ func (r *CRD) GoCodeSetOutput(
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForContainer(
-					crdField.Names.Camel,
+					f.Names.Camel,
 					memberVarName,
 					targetMemberShapeRef,
 					sourceAdaptedVarName,
@@ -1932,7 +1879,7 @@ func (r *CRD) GoCodeSetOutput(
 					indentLevel+1,
 				)
 				out += r.goCodeSetOutputForScalar(
-					crdField.Names.Camel,
+					f.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
 					sourceMemberShapeRef,
@@ -1941,7 +1888,7 @@ func (r *CRD) GoCodeSetOutput(
 			}
 		default:
 			out += r.goCodeSetOutputForScalar(
-				crdField.Names.Camel,
+				f.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
 				sourceMemberShapeRef,
@@ -2096,22 +2043,22 @@ func (r *CRD) goCodeSetOutputReadMany(
 		}
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
-		var crdField *CRDField
+		var f *Field
 		var found bool
 		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
-		crdField, found = r.SpecFields[memberName]
+		f, found = r.SpecFields[memberName]
 		if found {
 			targetAdaptedVarName += r.genCfg.PrefixConfig.SpecField
 		} else {
-			crdField, found = r.StatusFields[memberName]
+			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
 			targetAdaptedVarName += r.genCfg.PrefixConfig.StatusField
 		}
-		targetMemberShapeRef = crdField.ShapeRef
+		targetMemberShapeRef = f.ShapeRef
 		out += fmt.Sprintf(
 			"%s\tif %s != nil {\n", indent, sourceAdaptedVarName,
 		)
@@ -2125,7 +2072,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForContainer(
-					crdField.Names.Camel,
+					f.Names.Camel,
 					memberVarName,
 					targetMemberShapeRef,
 					sourceAdaptedVarName,
@@ -2133,7 +2080,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 					indentLevel+2,
 				)
 				out += r.goCodeSetOutputForScalar(
-					crdField.Names.Camel,
+					f.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
 					sourceMemberShapeRef,
@@ -2151,14 +2098,14 @@ func (r *CRD) goCodeSetOutputReadMany(
 					"%s\t\tif %s.%s != nil {\n",
 					indent,
 					targetAdaptedVarName,
-					crdField.Names.Camel,
+					f.Names.Camel,
 				)
 				out += fmt.Sprintf(
 					"%s\t\t\tif *%s != *%s.%s {\n",
 					indent,
 					sourceAdaptedVarName,
 					targetAdaptedVarName,
-					crdField.Names.Camel,
+					f.Names.Camel,
 				)
 				out += fmt.Sprintf(
 					"%s\t\t\t\tcontinue\n", indent,
@@ -2172,7 +2119,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 			}
 			//          r.ko.Spec.CacheClusterID = elem.CacheClusterId
 			out += r.goCodeSetOutputForScalar(
-				crdField.Names.Camel,
+				f.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
 				sourceMemberShapeRef,
@@ -2701,8 +2648,8 @@ func NewCRD(
 		Plural:                   plural,
 		Ops:                      crdOps,
 		AdditionalPrinterColumns: make([]*CRDPrinterColumn, 0),
-		SpecFields:               map[string]*CRDField{},
-		StatusFields:             map[string]*CRDField{},
+		SpecFields:               map[string]*Field{},
+		StatusFields:             map[string]*Field{},
 	}
 }
 
