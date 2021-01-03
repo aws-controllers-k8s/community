@@ -59,7 +59,7 @@ func newField(
 		shape = shapeRef.Shape
 	}
 	if shape != nil {
-		gte, gt, gtwp = crd.cleanGoType(shape)
+		gte, gt, gtwp = cleanGoType(crd.sdkAPI, crd.cfg, shape)
 	} else {
 		gte = "string"
 		gt = "*string"
