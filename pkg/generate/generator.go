@@ -106,11 +106,11 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 		// Shape.
 		inputShape := createOp.InputRef.Shape
 		if inputShape == nil {
-			return nil, ackmodel.ErrNilShapePointer
+			return nil, ErrNilShapePointer
 		}
 		for memberName, memberShapeRef := range inputShape.MemberRefs {
 			if memberShapeRef.Shape == nil {
-				return nil, ackmodel.ErrNilShapePointer
+				return nil, ErrNilShapePointer
 			}
 			renamedName, _ := crd.InputFieldRename(
 				createOp.Name, memberName,
@@ -172,7 +172,7 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 		}
 		for memberName, memberShapeRef := range outputShape.MemberRefs {
 			if memberShapeRef.Shape == nil {
-				return nil, ackmodel.ErrNilShapePointer
+				return nil, ErrNilShapePointer
 			}
 			memberNames := names.New(memberName)
 			if _, found := crd.SpecFields[memberName]; found {
