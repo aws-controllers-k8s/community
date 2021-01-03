@@ -32,6 +32,7 @@ which in turn requires Docker.
 In summary, in order to test ACK you will need to have the following tools
 installed and configured:
 
+1. [Golang 1.14+](https://golang.org/doc/install)
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
 1. [kubernetes-sigs/controller-tools](https://github.com/kubernetes-sigs/controller-tools)
@@ -93,7 +94,7 @@ make build-controller SERVICE=$SERVICE
 !!! bug "Handle `controller-gen: command not found`"
     If you run into the `controller-gen: command not found` message when
     executing `make build-controller` then you want to check if the
-    `controller-gen` binary is available in `$GOPATH/bin`, see also
+    `controller-gen` binary is available in `$GOPATH/bin`, also ensure that `$GOPATH/bin` is part of your `$PATH`, see also
     [`#234`](https://github.com/aws/aws-controllers-k8s/issues/234).
 
 In addition to the ACK service controller code, above generates the

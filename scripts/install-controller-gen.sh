@@ -25,9 +25,9 @@ source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
 
 if ! is_installed controller-gen; then
-    # GOBIN not always set... so default to installing into $GOPATH/bin if
-    # not...
-    __install_dir=${GOBIN:-$GOPATH/bin}
+    # GOBIN and GOPATH are not always set, so default to GOPATH from `go env`
+    __GOPATH=$(go env GOPATH)
+    __install_dir=${GOBIN:-$__GOPATH/bin}
     __install_path="$__install_dir/controller-gen"
     __work_dir=$(mktemp -d /tmp/controller-gen-XXX)
 
