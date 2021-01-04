@@ -107,6 +107,7 @@ update_cache_parameter_group_fields() {
 update_cache_parameter_group_fields
 ack_set_custom_cache_parameters
 assert_custom_cache_parameters
+assert_cpg_events "$cpg_name"
 
 #########################
 ## Remove parameter

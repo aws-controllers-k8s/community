@@ -575,6 +575,53 @@ wait_and_assert_replication_group_synced_and_available() {
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }
 
+# assert_replication_list_allowed_node_type_modifications this will validate
+#   if we have at least one scale up or down modification path available.
+#   Available node type modification depends upon many factors like existing instance,
+#   availability zone, available capacity thus it is difficult to assert the values
+#   so we assert the length.
+# assert_replication_list_allowed_node_type_modifications requires one argument:
+#   rg_id: Replication group name
+assert_replication_list_allowed_node_type_modifications() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} rg_id"
+    exit 1
+  fi
+
+  local rg_id="$1"
+  local allowed_scale_up_count=$(k8s_get_rg_field "$rg_id" ".status.allowedScaleUpModifications" | jq length)
+  local allowed_scale_down_count=$(k8s_get_rg_field "$rg_id" ".status.allowedScaleDownModifications" | jq length)
+
+  if [[ "allowed_scale_up_count" -eq 0 && "allowed_scale_down_count" -eq 0 ]]; then
+    echo "FAIL: expected at least one allowed node type modification for Replication group $rg_id"
+    print_k8s_ack_controller_pod_logs
+    exit 1
+  fi
+}
+
+# assert_replication_group_events this will validate that we have at least one event
+#   for a given Replication group.
+# assert_replication_group_events this requires one argument:
+#   rg_id: Replication group name
+assert_replication_group_events() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} rg_id"
+    exit 1
+  fi
+
+  local rg_id="$1"
+  wait_and_assert_replication_group_synced_and_available "$rg_id"
+  local event_size=$(k8s_get_rg_field "$rg_id" ".status.events" | jq length)
+
+  if [[ "event_size" -eq 0 ]]; then
+    echo "FAIL: expected at least one event for Replication group $rg_id"
+    print_k8s_ack_controller_pod_logs
+    exit 1
+  fi
+}
+
 #################################################
 # snapshot-specific functions
 #################################################
@@ -874,4 +921,24 @@ assert_k8s_status_parameters_value_source() {
   local status_parameters=$(k8s_get_cpg_field "$cpg_name" ".status.parameters")
   assert_parameters_details "$status_parameters" "$parameter_name" "parameterValue" "$expected_parameter_value"
   assert_parameters_details "$status_parameters" "$parameter_name" "source" "$expected_source_type"
+}
+
+# assert_cpg_events asserts that there is at least one event for given Cache parameter group.
+# assert_cpg_events expects one argument:
+#   cpg_name: Cache parameter group name
+assert_cpg_events() {
+  if [[ $# -ne 1 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} cpg_id"
+    exit 1
+  fi
+
+  local cpg_name="$1"
+  local event_size=$(k8s_get_cpg_field "$cpg_name" ".status.events" | jq length)
+
+  if [[ "event_size" -eq 0 ]]; then
+    echo "FAIL: expected at least one event for CacheParameterGroup cpg_name"
+    print_k8s_ack_controller_pod_logs
+    exit 1
+  fi
 }
