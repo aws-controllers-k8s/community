@@ -16,6 +16,7 @@ package testutil
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
@@ -24,7 +25,19 @@ import (
 )
 
 func NewGeneratorForService(t *testing.T, serviceAlias string) *generate.Generator {
-	path := filepath.Clean("testdata")
+	path, _ := filepath.Abs("testdata")
+	// We have subdirectories in pkg/generate that rely on the testdata in
+	// pkg/generate. This code simply detects if we're running from one of
+	// those subdirectories and if so, rebuilds the path to the API model files
+	// in pkg/generate/testdata
+	pathParts := strings.Split(path, "/")
+	for x, pathPart := range pathParts {
+		if pathPart == "generate" {
+			path = filepath.Join(pathParts[0 : x+1]...)
+			path = filepath.Join("/", path, "testdata")
+			break
+		}
+	}
 	sdkHelper := model.NewSDKHelper(path)
 	sdkAPI, err := sdkHelper.API(serviceAlias)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	ttpl "text/template"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/code"
 	"github.com/aws/aws-controllers-k8s/pkg/generate/templateset"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 )
@@ -53,7 +54,7 @@ var (
 			return r.ExceptionCode(httpStatusCode)
 		},
 		"GoCodeSetExceptionMessagePrefixCheck": func(r *ackmodel.CRD, httpStatusCode int) string {
-			return r.GoCodeSetExceptionMessagePrefixCheck(httpStatusCode)
+			return code.CheckExceptionMessagePrefix(r.Config(), r, httpStatusCode)
 		},
 		"GoCodeSetReadOneOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return r.GoCodeSetOutput(ackmodel.OpTypeGet, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
@@ -95,13 +96,13 @@ var (
 			return strings.TrimSpace(subject) == ""
 		},
 		"GoCodeRequiredFieldsMissingFromReadOneInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
-			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeGet, koVarName, indentLevel)
+			return code.CheckRequiredFieldsMissingFromShape(r, ackmodel.OpTypeGet, koVarName, indentLevel)
 		},
 		"GoCodeRequiredFieldsMissingFromGetAttributesInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
-			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeGetAttributes, koVarName, indentLevel)
+			return code.CheckRequiredFieldsMissingFromShape(r, ackmodel.OpTypeGetAttributes, koVarName, indentLevel)
 		},
 		"GoCodeRequiredFieldsMissingFromSetAttributesInput": func(r *ackmodel.CRD, koVarName string, indentLevel int) string {
-			return r.GoCodeRequiredFieldsMissingFromShape(ackmodel.OpTypeSetAttributes, koVarName, indentLevel)
+			return code.CheckRequiredFieldsMissingFromShape(r, ackmodel.OpTypeSetAttributes, koVarName, indentLevel)
 		},
 	}
 )

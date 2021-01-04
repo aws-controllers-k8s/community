@@ -14,7 +14,6 @@
 package generate_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -180,13 +179,4 @@ func TestSQS_Queue(t *testing.T) {
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
-
-	expRequiredFieldsCode := `
-	return r.ko.Status.QueueURL == nil
-`
-	gotCode := crd.GoCodeRequiredFieldsMissingFromShape(model.OpTypeGetAttributes, "r.ko", 1)
-	assert.Equal(
-		strings.TrimSpace(expRequiredFieldsCode),
-		strings.TrimSpace(gotCode),
-	)
 }

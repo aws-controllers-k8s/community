@@ -14,7 +14,6 @@
 package generate_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -318,13 +317,4 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	}
 `
 	assert.Equal(expReadOneOutput, crd.GoCodeSetOutput(model.OpTypeGet, "resp", "ko", 1, true))
-
-	expRequiredFieldsCode := `
-	return r.ko.Spec.APIID == nil || r.ko.Status.RouteID == nil
-`
-	gotCode := crd.GoCodeRequiredFieldsMissingFromShape(model.OpTypeGet, "r.ko", 1)
-	assert.Equal(
-		strings.TrimSpace(expRequiredFieldsCode),
-		strings.TrimSpace(gotCode),
-	)
 }

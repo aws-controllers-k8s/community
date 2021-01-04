@@ -206,6 +206,12 @@ type UpdateOperationConfig struct {
 	CustomMethodName string `json:"custom_method_name"`
 }
 
+// ResourceConfig returns the ResourceConfig for a given named resource
+func (c *Config) ResourceConfig(name string) (*ResourceConfig, bool) {
+	rc, ok := c.Resources[name]
+	return &rc, ok
+}
+
 // UnpacksAttributesMap returns true if the underlying API has
 // Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
 // schema'd fields to a raw `map[string]*string` for this resource (see SNS and

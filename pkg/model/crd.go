@@ -93,6 +93,11 @@ type CRD struct {
 	TypeImports map[string]string
 }
 
+// Config returns a pointer to the generator config
+func (r *CRD) Config() *ackgenconfig.Config {
+	return r.cfg
+}
+
 // HasShapeAsMember returns true if the supplied Shape name appears in *any*
 // payload shape of *any* Operation for the resource. It recurses down through
 // the resource's Operation Input and Output shapes and their member shapes

@@ -14,7 +14,6 @@
 package generate_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -213,22 +212,4 @@ func TestSNS_Topic(t *testing.T) {
 	ko.Status.ACKResourceMetadata.ARN = &tmpARN
 `
 	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
-
-	// The Go code for checking the GetTopicAttributes Input shape's required
-	// fields needs to return false when any required field is missing in the
-	// corresponding Spec or Status. The GetTopicAttributesInput shape has a
-	// required TopicArn field which corresponds to the resource's ARN which is
-	// stored in ACKMetadata.ARN, so the primary resource ARN field if
-	// condition is a bit special.
-	expReqFieldsInShape := `
-	return (ko.Status.ACKResourceMetadata == nil || ko.Status.ACKResourceMetadata.ARN == nil)
-`
-	assert.Equal(
-		strings.TrimSpace(expReqFieldsInShape),
-		strings.TrimSpace(
-			crd.GoCodeRequiredFieldsMissingFromShape(
-				model.OpTypeGetAttributes, "ko", 1,
-			),
-		),
-	)
 }

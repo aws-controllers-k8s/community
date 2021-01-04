@@ -19,6 +19,7 @@ import (
 	ttpl "text/template"
 
 	"github.com/aws/aws-controllers-k8s/pkg/generate"
+	"github.com/aws/aws-controllers-k8s/pkg/generate/code"
 	"github.com/aws/aws-controllers-k8s/pkg/generate/templateset"
 	ackmodel "github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/iancoleman/strcase"
@@ -45,7 +46,7 @@ var (
 			return r.ExceptionCode(httpStatusCode)
 		},
 		"GoCodeSetExceptionMessagePrefixCheck": func(r *ackmodel.CRD, httpStatusCode int) string {
-			return r.GoCodeSetExceptionMessagePrefixCheck(httpStatusCode)
+			return code.CheckExceptionMessagePrefix(r.Config(), r, httpStatusCode)
 		},
 		"GoCodeSetReadOneOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return r.GoCodeSetOutput(ackmodel.OpTypeGet, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
