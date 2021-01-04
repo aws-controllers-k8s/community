@@ -106,6 +106,12 @@ test_create_rg_single_shard_no_replicas() {
 
   # ensure resource successfully created and available
   wait_and_assert_replication_group_synced_and_available "$rg_id"
+
+  # ensure node type modification list exists.
+  assert_replication_list_allowed_node_type_modifications "$rg_id"
+
+  # ensure events exist.
+  assert_replication_group_events "$rg_id"
 }
 
 # create RG with custom node group specification where ID isn't surrounded by quotes: negative test,
