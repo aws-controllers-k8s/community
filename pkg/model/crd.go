@@ -98,6 +98,12 @@ func (r *CRD) Config() *ackgenconfig.Config {
 	return r.cfg
 }
 
+// SDKAPIPackageName returns the aws-sdk-go package name used for this
+// resource's API
+func (r *CRD) SDKAPIPackageName() string {
+	return r.sdkAPI.API.PackageName()
+}
+
 // HasShapeAsMember returns true if the supplied Shape name appears in *any*
 // payload shape of *any* Operation for the resource. It recurses down through
 // the resource's Operation Input and Output shapes and their member shapes

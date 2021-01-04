@@ -922,7 +922,7 @@ func (r *CRD) goCodeVarEmptyConstructorSDKType(
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
 	keepPointer := (shape.Type == "list" || shape.Type == "map")
-	goType = replacePkgName(goType, r.sdkAPI.API.PackageName(), "svcsdk", keepPointer)
+	goType = ReplacePkgName(goType, r.SDKAPIPackageName(), "svcsdk", keepPointer)
 	switch shape.Type {
 	case "structure":
 		// f0 := &svcsdk.BookData{}
@@ -948,7 +948,7 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 	indent := strings.Repeat("\t", indentLevel)
 	goType := shape.GoTypeWithPkgName()
 	keepPointer := (shape.Type == "list" || shape.Type == "map")
-	goType = replacePkgName(goType, r.sdkAPI.API.PackageName(), "svcapitypes", keepPointer)
+	goType = ReplacePkgName(goType, r.SDKAPIPackageName(), "svcapitypes", keepPointer)
 	goTypeNoPkg := goType
 	goPkg := ""
 	hadPkg := false

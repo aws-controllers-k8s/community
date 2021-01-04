@@ -73,11 +73,37 @@ func cleanGoType(
 	return gte, gt, gtwp
 }
 
-// replacePkgName accepts a type string, as returned by
-// Shape.GoTypeWithPkgName() and replaces the package name of the aws-sdk-go
-// SDK API (e.g. "ecr" for the ECR API) with the string "svcsdkapi" which is
-// the only alias we always use in our templated output.
-func replacePkgName(
+// ReplacePkgName accepts a type string (`subject`), as returned by
+// `aws-sdk-go/private/model/api:Shape.GoTypeWithPkgName()` and replaces the
+// package name of the aws-sdk-go SDK API (e.g. "ecr" for the ECR API) with a
+// different package alias, typically the string "svcsdk" which is the alias we
+// use in our Go code generating functions that get placed into files like
+// `services/$SERVICE/pkg/resource/$RESOURCE/sdk.go`.
+//
+// As an example, if ReplacePkgName() is called with the following parameters:
+//
+//  subject:			"*ecr.Repository"
+//  apiPkgName:			"ecr"
+//  replacePkgAlias:	"svcsdk"
+//  keepPointer:		true
+//
+// the returned string would be "*svcsdk.Repository"
+//
+// Why do we need to do this? Well, the Go code-generating functions return
+// strings of Go code that construct various aws-sdk-go "service API shapes".
+//
+// For example, the
+// `github.com/aws/aws-sdk-go/services/ecr.DescribeRepositoriesResponse` struct
+// returns a slice of `github.com/aws/aws-sdk-go/services/ecr.Repository`
+// structs. The `aws-sdk-go/private/model/api.Shape` object that represents
+// these `Repository` structs has a `GoTypeWithPkgName()` method that returns
+// the string "*ecr.Repository". But because in our
+// `templates/pkg/resource/sdk.go.tpl` file [0], you will note that we always
+// alias the aws-sdk-go "service api" package as "svcsdk". So, we need a way to
+// replace the "ecr." in the type string with "svcsdk.".
+//
+// [0] https://github.com/aws/aws-controllers-k8s/blob/e2970c8ec5a68a831081d22d82509a428aa5fe00/templates/pkg/resource/sdk.go.tpl#L20
+func ReplacePkgName(
 	subject string,
 	apiPkgName string,
 	replacePkgAlias string,
