@@ -70,6 +70,7 @@ func (rm *resourceManager) provideEvents(
 	resp, err := rm.sdkapi.DescribeEventsWithContext(ctx, input)
 	rm.metrics.RecordAPICall("READ_MANY", "DescribeEvents-CacheSubnetGroup", err)
 	if err != nil {
+		rm.log.V(1).Info("Error during DescribeEvents-CacheSubnetGroup", "error", err)
 		return nil, err
 	}
 	events := []*svcapitypes.Event{}

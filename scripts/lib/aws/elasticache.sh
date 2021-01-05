@@ -179,6 +179,45 @@ spec:
 EOF
 }
 
+# provide_replication_group_yaml puts replication group yaml to standard output
+# it uses following environment variables:
+#     rg_id, rg_description,
+#     automatic_failover_enabled, cache_node_type,
+#     num_node_groups, multi_az_enabled
+# if environment variables are not found, then following defaults are used
+#     $test_default_replication_group
+#     $test_default_replication_group_desc
+#     $test_default_replication_group_automatic_failover_enabled
+#     $test_default_replication_group_cache_node_type
+#     $test_default_replication_group_num_node_groups
+#     $test_default_replication_group_multi_az_enabled
+provide_replication_group_yaml_for_replica_config() {
+  local rg_id="${rg_id:-$test_default_replication_group}"
+  local rg_name="$rg_id"
+  local rg_description="${rg_description:-$test_default_replication_group_desc}"
+  local automatic_failover_enabled="${automatic_failover_enabled:-$test_default_replication_group_automatic_failover_enabled}"
+  local cache_node_type="${cache_node_type:=$test_default_replication_group_cache_node_type}"
+  local num_node_groups="${num_node_groups:-$test_default_replication_group_num_node_groups}"
+  local multi_az_enabled="${multi_az_enabled:-$test_default_replication_group_multi_az_enabled}"
+  # do not specify replicasPerNodeGroup in spec here
+  # the node group configuration in tests would specify
+  # fine grained details
+  cat <<EOF
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: ReplicationGroup
+metadata:
+  name: $rg_name
+spec:
+    engine: redis
+    replicationGroupID: $rg_id
+    replicationGroupDescription: $rg_description
+    automaticFailoverEnabled: $automatic_failover_enabled
+    cacheNodeType: $cache_node_type
+    numNodeGroups: $num_node_groups
+    multiAZEnabled: $multi_az_enabled
+EOF
+}
+
 # provide_replication_group_yaml_basic is similar to provide_replication_group_yaml, except only specifies
 #   a name, description, and engine. This is meant for use cases where certain properties which are usually included
 #   need to be excluded from the yaml (e.g. numNodeGroups not specified because replicaCount will be specified).
@@ -570,7 +609,7 @@ wait_and_assert_replication_group_synced_and_available() {
 
   # wait for resourced to be synced (or time out), then assert availability in aws and k8s
   sleep 5
-  k8s_wait_resource_synced "replicationgroups/$rg_id" 60
+  k8s_wait_resource_synced "replicationgroups/$rg_id" 60 "$service_name"
   aws_assert_replication_group_status "$rg_id" "available"
   k8s_assert_replication_group_status_property "$rg_id" ".status" "available"
 }

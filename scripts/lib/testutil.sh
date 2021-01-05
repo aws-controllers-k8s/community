@@ -75,24 +75,34 @@ assert_pod_not_restarted() {
 # k8s_wait_resource_synced checks the given resource for an ACK.ResourceSynced condition in its
 #   k8s status.conditions property. Times out if condition has not been met for a long time. This function
 #   is intended to be used after yaml application to await creation of a resource.
-# k8s_wait_resource_synced requires 2 arguments:
+# k8s_wait_resource_synced requires 3 arguments:
 #   k8s_resource_name: the name of the resource, e.g. "snapshots/test-snapshot"
 #   wait_periods: the number of 60-second periods to wait for the resource before timing out
+#   service_name: the aws service name. It is used to determine the controller deployment, in case credentials need
+#                 to be rotated during the wait.
 k8s_wait_resource_synced() {
-  if [[ $# -ne 2 ]]; then
+  if [[ $# -ne 3 ]]; then
     echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
-    echo "Usage: ${FUNCNAME[0]} k8s_resource_name wait_periods"
+    echo "Usage: ${FUNCNAME[0]} k8s_resource_name wait_periods service_name"
     exit 1
   fi
 
   local k8s_resource_name="$1"
   local wait_periods="$2"
+  local service_name="$3"
 
   kubectl get "$k8s_resource_name" 1>/dev/null 2>&1
   assert_equal "0" "$?" "Resource $k8s_resource_name doesn't exist in k8s cluster" || exit 1
 
   local wait_failed="true"
   for i in $(seq 1 "$wait_periods"); do
+    # Test role credentials expire after 15 minutes (Refer: aws.sh::aws_generate_temp_creds)
+    # Ensure that credentials are reloaded after first iteration and after every 15 minutes.
+    # else the controller fails to get the latest details from aws service api
+    # and the test fails on sync status.
+    if [[ "$((i % 15))" == "0" || "$i" == "2" ]]; then
+      k8s_controller_reload_credentials "$service_name"
+    fi
     debug_msg "waiting for resource $k8s_resource_name to be synced ($i)"
     sleep 60
 
