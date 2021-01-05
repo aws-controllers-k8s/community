@@ -290,7 +290,7 @@ supported service and re-run the IAM and test steps outlined above.
 
 We use [mockery](https://github.com/vektra/mockery) for unit testing.
 You can install it by following the guideline on mockery's GitHub or simply
-by running our handy scirpt at `./scripts/install_mockery.sh` for general
+by running our handy script at `./scripts/install-mockery.sh` for general
 Linux environments.
 
 
