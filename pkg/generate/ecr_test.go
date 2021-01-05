@@ -115,41 +115,6 @@ func TestECRRepository(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// ImageScanningConfiguration is in the Repository resource's
-	// CreateRepositoryInput shape and also returned in the
-	// CreateRepositoryOutput shape, so it should produce Go code to set the
-	// appropriate input shape member.
-	expCreateInput := `
-	if r.ko.Spec.ImageScanningConfiguration != nil {
-		f0 := &svcsdk.ImageScanningConfiguration{}
-		if r.ko.Spec.ImageScanningConfiguration.ScanOnPush != nil {
-			f0.SetScanOnPush(*r.ko.Spec.ImageScanningConfiguration.ScanOnPush)
-		}
-		res.SetImageScanningConfiguration(f0)
-	}
-	if r.ko.Spec.ImageTagMutability != nil {
-		res.SetImageTagMutability(*r.ko.Spec.ImageTagMutability)
-	}
-	if r.ko.Spec.RepositoryName != nil {
-		res.SetRepositoryName(*r.ko.Spec.RepositoryName)
-	}
-	if r.ko.Spec.Tags != nil {
-		f3 := []*svcsdk.Tag{}
-		for _, f3iter := range r.ko.Spec.Tags {
-			f3elem := &svcsdk.Tag{}
-			if f3iter.Key != nil {
-				f3elem.SetKey(*f3iter.Key)
-			}
-			if f3iter.Value != nil {
-				f3elem.SetValue(*f3iter.Value)
-			}
-			f3 = append(f3, f3elem)
-		}
-		res.SetTags(f3)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	expStatusFieldCamel := []string{
 		"CreatedAt",
 		// "ImageScanningConfiguration" removed because it is contained in the

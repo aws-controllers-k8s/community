@@ -87,57 +87,6 @@ func TestSQS_Queue(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
-	expCreateInput := `
-	attrMap := map[string]*string{}
-	if r.ko.Spec.ContentBasedDeduplication != nil {
-		attrMap["ContentBasedDeduplication"] = r.ko.Spec.ContentBasedDeduplication
-	}
-	if r.ko.Spec.DelaySeconds != nil {
-		attrMap["DelaySeconds"] = r.ko.Spec.DelaySeconds
-	}
-	if r.ko.Spec.FifoQueue != nil {
-		attrMap["FifoQueue"] = r.ko.Spec.FifoQueue
-	}
-	if r.ko.Spec.KMSDataKeyReusePeriodSeconds != nil {
-		attrMap["KmsDataKeyReusePeriodSeconds"] = r.ko.Spec.KMSDataKeyReusePeriodSeconds
-	}
-	if r.ko.Spec.KMSMasterKeyID != nil {
-		attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
-	}
-	if r.ko.Spec.MaximumMessageSize != nil {
-		attrMap["MaximumMessageSize"] = r.ko.Spec.MaximumMessageSize
-	}
-	if r.ko.Spec.MessageRetentionPeriod != nil {
-		attrMap["MessageRetentionPeriod"] = r.ko.Spec.MessageRetentionPeriod
-	}
-	if r.ko.Spec.Policy != nil {
-		attrMap["Policy"] = r.ko.Spec.Policy
-	}
-	if r.ko.Spec.ReceiveMessageWaitTimeSeconds != nil {
-		attrMap["ReceiveMessageWaitTimeSeconds"] = r.ko.Spec.ReceiveMessageWaitTimeSeconds
-	}
-	if r.ko.Spec.RedrivePolicy != nil {
-		attrMap["RedrivePolicy"] = r.ko.Spec.RedrivePolicy
-	}
-	if r.ko.Spec.VisibilityTimeout != nil {
-		attrMap["VisibilityTimeout"] = r.ko.Spec.VisibilityTimeout
-	}
-	res.SetAttributes(attrMap)
-	if r.ko.Spec.QueueName != nil {
-		res.SetQueueName(*r.ko.Spec.QueueName)
-	}
-	if r.ko.Spec.Tags != nil {
-		f2 := map[string]*string{}
-		for f2key, f2valiter := range r.ko.Spec.Tags {
-			var f2val string
-			f2val = *f2valiter
-			f2[f2key] = &f2val
-		}
-		res.SetTags(f2)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	// There are no fields other than QueueID in the returned CreateQueueResult
 	// shape
 	expCreateOutput := `
@@ -146,23 +95,6 @@ func TestSQS_Queue(t *testing.T) {
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	// The input shape for the GetAttributes operation technically has two
-	// fields in it: an AttributeNames list of attribute keys to file
-	// attributes for and a QueueUrl field. We only care about the QueueUrl
-	// field, since we look for all attributes for a queue.
-	expGetAttrsInput := `
-	{
-		tmpVals := []*string{}
-		tmpVal0 := "All"
-		tmpVals = append(tmpVals, &tmpVal0)
-		res.SetAttributeNames(tmpVals)
-	}
-	if r.ko.Status.QueueURL != nil {
-		res.SetQueueUrl(*r.ko.Status.QueueURL)
-	}
-`
-	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
 
 	// The output shape for the GetAttributes operation contains a single field
 	// "Attributes" that must be unpacked into the Queue CRD's Status fields.

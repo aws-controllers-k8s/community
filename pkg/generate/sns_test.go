@@ -127,45 +127,6 @@ func TestSNS_Topic(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
-	// The input shape for the Create operation is set from a variety of scalar
-	// and non-scalar types and the SNS API features an Attributes parameter
-	// that is actually a map[string]*string of real field values that are
-	// unpacked by the code generator.
-	expCreateInput := `
-	attrMap := map[string]*string{}
-	if r.ko.Spec.DeliveryPolicy != nil {
-		attrMap["DeliveryPolicy"] = r.ko.Spec.DeliveryPolicy
-	}
-	if r.ko.Spec.DisplayName != nil {
-		attrMap["DisplayName"] = r.ko.Spec.DisplayName
-	}
-	if r.ko.Spec.KMSMasterKeyID != nil {
-		attrMap["KmsMasterKeyId"] = r.ko.Spec.KMSMasterKeyID
-	}
-	if r.ko.Spec.Policy != nil {
-		attrMap["Policy"] = r.ko.Spec.Policy
-	}
-	res.SetAttributes(attrMap)
-	if r.ko.Spec.Name != nil {
-		res.SetName(*r.ko.Spec.Name)
-	}
-	if r.ko.Spec.Tags != nil {
-		f2 := []*svcsdk.Tag{}
-		for _, f2iter := range r.ko.Spec.Tags {
-			f2elem := &svcsdk.Tag{}
-			if f2iter.Key != nil {
-				f2elem.SetKey(*f2iter.Key)
-			}
-			if f2iter.Value != nil {
-				f2elem.SetValue(*f2iter.Value)
-			}
-			f2 = append(f2, f2elem)
-		}
-		res.SetTags(f2)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	// None of the fields in the Topic resource's CreateTopicInput shape are
 	// returned in the CreateTopicOutput shape, so none of them return any Go
 	// code for setting a Status struct field to a corresponding Create Output
@@ -182,19 +143,6 @@ func TestSNS_Topic(t *testing.T) {
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	// The input shape for the GetAttributes operation has a single TopicArn
-	// field. This field represents the ARN of the primary resource (the Topic
-	// itself) and should be set specially from the ACKResourceMetadata.ARN
-	// field in the TopicStatus struct
-	expGetAttrsInput := `
-	if r.ko.Status.ACKResourceMetadata != nil && r.ko.Status.ACKResourceMetadata.ARN != nil {
-		res.SetTopicArn(string(*r.ko.Status.ACKResourceMetadata.ARN))
-	} else {
-		res.SetTopicArn(rm.ARNFromName(*r.ko.Spec.Name))
-	}
-`
-	assert.Equal(expGetAttrsInput, crd.GoCodeGetAttributesSetInput("r.ko", "res", 1))
 
 	// The output shape for the GetAttributes operation contains a single field
 	// "Attributes" that must be unpacked into the Topic CRD's Status fields.

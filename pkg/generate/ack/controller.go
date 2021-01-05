@@ -60,19 +60,19 @@ var (
 			return r.GoCodeSetOutput(ackmodel.OpTypeGet, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
 		},
 		"GoCodeSetReadOneInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(ackmodel.OpTypeGet, sourceVarName, targetVarName, indentLevel)
+			return code.SetSDK(r.Config(), r, ackmodel.OpTypeGet, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeSetReadManyOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return r.GoCodeSetOutput(ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
 		},
 		"GoCodeSetReadManyInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel)
+			return code.SetSDK(r.Config(), r, ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeGetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeGetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
+			return code.SetSDKGetAttributes(r.Config(), r, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeSetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetAttributesSetInput(sourceVarName, targetVarName, indentLevel)
+			return code.SetSDKSetAttributes(r.Config(), r, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeGetAttributesSetOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return r.GoCodeGetAttributesSetOutput(sourceVarName, targetVarName, indentLevel)
@@ -81,16 +81,16 @@ var (
 			return r.GoCodeSetOutput(ackmodel.OpTypeCreate, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
 		},
 		"GoCodeSetCreateInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(ackmodel.OpTypeCreate, sourceVarName, targetVarName, indentLevel)
+			return code.SetSDK(r.Config(), r, ackmodel.OpTypeCreate, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeSetUpdateOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return r.GoCodeSetOutput(ackmodel.OpTypeUpdate, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
 		},
 		"GoCodeSetUpdateInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(ackmodel.OpTypeUpdate, sourceVarName, targetVarName, indentLevel)
+			return code.SetSDK(r.Config(), r, ackmodel.OpTypeUpdate, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeSetDeleteInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
-			return r.GoCodeSetInput(ackmodel.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
+			return code.SetSDK(r.Config(), r, ackmodel.OpTypeDelete, sourceVarName, targetVarName, indentLevel)
 		},
 		"Empty": func(subject string) bool {
 			return strings.TrimSpace(subject) == ""

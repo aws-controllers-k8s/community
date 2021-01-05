@@ -185,66 +185,6 @@ func TestAPIGatewayV2_Route(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
-	expCreateInput := `
-	if r.ko.Spec.APIID != nil {
-		res.SetApiId(*r.ko.Spec.APIID)
-	}
-	if r.ko.Spec.APIKeyRequired != nil {
-		res.SetApiKeyRequired(*r.ko.Spec.APIKeyRequired)
-	}
-	if r.ko.Spec.AuthorizationScopes != nil {
-		f2 := []*string{}
-		for _, f2iter := range r.ko.Spec.AuthorizationScopes {
-			var f2elem string
-			f2elem = *f2iter
-			f2 = append(f2, &f2elem)
-		}
-		res.SetAuthorizationScopes(f2)
-	}
-	if r.ko.Spec.AuthorizationType != nil {
-		res.SetAuthorizationType(*r.ko.Spec.AuthorizationType)
-	}
-	if r.ko.Spec.AuthorizerID != nil {
-		res.SetAuthorizerId(*r.ko.Spec.AuthorizerID)
-	}
-	if r.ko.Spec.ModelSelectionExpression != nil {
-		res.SetModelSelectionExpression(*r.ko.Spec.ModelSelectionExpression)
-	}
-	if r.ko.Spec.OperationName != nil {
-		res.SetOperationName(*r.ko.Spec.OperationName)
-	}
-	if r.ko.Spec.RequestModels != nil {
-		f7 := map[string]*string{}
-		for f7key, f7valiter := range r.ko.Spec.RequestModels {
-			var f7val string
-			f7val = *f7valiter
-			f7[f7key] = &f7val
-		}
-		res.SetRequestModels(f7)
-	}
-	if r.ko.Spec.RequestParameters != nil {
-		f8 := map[string]*svcsdk.ParameterConstraints{}
-		for f8key, f8valiter := range r.ko.Spec.RequestParameters {
-			f8val := &svcsdk.ParameterConstraints{}
-			if f8valiter.Required != nil {
-				f8val.SetRequired(*f8valiter.Required)
-			}
-			f8[f8key] = f8val
-		}
-		res.SetRequestParameters(f8)
-	}
-	if r.ko.Spec.RouteKey != nil {
-		res.SetRouteKey(*r.ko.Spec.RouteKey)
-	}
-	if r.ko.Spec.RouteResponseSelectionExpression != nil {
-		res.SetRouteResponseSelectionExpression(*r.ko.Spec.RouteResponseSelectionExpression)
-	}
-	if r.ko.Spec.Target != nil {
-		res.SetTarget(*r.ko.Spec.Target)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	expCreateOutput := `
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged

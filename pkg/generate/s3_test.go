@@ -90,54 +90,12 @@ func TestS3_Bucket(t *testing.T) {
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
 
-	expCreateInput := `
-	if r.ko.Spec.ACL != nil {
-		res.SetACL(*r.ko.Spec.ACL)
-	}
-	if r.ko.Spec.Name != nil {
-		res.SetBucket(*r.ko.Spec.Name)
-	}
-	if r.ko.Spec.CreateBucketConfiguration != nil {
-		f2 := &svcsdk.CreateBucketConfiguration{}
-		if r.ko.Spec.CreateBucketConfiguration.LocationConstraint != nil {
-			f2.SetLocationConstraint(*r.ko.Spec.CreateBucketConfiguration.LocationConstraint)
-		}
-		res.SetCreateBucketConfiguration(f2)
-	}
-	if r.ko.Spec.GrantFullControl != nil {
-		res.SetGrantFullControl(*r.ko.Spec.GrantFullControl)
-	}
-	if r.ko.Spec.GrantRead != nil {
-		res.SetGrantRead(*r.ko.Spec.GrantRead)
-	}
-	if r.ko.Spec.GrantReadACP != nil {
-		res.SetGrantReadACP(*r.ko.Spec.GrantReadACP)
-	}
-	if r.ko.Spec.GrantWrite != nil {
-		res.SetGrantWrite(*r.ko.Spec.GrantWrite)
-	}
-	if r.ko.Spec.GrantWriteACP != nil {
-		res.SetGrantWriteACP(*r.ko.Spec.GrantWriteACP)
-	}
-	if r.ko.Spec.ObjectLockEnabledForBucket != nil {
-		res.SetObjectLockEnabledForBucket(*r.ko.Spec.ObjectLockEnabledForBucket)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	expCreateOutput := `
 	if resp.Location != nil {
 		ko.Status.Location = resp.Location
 	}
 `
 	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	expDeleteInput := `
-	if r.ko.Spec.Name != nil {
-		res.SetBucket(*r.ko.Spec.Name)
-	}
-`
-	assert.Equal(expDeleteInput, crd.GoCodeSetInput(model.OpTypeDelete, "r.ko", "res", 1))
 
 	expReadManyOutput := `
 	found := false

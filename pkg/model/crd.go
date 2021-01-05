@@ -104,6 +104,12 @@ func (r *CRD) SDKAPIPackageName() string {
 	return r.sdkAPI.API.PackageName()
 }
 
+// TypeRenames returns a map of original type name to renamed name (some
+// type definition names conflict with generated names)
+func (r *CRD) TypeRenames() map[string]string {
+	return r.sdkAPI.GetTypeRenames(r.cfg)
+}
+
 // HasShapeAsMember returns true if the supplied Shape name appears in *any*
 // payload shape of *any* Operation for the resource. It recurses down through
 // the resource's Operation Input and Output shapes and their member shapes
