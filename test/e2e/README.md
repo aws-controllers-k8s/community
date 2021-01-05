@@ -3,6 +3,10 @@ The ACK End-to-End (E2E) testing framework intends to test each of the service
 operators against a set of known custom resource definitions.
 
 ## Overview
+The tests assume that a cluster has already been configured, the CRDs and 
+controller have been installed, and that the current user has access to AWS 
+credentials.
+
 The overall flow for the automated testing any one service is as follows:
 1. Run a bootstrap Python script
     - Invokes the individual service's `service_bootstrap.py` file,
