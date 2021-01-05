@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package model
+package code
 
 import (
 	"fmt"
@@ -20,62 +20,15 @@ import (
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 
+	ackgenconfig "github.com/aws/aws-controllers-k8s/pkg/generate/config"
+	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 	"github.com/aws/aws-controllers-k8s/pkg/util"
 )
 
-func (r *CRD) goCodeVarEmptyConstructorK8sType(
-	varName string,
-	// The shape we want to construct a new thing for
-	shape *awssdkmodel.Shape,
-	// Number of levels of indentation to use
-	indentLevel int,
-) string {
-	out := ""
-	indent := strings.Repeat("\t", indentLevel)
-	goType := shape.GoTypeWithPkgName()
-	keepPointer := (shape.Type == "list" || shape.Type == "map")
-	goType = ReplacePkgName(goType, r.SDKAPIPackageName(), "svcapitypes", keepPointer)
-	goTypeNoPkg := goType
-	goPkg := ""
-	hadPkg := false
-	if strings.Contains(goType, ".") {
-		parts := strings.Split(goType, ".")
-		goTypeNoPkg = parts[1]
-		goPkg = parts[0]
-		hadPkg = true
-	}
-	renames := r.TypeRenames()
-	altTypeName, renamed := renames[goTypeNoPkg]
-	if renamed {
-		goTypeNoPkg = altTypeName
-	} else if hadPkg {
-		cleanNames := names.New(goTypeNoPkg)
-		goTypeNoPkg = cleanNames.Camel
-	}
-	goType = goTypeNoPkg
-	if hadPkg {
-		goType = goPkg + "." + goType
-	}
-
-	switch shape.Type {
-	case "structure":
-		// f0 := &svcapitypes.BookData{}
-		out += fmt.Sprintf("%s%s := &%s{}\n", indent, varName, goType)
-	case "list", "map":
-		// f0 := []*string{}
-		out += fmt.Sprintf("%s%s := %s{}\n", indent, varName, goType)
-	default:
-		// var f0 string
-		out += fmt.Sprintf("%svar %s %s\n", indent, varName, goType)
-	}
-	return out
-}
-
-// GoCodeSetOutput returns the Go code that sets a CRD's field value to
-// the value of an output shape's member fields.
-// Status fields are always updated. Update of Spec fields depends on
-// 'performSpecUpdate' parameter
+// SetResource returns the Go code that sets a CRD's field value to the value
+// of an output shape's member fields.  Status fields are always updated.
+// Update of Spec fields depends on 'performSpecUpdate' parameter
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -119,9 +72,11 @@ func (r *CRD) goCodeVarEmptyConstructorK8sType(
 //   field1.Tag = resp.ImageData.Tag
 //   ko.Status.ImageData = field1
 //   ko.Status.Name = resp.Name
-func (r *CRD) GoCodeSetOutput(
+func SetResource(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The type of operation to look for the Output shape
-	opType OpType,
+	opType model.OpType,
 	// String representing the name of the variable that we will grab the
 	// Output shape from. This will likely be "resp" since in the templates
 	// that call this method, the "source variable" is the response struct
@@ -139,17 +94,18 @@ func (r *CRD) GoCodeSetOutput(
 ) string {
 	var op *awssdkmodel.Operation
 	switch opType {
-	case OpTypeCreate:
+	case model.OpTypeCreate:
 		op = r.Ops.Create
-	case OpTypeGet:
+	case model.OpTypeGet:
 		op = r.Ops.ReadOne
-	case OpTypeList:
-		return r.goCodeSetOutputReadMany(
+	case model.OpTypeList:
+		return setResourceReadMany(
+			cfg, r,
 			r.Ops.ReadMany, sourceVarName, targetVarName, indentLevel,
 		)
-	case OpTypeUpdate:
+	case model.OpTypeUpdate:
 		op = r.Ops.Update
-	case OpTypeDelete:
+	case model.OpTypeDelete:
 		op = r.Ops.Delete
 	default:
 		return ""
@@ -237,13 +193,13 @@ func (r *CRD) GoCodeSetOutput(
 
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
-		var f *Field
+		var f *model.Field
 		var found bool
 		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
 		f, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += r.cfg.PrefixConfig.SpecField
+			targetAdaptedVarName += cfg.PrefixConfig.SpecField
 			if !performSpecUpdate {
 				continue
 			}
@@ -253,7 +209,7 @@ func (r *CRD) GoCodeSetOutput(
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += r.cfg.PrefixConfig.StatusField
+			targetAdaptedVarName += cfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = f.ShapeRef
 		// fieldVarName is the name of the variable that is used for temporary
@@ -293,12 +249,14 @@ func (r *CRD) GoCodeSetOutput(
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
-				out += r.goCodeVarEmptyConstructorK8sType(
+				out += varEmptyConstructorK8sType(
+					cfg, r,
 					memberVarName,
 					targetMemberShapeRef.Shape,
 					indentLevel+1,
 				)
-				out += r.goCodeSetOutputForContainer(
+				out += setResourceForContainer(
+					cfg, r,
 					f.Names.Camel,
 					memberVarName,
 					targetMemberShapeRef,
@@ -306,7 +264,8 @@ func (r *CRD) GoCodeSetOutput(
 					sourceMemberShapeRef,
 					indentLevel+1,
 				)
-				out += r.goCodeSetOutputForScalar(
+				out += setResourceForScalar(
+					cfg, r,
 					f.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
@@ -315,7 +274,8 @@ func (r *CRD) GoCodeSetOutput(
 				)
 			}
 		default:
-			out += r.goCodeSetOutputForScalar(
+			out += setResourceForScalar(
+				cfg, r,
 				f.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
@@ -330,10 +290,10 @@ func (r *CRD) GoCodeSetOutput(
 	return out
 }
 
-// goCodeSetOutputReadMany sets the supplied target variable from the results
-// of a List operation. This is a special-case handling of those APIs where
-// there is no ReadOne operation and instead the only way to grab information
-// for a single object is to call the ReadMany/List operation with one of more
+// setResourceReadMany sets the supplied target variable from the results of a
+// List operation. This is a special-case handling of those APIs where there is
+// no ReadOne operation and instead the only way to grab information for a
+// single object is to call the ReadMany/List operation with one of more
 // filtering fields and then look for one element in the returned array of
 // results and unpack that into the target variable.
 //
@@ -375,7 +335,9 @@ func (r *CRD) GoCodeSetOutput(
 //  if !found {
 //      return nil, ackerr.NotFound
 //  }
-func (r *CRD) goCodeSetOutputReadMany(
+func setResourceReadMany(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The ReadMany operation descriptor
 	op *awssdkmodel.Operation,
 	// String representing the name of the variable that we will grab the
@@ -421,7 +383,7 @@ func (r *CRD) goCodeSetOutputReadMany(
 	// Set of field names in the element shape that, if the generator config
 	// instructs us to, we will write Go code to filter results of the List
 	// operation by checking for matching values in these fields.
-	matchFieldNames := r.listOpMatchFieldNames()
+	matchFieldNames := r.ListOpMatchFieldNames()
 
 	// found := false
 	out += fmt.Sprintf("%sfound := false\n", indent)
@@ -471,20 +433,20 @@ func (r *CRD) goCodeSetOutputReadMany(
 		}
 		// Determine whether the input shape's field is in the Spec or the
 		// Status struct and set the source variable appropriately.
-		var f *Field
+		var f *model.Field
 		var found bool
 		var targetMemberShapeRef *awssdkmodel.ShapeRef
 		targetAdaptedVarName := targetVarName
 		f, found = r.SpecFields[memberName]
 		if found {
-			targetAdaptedVarName += r.cfg.PrefixConfig.SpecField
+			targetAdaptedVarName += cfg.PrefixConfig.SpecField
 		} else {
 			f, found = r.StatusFields[memberName]
 			if !found {
 				// TODO(jaypipes): check generator config for exceptions?
 				continue
 			}
-			targetAdaptedVarName += r.cfg.PrefixConfig.StatusField
+			targetAdaptedVarName += cfg.PrefixConfig.StatusField
 		}
 		targetMemberShapeRef = f.ShapeRef
 		out += fmt.Sprintf(
@@ -494,12 +456,14 @@ func (r *CRD) goCodeSetOutputReadMany(
 		case "list", "structure", "map":
 			{
 				memberVarName := fmt.Sprintf("f%d", memberIndex)
-				out += r.goCodeVarEmptyConstructorK8sType(
+				out += varEmptyConstructorK8sType(
+					cfg, r,
 					memberVarName,
 					targetMemberShapeRef.Shape,
 					indentLevel+2,
 				)
-				out += r.goCodeSetOutputForContainer(
+				out += setResourceForContainer(
+					cfg, r,
 					f.Names.Camel,
 					memberVarName,
 					targetMemberShapeRef,
@@ -507,7 +471,8 @@ func (r *CRD) goCodeSetOutputReadMany(
 					sourceMemberShapeRef,
 					indentLevel+2,
 				)
-				out += r.goCodeSetOutputForScalar(
+				out += setResourceForScalar(
+					cfg, r,
 					f.Names.Camel,
 					targetAdaptedVarName,
 					memberVarName,
@@ -546,7 +511,8 @@ func (r *CRD) goCodeSetOutputReadMany(
 				)
 			}
 			//          r.ko.Spec.CacheClusterID = elem.CacheClusterId
-			out += r.goCodeSetOutputForScalar(
+			out += setResourceForScalar(
+				cfg, r,
 				f.Names.Camel,
 				targetAdaptedVarName,
 				sourceAdaptedVarName,
@@ -575,18 +541,18 @@ func (r *CRD) goCodeSetOutputReadMany(
 	//      return nil, ackerr.NotFound
 	//  }
 	out += fmt.Sprintf("%sif !found {\n", indent)
-	out += fmt.Sprintf("%s\t%s\n", indent, r.cfg.SetManyOutputNotFoundErrReturn)
+	out += fmt.Sprintf("%s\t%s\n", indent, cfg.SetManyOutputNotFoundErrReturn)
 	out += fmt.Sprintf("%s}\n", indent)
 	return out
 }
 
-// goCodeACKResourceMetadataGuardConstructor returns Go code representing a
-// nil-guard and constructor for an ACKResourceMetadata struct:
+// ackResourceMetadataGuardConstructor returns Go code representing a nil-guard
+// and constructor for an ACKResourceMetadata struct:
 //
 // if ko.Status.ACKResourceMetadata == nil {
 //     ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
 // }
-func goCodeACKResourceMetadataGuardConstructor(
+func ackResourceMetadataGuardConstructor(
 	// String representing the name of the variable that we will be **setting**
 	// with values we get from the Output shape. This will likely be
 	// "ko.Status" since that is the name of the "target variable" that the
@@ -610,7 +576,7 @@ func goCodeACKResourceMetadataGuardConstructor(
 	return out
 }
 
-// GoCodeGetAttributesSetOutput returns the Go code that sets the Status fields
+// SetResourceGetAttributes returns the Go code that sets the Status fields
 // from the Output shape returned from a resource's GetAttributes operation.
 //
 // As an example, for the GetTopicAttributes SNS API call, the returned code
@@ -622,7 +588,9 @@ func goCodeACKResourceMetadataGuardConstructor(
 // ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
 // ko.Status.ACKResourceMetadata.OwnerAccountID = ackv1alpha1.AWSAccountID(resp.Attributes["Owner"])
 // ko.Status.ACKResourceMetadata.ARN = ackv1alpha1.AWSResourceName(resp.Attributes["TopicArn"])
-func (r *CRD) GoCodeGetAttributesSetOutput(
+func SetResourceGetAttributes(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// String representing the name of the variable that we will grab the
 	// Output shape from. This will likely be "resp" since in the templates
 	// that call this method, the "source variable" is the response struct
@@ -638,7 +606,10 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 ) string {
 	if !r.UnpacksAttributesMap() {
 		// This is a bug in the code generation if this occurs...
-		msg := fmt.Sprintf("called GoCodeGetAttributesSetOutput for a resource '%s' that doesn't unpack attributes map", r.Ops.GetAttributes.Name)
+		msg := fmt.Sprintf(
+			"called SetResourceGetAttributes for a resource '%s' that doesn't unpack attributes map",
+			r.Ops.GetAttributes.Name,
+		)
 		panic(msg)
 	}
 	op := r.Ops.GetAttributes
@@ -655,7 +626,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 
 	// did we output an ACKResourceMetadata guard and constructor snippet?
 	mdGuardOut := false
-	fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
+	fieldConfigs := cfg.ResourceFields(r.Names.Original)
 	sortedAttrFieldNames := []string{}
 	for fName, fConfig := range fieldConfigs {
 		if fConfig.IsAttribute {
@@ -666,7 +637,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	for _, fieldName := range sortedAttrFieldNames {
 		if r.IsPrimaryARNField(fieldName) {
 			if !mdGuardOut {
-				out += goCodeACKResourceMetadataGuardConstructor(
+				out += ackResourceMetadataGuardConstructor(
 					targetVarName, indentLevel,
 				)
 				mdGuardOut = true
@@ -688,7 +659,7 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 		fieldConfig := fieldConfigs[fieldName]
 		if fieldConfig.IsOwnerAccountID {
 			if !mdGuardOut {
-				out += goCodeACKResourceMetadataGuardConstructor(
+				out += ackResourceMetadataGuardConstructor(
 					targetVarName, indentLevel,
 				)
 				mdGuardOut = true
@@ -722,11 +693,13 @@ func (r *CRD) GoCodeGetAttributesSetOutput(
 	return out
 }
 
-// goCodeSetOutputForContainer returns a string of Go code that sets the value
-// of a target variable to that of a source variable. When the source variable
-// type is a map, struct or slice type, then this function is called
-// recursively on the elements or members of the source variable.
-func (r *CRD) goCodeSetOutputForContainer(
+// setResourceForContainer returns a string of Go code that sets the value of a
+// target variable to that of a source variable. When the source variable type
+// is a map, struct or slice type, then this function is called recursively on
+// the elements or members of the source variable.
+func setResourceForContainer(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The name of the CR field we're outputting for
 	targetFieldName string,
 	// The variable name that we want to set a value to
@@ -741,7 +714,8 @@ func (r *CRD) goCodeSetOutputForContainer(
 ) string {
 	switch sourceShapeRef.Shape.Type {
 	case "structure":
-		return r.goCodeSetOutputForStruct(
+		return setResourceForStruct(
+			cfg, r,
 			targetFieldName,
 			targetVarName,
 			targetShapeRef,
@@ -750,7 +724,8 @@ func (r *CRD) goCodeSetOutputForContainer(
 			indentLevel,
 		)
 	case "list":
-		return r.goCodeSetOutputForSlice(
+		return setResourceForSlice(
+			cfg, r,
 			targetFieldName,
 			targetVarName,
 			targetShapeRef,
@@ -759,7 +734,8 @@ func (r *CRD) goCodeSetOutputForContainer(
 			indentLevel,
 		)
 	case "map":
-		return r.goCodeSetOutputForMap(
+		return setResourceForMap(
+			cfg, r,
 			targetFieldName,
 			targetVarName,
 			targetShapeRef,
@@ -768,7 +744,8 @@ func (r *CRD) goCodeSetOutputForContainer(
 			indentLevel,
 		)
 	default:
-		return r.goCodeSetOutputForScalar(
+		return setResourceForScalar(
+			cfg, r,
 			targetFieldName,
 			targetVarName,
 			sourceVarName,
@@ -778,10 +755,11 @@ func (r *CRD) goCodeSetOutputForContainer(
 	}
 }
 
-// goCodeSetOutputForStruct returns a string of Go code that sets a target
-// variable value to a source variable when the type of the source variable is
-// a struct.
-func (r *CRD) goCodeSetOutputForStruct(
+// setResourceForStruct returns a string of Go code that sets a target variable
+// value to a source variable when the type of the source variable is a struct.
+func setResourceForStruct(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The name of the CR field we're outputting for
 	targetFieldName string,
 	// The variable name that we want to set a value to
@@ -815,12 +793,14 @@ func (r *CRD) goCodeSetOutputForStruct(
 		switch memberShape.Type {
 		case "list", "structure", "map":
 			{
-				out += r.goCodeVarEmptyConstructorK8sType(
+				out += varEmptyConstructorK8sType(
+					cfg, r,
 					memberVarName,
 					targetMemberShapeRef.Shape,
 					indentLevel+1,
 				)
-				out += r.goCodeSetOutputForContainer(
+				out += setResourceForContainer(
+					cfg, r,
 					cleanNames.Camel,
 					memberVarName,
 					targetMemberShapeRef,
@@ -828,7 +808,8 @@ func (r *CRD) goCodeSetOutputForStruct(
 					memberShapeRef,
 					indentLevel+1,
 				)
-				out += r.goCodeSetOutputForScalar(
+				out += setResourceForScalar(
+					cfg, r,
 					cleanNames.Camel,
 					targetVarName,
 					memberVarName,
@@ -837,7 +818,8 @@ func (r *CRD) goCodeSetOutputForStruct(
 				)
 			}
 		default:
-			out += r.goCodeSetOutputForScalar(
+			out += setResourceForScalar(
+				cfg, r,
 				cleanNames.Camel,
 				targetVarName,
 				sourceAdaptedVarName,
@@ -852,10 +834,11 @@ func (r *CRD) goCodeSetOutputForStruct(
 	return out
 }
 
-// goCodeSetOutputForSlice returns a string of Go code that sets a target
-// variable value to a source variable when the type of the source variable is
-// a slice.
-func (r *CRD) goCodeSetOutputForSlice(
+// setResourceForSlice returns a string of Go code that sets a target variable
+// value to a source variable when the type of the source variable is a slice.
+func setResourceForSlice(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The name of the CR field we're outputting for
 	targetFieldName string,
 	// The variable name that we want to set a value to
@@ -877,7 +860,8 @@ func (r *CRD) goCodeSetOutputForSlice(
 	// for _, f0iter0 := range resp.TagSpecifications {
 	out += fmt.Sprintf("%sfor _, %s := range %s {\n", indent, iterVarName, sourceVarName)
 	//		var f0elem0 string
-	out += r.goCodeVarEmptyConstructorK8sType(
+	out += varEmptyConstructorK8sType(
+		cfg, r,
 		elemVarName,
 		targetShape.MemberRef.Shape,
 		indentLevel+1,
@@ -891,7 +875,8 @@ func (r *CRD) goCodeSetOutputForSlice(
 	if sourceShape.MemberRef.Shape.Type == "structure" {
 		containerFieldName = targetFieldName
 	}
-	out += r.goCodeSetOutputForContainer(
+	out += setResourceForContainer(
+		cfg, r,
 		containerFieldName,
 		elemVarName,
 		&targetShape.MemberRef,
@@ -912,10 +897,11 @@ func (r *CRD) goCodeSetOutputForSlice(
 	return out
 }
 
-// goCodeSetOutputForMap returns a string of Go code that sets a target
-// variable value to a source variable when the type of the source variable is
-// a map.
-func (r *CRD) goCodeSetOutputForMap(
+// setResourceForMap returns a string of Go code that sets a target variable
+// value to a source variable when the type of the source variable is a map.
+func setResourceForMap(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The name of the CR field we're outputting for
 	targetFieldName string,
 	// The variable name that we want to set a value to
@@ -939,7 +925,8 @@ func (r *CRD) goCodeSetOutputForMap(
 	// for f0key, f0valiter := range resp.Tags {
 	out += fmt.Sprintf("%sfor %s, %s := range %s {\n", indent, keyVarName, valIterVarName, sourceVarName)
 	//		f0elem := string{}
-	out += r.goCodeVarEmptyConstructorK8sType(
+	out += varEmptyConstructorK8sType(
+		cfg, r,
 		valVarName,
 		targetShape.ValueRef.Shape,
 		indentLevel+1,
@@ -949,7 +936,8 @@ func (r *CRD) goCodeSetOutputForMap(
 	if sourceShape.ValueRef.Shape.Type == "structure" {
 		containerFieldName = targetFieldName
 	}
-	out += r.goCodeSetOutputForContainer(
+	out += setResourceForContainer(
+		cfg, r,
 		containerFieldName,
 		valVarName,
 		&targetShape.ValueRef,
@@ -970,10 +958,12 @@ func (r *CRD) goCodeSetOutputForMap(
 	return out
 }
 
-// goCodeSetOutputForScalar returns a string of Go code that sets a target
-// variable value to a source variable when the type of the source variable is
-// a scalar type (not a map, slice or struct).
-func (r *CRD) goCodeSetOutputForScalar(
+// setResourceForScalar returns a string of Go code that sets a target variable
+// value to a source variable when the type of the source variable is a scalar
+// type (not a map, slice or struct).
+func setResourceForScalar(
+	cfg *ackgenconfig.Config,
+	r *model.CRD,
 	// The name of the Input SDK Shape member we're outputting for
 	targetFieldName string,
 	// The variable name that we want to set a value to

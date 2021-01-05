@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -81,42 +80,6 @@ func TestEC2_LaunchTemplate(t *testing.T) {
 		"Tags",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
-
-	// Check that we properly determined how to find the CreatedBy attribute
-	// within the CreateLaunchTemplateResult shape, which has a single field called
-	// "LaunchTemplate" that contains the CreatedBy field.
-	expCreateOutput := `
-	if resp.LaunchTemplate.CreateTime != nil {
-		ko.Status.CreateTime = &metav1.Time{*resp.LaunchTemplate.CreateTime}
-	}
-	if resp.LaunchTemplate.CreatedBy != nil {
-		ko.Status.CreatedBy = resp.LaunchTemplate.CreatedBy
-	}
-	if resp.LaunchTemplate.DefaultVersionNumber != nil {
-		ko.Status.DefaultVersionNumber = resp.LaunchTemplate.DefaultVersionNumber
-	}
-	if resp.LaunchTemplate.LatestVersionNumber != nil {
-		ko.Status.LatestVersionNumber = resp.LaunchTemplate.LatestVersionNumber
-	}
-	if resp.LaunchTemplate.LaunchTemplateId != nil {
-		ko.Status.LaunchTemplateID = resp.LaunchTemplate.LaunchTemplateId
-	}
-	if resp.LaunchTemplate.Tags != nil {
-		f6 := []*svcapitypes.Tag{}
-		for _, f6iter := range resp.LaunchTemplate.Tags {
-			f6elem := &svcapitypes.Tag{}
-			if f6iter.Key != nil {
-				f6elem.Key = f6iter.Key
-			}
-			if f6iter.Value != nil {
-				f6elem.Value = f6iter.Value
-			}
-			f6 = append(f6, f6elem)
-		}
-		ko.Status.Tags = f6
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	// The EC2 LaunchTemplate API has a "normal" set of CUD operations:
 	//

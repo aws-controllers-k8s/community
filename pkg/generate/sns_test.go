@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -126,38 +125,4 @@ func TestSNS_Topic(t *testing.T) {
 		"Owner",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
-
-	// None of the fields in the Topic resource's CreateTopicInput shape are
-	// returned in the CreateTopicOutput shape, so none of them return any Go
-	// code for setting a Status struct field to a corresponding Create Output
-	// Shape member. However, the returned output shape DOES include the
-	// Topic's ARN field (TopicArn), which we should be storing in the
-	// ACKResourceMetadata.ARN standardized field
-	expCreateOutput := `
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if resp.TopicArn != nil {
-		arn := ackv1alpha1.AWSResourceName(*resp.TopicArn)
-		ko.Status.ACKResourceMetadata.ARN = &arn
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	// The output shape for the GetAttributes operation contains a single field
-	// "Attributes" that must be unpacked into the Topic CRD's Status fields.
-	// There are only three attribute keys that are *not* in the Input shape
-	// (and thus in the Spec fields). Two of them are the tesource's ARN and
-	// AWS Owner account ID, both of which are handled specially.
-	expGetAttrsOutput := `
-	ko.Status.EffectiveDeliveryPolicy = resp.Attributes["EffectiveDeliveryPolicy"]
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	tmpOwnerID := ackv1alpha1.AWSAccountID(*resp.Attributes["Owner"])
-	ko.Status.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID
-	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["TopicArn"])
-	ko.Status.ACKResourceMetadata.ARN = &tmpARN
-`
-	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }

@@ -442,10 +442,10 @@ func (r *CRD) CustomUpdateMethodName() string {
 	return ""
 }
 
-// listOpMatchFieldNames returns a slice of strings representing the field
+// ListOpMatchFieldNames returns a slice of strings representing the field
 // names in the List operation's Output shape's element Shape that we should
 // check a corresponding value in the target Spec exists.
-func (r *CRD) listOpMatchFieldNames() []string {
+func (r *CRD) ListOpMatchFieldNames() []string {
 	return r.cfg.ListOpMatchFieldNames(r.Names.Original)
 }
 

@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -86,17 +85,6 @@ func TestCodeDeploy_Deployment(t *testing.T) {
 		"UpdateOutdatedInstancesOnly",
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
-
-	// However, all of the fields in the Deployment resource's
-	// CreateDeploymentInput shape are returned in the GetDeploymentOutput
-	// shape, and there is a DeploymentInfo wrapper struct for the output
-	// shape, so the readOne accessor contains the wrapper struct's name.
-	expCreateOutput := `
-	if resp.DeploymentId != nil {
-		ko.Status.DeploymentID = resp.DeploymentId
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
 
 	expStatusFieldCamel := []string{
 		// All of the fields in the Deployment resource's CreateDeploymentInput

@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -89,31 +88,4 @@ func TestS3_Bucket(t *testing.T) {
 		"Location",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
-
-	expCreateOutput := `
-	if resp.Location != nil {
-		ko.Status.Location = resp.Location
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	expReadManyOutput := `
-	found := false
-	for _, elem := range resp.Buckets {
-		if elem.Name != nil {
-			if ko.Spec.Name != nil {
-				if *elem.Name != *ko.Spec.Name {
-					continue
-				}
-			}
-			ko.Spec.Name = elem.Name
-		}
-		found = true
-		break
-	}
-	if !found {
-		return nil, ackerr.NotFound
-	}
-`
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

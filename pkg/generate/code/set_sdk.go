@@ -25,8 +25,8 @@ import (
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 )
 
-// SetSDK returns the Go code that sets an input shape's member fields
-// from a CRD's fields.
+// SetSDK returns the Go code that sets an SDK input shape's member fields from
+// a CRD's fields.
 //
 // Assume a CRD called Repository that looks like this pseudo-schema:
 //
@@ -307,7 +307,7 @@ func SetSDK(
 					memberShape,
 					indentLevel+1,
 				)
-				out += setInputForContainer(
+				out += setSDKForContainer(
 					cfg, r,
 					memberName,
 					memberVarName,
@@ -315,7 +315,7 @@ func SetSDK(
 					memberShapeRef,
 					indentLevel+1,
 				)
-				out += setInputForScalar(
+				out += setSDKForScalar(
 					cfg, r,
 					memberName,
 					targetVarName,
@@ -326,7 +326,7 @@ func SetSDK(
 				)
 			}
 		default:
-			out += setInputForScalar(
+			out += setSDKForScalar(
 				cfg, r,
 				memberName,
 				targetVarName,
@@ -484,7 +484,7 @@ func SetSDKGetAttributes(
 			"%sif %s != nil {\n",
 			indent, sourceVarPath,
 		)
-		out += setInputForScalar(
+		out += setSDKForScalar(
 			cfg, r,
 			memberName,
 			targetVarName,
@@ -678,7 +678,7 @@ func SetSDKSetAttributes(
 			"%sif %s != nil {\n",
 			indent, sourceVarPath,
 		)
-		out += setInputForScalar(
+		out += setSDKForScalar(
 			cfg, r,
 			memberName,
 			targetVarName,
@@ -694,11 +694,11 @@ func SetSDKSetAttributes(
 	return out
 }
 
-// setInputForContainer returns a string of Go code that sets the value of a
+// setSDKForContainer returns a string of Go code that sets the value of a
 // target variable to that of a source variable. When the source variable type
 // is a map, struct or slice type, then this function is called recursively on
 // the elements or members of the source variable.
-func setInputForContainer(
+func setSDKForContainer(
 	cfg *ackgenconfig.Config,
 	r *model.CRD,
 	// The name of the SDK Input shape member we're outputting for
@@ -713,7 +713,7 @@ func setInputForContainer(
 ) string {
 	switch targetShapeRef.Shape.Type {
 	case "structure":
-		return setInputForStruct(
+		return setSDKForStruct(
 			cfg, r,
 			targetFieldName,
 			targetVarName,
@@ -722,7 +722,7 @@ func setInputForContainer(
 			indentLevel,
 		)
 	case "list":
-		return setInputForSlice(
+		return setSDKForSlice(
 			cfg, r,
 			targetFieldName,
 			targetVarName,
@@ -731,7 +731,7 @@ func setInputForContainer(
 			indentLevel,
 		)
 	case "map":
-		return setInputForMap(
+		return setSDKForMap(
 			cfg, r,
 			targetFieldName,
 			targetVarName,
@@ -740,7 +740,7 @@ func setInputForContainer(
 			indentLevel,
 		)
 	default:
-		return setInputForScalar(
+		return setSDKForScalar(
 			cfg, r,
 			targetFieldName,
 			targetVarName,
@@ -752,9 +752,9 @@ func setInputForContainer(
 	}
 }
 
-// setInputForStruct returns a string of Go code that sets a target variable
+// setSDKForStruct returns a string of Go code that sets a target variable
 // value to a source variable when the type of the source variable is a struct.
-func setInputForStruct(
+func setSDKForStruct(
 	cfg *ackgenconfig.Config,
 	r *model.CRD,
 	// The name of the CR field we're outputting for
@@ -790,7 +790,7 @@ func setInputForStruct(
 					memberShape,
 					indentLevel+1,
 				)
-				out += setInputForContainer(
+				out += setSDKForContainer(
 					cfg, r,
 					memberName,
 					memberVarName,
@@ -798,7 +798,7 @@ func setInputForStruct(
 					memberShapeRef,
 					indentLevel+1,
 				)
-				out += setInputForScalar(
+				out += setSDKForScalar(
 					cfg, r,
 					memberName,
 					targetVarName,
@@ -809,7 +809,7 @@ func setInputForStruct(
 				)
 			}
 		default:
-			out += setInputForScalar(
+			out += setSDKForScalar(
 				cfg, r,
 				memberName,
 				targetVarName,
@@ -826,9 +826,9 @@ func setInputForStruct(
 	return out
 }
 
-// setInputForSlice returns a string of Go code that sets a target variable
-// value to a source variable when the type of the source variable is a struct.
-func setInputForSlice(
+// setSDKForSlice returns a string of Go code that sets a target variable value
+// to a source variable when the type of the source variable is a struct.
+func setSDKForSlice(
 	cfg *ackgenconfig.Config,
 	r *model.CRD,
 	// The name of the CR field we're outputting for
@@ -865,7 +865,7 @@ func setInputForSlice(
 	if targetShape.MemberRef.Shape.Type == "structure" {
 		containerFieldName = targetFieldName
 	}
-	out += setInputForContainer(
+	out += setSDKForContainer(
 		cfg, r,
 		containerFieldName,
 		elemVarName,
@@ -886,9 +886,9 @@ func setInputForSlice(
 	return out
 }
 
-// setInputForMap returns a string of Go code that sets a target variable value
+// setSDKForMap returns a string of Go code that sets a target variable value
 // to a source variable when the type of the source variable is a struct.
-func setInputForMap(
+func setSDKForMap(
 	cfg *ackgenconfig.Config,
 	r *model.CRD,
 	// The name of the CR field we're outputting for
@@ -926,7 +926,7 @@ func setInputForMap(
 	if targetShape.ValueRef.Shape.Type == "structure" {
 		containerFieldName = targetFieldName
 	}
-	out += setInputForContainer(
+	out += setSDKForContainer(
 		cfg, r,
 		containerFieldName,
 		valVarName,
@@ -1025,11 +1025,11 @@ func varEmptyConstructorK8sType(
 	return out
 }
 
-// setInputForScalar returns the Go code that sets the value of a target
-// variable or field to a scalar value. For target variables that are structs,
-// we output the aws-sdk-go's common SetXXX() method. For everything else, we
-// output normal assignment operations.
-func setInputForScalar(
+// setSDKForScalar returns the Go code that sets the value of a target variable
+// or field to a scalar value. For target variables that are structs, we output
+// the aws-sdk-go's common SetXXX() method. For everything else, we output
+// normal assignment operations.
+func setSDKForScalar(
 	cfg *ackgenconfig.Config,
 	r *model.CRD,
 	// The name of the Input SDK Shape member we're outputting for

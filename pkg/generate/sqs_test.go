@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -86,29 +85,4 @@ func TestSQS_Queue(t *testing.T) {
 		"QueueURL",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
-
-	// There are no fields other than QueueID in the returned CreateQueueResult
-	// shape
-	expCreateOutput := `
-	if resp.QueueUrl != nil {
-		ko.Status.QueueURL = resp.QueueUrl
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	// The output shape for the GetAttributes operation contains a single field
-	// "Attributes" that must be unpacked into the Queue CRD's Status fields.
-	// There are only three attribute keys that are *not* in the Input shape
-	// (and thus in the Spec fields). One of them is the resource's ARN which
-	// is handled specially.
-	expGetAttrsOutput := `
-	ko.Status.CreatedTimestamp = resp.Attributes["CreatedTimestamp"]
-	ko.Status.LastModifiedTimestamp = resp.Attributes["LastModifiedTimestamp"]
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	tmpARN := ackv1alpha1.AWSResourceName(*resp.Attributes["QueueArn"])
-	ko.Status.ACKResourceMetadata.ARN = &tmpARN
-`
-	assert.Equal(expGetAttrsOutput, crd.GoCodeGetAttributesSetOutput("resp", "ko.Status", 1))
 }
