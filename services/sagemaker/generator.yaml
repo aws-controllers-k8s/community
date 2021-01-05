@@ -1,3 +1,7 @@
+operations:
+  StopTrainingJob:
+    operation_type: Delete
+    resource_name: TrainingJob
 resources:
   Model:
     exceptions:
@@ -5,6 +9,33 @@ resources:
         404:
           code: ValidationException
           message_prefix: Could not find model
+  TrainingJob:
+    exceptions:
+      errors:
+          404:
+            code: ValidationException
+            message_prefix: Requested resource not found
+    fields:
+      TrainingJobStatus:
+          is_read_only: true
+          from:
+            operation: DescribeTrainingJob
+            path: TrainingJobStatus
+      SecondaryStatus:
+        is_read_only: true
+        from:
+          operation: DescribeTrainingJob
+          path: SecondaryStatus
+      DebugRuleEvaluationStatuses:
+        is_read_only: true
+        from:
+          operation: DescribeTrainingJob
+          path: DebugRuleEvaluationStatuses
+      FailureReason:
+        is_read_only: true
+        from:
+          operation: DescribeTrainingJob
+          path: FailureReason 
 ignore:
     resource_names:
       - Algorithm
@@ -27,7 +58,6 @@ ignore:
       - PresignedDomainUrl
       - PresignedNotebookInstanceUrl
       - ProcessingJob
-      - TrainingJob
       - TransformJob
       - TrialComponent
       - Trial

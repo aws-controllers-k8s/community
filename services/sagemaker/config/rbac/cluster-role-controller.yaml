@@ -42,3 +42,23 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - sagemaker.services.k8s.aws
+  resources:
+  - trainingjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.services.k8s.aws
+  resources:
+  - trainingjobs/status
+  verbs:
+  - get
+  - patch
+  - update
