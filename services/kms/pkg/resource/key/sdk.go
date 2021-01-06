@@ -84,20 +84,11 @@ func (rm *resourceManager) sdkFind(
 	if resp.KeyMetadata.CloudHsmClusterId != nil {
 		ko.Status.CloudHsmClusterID = resp.KeyMetadata.CloudHsmClusterId
 	}
-	if resp.KeyMetadata.CreationDate != nil {
-		ko.Status.CreationDate = &metav1.Time{*resp.KeyMetadata.CreationDate}
-	}
 	if resp.KeyMetadata.CustomKeyStoreId != nil {
 		ko.Spec.CustomKeyStoreID = resp.KeyMetadata.CustomKeyStoreId
 	}
-	if resp.KeyMetadata.CustomerMasterKeySpec != nil {
-		ko.Spec.CustomerMasterKeySpec = resp.KeyMetadata.CustomerMasterKeySpec
-	}
 	if resp.KeyMetadata.DeletionDate != nil {
 		ko.Status.DeletionDate = &metav1.Time{*resp.KeyMetadata.DeletionDate}
-	}
-	if resp.KeyMetadata.Description != nil {
-		ko.Spec.Description = resp.KeyMetadata.Description
 	}
 	if resp.KeyMetadata.Enabled != nil {
 		ko.Status.Enabled = resp.KeyMetadata.Enabled
