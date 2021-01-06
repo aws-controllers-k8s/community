@@ -13,8 +13,7 @@ source "$SCRIPTS_DIR/lib/testutil.sh"
 test_name="$( filenoext "${BASH_SOURCE[0]}" )"
 ack_ctrl_pod_id=$( controller_pod_id )
 debug_msg "executing test: $service_name/$test_name"
-key_name=ack-test-smoke-kms-413689294325
-#key_name="ack-test-smoke-$service_name-$AWS_ACCOUNT_ID"
+key_name="ack-test-smoke-$service_name-$AWS_ACCOUNT_ID"
 resource_name="$key_name"
 
 # PRE-CHECKS
