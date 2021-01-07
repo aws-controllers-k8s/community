@@ -20,10 +20,13 @@ fi
 
 SERVICE="$1"
 
-KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
+  KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
 
-# Build the dockerfile first
-TEST_DOCKER_SHA="$(docker build . --quiet)"
+# Ensure we are inside the correct build context
+pushd "${THIS_DIR}" > /dev/null
+  # Build the dockerfile first
+  TEST_DOCKER_SHA="$(docker build . --quiet)"
+popd
 
 # Ensure it can connect to KIND cluster on host device by running on host 
 # network. 

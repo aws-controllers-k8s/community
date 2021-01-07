@@ -191,6 +191,22 @@ echo "==========================================================================
 export KUBECONFIG
 
 $TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
-#$TEST_E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
-# switching to old e2e runs temporarily until docker test runs are successful.
-$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
+
+# Fork E2E tests based on bash or Python
+service_test_dir="$TEST_E2E_DIR/$AWS_SERVICE"
+
+if [ ! -d "$service_test_dir" ]; then
+    echo "No tests for service $SERVICE"
+    exit 0
+fi
+
+# check to see if the tests use pytest
+[[ -f "$service_test_dir/__init__.py" ]] && enable_python_tests="true" || enable_python_tests="false"
+
+if [[ "$enable_python_tests" == "false" ]]; then
+    # Run tests directly
+    $TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
+else
+    # Run tests inside Dockerfile
+    $TEST_E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
+fi
