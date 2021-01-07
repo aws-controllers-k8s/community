@@ -20,7 +20,7 @@ fi
 
 SERVICE="$1"
 
-  KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
+KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
 
 # Ensure we are inside the correct build context
 pushd "${THIS_DIR}" > /dev/null
