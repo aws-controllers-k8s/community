@@ -1,0 +1,47 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: TrainingJob
+metadata:
+  name: $TRAINING_JOB_NAME
+spec:
+  trainingJobName: $TRAINING_JOB_NAME
+  roleARN: $SAGEMAKER_EXECUTION_ROLE_ARN
+  hyperParameters:
+    max_depth: "5"
+    gamma: "4"
+    eta: "0.2"
+    min_child_weight: "6"
+    silent: "0"
+    objective: "multi:softmax"
+    num_class: "10"
+    num_round: "10"
+  algorithmSpecification:
+    trainingImage: $XGBOOST_IMAGE_URI
+    trainingInputMode: File
+  outputDataConfig:
+    s3OutputPath: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/output
+  resourceConfig:
+    instanceCount: 1
+    instanceType: ml.m4.xlarge
+    volumeSizeInGB: 5
+  stoppingCondition:
+    maxRuntimeInSeconds: 86400
+  inputDataConfig:
+    - channelName: train
+      dataSource:
+        s3DataSource:
+          s3DataType: S3Prefix
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/train
+          s3DataDistributionType: FullyReplicated
+      contentType: text/csv
+      compressionType: None
+    - channelName: validation
+      dataSource:
+        s3DataSource:
+          s3DataType: S3Prefix
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/validation
+          s3DataDistributionType: FullyReplicated
+      contentType: text/csv
+      compressionType: None
+  tags:
+    - key: key
+      value: value
