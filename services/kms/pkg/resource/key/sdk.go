@@ -114,12 +114,6 @@ func (rm *resourceManager) sdkFind(
 	if resp.KeyMetadata.KeyState != nil {
 		ko.Status.KeyState = resp.KeyMetadata.KeyState
 	}
-	if resp.KeyMetadata.KeyUsage != nil {
-		ko.Spec.KeyUsage = resp.KeyMetadata.KeyUsage
-	}
-	if resp.KeyMetadata.Origin != nil {
-		ko.Spec.Origin = resp.KeyMetadata.Origin
-	}
 	if resp.KeyMetadata.SigningAlgorithms != nil {
 		f16 := []*string{}
 		for _, f16iter := range resp.KeyMetadata.SigningAlgorithms {
