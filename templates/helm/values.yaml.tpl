@@ -14,6 +14,7 @@ fullnameOverride: ""
 deployment:
   annotations: {}
   labels: {}
+  containerPort: 8080
 
 resources:
   requests:
