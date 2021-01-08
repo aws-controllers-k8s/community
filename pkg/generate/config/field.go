@@ -109,6 +109,14 @@ type SourceFieldConfig struct {
 // to interpret the value of an Attribute and how to map it to a CRD's Spec or
 // Status field
 type FieldConfig struct {
+	// IsAttribute informs the code generator that this field is part of an
+	// "Attributes Map".
+	//
+	// Some resources for some service APIs follow a pattern or using an
+	// "Attributes" `map[string]*string` that contains real, schema'd fields of
+	// the primary resource, and that those fields should be "unpacked" from
+	// the raw map and into CRD's Spec and Status struct fields.
+	IsAttribute bool `json:"is_attribute"`
 	// IsReadOnly indicates the field's value can not be set by a Kubernetes
 	// user; in other words, the field should go in the CR's Status struct
 	IsReadOnly bool `json:"is_read_only"`
@@ -116,14 +124,19 @@ type FieldConfig struct {
 	// AdditionalPrinterColumns list to be included in the `kubectl get`
 	// response.
 	IsPrintable bool `json:"is_printable"`
-	// ContainsOwnerAccountID indicates the field contains the AWS Account ID
-	// that owns the resource. This is a special field that we direct to
-	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
-	ContainsOwnerAccountID bool `json:"contains_owner_account_id"`
-	// From instructs the code generator that the value of the field should
-	// be retrieved from the specified operation and member path
-	From *SourceFieldConfig `json:"from,omitempty"`
 	// Required indicates whether this field is a required member or not.
 	// This field is used to configure '+kubebuilder:validation:Required' on API object's members.
 	IsRequired *bool `json:"is_required,omitempty"`
+	// IsName indicates the field represents the name/string identifier field
+	// for the resource.  This allows the generator config to override the
+	// default behaviour of considering a field called "Name" or
+	// "{Resource}Name" or "{Resource}Id" as the "name field" for the resource.
+	IsName bool `json:"is_name"`
+	// IsOwnerAccountID indicates the field contains the AWS Account ID
+	// that owns the resource. This is a special field that we direct to
+	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
+	IsOwnerAccountID bool `json:"is_owner_account_id"`
+	// From instructs the code generator that the value of the field should
+	// be retrieved from the specified operation and member path
+	From *SourceFieldConfig `json:"from,omitempty"`
 }

@@ -5,19 +5,13 @@ package {{ .CRD.Names.Snake }}
 import (
 	"context"
 	"strings"
-	corev1 "k8s.io/api/core/v1"
-{{- if .CRD.TypeImports }}
-{{- range $packagePath, $alias := .CRD.TypeImports }}
-	{{ if $alias }}{{ $alias }} {{ end }}"{{ $packagePath }}"
-{{ end }}
-
-{{- end }}
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/{{ .ServiceIDClean }}/apis/{{ .APIVersion }}"
@@ -36,13 +30,13 @@ var (
 
 // sdkFind returns SDK-specific information about a supplied resource
 {{ if .CRD.Ops.ReadOne }}
-    {{- template "sdk_find_read_one" . }}
+	{{- template "sdk_find_read_one" . }}
 {{- else if .CRD.Ops.GetAttributes }}
-    {{- template "sdk_find_get_attributes" . }}
+	{{- template "sdk_find_get_attributes" . }}
 {{- else if .CRD.Ops.ReadMany }}
-    {{- template "sdk_find_read_many" . }}
+	{{- template "sdk_find_read_many" . }}
 {{- else }}
-    {{- template "sdk_find_not_implemented" . }}
+	{{- template "sdk_find_not_implemented" . }}
 {{- end }}
 
 // sdkCreate creates the supplied resource in the backend AWS service API and
@@ -96,13 +90,13 @@ func (rm *resourceManager) newCreateRequestPayload(
 // sdkUpdate patches the supplied resource in the backend AWS service API and
 // returns a new resource with updated fields.
 {{ if .CRD.CustomUpdateMethodName }}
-    {{- template "sdk_update_custom" . }}
+	{{- template "sdk_update_custom" . }}
 {{- else if .CRD.Ops.Update }}
-    {{- template "sdk_update" . }}
+	{{- template "sdk_update" . }}
 {{- else if .CRD.Ops.SetAttributes }}
-    {{- template "sdk_update_set_attributes" . }}
+	{{- template "sdk_update_set_attributes" . }}
 {{- else }}
-    {{- template "sdk_update_not_implemented" . }}
+	{{- template "sdk_update_not_implemented" . }}
 {{- end }}
 
 // sdkDelete deletes the supplied resource in the backend AWS service API

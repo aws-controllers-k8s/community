@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aws/aws-controllers-k8s/pkg/model"
 	"github.com/aws/aws-controllers-k8s/pkg/testutil"
 )
 
@@ -115,41 +114,6 @@ func TestECRRepository(t *testing.T) {
 	}
 	assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
 
-	// ImageScanningConfiguration is in the Repository resource's
-	// CreateRepositoryInput shape and also returned in the
-	// CreateRepositoryOutput shape, so it should produce Go code to set the
-	// appropriate input shape member.
-	expCreateInput := `
-	if r.ko.Spec.ImageScanningConfiguration != nil {
-		f0 := &svcsdk.ImageScanningConfiguration{}
-		if r.ko.Spec.ImageScanningConfiguration.ScanOnPush != nil {
-			f0.SetScanOnPush(*r.ko.Spec.ImageScanningConfiguration.ScanOnPush)
-		}
-		res.SetImageScanningConfiguration(f0)
-	}
-	if r.ko.Spec.ImageTagMutability != nil {
-		res.SetImageTagMutability(*r.ko.Spec.ImageTagMutability)
-	}
-	if r.ko.Spec.RepositoryName != nil {
-		res.SetRepositoryName(*r.ko.Spec.RepositoryName)
-	}
-	if r.ko.Spec.Tags != nil {
-		f3 := []*svcsdk.Tag{}
-		for _, f3iter := range r.ko.Spec.Tags {
-			f3elem := &svcsdk.Tag{}
-			if f3iter.Key != nil {
-				f3elem.SetKey(*f3iter.Key)
-			}
-			if f3iter.Value != nil {
-				f3elem.SetValue(*f3iter.Value)
-			}
-			f3 = append(f3, f3elem)
-		}
-		res.SetTags(f3)
-	}
-`
-	assert.Equal(expCreateInput, crd.GoCodeSetInput(model.OpTypeCreate, "r.ko", "res", 1))
-
 	expStatusFieldCamel := []string{
 		"CreatedAt",
 		// "ImageScanningConfiguration" removed because it is contained in the
@@ -165,78 +129,4 @@ func TestECRRepository(t *testing.T) {
 		"RepositoryURI",
 	}
 	assert.Equal(expStatusFieldCamel, attrCamelNames(statusFields))
-
-	// Check that we properly determined how to find the RegistryID attribute
-	// within the CreateRepositoryOutput shape, which has a single field called
-	// "Repository" that contains the RegistryId field.
-	expCreateOutput := `
-	if resp.Repository.CreatedAt != nil {
-		ko.Status.CreatedAt = &metav1.Time{*resp.Repository.CreatedAt}
-	}
-	if resp.Repository.RegistryId != nil {
-		ko.Status.RegistryID = resp.Repository.RegistryId
-	}
-	if ko.Status.ACKResourceMetadata == nil {
-		ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-	}
-	if resp.Repository.RepositoryArn != nil {
-		arn := ackv1alpha1.AWSResourceName(*resp.Repository.RepositoryArn)
-		ko.Status.ACKResourceMetadata.ARN = &arn
-	}
-	if resp.Repository.RepositoryUri != nil {
-		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
-	}
-`
-	assert.Equal(expCreateOutput, crd.GoCodeSetOutput(model.OpTypeCreate, "resp", "ko", 1, false))
-
-	// Check that the DescribeRepositories output is filtered by the
-	// RepositoryName field of the CR's Spec, since there is no ReadOne
-	// operation for ECR and we have no yet implemented a heuristic that allows
-	// the DescribeRepositoriesInput.RepositoryNames filter from the CR's
-	// Spec.RepositoryName field.
-	expReadManyOutput := `
-	found := false
-	for _, elem := range resp.Repositories {
-		if elem.CreatedAt != nil {
-			ko.Status.CreatedAt = &metav1.Time{*elem.CreatedAt}
-		}
-		if elem.ImageScanningConfiguration != nil {
-			f1 := &svcapitypes.ImageScanningConfiguration{}
-			if elem.ImageScanningConfiguration.ScanOnPush != nil {
-				f1.ScanOnPush = elem.ImageScanningConfiguration.ScanOnPush
-			}
-			ko.Spec.ImageScanningConfiguration = f1
-		}
-		if elem.ImageTagMutability != nil {
-			ko.Spec.ImageTagMutability = elem.ImageTagMutability
-		}
-		if elem.RegistryId != nil {
-			ko.Status.RegistryID = elem.RegistryId
-		}
-		if elem.RepositoryArn != nil {
-			if ko.Status.ACKResourceMetadata == nil {
-				ko.Status.ACKResourceMetadata = &ackv1alpha1.ResourceMetadata{}
-			}
-			tmpARN := ackv1alpha1.AWSResourceName(*elem.RepositoryArn)
-			ko.Status.ACKResourceMetadata.ARN = &tmpARN
-		}
-		if elem.RepositoryName != nil {
-			if ko.Spec.RepositoryName != nil {
-				if *elem.RepositoryName != *ko.Spec.RepositoryName {
-					continue
-				}
-			}
-			ko.Spec.RepositoryName = elem.RepositoryName
-		}
-		if elem.RepositoryUri != nil {
-			ko.Status.RepositoryURI = elem.RepositoryUri
-		}
-		found = true
-		break
-	}
-	if !found {
-		return nil, ackerr.NotFound
-	}
-`
-	assert.Equal(expReadManyOutput, crd.GoCodeSetOutput(model.OpTypeList, "resp", "ko", 1, true))
 }

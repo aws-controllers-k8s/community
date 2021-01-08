@@ -20,12 +20,6 @@ import (
 // ResourceConfig represents instructions to the ACK code generator
 // for a particular CRD/resource on an AWS service API
 type ResourceConfig struct {
-	// NameField is the name of the Member of the Create Input shape that
-	// represents the name/string identifier field for the resource. If this
-	// isn't set, then the generator will look for a field called "Name" or
-	// "{Resource}Name" or "{Resource}Id" because, well, because we can never
-	// have nice things.
-	NameField *string `json:"name_field,omitempty"`
 	// UnpackAttributeMapConfig contains instructions for converting a raw
 	// `map[string]*string` into real fields on a CRD's Spec or Status object
 	UnpackAttributesMapConfig *UnpackAttributesMapConfig `json:"unpack_attributes_map,omitempty"`
@@ -114,24 +108,6 @@ type CompareConfig struct {
 // This structure instructs the code generator about the above real, schema'd
 // fields that are masquerading as raw key/value pairs.
 type UnpackAttributesMapConfig struct {
-	// Fields contains a map, keyed by the original Attribute Key, of
-	// FieldConfig instructions for Attributes that should be
-	// considered actual CRD fields.
-	//
-	// Some fields are ReadWrite -- i.e. the Kubernetes user has the ability to
-	// set/update these fields on their CR -- and therefore go in the Spec
-	// struct of the CR
-	//
-	// Other fields are ReadeOnly -- i.e. the Kubernetes user cannot update the
-	// value of these fields.
-	//
-	// Note that any Attribute keys *not* listed here will be **excluded** from
-	// the representation of the CR's Status struct. If there is an Attribute
-	// -- e.g. an SNS Topic's `SubscriptionsDeleted` attribute -- that has
-	// information that is constantly changing and does not represent
-	// information to the ACK service controller that is useful for determining
-	// observed versus desired state -- then do NOT list that attribute here.
-	Fields map[string]FieldConfig `json:"fields"`
 	// SetAttributesSingleAttribute indicates that the SetAttributes API call
 	// doesn't actually set multiple attributes but rather must be called
 	// multiple times, once for each attribute that needs to change. See SNS
@@ -230,6 +206,12 @@ type UpdateOperationConfig struct {
 	CustomMethodName string `json:"custom_method_name"`
 }
 
+// ResourceConfig returns the ResourceConfig for a given named resource
+func (c *Config) ResourceConfig(name string) (*ResourceConfig, bool) {
+	rc, ok := c.Resources[name]
+	return &rc, ok
+}
+
 // UnpacksAttributesMap returns true if the underlying API has
 // Get{Resource}Attributes/Set{Resource}Attributes API calls that map real,
 // schema'd fields to a raw `map[string]*string` for this resource (see SNS and
@@ -239,7 +221,17 @@ func (c *Config) UnpacksAttributesMap(resourceName string) bool {
 		return false
 	}
 	resGenConfig, found := c.Resources[resourceName]
-	return found && resGenConfig.UnpackAttributesMapConfig != nil
+	if found {
+		if resGenConfig.UnpackAttributesMapConfig != nil {
+			return true
+		}
+		for _, fConfig := range resGenConfig.Fields {
+			if fConfig.IsAttribute {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // SetAttributesSingleAttribute returns true if the supplied resource name has
