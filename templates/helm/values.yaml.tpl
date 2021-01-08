@@ -28,6 +28,12 @@ aws:
   # If specified, use the AWS region for AWS API calls
   region: ""
 
+resourceTags:
+  # Configures the ACK service controller to always set key/value pairs tags on resources that it manages.
+  - services.k8s.aws/managed=true
+  - services.k8s.aws/created=%UTCNOW%
+  - services.k8s.aws/namespace=%KUBERNETES_NAMESPACE%
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true

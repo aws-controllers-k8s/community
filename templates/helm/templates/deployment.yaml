@@ -45,6 +45,8 @@ spec:
         - "$(ACK_ENABLE_DEVELOPMENT_LOGGING)"
         - --log-level
         - "$(ACK_LOG_LEVEL)"
+        - --resource-tags
+        - "$(ACK_RESOURCE_TAGS)"
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         name: controller
         ports:
@@ -58,4 +60,6 @@ spec:
               fieldPath: metadata.namespace
         - name: AWS_REGION
           value: {{ .Values.aws.region }}
+        - name: ACK_RESOURCE_TAGS
+          value: {{ join "," .Values.resourceTags | quote }}
       terminationGracePeriodSeconds: 10
