@@ -29,6 +29,7 @@ const (
 
 	errCreateSession = "cannot create a new session"
 	errCreate = "cannot create {{ .CRD.Names.Camel }} in AWS"
+	errUpdate = "cannot update {{ .CRD.Names.Camel }} in AWS"
 	errDescribe = "failed to describe {{ .CRD.Names.Camel }}"
 	errDelete = "failed to delete {{ .CRD.Names.Camel }}"
 )
@@ -116,11 +117,22 @@ func (e *external) Create(ctx context.Context, mg cpresource.Managed) (managed.E
 
 func (e *external) Update(ctx context.Context, mg cpresource.Managed) (managed.ExternalUpdate, error) {
 	{{- if .CRD.Ops.Update }}
-	// TODO(muvaf): resource claims to have update, fix this.
-	return e.update(ctx, mg)
+	cr, ok := mg.(*svcapitypes.{{ .CRD.Names.Camel }})
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errUnexpectedObject)
+	}
+	input := Generate{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}(cr)
+	if err := e.preUpdate(ctx, cr, input); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "pre-update failed")
+	}
+	resp, err := e.client.{{ .CRD.Ops.Update.Name }}WithContext(ctx, input)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdate)
+	}
+	return e.postUpdate(ctx, cr, resp, managed.ExternalUpdate{}, err)
 	{{- else }}
 	return e.update(ctx, mg)
-  {{ end }}
+	{{ end }}
 }
 
 func (e *external) Delete(ctx context.Context, mg cpresource.Managed) error {
@@ -137,8 +149,7 @@ func (e *external) Delete(ctx context.Context, mg cpresource.Managed) error {
   _, err := e.client.{{ .CRD.Ops.Delete.Name }}WithContext(ctx, input)
 	return errors.Wrap(cpresource.Ignore(IsNotFound, err), errDelete)
   {{- else }}
-  // TODO(muvaf): Resource does not have deletion. Dig deeper..
-  return nil
+  return e.delete(ctx, mg)
   {{ end }}
 }
 
@@ -154,8 +165,15 @@ func newExternal(kube client.Client, client svcsdkapi.{{ .SDKAPIInterfaceTypeNam
 		postCreate:     nopPostCreate,
 		{{- if .CRD.Ops.Delete }}
 		preDelete:      nopPreDelete,
+		{{- else }}
+		delete:         nopDelete,
 		{{- end }}
+		{{- if .CRD.Ops.Update }}
+		preUpdate:      nopPreUpdate,
+		postUpdate:     nopPostUpdate,
+		{{- else }}
 		update:         nopUpdate,
+		{{- end }}
 		lateInitialize: nopLateInitialize,
 		isUpToDate:     alwaysUpToDate,
 	}
@@ -184,9 +202,15 @@ type external struct {
 	postCreate  func(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Create.OutputRef.Shape.ShapeName }}, managed.ExternalCreation, error) (managed.ExternalCreation, error)
 	{{- if .CRD.Ops.Delete }}
 	preDelete   func(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}) error
+	{{- else }}
+	delete      func(ctx context.Context, mg cpresource.Managed) error
 	{{- end }}
-	// TODO(muvaf): update is not supported in most of the resources. this is temporary.
+	{{- if .CRD.Ops.Update }}
+	preUpdate   func(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}) error
+  postUpdate  func(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Update.OutputRef.Shape.ShapeName }}, managed.ExternalUpdate, error) (managed.ExternalUpdate, error)
+	{{- else }}
 	update      func(ctx context.Context, mg cpresource.Managed) (managed.ExternalUpdate, error)
+  {{ end }}
 }
 
 {{- if .CRD.Ops.ReadOne }}
@@ -231,7 +255,20 @@ func nopPostCreate(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk
 func nopPreDelete(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}) error {
 	return nil
 }
+{{- else }}
+func nopDelete(context.Context, cpresource.Managed) error {
+  return nil
+}
 {{- end }}
+{{- if .CRD.Ops.Update }}
+func nopPreUpdate(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}) error {
+	return nil
+}
+func nopPostUpdate(context.Context, *svcapitypes.{{ .CRD.Names.Camel }}, *svcsdk.{{ .CRD.Ops.Update.OutputRef.Shape.ShapeName }}, managed.ExternalUpdate, error) (managed.ExternalUpdate, error) {
+	return managed.ExternalUpdate{}, nil
+}
+{{- else }}
 func nopUpdate(context.Context, cpresource.Managed) (managed.ExternalUpdate, error) {
   return managed.ExternalUpdate{}, nil
 }
+{{- end }}

@@ -18,8 +18,6 @@ import (
 
 // NOTE(muvaf): We return pointers in case the function needs to start with an
 // empty object, hence need to return a new pointer.
-// TODO(muvaf): We can generate one-time boilerplate for these hooks but currently
-// ACK doesn't support not generating if file exists.
 
 {{ if .CRD.Ops.ReadOne }}
     {{- template "sdk_find_read_one" . }}
@@ -33,6 +31,14 @@ func Generate{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .
 {{ GoCodeSetCreateInput .CRD "cr" "res" 1 }}
 	return res
 }
+{{ if .CRD.Ops.Update -}}
+// Generate{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }} returns an update input.
+func Generate{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .CRD.Names.Camel }}) *svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }} {
+	res := &svcsdk.{{ .CRD.Ops.Update.InputRef.Shape.ShapeName }}{}
+{{ GoCodeSetUpdateInput .CRD "cr" "res" 1 }}
+	return res
+}
+{{- end}}
 
 {{ if .CRD.Ops.Delete -}}
 // Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }} returns a deletion input.
