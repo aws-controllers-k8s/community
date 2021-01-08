@@ -3,10 +3,6 @@
 set -eo pipefail
 
 E2E_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ROOT_DIR="$E2E_DIR/../.."
-SCRIPTS_DIR="$ROOT_DIR/scripts"
-
-source "$SCRIPTS_DIR/lib/common.sh"
 USAGE="
 Usage:
   $(basename "$0") <service>
@@ -40,6 +36,10 @@ fi
 service_test_files=$( find "$service_test_dir" -name helper -prune -false -o -type f ! -name '.*' | sort )
 
 if [[ "$enable_python_tests" == "false" ]]; then
+  ROOT_DIR="$E2E_DIR/../.."
+  SCRIPTS_DIR="$ROOT_DIR/scripts"
+  source "$SCRIPTS_DIR/lib/common.sh"
+
   for service_test_file in $service_test_files; do
       test_name=$( filenoext "$service_test_file" )
       test_start_time=$( date +%s )
