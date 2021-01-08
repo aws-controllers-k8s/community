@@ -69,6 +69,13 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 		}
 	}
 	cfgPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
+	_, err = os.Stat(cfgPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if os.IsNotExist(err) {
+		cfgPath = ""
+	}
 	g, err := generate.New(
 		sdkAPI, optGenVersion, cfgPath, cpgenerate.DefaultConfig,
 	)
@@ -95,18 +102,6 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 		outDir := filepath.Dir(outPath)
 		if _, err := ensureDir(outDir); err != nil {
 			return err
-		}
-		// NOTE(muvaf): We should not overwrite if hooks.go already exists
-		// since hooks.go contains any custom code that developers have
-		// modified for this resource.
-		if strings.HasSuffix(outPath, "hooks.go") {
-			_, err := os.Stat(outPath)
-			if err != nil && !os.IsNotExist(err) {
-				return err
-			}
-			if !os.IsNotExist(err) {
-				continue
-			}
 		}
 		if err = ioutil.WriteFile(outPath, contents.Bytes(), 0666); err != nil {
 			return err
