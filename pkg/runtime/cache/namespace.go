@@ -49,7 +49,7 @@ func (n *namespaceInfo) getOwnerAccountID() string {
 	return n.ownerAccountID
 }
 
-// NamespaceCache is reponsible of keeping track of namespaces
+// NamespaceCache is responsible of keeping track of namespaces
 // annotations, and caching those related to the ACK controller.
 type NamespaceCache struct {
 	sync.RWMutex
