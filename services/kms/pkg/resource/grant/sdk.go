@@ -94,21 +94,21 @@ func (rm *resourceManager) sdkFind(
 		if elem.GranteePrincipal != nil {
 			ko.Spec.GranteePrincipal = elem.GranteePrincipal
 		}
-		if elem.KeyId != nil {
-			ko.Spec.KeyID = elem.KeyId
-		}
-		if elem.Name != nil {
-			ko.Spec.Name = elem.Name
-		}
-		if elem.Operations != nil {
-			f7 := []*string{}
-			for _, f7iter := range elem.Operations {
-				var f7elem string
-				f7elem = *f7iter
-				f7 = append(f7, &f7elem)
-			}
-			ko.Spec.Operations = f7
-		}
+		// if elem.KeyId != nil {
+		// 	ko.Spec.KeyID = elem.KeyId
+		// }
+		// if elem.Name != nil {
+		// 	ko.Spec.Name = elem.Name
+		// }
+		// if elem.Operations != nil {
+		// 	f7 := []*string{}
+		// 	for _, f7iter := range elem.Operations {
+		// 		var f7elem string
+		// 		f7elem = *f7iter
+		// 		f7 = append(f7, &f7elem)
+		// 	}
+		// 	ko.Spec.Operations = f7
+		// }
 		if elem.RetiringPrincipal != nil {
 			ko.Spec.RetiringPrincipal = elem.RetiringPrincipal
 		}
