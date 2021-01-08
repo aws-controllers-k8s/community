@@ -16,6 +16,7 @@ package command
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -68,6 +69,13 @@ func generateCrossplane(_ *cobra.Command, args []string) error {
 		}
 	}
 	cfgPath := filepath.Join(providerDir, "apis", svcAlias, optGenVersion, "generator-config.yaml")
+	_, err = os.Stat(cfgPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if os.IsNotExist(err) {
+		cfgPath = ""
+	}
 	g, err := generate.New(
 		sdkAPI, optGenVersion, cfgPath, cpgenerate.DefaultConfig,
 	)
