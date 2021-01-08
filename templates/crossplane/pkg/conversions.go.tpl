@@ -11,7 +11,6 @@ import (
 {{ end }}
 {{- end }}
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	svcsdk "github.com/aws/aws-sdk-go/service/{{ .ServiceIDClean }}"
 
 	svcapitypes "github.com/crossplane/provider-aws/apis/{{ .ServiceIDClean }}/{{ .APIVersion}}"
@@ -30,17 +29,17 @@ import (
 
 // Generate{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }} returns a create input.
 func Generate{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .CRD.Names.Camel }}) *svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }} {
-	res := preGenerate{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}(cr, &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{})
+	res := &svcsdk.{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetCreateInput .CRD "cr" "res" 1 }}
-	return postGenerate{{ .CRD.Ops.Create.InputRef.Shape.ShapeName }}(cr, res)
+	return res
 }
 
 {{ if .CRD.Ops.Delete -}}
 // Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }} returns a deletion input.
 func Generate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .CRD.Names.Camel }}) *svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }} {
-	res := preGenerate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr, &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{})
+	res := &svcsdk.{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetDeleteInput .CRD "cr" "res" 1 }}
-	return postGenerate{{ .CRD.Ops.Delete.InputRef.Shape.ShapeName }}(cr, res)
+	return res
 }
 {{ end }}
 // IsNotFound returns whether the given error is of type NotFound or not.

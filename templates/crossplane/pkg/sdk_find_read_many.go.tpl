@@ -2,9 +2,9 @@
 // Generate{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }} returns input for read
 // operation.
 func Generate{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .CRD.Names.Camel }}) *svcsdk.{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }} {
-	res := preGenerate{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}(cr, &svcsdk.{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}{})
+	res := &svcsdk.{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetReadManyInput .CRD "cr" "res" 1 }}
-	return postGenerate{{ .CRD.Ops.ReadMany.InputRef.Shape.ShapeName }}(cr, res)
+	return res
 }
 
 // Generate{{ .CRD.Names.Camel }} returns the current state in the form of *svcapitypes.{{ .CRD.Names.Camel }}.

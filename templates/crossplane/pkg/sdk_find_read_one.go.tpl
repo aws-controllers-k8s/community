@@ -2,9 +2,9 @@
 // Generate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }} returns input for read
 // operation.
 func Generate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(cr *svcapitypes.{{ .CRD.Names.Camel }}) *svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }} {
-	res := preGenerate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(cr, &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{})
+	res := &svcsdk.{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}{}
 {{ GoCodeSetReadOneInput .CRD "cr" "res" 1 }}
-	return postGenerate{{ .CRD.Ops.ReadOne.InputRef.Shape.ShapeName }}(cr, res)
+	return res
 }
 
 // Generate{{ .CRD.Names.Camel }} returns the current state in the form of *svcapitypes.{{ .CRD.Names.Camel }}.

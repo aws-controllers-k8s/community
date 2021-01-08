@@ -172,20 +172,6 @@ func Crossplane(
 				return nil, err
 			}
 		}
-		// Generate the hooks.go file for the CRDs. hooks.go contains any custom
-		// callbacks and custom modifiers for this resource.
-		crd := crds[0]
-		outPath := filepath.Join(
-			"pkg", "controller", metaVars.ServiceIDClean, crd.Names.Lower,
-			"hooks.go",
-		)
-		crdVars := &templateCRDVars{
-			metaVars,
-			crd,
-		}
-		if err = ts.Add(outPath, "pkg/hooks.go.tpl", crdVars); err != nil {
-			return nil, err
-		}
 	}
 
 	return ts, nil
