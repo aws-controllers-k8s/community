@@ -147,7 +147,7 @@ func SetSDK(
 			fieldConfig := fieldConfigs[fieldName]
 			fieldNames := names.New(fieldName)
 			if !fieldConfig.IsReadOnly {
-				sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+				sourceAdaptedVarName := sourceVarName + cfg.PrefixConfig.SpecField + "." + fieldNames.Camel
 				out += fmt.Sprintf(
 					"%sif %s != nil {\n",
 					indent, sourceAdaptedVarName,
@@ -480,14 +480,14 @@ func SetSDKGetAttributes(
 		sourceVarPath := sourceVarName
 		field, found := r.SpecFields[memberName]
 		if found {
-			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+			sourceVarPath = sourceVarName + cfg.PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			field, found = r.StatusFields[memberName]
 			if !found {
 				// If it isn't in our spec/status fields, just ignore it
 				continue
 			}
-			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+			sourceVarPath = sourceVarPath + cfg.PrefixConfig.StatusField + "." + cleanMemberName
 		}
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n",
@@ -647,7 +647,7 @@ func SetSDKSetAttributes(
 				fieldConfig := fieldConfigs[fieldName]
 				fieldNames := names.New(fieldName)
 				if !fieldConfig.IsReadOnly {
-					sourceAdaptedVarName := sourceVarName + ".Spec." + fieldNames.Camel
+					sourceAdaptedVarName := sourceVarName + cfg.PrefixConfig.SpecField + "." + fieldNames.Camel
 					out += fmt.Sprintf(
 						"%sif %s != nil {\n",
 						indent, sourceAdaptedVarName,
@@ -674,14 +674,14 @@ func SetSDKSetAttributes(
 		sourceVarPath := sourceVarName
 		field, found := r.SpecFields[memberName]
 		if found {
-			sourceVarPath = sourceVarName + ".Spec." + cleanMemberName
+			sourceVarPath = sourceVarName + cfg.PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			field, found = r.StatusFields[memberName]
 			if !found {
 				// If it isn't in our spec/status fields, just ignore it
 				continue
 			}
-			sourceVarPath = sourceVarPath + ".Status." + cleanMemberName
+			sourceVarPath = sourceVarPath + cfg.PrefixConfig.StatusField + "." + cleanMemberName
 		}
 		out += fmt.Sprintf(
 			"%sif %s != nil {\n",

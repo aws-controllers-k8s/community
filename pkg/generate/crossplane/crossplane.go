@@ -38,6 +38,7 @@ var (
 		"apis/type_def.go.tpl",
 		"pkg/sdk_find_read_one.go.tpl",
 		"pkg/sdk_find_read_many.go.tpl",
+		"pkg/sdk_find_get_attributes.go.tpl",
 	}
 	copyPaths = []string{}
 	funcMap   = ttpl.FuncMap{
@@ -59,6 +60,15 @@ var (
 		},
 		"GoCodeSetReadManyInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return code.SetSDK(r.Config(), r, ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeGetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return code.SetSDKGetAttributes(r.Config(), r, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeSetAttributesSetInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return code.SetSDKSetAttributes(r.Config(), r, sourceVarName, targetVarName, indentLevel)
+		},
+		"GoCodeGetAttributesSetOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
+			return code.SetResourceGetAttributes(r.Config(), r, sourceVarName, targetVarName, indentLevel)
 		},
 		"GoCodeSetCreateOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return code.SetResource(r.Config(), r, ackmodel.OpTypeCreate, sourceVarName, targetVarName, indentLevel, performSpecUpdate)

@@ -1891,7 +1891,7 @@ func TestSetResource_SNS_Topic_GetAttributes(t *testing.T) {
 `
 	assert.Equal(
 		expected,
-		code.SetResourceGetAttributes(crd.Config(), crd, "resp", "ko.Status", 1),
+		code.SetResourceGetAttributes(crd.Config(), crd, "resp", "ko", 1),
 	)
 }
 
@@ -1942,6 +1942,6 @@ func TestSetResource_SQS_Queue_GetAttributes(t *testing.T) {
 `
 	assert.Equal(
 		expected,
-		code.SetResourceGetAttributes(crd.Config(), crd, "resp", "ko.Status", 1),
+		code.SetResourceGetAttributes(crd.Config(), crd, "resp", "ko", 1),
 	)
 }

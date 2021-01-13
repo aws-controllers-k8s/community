@@ -623,6 +623,7 @@ func SetResourceGetAttributes(
 
 	out := "\n"
 	indent := strings.Repeat("\t", indentLevel)
+	adaptiveTargetVarName := targetVarName + cfg.PrefixConfig.StatusField
 
 	// did we output an ACKResourceMetadata guard and constructor snippet?
 	mdGuardOut := false
@@ -638,7 +639,7 @@ func SetResourceGetAttributes(
 		if r.IsPrimaryARNField(fieldName) {
 			if !mdGuardOut {
 				out += ackResourceMetadataGuardConstructor(
-					targetVarName, indentLevel,
+					adaptiveTargetVarName, indentLevel,
 				)
 				mdGuardOut = true
 			}
@@ -651,16 +652,16 @@ func SetResourceGetAttributes(
 			out += fmt.Sprintf(
 				"%s%s.ACKResourceMetadata.ARN = &tmpARN\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 			)
 			continue
 		}
 
 		fieldConfig := fieldConfigs[fieldName]
-		if fieldConfig.IsOwnerAccountID {
+		if fieldConfig.IsOwnerAccountID && cfg.IncludeACKMetadata {
 			if !mdGuardOut {
 				out += ackResourceMetadataGuardConstructor(
-					targetVarName, indentLevel,
+					adaptiveTargetVarName, indentLevel,
 				)
 				mdGuardOut = true
 			}
@@ -673,7 +674,7 @@ func SetResourceGetAttributes(
 			out += fmt.Sprintf(
 				"%s%s.ACKResourceMetadata.OwnerAccountID = &tmpOwnerID\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 			)
 			continue
 		}
@@ -683,7 +684,7 @@ func SetResourceGetAttributes(
 			out += fmt.Sprintf(
 				"%s%s.%s = %s.Attributes[\"%s\"]\n",
 				indent,
-				targetVarName,
+				adaptiveTargetVarName,
 				fieldNames.Camel,
 				sourceVarName,
 				fieldName,

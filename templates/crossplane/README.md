@@ -7,5 +7,5 @@ following to generate:
 go run -tags codegen cmd/ack-generate/main.go crossplane apis ecr --provider-dir <directory for provider>
 ```
 
-Then you will need to run `go generate ./...` in `provider-dir` so that `kubebuiler`
-and other generation tools can generate the rest of machinerty for CRDs and Crossplane.
+See [Contributing New Resource Using ACK](https://github.com/crossplane/provider-aws/blob/master/CODE_GENERATION.md)
+for details.
