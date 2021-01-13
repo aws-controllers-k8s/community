@@ -136,6 +136,10 @@ type FieldConfig struct {
 	// that owns the resource. This is a special field that we direct to
 	// storage in the common `Status.ACKResourceMetadata.OwnerAccountID` field.
 	IsOwnerAccountID bool `json:"is_owner_account_id"`
+	// ReferencedType is the Group Version Kind of another CRD that can be referenced
+	// to get the value of this field. The format is <group>/<version>.<kind>.
+	// For example: "sns/v1alpha1.Topic"
+	ReferencedType *string `json:"referenced_type,omitempty"`
 	// From instructs the code generator that the value of the field should
 	// be retrieved from the specified operation and member path
 	From *SourceFieldConfig `json:"from,omitempty"`

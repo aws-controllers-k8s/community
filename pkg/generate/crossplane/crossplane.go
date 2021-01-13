@@ -42,7 +42,8 @@ var (
 	}
 	copyPaths = []string{}
 	funcMap   = ttpl.FuncMap{
-		"ToLower": strings.ToLower,
+		"ToLower":  strings.ToLower,
+		"Contains": strings.Contains,
 		"ResourceExceptionCode": func(r *ackmodel.CRD, httpStatusCode int) string {
 			return r.ExceptionCode(httpStatusCode)
 		},

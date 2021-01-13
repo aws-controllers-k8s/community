@@ -46,6 +46,15 @@ func (f *Field) IsRequired() bool {
 	return util.InStrings(f.Names.ModelOrginal, f.CRD.Ops.Create.InputRef.Shape.Required)
 }
 
+// ReferencedType returns the given type information for the referencer of this
+// field.
+func (f *Field) ReferencedType() *string {
+	if f.FieldConfig == nil {
+		return nil
+	}
+	return f.FieldConfig.ReferencedType
+}
+
 // newField returns a pointer to a new Field object
 func newField(
 	crd *CRD,
