@@ -44,6 +44,9 @@ type {{ .CRD.Kind }}Status struct {
 {{- range $column := .CRD.AdditionalPrinterColumns }}
 // +kubebuilder:printcolumn:name="{{$column.Name}}",type={{$column.Type}},JSONPath=`{{$column.JSONPath}}`
 {{- end }}
+{{- if .CRD.ShortNames }}
+// +kubebuilder:resource:shortName={{ Join .CRD.ShortNames ";" }}
+{{- end }}
 type {{ .CRD.Kind }} struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

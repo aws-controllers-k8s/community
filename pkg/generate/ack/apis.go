@@ -37,7 +37,9 @@ var (
 		"apis/type_def.go.tpl",
 	}
 	apisCopyPaths = []string{}
-	apisFuncMap   = ttpl.FuncMap{}
+	apisFuncMap   = ttpl.FuncMap{
+		"Join": strings.Join,
+	}
 )
 
 // APIs returns a pointer to a TemplateSet containing all the templates for
