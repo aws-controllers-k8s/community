@@ -18,19 +18,16 @@ resources:
     fields:
       TrainingJobStatus:
           is_read_only: true
+          is_printable: true
           from:
             operation: DescribeTrainingJob
             path: TrainingJobStatus
       SecondaryStatus:
         is_read_only: true
+        is_printable: true
         from:
           operation: DescribeTrainingJob
           path: SecondaryStatus
-      DebugRuleEvaluationStatuses:
-        is_read_only: true
-        from:
-          operation: DescribeTrainingJob
-          path: DebugRuleEvaluationStatuses
       FailureReason:
         is_read_only: true
         from:

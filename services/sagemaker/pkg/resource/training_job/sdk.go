@@ -17,7 +17,6 @@ package training_job
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/sagemaker"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/sagemaker/apis/v1alpha1"
@@ -184,29 +184,6 @@ func (rm *resourceManager) sdkFind(
 			f6 = append(f6, f6elem)
 		}
 		ko.Spec.DebugRuleConfigurations = f6
-	}
-	if resp.DebugRuleEvaluationStatuses != nil {
-		f7 := []*svcapitypes.DebugRuleEvaluationStatus{}
-		for _, f7iter := range resp.DebugRuleEvaluationStatuses {
-			f7elem := &svcapitypes.DebugRuleEvaluationStatus{}
-			if f7iter.LastModifiedTime != nil {
-				f7elem.LastModifiedTime = &metav1.Time{*f7iter.LastModifiedTime}
-			}
-			if f7iter.RuleConfigurationName != nil {
-				f7elem.RuleConfigurationName = f7iter.RuleConfigurationName
-			}
-			if f7iter.RuleEvaluationJobArn != nil {
-				f7elem.RuleEvaluationJobARN = f7iter.RuleEvaluationJobArn
-			}
-			if f7iter.RuleEvaluationStatus != nil {
-				f7elem.RuleEvaluationStatus = f7iter.RuleEvaluationStatus
-			}
-			if f7iter.StatusDetails != nil {
-				f7elem.StatusDetails = f7iter.StatusDetails
-			}
-			f7 = append(f7, f7elem)
-		}
-		ko.Status.DebugRuleEvaluationStatuses = f7
 	}
 	if resp.EnableInterContainerTrafficEncryption != nil {
 		ko.Spec.EnableInterContainerTrafficEncryption = resp.EnableInterContainerTrafficEncryption
