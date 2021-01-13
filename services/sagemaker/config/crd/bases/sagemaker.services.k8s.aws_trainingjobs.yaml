@@ -16,7 +16,14 @@ spec:
     singular: trainingjob
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.secondaryStatus
+      name: SecondaryStatus
+      type: string
+    - jsonPath: .status.trainingJobStatus
+      name: TrainingJobStatus
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: TrainingJob is the Schema for the TrainingJobs API
@@ -299,22 +306,6 @@ spec:
                   required:
                   - status
                   - type
-                  type: object
-                type: array
-              debugRuleEvaluationStatuses:
-                items:
-                  properties:
-                    lastModifiedTime:
-                      format: date-time
-                      type: string
-                    ruleConfigurationName:
-                      type: string
-                    ruleEvaluationJobARN:
-                      type: string
-                    ruleEvaluationStatus:
-                      type: string
-                    statusDetails:
-                      type: string
                   type: object
                 type: array
               failureReason:

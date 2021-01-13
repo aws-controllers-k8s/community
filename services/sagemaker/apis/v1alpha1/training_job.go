@@ -58,16 +58,17 @@ type TrainingJobStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions                  []*ackv1alpha1.Condition     `json:"conditions"`
-	DebugRuleEvaluationStatuses []*DebugRuleEvaluationStatus `json:"debugRuleEvaluationStatuses,omitempty"`
-	FailureReason               *string                      `json:"failureReason,omitempty"`
-	SecondaryStatus             *string                      `json:"secondaryStatus,omitempty"`
-	TrainingJobStatus           *string                      `json:"trainingJobStatus,omitempty"`
+	Conditions        []*ackv1alpha1.Condition `json:"conditions"`
+	FailureReason     *string                  `json:"failureReason,omitempty"`
+	SecondaryStatus   *string                  `json:"secondaryStatus,omitempty"`
+	TrainingJobStatus *string                  `json:"trainingJobStatus,omitempty"`
 }
 
 // TrainingJob is the Schema for the TrainingJobs API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="SecondaryStatus",type=string,JSONPath=`.status.secondaryStatus`
+// +kubebuilder:printcolumn:name="TrainingJobStatus",type=string,JSONPath=`.status.trainingJobStatus`
 type TrainingJob struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
