@@ -21,6 +21,8 @@ import (
 
 {{ if .CRD.Ops.ReadOne }}
     {{- template "sdk_find_read_one" . }}
+{{- else if .CRD.Ops.GetAttributes }}
+    {{- template "sdk_find_get_attributes" . }}
 {{- else if .CRD.Ops.ReadMany }}
     {{- template "sdk_find_read_many" . }}
 {{- end }}

@@ -128,7 +128,7 @@ func checkRequiredFieldsMissingFromShape(
 		resVarPath := koVarName
 		_, found := r.SpecFields[memberName]
 		if found {
-			resVarPath = resVarPath + ".Spec." + cleanMemberName
+			resVarPath = resVarPath + r.Config().PrefixConfig.SpecField + "." + cleanMemberName
 		} else {
 			_, found = r.StatusFields[memberName]
 			if !found {
@@ -141,7 +141,7 @@ func checkRequiredFieldsMissingFromShape(
 				)
 				panic(msg)
 			}
-			resVarPath = resVarPath + ".Status." + cleanMemberName
+			resVarPath = resVarPath + r.Config().PrefixConfig.StatusField + "." + cleanMemberName
 		}
 		missing = append(missing, fmt.Sprintf("%s == nil", resVarPath))
 	}
