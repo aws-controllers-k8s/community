@@ -91,6 +91,9 @@ type CRD struct {
 	// TypeImports is a map, keyed by an import string, with the map value
 	// being the import alias
 	TypeImports map[string]string
+	// ShortNames represent the CRD list of aliases. Short names allow shorter
+	// strings to match a CR on the CLI.
+	ShortNames []string
 }
 
 // Config returns a pointer to the generator config
@@ -470,5 +473,6 @@ func NewCRD(
 		AdditionalPrinterColumns: make([]*PrinterColumn, 0),
 		SpecFields:               map[string]*Field{},
 		StatusFields:             map[string]*Field{},
+		ShortNames:               cfg.ResourceShortNames(kind),
 	}
 }

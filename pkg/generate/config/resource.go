@@ -64,6 +64,9 @@ type ResourceConfig struct {
 	// Compare contains instructions for the code generation to generate custom
 	// comparison logic.
 	Compare *CompareConfig `json:"compare,omitempty"`
+	// ShortNames represent the CRD list of aliases. Short names allow shorter strings to
+	// match a CR on the CLI.
+	ShortNames []string `json:"shortNames,omitempty"`
 }
 
 // CompareConfig informs instruct the code generator on how to compare two different
@@ -331,4 +334,16 @@ func (c *Config) ResourceInputFieldRename(
 		return origFieldName, false
 	}
 	return renamed, true
+}
+
+// ResourceShortNames returns the CRD list of aliases
+func (c *Config) ResourceShortNames(resourceName string) []string {
+	if c == nil {
+		return nil
+	}
+	rConfig, ok := c.Resources[resourceName]
+	if !ok {
+		return nil
+	}
+	return rConfig.ShortNames
 }
