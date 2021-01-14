@@ -58,6 +58,9 @@ var (
 		"GoCodeSetReadManyOutput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int, performSpecUpdate bool) string {
 			return code.SetResource(r.Config(), r, ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel, performSpecUpdate)
 		},
+		"ListMemberNameInReadManyOutput": func(r *ackmodel.CRD) string {
+			return code.ListMemberNameInReadManyOutput(r)
+		},
 		"GoCodeSetReadManyInput": func(r *ackmodel.CRD, sourceVarName string, targetVarName string, indentLevel int) string {
 			return code.SetSDK(r.Config(), r, ackmodel.OpTypeList, sourceVarName, targetVarName, indentLevel)
 		},

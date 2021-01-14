@@ -290,6 +290,21 @@ func SetResource(
 	return out
 }
 
+func ListMemberNameInReadManyOutput(
+	r *model.CRD,
+) string {
+	// Find the element in the output shape that contains the list of
+	// resources. This heuristic is simplistic (just look for the field with a
+	// list type) but seems to be followed consistently by the aws-sdk-go for
+	// List operations.
+	for memberName, memberShapeRef := range r.Ops.ReadMany.OutputRef.Shape.MemberRefs {
+		if memberShapeRef.Shape.Type == "list" {
+			return memberName
+		}
+	}
+	panic("List output shape had no field of type 'list'")
+}
+
 // setResourceReadMany sets the supplied target variable from the results of a
 // List operation. This is a special-case handling of those APIs where there is
 // no ReadOne operation and instead the only way to grab information for a

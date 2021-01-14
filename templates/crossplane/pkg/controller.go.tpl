@@ -90,7 +90,7 @@ func (e *external) Observe(ctx context.Context, mg cpresource.Managed) (managed.
 		return managed.ExternalObservation{ResourceExists: false}, errors.Wrap(cpresource.Ignore(IsNotFound, err), errDescribe)
 	}
 	resp = e.filterList(cr, resp)
-	if len(resp.Items) == 0 {
+	if len(resp.{{ ListMemberNameInReadManyOutput .CRD }}) == 0 {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 {{- end }}
