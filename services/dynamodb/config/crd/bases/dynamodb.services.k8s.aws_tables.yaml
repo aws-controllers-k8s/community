@@ -271,6 +271,9 @@ spec:
                       type: object
                     regionName:
                       type: string
+                    replicaInaccessibleDateTime:
+                      format: date-time
+                      type: string
                     replicaStatus:
                       type: string
                     replicaStatusDescription:

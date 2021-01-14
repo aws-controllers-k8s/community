@@ -76,6 +76,13 @@ const (
 	AppInstanceType_ml_g4dn_16xlarge AppInstanceType = "ml.g4dn.16xlarge"
 )
 
+type AppNetworkAccessType string
+
+const (
+	AppNetworkAccessType_PublicInternetOnly AppNetworkAccessType = "PublicInternetOnly"
+	AppNetworkAccessType_VpcOnly            AppNetworkAccessType = "VpcOnly"
+)
+
 type AppSortKey string
 
 const (

@@ -55,6 +55,7 @@ type ReplicationGroupSpec struct {
 	SnapshotWindow           *string   `json:"snapshotWindow,omitempty"`
 	Tags                     []*Tag    `json:"tags,omitempty"`
 	TransitEncryptionEnabled *bool     `json:"transitEncryptionEnabled,omitempty"`
+	UserGroupIDs             []*string `json:"userGroupIDs,omitempty"`
 }
 
 // ReplicationGroupStatus defines the observed state of ReplicationGroup
@@ -79,6 +80,7 @@ type ReplicationGroupStatus struct {
 	Events                        []*Event                               `json:"events,omitempty"`
 	GlobalReplicationGroupInfo    *GlobalReplicationGroupInfo            `json:"globalReplicationGroupInfo,omitempty"`
 	MemberClusters                []*string                              `json:"memberClusters,omitempty"`
+	MemberClustersOutpostARNs     []*string                              `json:"memberClustersOutpostARNs,omitempty"`
 	MultiAZ                       *string                                `json:"multiAZ,omitempty"`
 	NodeGroups                    []*NodeGroup                           `json:"nodeGroups,omitempty"`
 	PendingModifiedValues         *ReplicationGroupPendingModifiedValues `json:"pendingModifiedValues,omitempty"`

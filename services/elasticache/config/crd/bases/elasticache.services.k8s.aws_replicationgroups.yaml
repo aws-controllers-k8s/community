@@ -71,6 +71,8 @@ spec:
                       type: string
                     primaryAvailabilityZone:
                       type: string
+                    primaryOutpostARN:
+                      type: string
                     replicaAvailabilityZones:
                       items:
                         type: string
@@ -78,6 +80,10 @@ spec:
                     replicaCount:
                       format: int64
                       type: integer
+                    replicaOutpostARNs:
+                      items:
+                        type: string
+                      type: array
                     slots:
                       type: string
                   type: object
@@ -134,6 +140,10 @@ spec:
                 type: array
               transitEncryptionEnabled:
                 type: boolean
+              userGroupIDs:
+                items:
+                  type: string
+                type: array
             required:
             - replicationGroupDescription
             - replicationGroupID
@@ -247,6 +257,10 @@ spec:
                 items:
                   type: string
                 type: array
+              memberClustersOutpostARNs:
+                items:
+                  type: string
+                type: array
               multiAZ:
                 type: string
               nodeGroups:
@@ -264,6 +278,8 @@ spec:
                           currentRole:
                             type: string
                           preferredAvailabilityZone:
+                            type: string
+                          preferredOutpostARN:
                             type: string
                           readEndpoint:
                             properties:
@@ -312,6 +328,17 @@ spec:
                           progressPercentage:
                             type: number
                         type: object
+                    type: object
+                  userGroups:
+                    properties:
+                      userGroupIDsToAdd:
+                        items:
+                          type: string
+                        type: array
+                      userGroupIDsToRemove:
+                        items:
+                          type: string
+                        type: array
                     type: object
                 type: object
               snapshottingClusterID:

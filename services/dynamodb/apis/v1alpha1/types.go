@@ -260,6 +260,7 @@ type ReplicaDescription struct {
 	KMSMasterKeyID                *string                                   `json:"kmsMasterKeyID,omitempty"`
 	ProvisionedThroughputOverride *ProvisionedThroughputOverride            `json:"provisionedThroughputOverride,omitempty"`
 	RegionName                    *string                                   `json:"regionName,omitempty"`
+	ReplicaInaccessibleDateTime   *metav1.Time                              `json:"replicaInaccessibleDateTime,omitempty"`
 	ReplicaStatus                 *string                                   `json:"replicaStatus,omitempty"`
 	ReplicaStatusDescription      *string                                   `json:"replicaStatusDescription,omitempty"`
 	ReplicaStatusPercentProgress  *string                                   `json:"replicaStatusPercentProgress,omitempty"`

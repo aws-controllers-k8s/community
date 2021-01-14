@@ -130,6 +130,11 @@ spec:
                       type: object
                     subnetIdentifier:
                       type: string
+                    subnetOutpost:
+                      properties:
+                        subnetOutpostARN:
+                          type: string
+                      type: object
                   type: object
                 type: array
               vpcID:

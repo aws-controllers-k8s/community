@@ -19,6 +19,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type Authentication struct {
+	PasswordCount *int64  `json:"passwordCount,omitempty"`
+	Type          *string `json:"type_,omitempty"`
+}
+
 type AvailabilityZone struct {
 	Name *string `json:"name,omitempty"`
 }
@@ -41,6 +46,7 @@ type CacheCluster struct {
 	NumCacheNodes              *int64       `json:"numCacheNodes,omitempty"`
 	PreferredAvailabilityZone  *string      `json:"preferredAvailabilityZone,omitempty"`
 	PreferredMaintenanceWindow *string      `json:"preferredMaintenanceWindow,omitempty"`
+	PreferredOutpostARN        *string      `json:"preferredOutpostARN,omitempty"`
 	ReplicationGroupID         *string      `json:"replicationGroupID,omitempty"`
 	SnapshotRetentionLimit     *int64       `json:"snapshotRetentionLimit,omitempty"`
 	SnapshotWindow             *string      `json:"snapshotWindow,omitempty"`
@@ -60,6 +66,7 @@ type CacheNode struct {
 	CacheNodeID              *string      `json:"cacheNodeID,omitempty"`
 	CacheNodeStatus          *string      `json:"cacheNodeStatus,omitempty"`
 	CustomerAvailabilityZone *string      `json:"customerAvailabilityZone,omitempty"`
+	CustomerOutpostARN       *string      `json:"customerOutpostARN,omitempty"`
 	Endpoint                 *Endpoint    `json:"endpoint,omitempty"`
 	ParameterGroupStatus     *string      `json:"parameterGroupStatus,omitempty"`
 	SourceCacheNodeID        *string      `json:"sourceCacheNodeID,omitempty"`
@@ -154,6 +161,11 @@ type Event struct {
 	SourceIdentifier *string      `json:"sourceIdentifier,omitempty"`
 }
 
+type Filter struct {
+	Name   *string   `json:"name,omitempty"`
+	Values []*string `json:"values,omitempty"`
+}
+
 type GlobalNodeGroup struct {
 	GlobalNodeGroupID *string `json:"globalNodeGroupID,omitempty"`
 	Slots             *string `json:"slots,omitempty"`
@@ -198,8 +210,10 @@ type NodeGroup struct {
 type NodeGroupConfiguration struct {
 	NodeGroupID              *string   `json:"nodeGroupID,omitempty"`
 	PrimaryAvailabilityZone  *string   `json:"primaryAvailabilityZone,omitempty"`
+	PrimaryOutpostARN        *string   `json:"primaryOutpostARN,omitempty"`
 	ReplicaAvailabilityZones []*string `json:"replicaAvailabilityZones,omitempty"`
 	ReplicaCount             *int64    `json:"replicaCount,omitempty"`
+	ReplicaOutpostARNs       []*string `json:"replicaOutpostARNs,omitempty"`
 	Slots                    *string   `json:"slots,omitempty"`
 }
 
@@ -208,6 +222,7 @@ type NodeGroupMember struct {
 	CacheNodeID               *string   `json:"cacheNodeID,omitempty"`
 	CurrentRole               *string   `json:"currentRole,omitempty"`
 	PreferredAvailabilityZone *string   `json:"preferredAvailabilityZone,omitempty"`
+	PreferredOutpostARN       *string   `json:"preferredOutpostARN,omitempty"`
 	ReadEndpoint              *Endpoint `json:"readEndpoint,omitempty"`
 }
 
@@ -280,10 +295,11 @@ type RegionalConfiguration struct {
 }
 
 type ReplicationGroupPendingModifiedValues struct {
-	AuthTokenStatus         *string           `json:"authTokenStatus,omitempty"`
-	AutomaticFailoverStatus *string           `json:"automaticFailoverStatus,omitempty"`
-	PrimaryClusterID        *string           `json:"primaryClusterID,omitempty"`
-	Resharding              *ReshardingStatus `json:"resharding,omitempty"`
+	AuthTokenStatus         *string                 `json:"authTokenStatus,omitempty"`
+	AutomaticFailoverStatus *string                 `json:"automaticFailoverStatus,omitempty"`
+	PrimaryClusterID        *string                 `json:"primaryClusterID,omitempty"`
+	Resharding              *ReshardingStatus       `json:"resharding,omitempty"`
+	UserGroups              *UserGroupsUpdateStatus `json:"userGroups,omitempty"`
 }
 
 type ReplicationGroup_SDK struct {
@@ -299,6 +315,7 @@ type ReplicationGroup_SDK struct {
 	GlobalReplicationGroupInfo *GlobalReplicationGroupInfo            `json:"globalReplicationGroupInfo,omitempty"`
 	KMSKeyID                   *string                                `json:"kmsKeyID,omitempty"`
 	MemberClusters             []*string                              `json:"memberClusters,omitempty"`
+	MemberClustersOutpostARNs  []*string                              `json:"memberClustersOutpostARNs,omitempty"`
 	MultiAZ                    *string                                `json:"multiAZ,omitempty"`
 	NodeGroups                 []*NodeGroup                           `json:"nodeGroups,omitempty"`
 	PendingModifiedValues      *ReplicationGroupPendingModifiedValues `json:"pendingModifiedValues,omitempty"`
@@ -308,6 +325,7 @@ type ReplicationGroup_SDK struct {
 	SnapshottingClusterID      *string                                `json:"snapshottingClusterID,omitempty"`
 	Status                     *string                                `json:"status,omitempty"`
 	TransitEncryptionEnabled   *bool                                  `json:"transitEncryptionEnabled,omitempty"`
+	UserGroupIDs               []*string                              `json:"userGroupIDs,omitempty"`
 }
 
 type ReservedCacheNode struct {
@@ -383,6 +401,7 @@ type Snapshot_SDK struct {
 	Port                        *int64          `json:"port,omitempty"`
 	PreferredAvailabilityZone   *string         `json:"preferredAvailabilityZone,omitempty"`
 	PreferredMaintenanceWindow  *string         `json:"preferredMaintenanceWindow,omitempty"`
+	PreferredOutpostARN         *string         `json:"preferredOutpostARN,omitempty"`
 	ReplicationGroupDescription *string         `json:"replicationGroupDescription,omitempty"`
 	ReplicationGroupID          *string         `json:"replicationGroupID,omitempty"`
 	SnapshotName                *string         `json:"snapshotName,omitempty"`
@@ -397,6 +416,11 @@ type Snapshot_SDK struct {
 type Subnet struct {
 	SubnetAvailabilityZone *AvailabilityZone `json:"subnetAvailabilityZone,omitempty"`
 	SubnetIdentifier       *string           `json:"subnetIdentifier,omitempty"`
+	SubnetOutpost          *SubnetOutpost    `json:"subnetOutpost,omitempty"`
+}
+
+type SubnetOutpost struct {
+	SubnetOutpostARN *string `json:"subnetOutpostARN,omitempty"`
 }
 
 type Tag struct {
@@ -428,4 +452,35 @@ type UpdateAction struct {
 	ServiceUpdateReleaseDate            *metav1.Time `json:"serviceUpdateReleaseDate,omitempty"`
 	UpdateActionAvailableDate           *metav1.Time `json:"updateActionAvailableDate,omitempty"`
 	UpdateActionStatusModifiedDate      *metav1.Time `json:"updateActionStatusModifiedDate,omitempty"`
+}
+
+type UserGroupPendingChanges struct {
+	UserIDsToAdd    []*string `json:"userIDsToAdd,omitempty"`
+	UserIDsToRemove []*string `json:"userIDsToRemove,omitempty"`
+}
+
+type UserGroup_SDK struct {
+	ARN               *string                  `json:"arn,omitempty"`
+	Engine            *string                  `json:"engine,omitempty"`
+	PendingChanges    *UserGroupPendingChanges `json:"pendingChanges,omitempty"`
+	ReplicationGroups []*string                `json:"replicationGroups,omitempty"`
+	Status            *string                  `json:"status,omitempty"`
+	UserGroupID       *string                  `json:"userGroupID,omitempty"`
+	UserIDs           []*string                `json:"userIDs,omitempty"`
+}
+
+type UserGroupsUpdateStatus struct {
+	UserGroupIDsToAdd    []*string `json:"userGroupIDsToAdd,omitempty"`
+	UserGroupIDsToRemove []*string `json:"userGroupIDsToRemove,omitempty"`
+}
+
+type User_SDK struct {
+	ARN            *string         `json:"arn,omitempty"`
+	AccessString   *string         `json:"accessString,omitempty"`
+	Authentication *Authentication `json:"authentication,omitempty"`
+	Engine         *string         `json:"engine,omitempty"`
+	Status         *string         `json:"status,omitempty"`
+	UserGroupIDs   []*string       `json:"userGroupIDs,omitempty"`
+	UserID         *string         `json:"userID,omitempty"`
+	UserName       *string         `json:"userName,omitempty"`
 }

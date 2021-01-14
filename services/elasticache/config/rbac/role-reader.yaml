@@ -13,6 +13,8 @@ rules:
   - cachesubnetgroups
   - replicationgroups
   - snapshots
+  - users
+  - usergroups
   verbs:
   - get
   - list

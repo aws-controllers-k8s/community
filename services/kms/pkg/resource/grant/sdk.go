@@ -17,7 +17,6 @@ package grant
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/kms"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/kms/apis/v1alpha1"
@@ -94,21 +94,21 @@ func (rm *resourceManager) sdkFind(
 		if elem.GranteePrincipal != nil {
 			ko.Spec.GranteePrincipal = elem.GranteePrincipal
 		}
-		// if elem.KeyId != nil {
-		// 	ko.Spec.KeyID = elem.KeyId
-		// }
-		// if elem.Name != nil {
-		// 	ko.Spec.Name = elem.Name
-		// }
-		// if elem.Operations != nil {
-		// 	f7 := []*string{}
-		// 	for _, f7iter := range elem.Operations {
-		// 		var f7elem string
-		// 		f7elem = *f7iter
-		// 		f7 = append(f7, &f7elem)
-		// 	}
-		// 	ko.Spec.Operations = f7
-		// }
+		if elem.KeyId != nil {
+			ko.Spec.KeyID = elem.KeyId
+		}
+		if elem.Name != nil {
+			ko.Spec.Name = elem.Name
+		}
+		if elem.Operations != nil {
+			f7 := []*string{}
+			for _, f7iter := range elem.Operations {
+				var f7elem string
+				f7elem = *f7iter
+				f7 = append(f7, &f7elem)
+			}
+			ko.Spec.Operations = f7
+		}
 		if elem.RetiringPrincipal != nil {
 			ko.Spec.RetiringPrincipal = elem.RetiringPrincipal
 		}
