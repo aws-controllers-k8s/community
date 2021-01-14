@@ -2,6 +2,9 @@ operations:
   StopTrainingJob:
     operation_type: Delete
     resource_name: TrainingJob
+  StopProcessingJob:
+    operation_type: Delete
+    resource_name: ProcessingJob
 resources:
   Model:
     exceptions:
@@ -33,6 +36,25 @@ resources:
         from:
           operation: DescribeTrainingJob
           path: FailureReason 
+  ProcessingJob:
+    exceptions:
+      errors:
+          404:
+            code: ValidationException
+            message_prefix: Could not find requested job
+    fields:
+      ProcessingJobStatus:
+        is_read_only: true
+        is_printable: true
+        from:
+          operation: DescribeProcessingJob
+          path: ProcessingJobStatus
+      FailureReason:
+        is_read_only: true
+        is_printable: true
+        from:
+          operation: DescribeProcessingJob
+          path: FailureReason 
 ignore:
     resource_names:
       - Algorithm
@@ -54,7 +76,6 @@ ignore:
       - NotebookInstance
       - PresignedDomainUrl
       - PresignedNotebookInstanceUrl
-      - ProcessingJob
       - TransformJob
       - TrialComponent
       - Trial

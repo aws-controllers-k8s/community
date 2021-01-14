@@ -97,7 +97,7 @@ class TestTrainingJob:
 
         assert trainingjob_name is not None
 
-        resource_trainingjob_arn = self._get_resource_trainingjob_arn(resource)
+        resource_trainingjob_arn = k8s.get_resource_arn(resource)
         expected_trainingjob_arn = self._get_sagemaker_trainingjob_arn(
             sagemaker_client, trainingjob_name)
 

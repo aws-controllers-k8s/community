@@ -1,0 +1,54 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: ProcessingJob
+metadata:
+  name: $PROCESSING_JOB_NAME
+spec:
+  processingJobName: $PROCESSING_JOB_NAME
+  roleARN: $SAGEMAKER_EXECUTION_ROLE_ARN
+  environment:
+    my_var: my_value
+    my_var2: my_value2
+  appSpecification:
+    imageURI: $PYTORCH_TRAIN_IMAGE_URI
+    containerEntrypoint:
+      - python
+      - /opt/ml/processing/code/kmeans_preprocessing.py
+  networkConfig:
+    enableNetworkIsolation: false
+  processingResources:
+    clusterConfig:
+      instanceCount: 1
+      instanceType: "ml.m5.xlarge"
+      volumeSizeInGB: 20
+  processingInputs:
+    - inputName: mnist_tar
+      s3Input:
+        s3URI: s3://sagemaker-sample-data-$AWS_REGION/algorithms/kmeans/mnist/mnist.pkl.gz
+        localPath: /opt/ml/processing/input
+        s3DataType: S3Prefix
+        s3InputMode: File
+        s3CompressionType: None
+    - inputName: source_code
+      s3Input:
+        s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/processing/kmeans_preprocessing.py
+        localPath: /opt/ml/processing/code
+        s3DataType: S3Prefix
+        s3InputMode: File
+        s3CompressionType: None
+  processingOutputConfig:
+    outputs:
+      - outputName: train_data
+        s3Output:
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/processing/output/
+          localPath: /opt/ml/processing/output_train/
+          s3UploadMode: EndOfJob
+      - outputName: test_data
+        s3Output:
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/processing/output/
+          localPath: /opt/ml/processing/output_test/
+          s3UploadMode: EndOfJob
+      - outputName: valid_data
+        s3Output:
+          s3URI: s3://{DATA_BUCKET}/sagemaker/processing/output/
+          localPath: /opt/ml/processing/output_valid/
+          s3UploadMode: EndOfJob

@@ -77,8 +77,7 @@ in the service directory with the file name `bootstrap.yaml`.
 
 To run a service's tests:
 ```bash
-cd <service_name>
-pytest --log-cli-level INFO .
+PYTHONPATH=. pytest -n auto --dist loadfile --log-cli-level INFO <service_name>
 ```
 
 To clean up a service's bootstrapped resources:

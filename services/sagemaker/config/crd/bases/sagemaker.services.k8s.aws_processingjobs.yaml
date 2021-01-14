@@ -6,27 +6,27 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
   creationTimestamp: null
-  name: trainingjobs.sagemaker.services.k8s.aws
+  name: processingjobs.sagemaker.services.k8s.aws
 spec:
   group: sagemaker.services.k8s.aws
   names:
-    kind: TrainingJob
-    listKind: TrainingJobList
-    plural: trainingjobs
-    singular: trainingjob
+    kind: ProcessingJob
+    listKind: ProcessingJobList
+    plural: processingjobs
+    singular: processingjob
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.trainingJobStatus
-      name: TrainingJobStatus
+    - jsonPath: .status.failureReason
+      name: FailureReason
       type: string
-    - jsonPath: .status.secondaryStatus
-      name: SecondaryStatus
+    - jsonPath: .status.processingJobStatus
+      name: ProcessingJobStatus
       type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TrainingJob is the Schema for the TrainingJobs API
+        description: ProcessingJob is the Schema for the ProcessingJobs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -41,85 +41,25 @@ spec:
           metadata:
             type: object
           spec:
-            description: TrainingJobSpec defines the desired state of TrainingJob
+            description: ProcessingJobSpec defines the desired state of ProcessingJob
             properties:
-              algorithmSpecification:
+              appSpecification:
                 properties:
-                  algorithmName:
-                    type: string
-                  enableSageMakerMetricsTimeSeries:
-                    type: boolean
-                  metricDefinitions:
+                  containerArguments:
                     items:
-                      properties:
-                        name:
-                          type: string
-                        regex:
-                          type: string
-                      type: object
+                      type: string
                     type: array
-                  trainingImage:
-                    type: string
-                  trainingInputMode:
-                    type: string
-                type: object
-              checkpointConfig:
-                properties:
-                  localPath:
-                    type: string
-                  s3URI:
-                    type: string
-                type: object
-              debugHookConfig:
-                properties:
-                  collectionConfigurations:
+                  containerEntrypoint:
                     items:
-                      properties:
-                        collectionName:
-                          type: string
-                        collectionParameters:
-                          additionalProperties:
-                            type: string
-                          type: object
-                      type: object
-                    type: array
-                  hookParameters:
-                    additionalProperties:
                       type: string
-                    type: object
-                  localPath:
-                    type: string
-                  s3OutputPath:
+                    type: array
+                  imageURI:
                     type: string
                 type: object
-              debugRuleConfigurations:
-                items:
-                  properties:
-                    instanceType:
-                      type: string
-                    localPath:
-                      type: string
-                    ruleConfigurationName:
-                      type: string
-                    ruleEvaluatorImage:
-                      type: string
-                    ruleParameters:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    s3OutputPath:
-                      type: string
-                    volumeSizeInGB:
-                      format: int64
-                      type: integer
-                  type: object
-                type: array
-              enableInterContainerTrafficEncryption:
-                type: boolean
-              enableManagedSpotTraining:
-                type: boolean
-              enableNetworkIsolation:
-                type: boolean
+              environment:
+                additionalProperties:
+                  type: string
+                type: object
               experimentConfig:
                 properties:
                   experimentName:
@@ -129,86 +69,90 @@ spec:
                   trialName:
                     type: string
                 type: object
-              hyperParameters:
-                additionalProperties:
-                  type: string
+              networkConfig:
+                properties:
+                  enableInterContainerTrafficEncryption:
+                    type: boolean
+                  enableNetworkIsolation:
+                    type: boolean
+                  vpcConfig:
+                    properties:
+                      securityGroupIDs:
+                        items:
+                          type: string
+                        type: array
+                      subnets:
+                        items:
+                          type: string
+                        type: array
+                    type: object
                 type: object
-              inputDataConfig:
+              processingInputs:
                 items:
                   properties:
-                    channelName:
+                    inputName:
                       type: string
-                    compressionType:
-                      type: string
-                    contentType:
-                      type: string
-                    dataSource:
+                    s3Input:
                       properties:
-                        fileSystemDataSource:
-                          properties:
-                            directoryPath:
-                              type: string
-                            fileSystemAccessMode:
-                              type: string
-                            fileSystemID:
-                              type: string
-                            fileSystemType:
-                              type: string
-                          type: object
-                        s3DataSource:
-                          properties:
-                            attributeNames:
-                              items:
-                                type: string
-                              type: array
-                            s3DataDistributionType:
-                              type: string
-                            s3DataType:
-                              type: string
-                            s3URI:
-                              type: string
-                          type: object
-                      type: object
-                    inputMode:
-                      type: string
-                    recordWrapperType:
-                      type: string
-                    shuffleConfig:
-                      properties:
-                        seed:
-                          format: int64
-                          type: integer
+                        localPath:
+                          type: string
+                        s3CompressionType:
+                          type: string
+                        s3DataDistributionType:
+                          type: string
+                        s3DataType:
+                          type: string
+                        s3InputMode:
+                          type: string
+                        s3URI:
+                          type: string
                       type: object
                   type: object
                 type: array
-              outputDataConfig:
+              processingJobName:
+                type: string
+              processingOutputConfig:
                 properties:
                   kmsKeyID:
                     type: string
-                  s3OutputPath:
-                    type: string
+                  outputs:
+                    items:
+                      properties:
+                        outputName:
+                          type: string
+                        s3Output:
+                          properties:
+                            localPath:
+                              type: string
+                            s3URI:
+                              type: string
+                            s3UploadMode:
+                              type: string
+                          type: object
+                      type: object
+                    type: array
                 type: object
-              resourceConfig:
+              processingResources:
                 properties:
-                  instanceCount:
-                    format: int64
-                    type: integer
-                  instanceType:
-                    type: string
-                  volumeKMSKeyID:
-                    type: string
-                  volumeSizeInGB:
-                    format: int64
-                    type: integer
+                  clusterConfig:
+                    properties:
+                      instanceCount:
+                        format: int64
+                        type: integer
+                      instanceType:
+                        type: string
+                      volumeKMSKeyID:
+                        type: string
+                      volumeSizeInGB:
+                        format: int64
+                        type: integer
+                    type: object
                 type: object
               roleARN:
                 type: string
               stoppingCondition:
                 properties:
                   maxRuntimeInSeconds:
-                    format: int64
-                    type: integer
-                  maxWaitTimeInSeconds:
                     format: int64
                     type: integer
                 type: object
@@ -221,36 +165,14 @@ spec:
                       type: string
                   type: object
                 type: array
-              tensorBoardOutputConfig:
-                properties:
-                  localPath:
-                    type: string
-                  s3OutputPath:
-                    type: string
-                type: object
-              trainingJobName:
-                type: string
-              vpcConfig:
-                properties:
-                  securityGroupIDs:
-                    items:
-                      type: string
-                    type: array
-                  subnets:
-                    items:
-                      type: string
-                    type: array
-                type: object
             required:
-            - algorithmSpecification
-            - outputDataConfig
-            - resourceConfig
+            - appSpecification
+            - processingJobName
+            - processingResources
             - roleARN
-            - stoppingCondition
-            - trainingJobName
             type: object
           status:
-            description: TrainingJobStatus defines the observed state of TrainingJob
+            description: ProcessingJobStatus defines the observed state of ProcessingJob
             properties:
               ackResourceMetadata:
                 description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
@@ -310,9 +232,7 @@ spec:
                 type: array
               failureReason:
                 type: string
-              secondaryStatus:
-                type: string
-              trainingJobStatus:
+              processingJobStatus:
                 type: string
             required:
             - ackResourceMetadata

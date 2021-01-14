@@ -11,7 +11,8 @@ Usage:
 's3' 'sns' or 'sqs'
 
 Environment variables:
-  DEBUG:        Set to any value to enable debug logging in the tests
+  DEBUG:            Set to any value to enable debug logging in the bash tests
+  PYTEST_LOG_LEVEL: Set to any Python logging level for the Python tests.
 "
 
 if [ $# -ne 1 ]; then
@@ -48,13 +49,12 @@ if [[ "$enable_python_tests" == "false" ]]; then
       echo "$test_name took $( expr $test_end_time - $test_start_time ) second(s)"
   done
 else
+  PYTEST_LOG_LEVEL="${PYTEST_LOG_LEVEL:-"INFO"}"
   python bootstrap.py "${SERVICE}"
 
   set +e
 
-  pushd "$service_test_dir" > /dev/null
-    pytest --log-cli-level INFO .
-  popd > /dev/null
+  PYTHONPATH=. pytest -n auto --dist loadfile --log-cli-level "${PYTEST_LOG_LEVEL}" "${SERVICE}"
   python cleanup.py "${SERVICE}"
 
   set -eo pipefail

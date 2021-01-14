@@ -144,6 +144,17 @@ def _get_terminal_condition(resource: object) -> Union[None, bool]:
     terminal: Dict = conditions['ACK']['Terminal']
     return bool(terminal.get('status', False))
 
+def get_resource_arn(resource: object) -> Union[None, str]:
+    """Get the .status.ackResourceMetadata.arn value from a given resource.
+
+    Returns:
+        None or string: None if the status field doesn't exist, otherwise the
+            field value.
+    """
+    if 'ackResourceMetadata' in resource['status'] and \
+        'arn' in resource['status']['ackResourceMetadata']:
+        return resource['status']['ackResourceMetadata']['arn']
+    return None
 
 def _get_resource_synced(resource: object) -> Union[None, bool]:
     """Get the .status.ACK.ResourceSynced boolean from a given resource.
