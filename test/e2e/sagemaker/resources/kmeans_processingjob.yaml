@@ -13,12 +13,10 @@ spec:
     containerEntrypoint:
       - python
       - /opt/ml/processing/code/kmeans_preprocessing.py
-  networkConfig:
-    enableNetworkIsolation: false
   processingResources:
     clusterConfig:
       instanceCount: 1
-      instanceType: "ml.m5.xlarge"
+      instanceType: "ml.m5.large"
       volumeSizeInGB: 20
   processingInputs:
     - inputName: mnist_tar
