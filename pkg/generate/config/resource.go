@@ -66,6 +66,8 @@ type ResourceConfig struct {
 	Compare *CompareConfig `json:"compare,omitempty"`
 	// ShortNames represent the CRD list of aliases. Short names allow shorter strings to
 	// match a CR on the CLI.
+	// All ShortNames must be unique to any other ShortNames installed into the cluster, otherwise
+	// the CRD will fail to install.
 	ShortNames []string `json:"shortNames,omitempty"`
 }
 
