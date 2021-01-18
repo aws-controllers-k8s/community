@@ -45,6 +45,7 @@ publish-controller-image:  ## docker push a container image for SERVICE
 	./scripts/publish-controller-image.sh $(AWS_SERVICE)
 
 build-controller: build-ack-generate ## Generate controller code for SERVICE
+	@./scripts/install-controller-gen.sh 
 	@./scripts/build-controller.sh $(AWS_SERVICE)
 
 kind-test: export PRESERVE = true
