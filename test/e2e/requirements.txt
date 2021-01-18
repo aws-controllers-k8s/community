@@ -2,7 +2,7 @@ astroid==2.4.2
 attrs==20.3.0
 autopep8==1.5.4
 boto3==1.16.40
-botocore==1.19.43
+botocore==1.19.56
 cachetools==4.2.0
 certifi==2020.12.5
 chardet==3.0.4
