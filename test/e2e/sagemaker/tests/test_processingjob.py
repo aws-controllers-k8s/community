@@ -53,6 +53,12 @@ def kmeans_processing_job():
 
     yield (reference, resource)
 
+    # Delete the k8s resource if not already deleted by tests
+    try:
+        k8s.delete_custom_resource(reference)
+    except:
+        pass
+
 
 @service_marker
 @pytest.mark.canary

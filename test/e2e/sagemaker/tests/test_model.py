@@ -52,8 +52,11 @@ def xgboost_model():
 
     yield (reference, resource)
 
-    # Delete the k8s resource on
-    k8s.delete_custom_resource(reference)
+    # Delete the k8s resource if not already deleted by tests
+    try:
+        k8s.delete_custom_resource(reference)
+    except:
+        pass
 
 
 @service_marker
