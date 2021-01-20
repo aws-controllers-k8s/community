@@ -35,7 +35,6 @@ installed and configured:
 1. [Golang 1.14+](https://golang.org/doc/install)
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-1. [kubernetes-sigs/controller-tools](https://github.com/kubernetes-sigs/controller-tools)
 1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) version 1
 1. [jq](https://github.com/stedolan/jq/wiki/Installation)
 1. `make`
