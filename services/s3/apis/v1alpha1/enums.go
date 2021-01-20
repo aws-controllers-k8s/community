@@ -272,6 +272,13 @@ const (
 	ObjectLockRetentionMode_COMPLIANCE ObjectLockRetentionMode = "COMPLIANCE"
 )
 
+type ObjectOwnership string
+
+const (
+	ObjectOwnership_BucketOwnerPreferred ObjectOwnership = "BucketOwnerPreferred"
+	ObjectOwnership_ObjectWriter         ObjectOwnership = "ObjectWriter"
+)
+
 type ObjectStorageClass string
 
 const (
@@ -282,6 +289,7 @@ const (
 	ObjectStorageClass_ONEZONE_IA          ObjectStorageClass = "ONEZONE_IA"
 	ObjectStorageClass_INTELLIGENT_TIERING ObjectStorageClass = "INTELLIGENT_TIERING"
 	ObjectStorageClass_DEEP_ARCHIVE        ObjectStorageClass = "DEEP_ARCHIVE"
+	ObjectStorageClass_OUTPOSTS            ObjectStorageClass = "OUTPOSTS"
 )
 
 type ObjectVersionStorageClass string
@@ -392,6 +400,7 @@ const (
 	StorageClass_INTELLIGENT_TIERING StorageClass = "INTELLIGENT_TIERING"
 	StorageClass_GLACIER             StorageClass = "GLACIER"
 	StorageClass_DEEP_ARCHIVE        StorageClass = "DEEP_ARCHIVE"
+	StorageClass_OUTPOSTS            StorageClass = "OUTPOSTS"
 )
 
 type StorageClassAnalysisSchemaVersion string

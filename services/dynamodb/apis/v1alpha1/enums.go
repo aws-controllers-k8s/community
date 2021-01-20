@@ -152,6 +152,7 @@ const (
 	ReplicaStatus_UPDATING        ReplicaStatus = "UPDATING"
 	ReplicaStatus_DELETING        ReplicaStatus = "DELETING"
 	ReplicaStatus_ACTIVE          ReplicaStatus = "ACTIVE"
+	ReplicaStatus_REGION_DISABLED ReplicaStatus = "REGION_DISABLED"
 )
 
 type ReturnConsumedCapacity string

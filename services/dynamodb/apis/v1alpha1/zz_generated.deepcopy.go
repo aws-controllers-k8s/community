@@ -1556,6 +1556,10 @@ func (in *ReplicaDescription) DeepCopyInto(out *ReplicaDescription) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ReplicaInaccessibleDateTime != nil {
+		in, out := &in.ReplicaInaccessibleDateTime, &out.ReplicaInaccessibleDateTime
+		*out = (*in).DeepCopy()
+	}
 	if in.ReplicaStatus != nil {
 		in, out := &in.ReplicaStatus, &out.ReplicaStatus
 		*out = new(string)

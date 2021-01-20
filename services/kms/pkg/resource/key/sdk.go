@@ -17,7 +17,6 @@ package key
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/kms"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/kms/apis/v1alpha1"
@@ -84,11 +84,20 @@ func (rm *resourceManager) sdkFind(
 	if resp.KeyMetadata.CloudHsmClusterId != nil {
 		ko.Status.CloudHsmClusterID = resp.KeyMetadata.CloudHsmClusterId
 	}
+	if resp.KeyMetadata.CreationDate != nil {
+		ko.Status.CreationDate = &metav1.Time{*resp.KeyMetadata.CreationDate}
+	}
 	if resp.KeyMetadata.CustomKeyStoreId != nil {
 		ko.Spec.CustomKeyStoreID = resp.KeyMetadata.CustomKeyStoreId
 	}
+	if resp.KeyMetadata.CustomerMasterKeySpec != nil {
+		ko.Spec.CustomerMasterKeySpec = resp.KeyMetadata.CustomerMasterKeySpec
+	}
 	if resp.KeyMetadata.DeletionDate != nil {
 		ko.Status.DeletionDate = &metav1.Time{*resp.KeyMetadata.DeletionDate}
+	}
+	if resp.KeyMetadata.Description != nil {
+		ko.Spec.Description = resp.KeyMetadata.Description
 	}
 	if resp.KeyMetadata.Enabled != nil {
 		ko.Status.Enabled = resp.KeyMetadata.Enabled
@@ -113,6 +122,12 @@ func (rm *resourceManager) sdkFind(
 	}
 	if resp.KeyMetadata.KeyState != nil {
 		ko.Status.KeyState = resp.KeyMetadata.KeyState
+	}
+	if resp.KeyMetadata.KeyUsage != nil {
+		ko.Spec.KeyUsage = resp.KeyMetadata.KeyUsage
+	}
+	if resp.KeyMetadata.Origin != nil {
+		ko.Spec.Origin = resp.KeyMetadata.Origin
 	}
 	if resp.KeyMetadata.SigningAlgorithms != nil {
 		f16 := []*string{}

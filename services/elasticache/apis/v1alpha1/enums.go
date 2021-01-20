@@ -34,6 +34,14 @@ type AuthTokenUpdateStrategyType string
 const (
 	AuthTokenUpdateStrategyType_SET    AuthTokenUpdateStrategyType = "SET"
 	AuthTokenUpdateStrategyType_ROTATE AuthTokenUpdateStrategyType = "ROTATE"
+	AuthTokenUpdateStrategyType_DELETE AuthTokenUpdateStrategyType = "DELETE"
+)
+
+type AuthenticationType string
+
+const (
+	AuthenticationType_password    AuthenticationType = "password"
+	AuthenticationType_no_password AuthenticationType = "no-password"
 )
 
 type AutomaticFailoverStatus string
@@ -75,6 +83,13 @@ const (
 	NodeUpdateStatus_stopping         NodeUpdateStatus = "stopping"
 	NodeUpdateStatus_stopped          NodeUpdateStatus = "stopped"
 	NodeUpdateStatus_complete         NodeUpdateStatus = "complete"
+)
+
+type OutpostMode string
+
+const (
+	OutpostMode_single_outpost OutpostMode = "single-outpost"
+	OutpostMode_cross_outpost  OutpostMode = "cross-outpost"
 )
 
 type PendingAutomaticFailoverStatus string
@@ -123,6 +138,8 @@ const (
 	SourceType_cache_security_group  SourceType = "cache-security-group"
 	SourceType_cache_subnet_group    SourceType = "cache-subnet-group"
 	SourceType_replication_group     SourceType = "replication-group"
+	SourceType_user                  SourceType = "user"
+	SourceType_user_group            SourceType = "user-group"
 )
 
 type UpdateActionStatus string

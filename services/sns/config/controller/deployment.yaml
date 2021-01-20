@@ -36,6 +36,8 @@ spec:
         - "$(ACK_LOG_LEVEL)"
         image: controller:latest
         name: controller
+        ports:
+          - containerPort: 8080
         resources:
           limits:
             cpu: 100m

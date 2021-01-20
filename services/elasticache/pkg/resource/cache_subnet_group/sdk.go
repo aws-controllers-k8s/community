@@ -17,7 +17,6 @@ package cache_subnet_group
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
@@ -92,6 +92,13 @@ func (rm *resourceManager) sdkFind(
 				}
 				if f3iter.SubnetIdentifier != nil {
 					f3elem.SubnetIdentifier = f3iter.SubnetIdentifier
+				}
+				if f3iter.SubnetOutpost != nil {
+					f3elemf2 := &svcapitypes.SubnetOutpost{}
+					if f3iter.SubnetOutpost.SubnetOutpostArn != nil {
+						f3elemf2.SubnetOutpostARN = f3iter.SubnetOutpost.SubnetOutpostArn
+					}
+					f3elem.SubnetOutpost = f3elemf2
 				}
 				f3 = append(f3, f3elem)
 			}
@@ -172,6 +179,13 @@ func (rm *resourceManager) sdkCreate(
 			}
 			if f3iter.SubnetIdentifier != nil {
 				f3elem.SubnetIdentifier = f3iter.SubnetIdentifier
+			}
+			if f3iter.SubnetOutpost != nil {
+				f3elemf2 := &svcapitypes.SubnetOutpost{}
+				if f3iter.SubnetOutpost.SubnetOutpostArn != nil {
+					f3elemf2.SubnetOutpostARN = f3iter.SubnetOutpost.SubnetOutpostArn
+				}
+				f3elem.SubnetOutpost = f3elemf2
 			}
 			f3 = append(f3, f3elem)
 		}
@@ -255,6 +269,13 @@ func (rm *resourceManager) sdkUpdate(
 			}
 			if f3iter.SubnetIdentifier != nil {
 				f3elem.SubnetIdentifier = f3iter.SubnetIdentifier
+			}
+			if f3iter.SubnetOutpost != nil {
+				f3elemf2 := &svcapitypes.SubnetOutpost{}
+				if f3iter.SubnetOutpost.SubnetOutpostArn != nil {
+					f3elemf2.SubnetOutpostARN = f3iter.SubnetOutpost.SubnetOutpostArn
+				}
+				f3elem.SubnetOutpost = f3elemf2
 			}
 			f3 = append(f3, f3elem)
 		}

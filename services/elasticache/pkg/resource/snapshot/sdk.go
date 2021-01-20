@@ -17,7 +17,6 @@ package snapshot
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/elasticache"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/elasticache/apis/v1alpha1"
@@ -127,17 +127,29 @@ func (rm *resourceManager) sdkFind(
 					if f11iter.NodeGroupConfiguration.PrimaryAvailabilityZone != nil {
 						f11elemf4.PrimaryAvailabilityZone = f11iter.NodeGroupConfiguration.PrimaryAvailabilityZone
 					}
+					if f11iter.NodeGroupConfiguration.PrimaryOutpostArn != nil {
+						f11elemf4.PrimaryOutpostARN = f11iter.NodeGroupConfiguration.PrimaryOutpostArn
+					}
 					if f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones != nil {
-						f11elemf4f2 := []*string{}
-						for _, f11elemf4f2iter := range f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones {
-							var f11elemf4f2elem string
-							f11elemf4f2elem = *f11elemf4f2iter
-							f11elemf4f2 = append(f11elemf4f2, &f11elemf4f2elem)
+						f11elemf4f3 := []*string{}
+						for _, f11elemf4f3iter := range f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones {
+							var f11elemf4f3elem string
+							f11elemf4f3elem = *f11elemf4f3iter
+							f11elemf4f3 = append(f11elemf4f3, &f11elemf4f3elem)
 						}
-						f11elemf4.ReplicaAvailabilityZones = f11elemf4f2
+						f11elemf4.ReplicaAvailabilityZones = f11elemf4f3
 					}
 					if f11iter.NodeGroupConfiguration.ReplicaCount != nil {
 						f11elemf4.ReplicaCount = f11iter.NodeGroupConfiguration.ReplicaCount
+					}
+					if f11iter.NodeGroupConfiguration.ReplicaOutpostArns != nil {
+						f11elemf4f5 := []*string{}
+						for _, f11elemf4f5iter := range f11iter.NodeGroupConfiguration.ReplicaOutpostArns {
+							var f11elemf4f5elem string
+							f11elemf4f5elem = *f11elemf4f5iter
+							f11elemf4f5 = append(f11elemf4f5, &f11elemf4f5elem)
+						}
+						f11elemf4.ReplicaOutpostARNs = f11elemf4f5
 					}
 					if f11iter.NodeGroupConfiguration.Slots != nil {
 						f11elemf4.Slots = f11iter.NodeGroupConfiguration.Slots
@@ -168,6 +180,9 @@ func (rm *resourceManager) sdkFind(
 		}
 		if elem.PreferredMaintenanceWindow != nil {
 			ko.Status.PreferredMaintenanceWindow = elem.PreferredMaintenanceWindow
+		}
+		if elem.PreferredOutpostArn != nil {
+			ko.Status.PreferredOutpostARN = elem.PreferredOutpostArn
 		}
 		if elem.ReplicationGroupDescription != nil {
 			ko.Status.ReplicationGroupDescription = elem.ReplicationGroupDescription
@@ -307,17 +322,29 @@ func (rm *resourceManager) sdkCreate(
 				if f11iter.NodeGroupConfiguration.PrimaryAvailabilityZone != nil {
 					f11elemf4.PrimaryAvailabilityZone = f11iter.NodeGroupConfiguration.PrimaryAvailabilityZone
 				}
+				if f11iter.NodeGroupConfiguration.PrimaryOutpostArn != nil {
+					f11elemf4.PrimaryOutpostARN = f11iter.NodeGroupConfiguration.PrimaryOutpostArn
+				}
 				if f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones != nil {
-					f11elemf4f2 := []*string{}
-					for _, f11elemf4f2iter := range f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones {
-						var f11elemf4f2elem string
-						f11elemf4f2elem = *f11elemf4f2iter
-						f11elemf4f2 = append(f11elemf4f2, &f11elemf4f2elem)
+					f11elemf4f3 := []*string{}
+					for _, f11elemf4f3iter := range f11iter.NodeGroupConfiguration.ReplicaAvailabilityZones {
+						var f11elemf4f3elem string
+						f11elemf4f3elem = *f11elemf4f3iter
+						f11elemf4f3 = append(f11elemf4f3, &f11elemf4f3elem)
 					}
-					f11elemf4.ReplicaAvailabilityZones = f11elemf4f2
+					f11elemf4.ReplicaAvailabilityZones = f11elemf4f3
 				}
 				if f11iter.NodeGroupConfiguration.ReplicaCount != nil {
 					f11elemf4.ReplicaCount = f11iter.NodeGroupConfiguration.ReplicaCount
+				}
+				if f11iter.NodeGroupConfiguration.ReplicaOutpostArns != nil {
+					f11elemf4f5 := []*string{}
+					for _, f11elemf4f5iter := range f11iter.NodeGroupConfiguration.ReplicaOutpostArns {
+						var f11elemf4f5elem string
+						f11elemf4f5elem = *f11elemf4f5iter
+						f11elemf4f5 = append(f11elemf4f5, &f11elemf4f5elem)
+					}
+					f11elemf4.ReplicaOutpostARNs = f11elemf4f5
 				}
 				if f11iter.NodeGroupConfiguration.Slots != nil {
 					f11elemf4.Slots = f11iter.NodeGroupConfiguration.Slots
@@ -348,6 +375,9 @@ func (rm *resourceManager) sdkCreate(
 	}
 	if resp.Snapshot.PreferredMaintenanceWindow != nil {
 		ko.Status.PreferredMaintenanceWindow = resp.Snapshot.PreferredMaintenanceWindow
+	}
+	if resp.Snapshot.PreferredOutpostArn != nil {
+		ko.Status.PreferredOutpostARN = resp.Snapshot.PreferredOutpostArn
 	}
 	if resp.Snapshot.ReplicationGroupDescription != nil {
 		ko.Status.ReplicationGroupDescription = resp.Snapshot.ReplicationGroupDescription

@@ -17,7 +17,6 @@ package table
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -25,6 +24,7 @@ import (
 	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/dynamodb"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	svcapitypes "github.com/aws/aws-controllers-k8s/services/dynamodb/apis/v1alpha1"
@@ -274,6 +274,9 @@ func (rm *resourceManager) sdkFind(
 			if f12iter.RegionName != nil {
 				f12elem.RegionName = f12iter.RegionName
 			}
+			if f12iter.ReplicaInaccessibleDateTime != nil {
+				f12elem.ReplicaInaccessibleDateTime = &metav1.Time{*f12iter.ReplicaInaccessibleDateTime}
+			}
 			if f12iter.ReplicaStatus != nil {
 				f12elem.ReplicaStatus = f12iter.ReplicaStatus
 			}
@@ -469,6 +472,9 @@ func (rm *resourceManager) sdkCreate(
 			}
 			if f12iter.RegionName != nil {
 				f12elem.RegionName = f12iter.RegionName
+			}
+			if f12iter.ReplicaInaccessibleDateTime != nil {
+				f12elem.ReplicaInaccessibleDateTime = &metav1.Time{*f12iter.ReplicaInaccessibleDateTime}
 			}
 			if f12iter.ReplicaStatus != nil {
 				f12elem.ReplicaStatus = f12iter.ReplicaStatus
@@ -816,6 +822,9 @@ func (rm *resourceManager) sdkUpdate(
 			}
 			if f12iter.RegionName != nil {
 				f12elem.RegionName = f12iter.RegionName
+			}
+			if f12iter.ReplicaInaccessibleDateTime != nil {
+				f12elem.ReplicaInaccessibleDateTime = &metav1.Time{*f12iter.ReplicaInaccessibleDateTime}
 			}
 			if f12iter.ReplicaStatus != nil {
 				f12elem.ReplicaStatus = f12iter.ReplicaStatus

@@ -55,6 +55,7 @@ type SnapshotStatus struct {
 	Port                        *int64                   `json:"port,omitempty"`
 	PreferredAvailabilityZone   *string                  `json:"preferredAvailabilityZone,omitempty"`
 	PreferredMaintenanceWindow  *string                  `json:"preferredMaintenanceWindow,omitempty"`
+	PreferredOutpostARN         *string                  `json:"preferredOutpostARN,omitempty"`
 	ReplicationGroupDescription *string                  `json:"replicationGroupDescription,omitempty"`
 	SnapshotRetentionLimit      *int64                   `json:"snapshotRetentionLimit,omitempty"`
 	SnapshotSource              *string                  `json:"snapshotSource,omitempty"`
