@@ -102,6 +102,9 @@ if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
     apis_args="$apis_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
 fi
 
+echo "Building common Kubernetes API objects"
+controller-gen paths=$ROOT_DIR/apis/... crd:trivialVersions=true object:headerFile=$TEMPLATES_DIR/boilerplate.txt output:crd:artifacts:config=$ROOT_DIR/config/crd/bases
+
 echo "Building Kubernetes API objects for $SERVICE"
 $ACK_GENERATE_BIN_PATH $apis_args
 if [ $? -ne 0 ]; then
