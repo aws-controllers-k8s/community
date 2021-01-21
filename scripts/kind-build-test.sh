@@ -57,7 +57,8 @@ function clean_up {
         "${SCRIPTS_DIR}"/delete-kind-cluster.sh "$TMP_DIR" || :
         return
     fi
-    echo "To resume test with the same cluster use: \"-c $TMP_DIR\""""
+    echo "To resume test with the same cluster use: \" TMP_DIR=$TMP_DIR
+    AWS_SERVICE_DOCKER_IMG=$AWS_SERVICE_DOCKER_IMG \""""
 }
 
 
