@@ -42,8 +42,34 @@ XGBOOST_IMAGE_URIS = {
     "sa-east-1": 	    "737474898029.dkr.ecr.sa-east-1.amazonaws.com"
 }
 
+PYTORCH_TRAIN_IMAGE_URIS = {
+    "us-east-1":        "763104351884.dkr.ecr.us-east-1.amazonaws.com",
+    "us-east-2":        "763104351884.dkr.ecr.us-east-2.amazonaws.com",
+    "us-west-1":        "763104351884.dkr.ecr.us-west-1.amazonaws.com",
+    "us-west-2":        "763104351884.dkr.ecr.us-west-2.amazonaws.com",
+    "af-south-1":       "626614931356.dkr.ecr.af-south-1.amazonaws.com",
+    "ap-east-1":        "871362719292.dkr.ecr.ap-east-1.amazonaws.com",
+    "ap-south-1":       "763104351884.dkr.ecr.ap-south-1.amazonaws.com",
+    "ap-northeast-2":   "763104351884.dkr.ecr.ap-northeast-2.amazonaws.com",
+    "ap-southeast-1":   "763104351884.dkr.ecr.ap-southeast-1.amazonaws.com",
+    "ap-southeast-2":   "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com",
+    "ap-northeast-1":   "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com",
+    "ca-central-1":     "763104351884.dkr.ecr.ca-central-1.amazonaws.com",
+    "eu-central-1":     "763104351884.dkr.ecr.eu-central-1.amazonaws.com",
+    "eu-west-1":        "763104351884.dkr.ecr.eu-west-1.amazonaws.com",
+    "eu-west-2":        "763104351884.dkr.ecr.eu-west-2.amazonaws.com",
+    "eu-south-1":       "692866216735.dkr.ecr.eu-south-1.amazonaws.com",
+    "eu-west-3":        "763104351884.dkr.ecr.eu-west-3.amazonaws.com",
+    "eu-north-1":       "763104351884.dkr.ecr.eu-north-1.amazonaws.com",
+    "me-south-1":       "217643126080.dkr.ecr.me-south-1.amazonaws.com",
+    "sa-east-1":        "763104351884.dkr.ecr.sa-east-1.amazonaws.com",
+    "cn-north-1":       "727897471807.dkr.ecr.cn-north-1.amazonaws.com.cn",
+    "cn-northwest-1":   "727897471807.dkr.ecr.cn-northwest-1.amazonaws.com.cn"
+}
+
 REPLACEMENT_VALUES = {
     "SAGEMAKER_DATA_BUCKET": get_bootstrap_resources().DataBucketName,
     "XGBOOST_IMAGE_URI": f"{XGBOOST_IMAGE_URIS[get_aws_region()]}/sagemaker-xgboost:1.0-1-cpu-py3",
+    "PYTORCH_TRAIN_IMAGE_URI": f"{PYTORCH_TRAIN_IMAGE_URIS[get_aws_region()]}/pytorch-training:1.5.0-cpu-py36-ubuntu16.04",
     "SAGEMAKER_EXECUTION_ROLE_ARN": get_bootstrap_resources().ExecutionRoleARN
 }

@@ -729,14 +729,14 @@ const (
 	ProcessingInstanceType_ml_r5_24xlarge ProcessingInstanceType = "ml.r5.24xlarge"
 )
 
-type ProcessingJobStatus string
+type ProcessingJobStatus_SDK string
 
 const (
-	ProcessingJobStatus_InProgress ProcessingJobStatus = "InProgress"
-	ProcessingJobStatus_Completed  ProcessingJobStatus = "Completed"
-	ProcessingJobStatus_Failed     ProcessingJobStatus = "Failed"
-	ProcessingJobStatus_Stopping   ProcessingJobStatus = "Stopping"
-	ProcessingJobStatus_Stopped    ProcessingJobStatus = "Stopped"
+	ProcessingJobStatus_SDK_InProgress ProcessingJobStatus_SDK = "InProgress"
+	ProcessingJobStatus_SDK_Completed  ProcessingJobStatus_SDK = "Completed"
+	ProcessingJobStatus_SDK_Failed     ProcessingJobStatus_SDK = "Failed"
+	ProcessingJobStatus_SDK_Stopping   ProcessingJobStatus_SDK = "Stopping"
+	ProcessingJobStatus_SDK_Stopped    ProcessingJobStatus_SDK = "Stopped"
 )
 
 type ProcessingS3CompressionType string

@@ -10,6 +10,7 @@ rules:
   - sagemaker.services.k8s.aws
   resources:
   - models
+  - processingjobs
   - trainingjobs
   verbs:
   - get

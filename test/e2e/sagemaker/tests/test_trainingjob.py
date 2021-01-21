@@ -53,6 +53,12 @@ def xgboost_trainingjob():
 
     yield (reference, resource)    
 
+    # Delete the k8s resource if not already deleted by tests
+    try:
+        k8s.delete_custom_resource(reference)
+    except:
+        pass
+
 
 @service_marker
 @pytest.mark.canary
@@ -97,7 +103,7 @@ class TestTrainingJob:
 
         assert trainingjob_name is not None
 
-        resource_trainingjob_arn = self._get_resource_trainingjob_arn(resource)
+        resource_trainingjob_arn = k8s.get_resource_arn(resource)
         expected_trainingjob_arn = self._get_sagemaker_trainingjob_arn(
             sagemaker_client, trainingjob_name)
 

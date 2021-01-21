@@ -64,3 +64,5 @@ echo "ok."
 echo -n "uninstalling the helm chart for ack-$SERVICE-controller in namespace $K8S_NAMESPACE ... "
 helm uninstall --namespace "$K8S_NAMESPACE" ack-$SERVICE-controller-helm-test 1>/dev/null || exit 1
 echo "ok."
+
+kubectl delete namespace "$K8S_NAMESPACE"

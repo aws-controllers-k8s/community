@@ -1,3 +1,4 @@
+apipkg==1.5
 astroid==2.4.2
 attrs==20.3.0
 autopep8==1.5.4
@@ -6,6 +7,7 @@ botocore==1.19.43
 cachetools==4.2.0
 certifi==2020.12.5
 chardet==3.0.4
+execnet==1.7.1
 google-auth==1.24.0
 google-pasta==0.2.0
 idna==2.10
@@ -22,12 +24,15 @@ packaging==20.7
 pluggy==0.13.1
 protobuf==3.14.0
 protobuf3-to-dict==0.1.5
+psutil==5.8.0
 py==1.9.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.6.0
 pyparsing==2.4.7
 pytest==6.1.2
+pytest-forked==1.3.0
+pytest-xdist==2.2.0
 python-dateutil==2.8.1
 PyYAML==5.3.1
 requests==2.25.0
