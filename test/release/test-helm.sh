@@ -53,7 +53,7 @@ ACK_GENERATE_IMAGE_REPOSITORY="aws-controllers-k8s" \
 
 popd 1>/dev/null
 
-kubectl create namespace "$K8S_NAMESPACE"
+kubectl create namespace "$K8S_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
 pushd $CHART_DIR/helm 1>/dev/null
 
