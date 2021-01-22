@@ -1,0 +1,29 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ack-s3-writer
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - s3.services.k8s.aws
+  resources:
+  - buckets
+
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - s3.services.k8s.aws
+  resources:
+  - buckets
+  verbs:
+  - get
+  - patch
+  - update

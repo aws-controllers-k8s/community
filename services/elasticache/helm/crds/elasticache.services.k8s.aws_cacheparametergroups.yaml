@@ -6,20 +6,21 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
   creationTimestamp: null
-  name: snapshots.elasticache.services.k8s.aws
+  name: cacheparametergroups.elasticache.services.k8s.aws
 spec:
   group: elasticache.services.k8s.aws
   names:
-    kind: Snapshot
-    listKind: SnapshotList
-    plural: snapshots
-    singular: snapshot
+    kind: CacheParameterGroup
+    listKind: CacheParameterGroupList
+    plural: cacheparametergroups
+    singular: cacheparametergroup
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Snapshot is the Schema for the Snapshots API
+        description: CacheParameterGroup is the Schema for the CacheParameterGroups
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,23 +35,30 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnapshotSpec defines the desired state of Snapshot
+            description: CacheParameterGroupSpec defines the desired state of CacheParameterGroup
             properties:
-              cacheClusterID:
+              cacheParameterGroupFamily:
                 type: string
-              kmsKeyID:
+              cacheParameterGroupName:
                 type: string
-              replicationGroupID:
+              description:
                 type: string
-              snapshotName:
-                type: string
-              sourceSnapshotName:
-                type: string
+              parameterNameValues:
+                items:
+                  properties:
+                    parameterName:
+                      type: string
+                    parameterValue:
+                      type: string
+                  type: object
+                type: array
             required:
-            - snapshotName
+            - cacheParameterGroupFamily
+            - cacheParameterGroupName
+            - description
             type: object
           status:
-            description: SnapshotStatus defines the observed state of Snapshot
+            description: CacheParameterGroupStatus defines the observed state of CacheParameterGroup
             properties:
               ackResourceMetadata:
                 description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
@@ -75,19 +83,6 @@ spec:
                 required:
                 - ownerAccountID
                 type: object
-              autoMinorVersionUpgrade:
-                type: boolean
-              automaticFailover:
-                type: string
-              cacheClusterCreateTime:
-                format: date-time
-                type: string
-              cacheNodeType:
-                type: string
-              cacheParameterGroupName:
-                type: string
-              cacheSubnetGroupName:
-                type: string
               conditions:
                 description: All CRS managed by ACK have a common `Status.Conditions`
                   member that contains a collection of `ackv1alpha1.Condition` objects
@@ -121,81 +116,41 @@ spec:
                   - type
                   type: object
                 type: array
-              engine:
-                type: string
-              engineVersion:
-                type: string
-              nodeSnapshots:
+              events:
                 items:
                   properties:
-                    cacheClusterID:
-                      type: string
-                    cacheNodeCreateTime:
+                    date:
                       format: date-time
                       type: string
-                    cacheNodeID:
+                    message:
                       type: string
-                    cacheSize:
-                      type: string
-                    nodeGroupConfiguration:
-                      properties:
-                        nodeGroupID:
-                          type: string
-                        primaryAvailabilityZone:
-                          type: string
-                        primaryOutpostARN:
-                          type: string
-                        replicaAvailabilityZones:
-                          items:
-                            type: string
-                          type: array
-                        replicaCount:
-                          format: int64
-                          type: integer
-                        replicaOutpostARNs:
-                          items:
-                            type: string
-                          type: array
-                        slots:
-                          type: string
-                      type: object
-                    nodeGroupID:
-                      type: string
-                    snapshotCreateTime:
-                      format: date-time
+                    sourceIdentifier:
                       type: string
                   type: object
                 type: array
-              numCacheNodes:
-                format: int64
-                type: integer
-              numNodeGroups:
-                format: int64
-                type: integer
-              port:
-                format: int64
-                type: integer
-              preferredAvailabilityZone:
-                type: string
-              preferredMaintenanceWindow:
-                type: string
-              preferredOutpostARN:
-                type: string
-              replicationGroupDescription:
-                type: string
-              snapshotRetentionLimit:
-                format: int64
-                type: integer
-              snapshotSource:
-                type: string
-              snapshotStatus:
-                type: string
-              snapshotWindow:
-                type: string
-              topicARN:
-                type: string
-              vpcID:
-                type: string
+              isGlobal:
+                type: boolean
+              parameters:
+                items:
+                  properties:
+                    allowedValues:
+                      type: string
+                    dataType:
+                      type: string
+                    description:
+                      type: string
+                    isModifiable:
+                      type: boolean
+                    minimumEngineVersion:
+                      type: string
+                    parameterName:
+                      type: string
+                    parameterValue:
+                      type: string
+                    source:
+                      type: string
+                  type: object
+                type: array
             required:
             - ackResourceMetadata
             - conditions

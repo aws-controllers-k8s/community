@@ -1,8 +1,8 @@
 apiVersion: v1
 name: ack-dynamodb-controller
 description: A Helm chart for the ACK service controller for dynamodb
-version: v0.0.1
-appVersion: v0.0.1
+version: v0.0.2
+appVersion: v0.0.2
 home: https://github.com/aws/aws-controllers-k8s
 icon: https://raw.githubusercontent.com/aws/eks-charts/master/docs/logo/aws.png
 sources:
