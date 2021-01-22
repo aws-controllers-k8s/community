@@ -67,8 +67,9 @@ type TrainingJobStatus struct {
 // TrainingJob is the Schema for the TrainingJobs API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="TrainingJobStatus",type=string,JSONPath=`.status.trainingJobStatus`
+// +kubebuilder:printcolumn:name="FailureReason",type=string,JSONPath=`.status.failureReason`
 // +kubebuilder:printcolumn:name="SecondaryStatus",type=string,JSONPath=`.status.secondaryStatus`
+// +kubebuilder:printcolumn:name="TrainingJobStatus",type=string,JSONPath=`.status.trainingJobStatus`
 type TrainingJob struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

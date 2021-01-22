@@ -57,8 +57,8 @@ type ProcessingJobStatus struct {
 // ProcessingJob is the Schema for the ProcessingJobs API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="FailureReason",type=string,JSONPath=`.status.failureReason`
 // +kubebuilder:printcolumn:name="ProcessingJobStatus",type=string,JSONPath=`.status.processingJobStatus`
+// +kubebuilder:printcolumn:name="FailureReason",type=string,JSONPath=`.status.failureReason`
 type ProcessingJob struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

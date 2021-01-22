@@ -7,12 +7,16 @@ operations:
     resource_name: ProcessingJob
 resources:
   Model:
+    update_operation:
+      custom_method_name: customUpdateModel
     exceptions:
       errors:
         404:
           code: ValidationException
           message_prefix: Could not find model
   TrainingJob:
+    update_operation:
+      custom_method_name: customUpdateTrainingJob
     exceptions:
       errors:
           404:
@@ -33,10 +37,13 @@ resources:
           path: SecondaryStatus
       FailureReason:
         is_read_only: true
+        is_printable: true
         from:
           operation: DescribeTrainingJob
           path: FailureReason 
   ProcessingJob:
+    update_operation:
+      custom_method_name: customUpdateProcessingJob
     exceptions:
       errors:
           404:

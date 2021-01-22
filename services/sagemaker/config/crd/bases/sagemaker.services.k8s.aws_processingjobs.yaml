@@ -17,11 +17,11 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.failureReason
-      name: FailureReason
-      type: string
     - jsonPath: .status.processingJobStatus
       name: ProcessingJobStatus
+      type: string
+    - jsonPath: .status.failureReason
+      name: FailureReason
       type: string
     name: v1alpha1
     schema:
