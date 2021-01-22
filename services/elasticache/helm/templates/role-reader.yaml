@@ -1,0 +1,21 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ack-elasticache-reader
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - elasticache.services.k8s.aws
+  resources:
+  - cacheparametergroups
+  - cachesubnetgroups
+  - replicationgroups
+  - snapshots
+  - users
+  - usergroups
+  verbs:
+  - get
+  - list
+  - watch

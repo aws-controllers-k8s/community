@@ -1,0 +1,27 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ack-apigatewayv2-reader
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - apigatewayv2.services.k8s.aws
+  resources:
+  - apis
+  - apimappings
+  - authorizers
+  - deployments
+  - domainnames
+  - integrations
+  - integrationresponses
+  - models
+  - routes
+  - routeresponses
+  - stages
+  - vpclinks
+  verbs:
+  - get
+  - list
+  - watch

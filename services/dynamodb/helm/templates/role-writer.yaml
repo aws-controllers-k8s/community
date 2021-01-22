@@ -1,0 +1,35 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ack-dynamodb-writer
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - backups
+
+  - globaltables
+
+  - tables
+
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dynamodb.services.k8s.aws
+  resources:
+  - backups
+  - globaltables
+  - tables
+  verbs:
+  - get
+  - patch
+  - update

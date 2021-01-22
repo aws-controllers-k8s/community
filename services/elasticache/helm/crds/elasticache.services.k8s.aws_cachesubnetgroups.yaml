@@ -108,6 +108,18 @@ spec:
                   - type
                   type: object
                 type: array
+              events:
+                items:
+                  properties:
+                    date:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    sourceIdentifier:
+                      type: string
+                  type: object
+                type: array
               subnets:
                 items:
                   properties:
@@ -118,6 +130,11 @@ spec:
                       type: object
                     subnetIdentifier:
                       type: string
+                    subnetOutpost:
+                      properties:
+                        subnetOutpostARN:
+                          type: string
+                      type: object
                   type: object
                 type: array
               vpcID:

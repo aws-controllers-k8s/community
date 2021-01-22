@@ -1,0 +1,32 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ack-sfn-writer
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - sfn.services.k8s.aws
+  resources:
+  - activities
+
+  - statemachines
+
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sfn.services.k8s.aws
+  resources:
+  - activities
+  - statemachines
+  verbs:
+  - get
+  - patch
+  - update
