@@ -60,9 +60,9 @@ func Release(
 ) (*templateset.TemplateSet, error) {
 	ts := templateset.New(
 		templateBasePath,
-		apisIncludePaths,
-		apisCopyPaths,
-		apisFuncMap,
+		releaseIncludePaths,
+		releaseCopyPaths,
+		releaseFuncMap,
 	)
 
 	metaVars := g.MetaVars()

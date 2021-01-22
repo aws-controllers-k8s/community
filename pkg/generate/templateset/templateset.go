@@ -95,7 +95,8 @@ func (ts *TemplateSet) Execute() error {
 		ts.executed[path] = &b
 	}
 	for _, path := range ts.copyPaths {
-		b, err := byteBufferFromFile(path)
+		copyPath := filepath.Join(ts.basePath, path)
+		b, err := byteBufferFromFile(copyPath)
 		if err != nil {
 			return err
 		}
