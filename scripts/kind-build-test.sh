@@ -19,6 +19,7 @@ AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-"false"}
 ACK_LOG_LEVEL="debug"
+ACK_RESOURCE_TAGS='services.k8s.aws/managed=true, services.k8s.aws/created=%UTCNOW%, services.k8s.aws/namespace=%KUBERNETES_NAMESPACE%'
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION=${K8S_VERSION:-"1.16"}
 PRESERVE=${PRESERVE:-"false"}
@@ -146,6 +147,7 @@ export AWS_REGION
 export AWS_ROLE_ARN
 export ACK_ENABLE_DEVELOPMENT_LOGGING
 export ENABLE_PROMETHEUS
+export ACK_RESOURCE_TAGS
 export ACK_LOG_LEVEL
 
 service_config_dir="$ROOT_DIR/services/$AWS_SERVICE/config"
@@ -190,6 +192,7 @@ kubectl -n ack-system set env deployment/ack-"$AWS_SERVICE"-controller \
     AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
     ACK_ENABLE_DEVELOPMENT_LOGGING="$ACK_ENABLE_DEVELOPMENT_LOGGING" \
     ACK_LOG_LEVEL="$ACK_LOG_LEVEL" \
+    ACK_RESOURCE_TAGS="$ACK_RESOURCE_TAGS" \
     AWS_REGION="$AWS_REGION" 1>/dev/null
 sleep 10
 echo "ok."

@@ -30,6 +30,7 @@ const (
 	flagAWSAccountID         = "aws-account-id"
 	flagAWSRegion            = "aws-region"
 	flagLogLevel             = "log-level"
+	flagResourceTags         = "resource-tags"
 )
 
 // Config contains configuration otpions for ACK service controllers
@@ -41,6 +42,7 @@ type Config struct {
 	AccountID                string
 	Region                   string
 	LogLevel                 string
+	ResourceTags             []string
 }
 
 // BindFlags defines CLI/runtime configuration options
@@ -81,6 +83,11 @@ func (cfg *Config) BindFlags() {
 		&cfg.LogLevel, flagLogLevel,
 		"info",
 		"The log level. Default is info. We use logr interface which only supports info and debug level",
+	)
+	flag.StringSliceVar(
+		&cfg.ResourceTags, flagResourceTags,
+		[]string{},
+		"Configures the ACK service controller to always set key/value pairs tags on resources that it manages.",
 	)
 }
 

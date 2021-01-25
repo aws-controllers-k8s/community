@@ -34,6 +34,8 @@ spec:
         - "$(ACK_ENABLE_DEVELOPMENT_LOGGING)"
         - --log-level
         - "$(ACK_LOG_LEVEL)"
+        - --resource-tags
+        - "$(ACK_RESOURCE_TAGS)"
         image: controller:latest
         name: controller
         ports:
