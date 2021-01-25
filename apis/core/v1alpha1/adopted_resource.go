@@ -19,7 +19,8 @@ import (
 
 // AdoptedResourceSpec defines the desired state of the AdoptedResource.
 type AdoptedResourceSpec struct {
-	Kubernetes PartialObjectMeta `json:"kubernetes,omitempty"`
+	// +kubebuilder:validation:Required
+	Kubernetes TargetKubernetesResource `json:"kubernetes"`
 	// +kubebuilder:validation:Required
 	AWS AWSResourceReference `json:"aws"`
 }

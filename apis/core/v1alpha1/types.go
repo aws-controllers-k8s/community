@@ -97,3 +97,13 @@ type PartialObjectMeta struct {
 	// +patchStrategy=merge
 	OwnerReferences []metav1.OwnerReference `json:"ownerReferences,omitempty" patchStrategy:"merge" patchMergeKey:"uid" protobuf:"bytes,6,rep,name=ownerReferences"`
 }
+
+// TargetKubernetesResource provides all the values necessary to identify a given ACK type
+// and override any metadata values when creating a resource of that type.
+type TargetKubernetesResource struct {
+	// +kubebuilder:validation:Required
+	Kind string `json:"kind"`
+	// +kubebuilder:validation:Required
+	APIVersion string            `json:"apiVersion"`
+	Metadata   PartialObjectMeta `json:"metadata,omitempty"`
+}
