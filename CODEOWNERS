@@ -3,5 +3,5 @@
 # https://github.com/blog/2392-introducing-code-owners
 
 # Amazon SageMaker CodeOwners
-/services/sagemaker @akartsky @jkuruba @mbaijal @RedbackThomson @surajkota
-/test/e2e/sagemaker @akartsky @jkuruba @mbaijal @RedbackThomson @surajkota
+/services/sagemaker @aws/sagemaker-operator @jkuruba
+/test/e2e/sagemaker @aws/sagemaker-operator @jkuruba
