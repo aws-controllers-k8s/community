@@ -3637,6 +3637,16 @@ func (in *UserStatus) DeepCopyInto(out *UserStatus) {
 		*out = new(Authentication)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.LastAppliedAccessString != nil {
+		in, out := &in.LastAppliedAccessString, &out.LastAppliedAccessString
+		*out = new(string)
+		**out = **in
+	}
+	if in.ResponseAccessString != nil {
+		in, out := &in.ResponseAccessString, &out.ResponseAccessString
+		*out = new(string)
+		**out = **in
+	}
 	if in.Status != nil {
 		in, out := &in.Status, &out.Status
 		*out = new(string)

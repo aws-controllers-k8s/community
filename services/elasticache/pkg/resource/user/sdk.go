@@ -188,6 +188,12 @@ func (rm *resourceManager) sdkCreate(
 
 	rm.setStatusDefaults(ko)
 
+	// custom set output from response
+	ko, err = rm.CustomCreateUserSetOutput(ctx, r, resp, ko)
+	if err != nil {
+		return nil, err
+	}
+
 	return &resource{ko}, nil
 }
 
@@ -235,6 +241,11 @@ func (rm *resourceManager) sdkUpdate(
 	diffReporter *ackcompare.Reporter,
 ) (*resource, error) {
 
+	customResp, customRespErr := rm.CustomModifyUser(ctx, desired, latest, diffReporter)
+	if customResp != nil || customRespErr != nil {
+		return customResp, customRespErr
+	}
+
 	input, err := rm.newUpdateRequestPayload(desired)
 	if err != nil {
 		return nil, err
@@ -280,6 +291,12 @@ func (rm *resourceManager) sdkUpdate(
 	}
 
 	rm.setStatusDefaults(ko)
+
+	// custom set output from response
+	ko, err = rm.CustomModifyUserSetOutput(ctx, desired, resp, ko)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resource{ko}, nil
 }
@@ -399,6 +416,24 @@ func (rm *resourceManager) updateConditions(
 // and if the exception indicates that it is a Terminal exception
 // 'Terminal' exception are specified in generator configuration
 func (rm *resourceManager) terminalAWSError(err error) bool {
-	// No terminal_errors specified for this resource in generator config
-	return false
+	if err == nil {
+		return false
+	}
+	awsErr, ok := ackerr.AWSError(err)
+	if !ok {
+		return false
+	}
+	switch awsErr.Code() {
+	case "UserAlreadyExists",
+		"UserQuotaExceeded",
+		"DuplicateUserName",
+		"InvalidParameterValue",
+		"InvalidParameterCombination",
+		"InvalidUserState",
+		"UserNotFound",
+		"DefaultUserAssociatedToUserGroup":
+		return true
+	default:
+		return false
+	}
 }

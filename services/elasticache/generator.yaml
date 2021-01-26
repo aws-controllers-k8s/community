@@ -98,6 +98,28 @@ resources:
           path: Events
     update_operation:
       custom_method_name: customUpdateCacheParameterGroup
+  User:
+    exceptions:
+      terminal_codes:
+        - UserAlreadyExists
+        - UserQuotaExceeded
+        - DuplicateUserName
+        - InvalidParameterValue
+        - InvalidParameterCombination
+        - InvalidUserState
+        - UserNotFound
+        - DefaultUserAssociatedToUserGroup
+    fields:
+      LastAppliedAccessString:
+        is_read_only: true
+        from:
+          operation: CreateUser
+          path: AccessString
+      ResponseAccessString:
+        is_read_only: true
+        from:
+          operation: CreateUser
+          path: AccessString
 operations:
   DescribeCacheSubnetGroups:
     set_output_custom_method_name: CustomDescribeCacheSubnetGroupsSetOutput
@@ -119,6 +141,11 @@ operations:
     set_output_custom_method_name: CustomCreateCacheParameterGroupSetOutput
   DescribeCacheParameterGroups:
     set_output_custom_method_name: CustomDescribeCacheParameterGroupsSetOutput
+  CreateUser:
+    set_output_custom_method_name: CustomCreateUserSetOutput
+  ModifyUser:
+    custom_implementation: CustomModifyUser
+    set_output_custom_method_name: CustomModifyUserSetOutput
 ignore:
   resource_names:
     - GlobalReplicationGroup

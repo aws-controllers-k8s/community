@@ -123,6 +123,10 @@ spec:
                   - type
                   type: object
                 type: array
+              lastAppliedAccessString:
+                type: string
+              responseAccessString:
+                type: string
               status:
                 type: string
               userGroupIDs:

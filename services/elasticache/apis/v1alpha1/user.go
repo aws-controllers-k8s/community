@@ -44,10 +44,12 @@ type UserStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions     []*ackv1alpha1.Condition `json:"conditions"`
-	Authentication *Authentication          `json:"authentication,omitempty"`
-	Status         *string                  `json:"status,omitempty"`
-	UserGroupIDs   []*string                `json:"userGroupIDs,omitempty"`
+	Conditions              []*ackv1alpha1.Condition `json:"conditions"`
+	Authentication          *Authentication          `json:"authentication,omitempty"`
+	LastAppliedAccessString *string                  `json:"lastAppliedAccessString,omitempty"`
+	ResponseAccessString    *string                  `json:"responseAccessString,omitempty"`
+	Status                  *string                  `json:"status,omitempty"`
+	UserGroupIDs            []*string                `json:"userGroupIDs,omitempty"`
 }
 
 // User is the Schema for the Users API
