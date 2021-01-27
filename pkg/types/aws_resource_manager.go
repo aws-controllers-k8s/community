@@ -77,7 +77,7 @@ type AWSResourceManagerFactory interface {
 		ackcfg.Config, // passed by-value to avoid mutation by consumers
 		logr.Logger,
 		*ackmetrics.Metrics,
-		AWSResourceReconciler,
+		ACKReconciler,
 		*session.Session,
 		ackv1alpha1.AWSAccountID,
 		ackv1alpha1.AWSRegion,

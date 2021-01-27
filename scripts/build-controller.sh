@@ -103,7 +103,14 @@ if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
 fi
 
 echo "Building common Kubernetes API objects"
-controller-gen paths=$ROOT_DIR/apis/... crd:trivialVersions=true object:headerFile=$TEMPLATES_DIR/boilerplate.txt output:crd:artifacts:config=$ROOT_DIR/config/crd/bases
+
+common_config_output_dir=$ROOT_DIR/config
+
+controller-gen paths=$ROOT_DIR/apis/...
+    crd:trivialVersions=true object:headerFile=$TEMPLATES_DIR/boilerplate.txt \
+    output:crd:artifacts:config=$common_config_output_dir/crd/bases
+
+controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME crd paths=$ROOT_DIR/apis/... output:rbac:artifacts:config=$common_config_output_dir/rbac \
 
 echo "Building Kubernetes API objects for $SERVICE"
 $ACK_GENERATE_BIN_PATH $apis_args

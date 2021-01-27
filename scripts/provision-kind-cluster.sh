@@ -66,7 +66,7 @@ debug_msg "kind: using Kubernetes $K8_VERSION"
 echo -n "creating kind cluster $cluster_name ... "
 for i in $(seq 0 5); do
   if [[ -z $(kind get clusters 2>/dev/null | grep $cluster_name) ]]; then
-      kind create cluster -q --name "$cluster_name" --image $K8_VERSION --config "$KIND_CONFIG_FILE" --kubeconfig $TMP_DIR/kubeconfig 1>&2 || :
+      kind create cluster --name "$cluster_name" --image $K8_VERSION --config "$KIND_CONFIG_FILE" --kubeconfig $TMP_DIR/kubeconfig 1>&2 || :
   else
       break
   fi

@@ -35,26 +35,31 @@ import (
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 )
 
-// reconciler is responsible for reconciling the state of a SINGLE KIND of
-// Kubernetes custom resources (CRs) that represent AWS service API resources.
-// It implements the upstream controller-runtime `Reconciler` interface.
-//
-// The upstream controller-runtime.Manager object ends up managing MULTIPLE
-// controller-runtime.Controller objects (each containing a single reconciler
-// object)s and sharing watch and informer queues across those controllers.
+// reconciler describes a generic reconciler within ACK.
 type reconciler struct {
 	kc      client.Client
-	rmf     acktypes.AWSResourceManagerFactory
-	rd      acktypes.AWSResourceDescriptor
 	log     logr.Logger
 	cfg     ackcfg.Config
 	cache   ackrtcache.Caches
 	metrics *ackmetrics.Metrics
 }
 
+// resourceReconciler is responsible for reconciling the state of a SINGLE KIND of
+// Kubernetes custom resources (CRs) that represent AWS service API resources.
+// It implements the upstream controller-runtime `Reconciler` interface.
+//
+// The upstream controller-runtime.Manager object ends up managing MULTIPLE
+// controller-runtime.Controller objects (each containing a single resourceReconciler
+// object)s and sharing watch and informer queues across those controllers.
+type resourceReconciler struct {
+	reconciler
+	rmf acktypes.AWSResourceManagerFactory
+	rd  acktypes.AWSResourceDescriptor
+}
+
 // GroupKind returns the string containing the API group and kind reconciled by
 // this reconciler
-func (r *reconciler) GroupKind() *metav1.GroupKind {
+func (r *resourceReconciler) GroupKind() *metav1.GroupKind {
 	if r.rd == nil {
 		return nil
 	}
@@ -63,7 +68,7 @@ func (r *reconciler) GroupKind() *metav1.GroupKind {
 
 // BindControllerManager sets up the AWSResourceReconciler with an instance
 // of an upstream controller-runtime.Manager
-func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
+func (r *resourceReconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	if r.rmf == nil {
 		return ackerr.NilResourceManagerFactory
 	}
@@ -85,7 +90,7 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 
 // SecretValueFromReference fetches the value of a Secret given a
 // SecretReference
-func (r *reconciler) SecretValueFromReference(
+func (r *resourceReconciler) SecretValueFromReference(
 	ref *corev1.SecretReference,
 ) (string, error) {
 	// TODO(alina-kim): Implement this method :)
@@ -94,11 +99,11 @@ func (r *reconciler) SecretValueFromReference(
 
 // Reconcile implements `controller-runtime.Reconciler` and handles reconciling
 // a CR CRUD request
-func (r *reconciler) Reconcile(req ctrlrt.Request) (ctrlrt.Result, error) {
+func (r *resourceReconciler) Reconcile(req ctrlrt.Request) (ctrlrt.Result, error) {
 	return r.handleReconcileError(r.reconcile(req))
 }
 
-func (r *reconciler) reconcile(req ctrlrt.Request) error {
+func (r *resourceReconciler) reconcile(req ctrlrt.Request) error {
 	ctx := context.Background()
 	res, err := r.getAWSResource(ctx, req)
 	if err != nil {
@@ -140,7 +145,7 @@ func (r *reconciler) reconcile(req ctrlrt.Request) error {
 
 // sync ensures that the supplied AWSResource's backing API resource
 // matches the supplied desired state
-func (r *reconciler) sync(
+func (r *resourceReconciler) sync(
 	ctx context.Context,
 	rm acktypes.AWSResourceManager,
 	desired acktypes.AWSResource,
@@ -240,7 +245,7 @@ func (r *reconciler) sync(
 
 // patchResource patches the custom resource in the Kubernetes API to match the
 // supplied latest resource.
-func (r *reconciler) patchResource(
+func (r *resourceReconciler) patchResource(
 	ctx context.Context,
 	desired acktypes.AWSResource,
 	latest acktypes.AWSResource,
@@ -266,7 +271,7 @@ func (r *reconciler) patchResource(
 
 // cleanup ensures that the supplied AWSResource's backing API resource is
 // destroyed along with all child dependent resources
-func (r *reconciler) cleanup(
+func (r *resourceReconciler) cleanup(
 	ctx context.Context,
 	rm acktypes.AWSResourceManager,
 	current acktypes.AWSResource,
@@ -296,7 +301,7 @@ func (r *reconciler) cleanup(
 // setResourceManaged marks the underlying CR in the supplied AWSResource with
 // a finalizer that indicates the object is under ACK management and will not
 // be deleted until that finalizer is removed (in setResourceUnmanaged())
-func (r *reconciler) setResourceManaged(
+func (r *resourceReconciler) setResourceManaged(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
@@ -320,7 +325,7 @@ func (r *reconciler) setResourceManaged(
 // setResourceUnmanaged removes a finalizer from the underlying CR in the
 // supplied AWSResource that indicates the object is under ACK management. This
 // allows the CR to be deleted by the Kubernetes API server.
-func (r *reconciler) setResourceUnmanaged(
+func (r *resourceReconciler) setResourceUnmanaged(
 	ctx context.Context,
 	res acktypes.AWSResource,
 ) error {
@@ -343,7 +348,7 @@ func (r *reconciler) setResourceUnmanaged(
 
 // getAWSResource returns an AWSResource representing the requested Kubernetes
 // namespaced object
-func (r *reconciler) getAWSResource(
+func (r *resourceReconciler) getAWSResource(
 	ctx context.Context,
 	req ctrlrt.Request,
 ) (acktypes.AWSResource, error) {
@@ -356,7 +361,7 @@ func (r *reconciler) getAWSResource(
 
 // handleReconcileError will handle errors from reconcile handlers, which
 // respects runtime errors.
-func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
+func (r *resourceReconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 	if err == nil || err == ackerr.Terminal {
 		return ctrlrt.Result{}, nil
 	}
@@ -389,7 +394,7 @@ func (r *reconciler) handleReconcileError(err error) (ctrlrt.Result, error) {
 // by the default AWS account ID associated with the Kubernetes Namespace in
 // which the CR was created, followed by the AWS Account in which the IAM Role
 // that the service controller is in.
-func (r *reconciler) getOwnerAccountID(
+func (r *resourceReconciler) getOwnerAccountID(
 	res acktypes.AWSResource,
 ) ackv1alpha1.AWSAccountID {
 	acctID := res.Identifiers().OwnerAccountID()
@@ -410,7 +415,7 @@ func (r *reconciler) getOwnerAccountID(
 
 // getRoleARN return the Role ARN that should be assumed in order to manage
 // the resources.
-func (r *reconciler) getRoleARN(
+func (r *resourceReconciler) getRoleARN(
 	acctID ackv1alpha1.AWSAccountID,
 ) ackv1alpha1.AWSResourceName {
 	roleARN, _ := r.cache.Accounts.GetAccountRoleARN(string(acctID))
@@ -422,7 +427,7 @@ func (r *reconciler) getRoleARN(
 // we look for the namespace associated region, if that is set we use it. Finally
 // if none of these annotations are set we use the use the region specified in the
 // configuration is used
-func (r *reconciler) getRegion(
+func (r *resourceReconciler) getRegion(
 	res acktypes.AWSResource,
 ) ackv1alpha1.AWSRegion {
 	// look for region in CR metadata annotations
@@ -450,11 +455,13 @@ func NewReconciler(
 	cfg ackcfg.Config,
 	metrics *ackmetrics.Metrics,
 ) acktypes.AWSResourceReconciler {
-	return &reconciler{
-		rmf:     rmf,
-		rd:      rmf.ResourceDescriptor(),
-		log:     log.WithName("ackrt"),
-		cfg:     cfg,
-		metrics: metrics,
+	return &resourceReconciler{
+		reconciler: reconciler{
+			log:     log.WithName("ackrt"),
+			cfg:     cfg,
+			metrics: metrics,
+		},
+		rmf: rmf,
+		rd:  rmf.ResourceDescriptor(),
 	}
 }

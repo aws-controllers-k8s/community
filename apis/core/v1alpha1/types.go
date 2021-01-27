@@ -17,13 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AWSResourceReference defines all unique ways to reference an AWS resource.
-type AWSResourceReference struct {
-	ARN  AWSResourceName `json:"arn,omitempty"`
-	Name string          `json:"name,omitempty"`
-	ID   string          `json:"id,omitempty"`
-}
-
 // ObjectMeta is metadata that all persisted resources must have, which includes all objects
 // users must create.
 // It is not possible to use `metav1.ObjectMeta` inside spec, as the controller-gen
@@ -96,14 +89,4 @@ type PartialObjectMeta struct {
 	// +patchMergeKey=uid
 	// +patchStrategy=merge
 	OwnerReferences []metav1.OwnerReference `json:"ownerReferences,omitempty" patchStrategy:"merge" patchMergeKey:"uid" protobuf:"bytes,6,rep,name=ownerReferences"`
-}
-
-// TargetKubernetesResource provides all the values necessary to identify a given ACK type
-// and override any metadata values when creating a resource of that type.
-type TargetKubernetesResource struct {
-	// +kubebuilder:validation:Required
-	Kind string `json:"kind"`
-	// +kubebuilder:validation:Required
-	APIVersion string            `json:"apiVersion"`
-	Metadata   PartialObjectMeta `json:"metadata,omitempty"`
 }

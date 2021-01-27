@@ -37,9 +37,9 @@ type resourceManager struct {
 	// metrics contains a collection of Prometheus metric objects that the
 	// service controller and its reconcilers track
 	metrics *ackmetrics.Metrics
-	// rr is the AWSResourceReconciler which can be used for various utility
+	// rr is the ACKReconciler which can be used for various utility
 	// functions such as querying for Secret values given a SecretReference
-	rr acktypes.AWSResourceReconciler
+	rr acktypes.ACKReconciler
 	// awsAccountID is the AWS account identifier that contains the resources
 	// managed by this resource manager
 	awsAccountID ackv1alpha1.AWSAccountID
@@ -160,7 +160,7 @@ func newResourceManager(
 	cfg ackcfg.Config,
 	log logr.Logger,
 	metrics *ackmetrics.Metrics,
-	rr acktypes.AWSResourceReconciler,
+	rr acktypes.ACKReconciler,
 	sess *session.Session,
 	id ackv1alpha1.AWSAccountID,
 	region ackv1alpha1.AWSRegion,

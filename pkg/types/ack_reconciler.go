@@ -14,22 +14,24 @@
 package types
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	ctrlrt "sigs.k8s.io/controller-runtime"
+	ctrlreconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// AWSResourceReconciler is responsible for reconciling the state of a SINGLE
-// KIND of Kubernetes custom resources (CRs) that represent AWS service API
-// resources.  It implements the upstream controller-runtime `Reconciler`
-// interface.
+// ACKReconciler is responsible for reconciling the state of any single custom
+// resource within the cluster.
 //
 // The upstream controller-runtime.Manager object ends up managing MULTIPLE
 // controller-runtime.Controller objects (each containing a single
-// AWSResourceReconciler object)s and sharing watch and informer queues across
+// ACKReconciler object)s and sharing watch and informer queues across
 // those controllers.
-type AWSResourceReconciler interface {
-	ACKReconciler
-	// GroupKind returns the
-	// sigs.k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind containing the API
-	// group and kind reconciled by this reconciler
-	GroupKind() *metav1.GroupKind
+type ACKReconciler interface {
+	ctrlreconcile.Reconciler
+	// BindControllerManager sets up the AWSResourceReconciler with an instance
+	// of an upstream controller-runtime.Manager
+	BindControllerManager(ctrlrt.Manager) error
+	// SecretValueFromReference fetches the value of a Secret given a
+	// SecretReference
+	SecretValueFromReference(*corev1.SecretReference) (string, error)
 }

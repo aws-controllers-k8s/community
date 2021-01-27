@@ -13,16 +13,7 @@
 
 package types
 
-import (
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-)
-
-// AWSResourceIdentifiers has methods that returns common identifying
-// information about a resource
-type AWSResourceIdentifiers interface {
-	AccountIDProvider
-	// ARN returns the AWS Resource Name for the backend AWS resource. If nil,
-	// this means the resource has not yet been created in the backend AWS
-	// service.
-	ARN() *ackv1alpha1.AWSResourceName
+// ACKAdoptionReconciler
+type ACKAdoptionReconciler interface {
+	ACKReconciler
 }

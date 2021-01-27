@@ -34,6 +34,11 @@ var (
 	// information that the resource being checked for existence was
 	// previously-created out of band from ACK
 	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
+	// ResourceManagerFactoryNotFound is return when a lookup into the resource
+	// manager factory mapping fails
+	ResourceManagerFactoryNotFound = fmt.Errorf("resource manager factory " +
+		"not found",
+	)
 	// TemporaryOutOfSync is to indicate the error isn't really an error
 	// but more of a marker that the status check will be performed
 	// after some wait time

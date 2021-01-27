@@ -126,7 +126,7 @@ fi
 echo "$AWS_SERVICE_DOCKER_IMG" > "${TMP_DIR}"/"${AWS_SERVICE}"_docker-img
 
 echo -n "loading the images into the cluster ... "
-kind load docker-image --quiet --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}" || exit 1
+kind load docker-image --name "${CLUSTER_NAME}" --nodes="${CLUSTER_NAME}"-worker,"${CLUSTER_NAME}"-control-plane "${AWS_SERVICE_DOCKER_IMG}" || exit 1
 echo "ok."
 if [[ "$ENABLE_PROMETHEUS" == true ]]; then
     echo -n "Loading prometheus image into the cluster ... "
