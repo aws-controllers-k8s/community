@@ -2,7 +2,13 @@
 FROM golang:1.14.1 as builder
 
 ARG service_alias
-ARG work_dir=/github.com/aws/aws-controllers-k8s
+# The tuple of controller image version information
+ARG service_controller_git_version
+ARG service_controller_git_commit
+ARG build_date
+# The directory within the builder container into which we will copy our
+# service controller code.
+ARG work_dir=/github.com/aws-controllers-k8s/$service_alias-controller
 WORKDIR $work_dir
 # For building Go Module required
 ENV GOPROXY=https://proxy.golang.org,direct
@@ -10,26 +16,32 @@ ENV GO111MODULE=on
 ENV GOARCH=amd64
 ENV GOOS=linux
 ENV CGO_ENABLED=0
-ENV VERSION_PKG=github.com/aws/aws-controllers-k8s/pkg/version
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+ENV VERSION_PKG=github.com/aws-controllers-k8s/$service_alias-controller/pkg/version
+# Copy the Go Modules manifests and LICENSE/ATTRIBUTION
+COPY LICENSE $work_dir/LICENSE
+COPY ATTRIBUTION.md $work_dir/ATTRIBUTION.md
+COPY go.mod $work_dir/go.mod
+COPY go.sum $work_dir/go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN  go mod download
-# Copy the go source
-COPY . $work_dir/
+
+# Now copy the go source code for the controller...
+COPY apis $work_dir/apis
+COPY cmd $work_dir/cmd
+COPY pkg $work_dir/pkg
 # Build
-RUN GIT_VERSION=$(git describe --tags --dirty --always) && \
-    GIT_COMMIT=$(git rev-parse HEAD) && \
-    BUILD_DATE=$(date +%Y-%m-%dT%H:%M) && \
+RUN GIT_VERSION=$service_controller_git_version && \
+    GIT_COMMIT=$service_controller_git_commit && \
+    BUILD_DATE=$build_date && \
     go build -ldflags="-X ${VERSION_PKG}.GitVersion=${GIT_VERSION} \
     -X ${VERSION_PKG}.GitCommit=${GIT_COMMIT} \
     -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" \
-    -a -o $work_dir/bin/controller $work_dir/services/$service_alias/cmd/controller/main.go
+    -a -o $work_dir/bin/controller $work_dir/cmd/controller/main.go
 
 FROM amazonlinux:2
-ARG work_dir=/github.com/aws/aws-controllers-k8s
+ARG service_alias
+ARG work_dir=/github.com/aws-controllers-k8s/$service_alias-controller
 WORKDIR /
 COPY --from=builder $work_dir/bin/controller $work_dir/LICENSE $work_dir/ATTRIBUTION.md /bin/
 ENTRYPOINT ["/bin/controller"]
