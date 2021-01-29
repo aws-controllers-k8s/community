@@ -139,4 +139,7 @@ type FieldConfig struct {
 	// From instructs the code generator that the value of the field should
 	// be retrieved from the specified operation and member path
 	From *SourceFieldConfig `json:"from,omitempty"`
+	// IsSecret instructs the code generator that this field should be of a
+	// secret type.
+	IsSecret bool `json:"is_secret"`
 }

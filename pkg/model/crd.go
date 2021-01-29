@@ -139,6 +139,16 @@ func (r *CRD) HasShapeAsMember(toFind string) bool {
 	return false
 }
 
+// HasSecret returns true if the CRD has at least one secret field.
+func (r *CRD) HasSecret() bool {
+	fieldConfigs := r.cfg.ResourceFields(r.Names.Original)
+	for _, config := range fieldConfigs {
+		if config.IsSecret {
+			return true
+		}
+	}
+	return false
+}
 func shapeHasMember(shape *awssdkmodel.Shape, toFind string) bool {
 	if shape.ShapeName == toFind {
 		return true

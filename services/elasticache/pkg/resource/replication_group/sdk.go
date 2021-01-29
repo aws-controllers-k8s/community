@@ -319,7 +319,7 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
-	input, err := rm.newCreateRequestPayload(r)
+	input, err := rm.newCreateRequestPayload(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -533,6 +533,7 @@ func (rm *resourceManager) sdkCreate(
 // newCreateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Create API call for the resource
 func (rm *resourceManager) newCreateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.CreateReplicationGroupInput, error) {
 	res := &svcsdk.CreateReplicationGroupInput{}
@@ -541,7 +542,15 @@ func (rm *resourceManager) newCreateRequestPayload(
 		res.SetAtRestEncryptionEnabled(*r.ko.Spec.AtRestEncryptionEnabled)
 	}
 	if r.ko.Spec.AuthToken != nil {
-		res.SetAuthToken(*r.ko.Spec.AuthToken)
+		resp, err := rm.rr.SecretValueFromReference(ctx,
+			r.ko.Spec.AuthToken.Namespace,
+			r.ko.Spec.AuthToken.Name,
+			r.ko.Spec.AuthToken.Key)
+
+		if err != nil {
+			return nil, err
+		}
+		res.SetAuthToken(*resp)
 	}
 	if r.ko.Spec.AutoMinorVersionUpgrade != nil {
 		res.SetAutoMinorVersionUpgrade(*r.ko.Spec.AutoMinorVersionUpgrade)
@@ -730,7 +739,7 @@ func (rm *resourceManager) sdkUpdate(
 		return customResp, customRespErr
 	}
 
-	input, err := rm.newUpdateRequestPayload(desired)
+	input, err := rm.newUpdateRequestPayload(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -944,13 +953,22 @@ func (rm *resourceManager) sdkUpdate(
 // newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.ModifyReplicationGroupInput, error) {
 	res := &svcsdk.ModifyReplicationGroupInput{}
 
 	res.SetApplyImmediately(true)
 	if r.ko.Spec.AuthToken != nil {
-		res.SetAuthToken(*r.ko.Spec.AuthToken)
+		resp, err := rm.rr.SecretValueFromReference(ctx,
+			r.ko.Spec.AuthToken.Namespace,
+			r.ko.Spec.AuthToken.Name,
+			r.ko.Spec.AuthToken.Key)
+
+		if err != nil {
+			return nil, err
+		}
+		res.SetAuthToken(*resp)
 	}
 	if r.ko.Spec.AutoMinorVersionUpgrade != nil {
 		res.SetAutoMinorVersionUpgrade(*r.ko.Spec.AutoMinorVersionUpgrade)

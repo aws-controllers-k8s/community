@@ -17,8 +17,8 @@ import (
 type {{ .CRD.Kind }}Spec struct {
 	{{- range $fieldName, $field := .CRD.SpecFields }}
 	{{ if $field.IsRequired }} // +kubebuilder:validation:Required
-	{{ $field.Names.Camel }} {{ $field.GoType }} `json:"{{ $field.Names.CamelLower }}"`
-	{{- else }} {{ $field.Names.Camel }} {{ $field.GoType }} `json:"{{ $field.Names.CamelLower }},omitempty"` {{ end }}
+	{{ $field.Names.Camel }} {{ if $field.IsSecret }}*SecretReference{{- else }}{{ $field.GoType }}{{- end }} `json:"{{ $field.Names.CamelLower }}"`
+	{{- else }} {{ $field.Names.Camel }} {{ if $field.IsSecret }}*SecretReference{{- else }}{{ $field.GoType }}{{- end }} `json:"{{ $field.Names.CamelLower }},omitempty"` {{ end }}
 {{- end }}
 }
 

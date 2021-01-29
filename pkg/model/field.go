@@ -46,6 +46,11 @@ func (f *Field) IsRequired() bool {
 	return util.InStrings(f.Names.ModelOrginal, f.CRD.Ops.Create.InputRef.Shape.Required)
 }
 
+// IsSecret returns true if a field is a secret.
+func (f *Field) IsSecret() bool {
+	return f.FieldConfig != nil && f.FieldConfig.IsSecret
+}
+
 // newField returns a pointer to a new Field object
 func newField(
 	crd *CRD,

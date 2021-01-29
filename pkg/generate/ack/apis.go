@@ -69,11 +69,19 @@ func APIs(
 	)
 
 	metaVars := g.MetaVars()
+	crds, _ = g.GetCRDs()
+	hassecret := false
+	for _, crd := range crds {
+		if crd.HasSecret() {
+			hassecret = true
+		}
+	}
 	apiVars := &templateAPIVars{
 		metaVars,
 		enumDefs,
 		typeDefs,
 		typeImports,
+		hassecret,
 	}
 	for _, path := range apisTemplatePaths {
 		outPath := strings.TrimSuffix(filepath.Base(path), ".tpl")
@@ -99,9 +107,10 @@ func APIs(
 // code in the /services/$SERVICE/apis/$API_VERSION directory
 type templateAPIVars struct {
 	templateset.MetaVars
-	EnumDefs []*ackmodel.EnumDef
-	TypeDefs []*ackmodel.TypeDef
-	Imports  map[string]string
+	EnumDefs  []*ackmodel.EnumDef
+	TypeDefs  []*ackmodel.TypeDef
+	Imports   map[string]string
+	HasSecret bool
 }
 
 // templateCRDVars contains template variables for the template that outputs Go

@@ -39,7 +39,20 @@ spec:
               atRestEncryptionEnabled:
                 type: boolean
               authToken:
-                type: string
+                description: SecretReference has enough information to retrieve secret
+                  in any namespace.
+                properties:
+                  key:
+                    description: Key of the secret.
+                    type: string
+                  name:
+                    description: Name of secret in a given namespace.
+                    type: string
+                  namespace:
+                    description: Namespace defines the space within which the secret
+                      name must be unique.
+                    type: string
+                type: object
               autoMinorVersionUpgrade:
                 type: boolean
               automaticFailoverEnabled:

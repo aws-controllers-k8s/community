@@ -23,7 +23,7 @@ import (
 // ReplicationGroupSpec defines the desired state of ReplicationGroup
 type ReplicationGroupSpec struct {
 	AtRestEncryptionEnabled    *bool                     `json:"atRestEncryptionEnabled,omitempty"`
-	AuthToken                  *string                   `json:"authToken,omitempty"`
+	AuthToken                  *SecretReference          `json:"authToken,omitempty"`
 	AutoMinorVersionUpgrade    *bool                     `json:"autoMinorVersionUpgrade,omitempty"`
 	AutomaticFailoverEnabled   *bool                     `json:"automaticFailoverEnabled,omitempty"`
 	CacheNodeType              *string                   `json:"cacheNodeType,omitempty"`

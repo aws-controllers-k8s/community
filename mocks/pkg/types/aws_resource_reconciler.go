@@ -3,8 +3,9 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
-	corev1 "k8s.io/api/core/v1"
 	manager "sigs.k8s.io/controller-runtime/pkg/manager"
 
 	reconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -68,20 +69,20 @@ func (_m *AWSResourceReconciler) Reconcile(_a0 reconcile.Request) (reconcile.Res
 	return r0, r1
 }
 
-// SecretValueFromReference provides a mock function with given fields: _a0
-func (_m *AWSResourceReconciler) SecretValueFromReference(_a0 *corev1.SecretReference) (string, error) {
-	ret := _m.Called(_a0)
+// SecretValueFromReference provides a mock function with given fields: ctx, namespace, name, key
+func (_m *AWSResourceReconciler) SecretValueFromReference(ctx context.Context, namespace string, name string, key string) (string, error) {
+	ret := _m.Called(ctx, namespace, name, key)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(*corev1.SecretReference) string); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) string); ok {
+		r0 = rf(ctx, namespace, name, key)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*corev1.SecretReference) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, namespace, name, key)
 	} else {
 		r1 = ret.Error(1)
 	}

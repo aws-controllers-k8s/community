@@ -53,6 +53,8 @@ resources:
         from:
           operation: DescribeEvents
           path: Events
+      AuthToken:
+        is_secret: true
   Snapshot:
     update_conditions_custom_method_name: CustomUpdateConditions
     exceptions:

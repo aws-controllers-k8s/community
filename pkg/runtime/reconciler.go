@@ -43,13 +43,14 @@ import (
 // controller-runtime.Controller objects (each containing a single reconciler
 // object)s and sharing watch and informer queues across those controllers.
 type reconciler struct {
-	kc      client.Client
-	rmf     acktypes.AWSResourceManagerFactory
-	rd      acktypes.AWSResourceDescriptor
-	log     logr.Logger
-	cfg     ackcfg.Config
-	cache   ackrtcache.Caches
-	metrics *ackmetrics.Metrics
+	kc        client.Client
+	rmf       acktypes.AWSResourceManagerFactory
+	rd        acktypes.AWSResourceDescriptor
+	log       logr.Logger
+	cfg       ackcfg.Config
+	cache     ackrtcache.Caches
+	metrics   *ackmetrics.Metrics
+	clientSet kubernetes.Clientset
 }
 
 // GroupKind returns the string containing the API group and kind reconciled by
@@ -75,6 +76,7 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 	r.kc = mgr.GetClient()
 	r.cache = ackrtcache.New(clientset, r.log)
 	r.cache.Run()
+	r.clientSet = *clientset
 	rd := r.rmf.ResourceDescriptor()
 	return ctrlrt.NewControllerManagedBy(
 		mgr,
@@ -84,12 +86,34 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 }
 
 // SecretValueFromReference fetches the value of a Secret given a
-// SecretReference
+// namespace, name and key of the secret
 func (r *reconciler) SecretValueFromReference(
-	ref *corev1.SecretReference,
-) (string, error) {
-	// TODO(alina-kim): Implement this method :)
-	return "", ackerr.NotImplemented
+	ctx context.Context,
+	namespace string,
+	name string,
+	key string,
+) (*string, error) {
+
+	if namespace == "" {
+		namespace = "default"
+	}
+	secret, err := r.clientSet.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Currently we have only Opaque secrets in scope.
+	if secret.Type != corev1.SecretTypeOpaque {
+		return nil, ackerr.NotImplemented
+	}
+
+	if value, ok := secret.Data[key]; ok {
+		valuestr := string(value)
+		return &valuestr, nil
+	}
+
+	return nil, ackerr.NotFound
 }
 
 // Reconcile implements `controller-runtime.Reconciler` and handles reconciling

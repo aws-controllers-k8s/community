@@ -253,7 +253,7 @@ func (rm *resourceManager) sdkCreate(
 	if customResp != nil || customRespErr != nil {
 		return customResp, customRespErr
 	}
-	input, err := rm.newCreateRequestPayload(r)
+	input, err := rm.newCreateRequestPayload(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -415,6 +415,7 @@ func (rm *resourceManager) sdkCreate(
 // newCreateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Create API call for the resource
 func (rm *resourceManager) newCreateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.CreateSnapshotInput, error) {
 	res := &svcsdk.CreateSnapshotInput{}
