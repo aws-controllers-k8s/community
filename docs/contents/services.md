@@ -15,29 +15,29 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 
 | AWS Service | Current Status | Next Milestone
 | ----------- | -------------- | --------------
-| Amazon [ACM][Amazon ACM] | `PROPOSED` |
-| Amazon [API Gateway V2][Amazon API Gateway v2] | `DEVELOPER PREVIEW` | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/15)
-| Amazon [CloudFront Distribution][Amazon CloudFront Distribution] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/14)
-| Amazon [DynamoDB][Amazon DynamoDB] | `DEVELOPER PREVIEW` |
-| Amazon [ECR][Amazon ECR] | `DEVELOPER PREVIEW` |
-| Amazon [EFS][Amazon EFS] | `PROPOSED` |
-| Amazon [EKS][Amazon EKS] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/7)
-| Amazon [ElastiCache][Amazon ElastiCache] | `DEVELOPER PREVIEW` | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/9)
-| Amazon [Elasticsearch][Amazon Elasticsearch] | `PROPOSED` |
-| Amazon [EC2 VPC][Amazon EC2 VPC] | `PROPOSED` |
-| AWS [IAM][AWS IAM] | `PROPOSED` |
-| AWS [Kinesis][AWS Kinesis] | `PROPOSED` |
-| Amazon [KMS][Amazon KMS] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/18)
-| AWS [Lambda][AWS Lambda] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
-| Amazon [MQ][Amazon MQ] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/12)
-| Amazon [MSK][Amazon MSK] | `PLANNED` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/13)
-| Amazon [RDS][Amazon RDS] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/8)
-| Amazon [Route53][Amazon Route53] | `PROPOSED` |
-| Amazon [SageMaker][Amazon SageMaker] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/11)
-| Amazon [SNS][Amazon SNS] | `DEVELOPER PREVIEW` |
-| Amazon [SQS][Amazon SQS] | `BUILD` | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/6)
-| AWS [StepFunctions][AWS StepFunctions] | `DEVELOPER PREVIEW`
-| Amazon [S3][Amazon S3] | `DEVELOPER PREVIEW` |
+| Amazon [ACM](#amazon-acm) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/482) |
+| Amazon [API Gateway V2](#amazon-api-gateway-v2) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/207) | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/15)
+| Amazon [CloudFront Distribution](#amazon-cloudfront-distribution) | [`PLANNED`](https://github.com/aws/aws-controllers-k8s/issues/249) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/14)
+| Amazon [DynamoDB](#amazon-dynamodb) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/2060) |
+| Amazon [ECR](#amazon-ecr) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/208) |
+| Amazon [EFS](#amazon-efs) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/328) |
+| Amazon [EKS](#amazon-eks) | [`PLANNED`](https://github.com/aws/aws-controllers-k8s/issues/16) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/7)
+| Amazon [ElastiCache](#amazon-elasticache) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/240) | [`BETA`](https://github.com/aws/aws-controllers-k8s/milestone/9)
+| Amazon [Elasticsearch](#amazon-elasticsearch) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/503) |
+| Amazon [EC2 VPC](#amazon-ec2-vpc) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/489) |
+| AWS [IAM](#aws-iam) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/222) |
+| AWS [Lambda](#aws-lambda) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/238) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
+| AWS [Kinesis](#aws-kinesis) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/235) |
+| Amazon [KMS](#amazon-kms) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/491) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/18)
+| Amazon [MQ](#amazon-mq) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/390) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/12)
+| Amazon [MSK](#amazon-msk) | [`PLANNED`](https://github.com/aws/aws-controllers-k8s/issues/348) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/13)
+| Amazon [RDS](#amazon-rds) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/237) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/8)
+| Amazon [Route53](#amazon-route53) | [`PROPOSED`](https://github.com/aws/aws-controllers-k8s/issues/480) |
+| Amazon [SageMaker](#amazon-sagemaker) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/385) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/11)
+| Amazon [SNS](#amazon-sns) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/202) |
+| Amazon [SQS](#amazon-sqs) | [`BUILD`](https://github.com/aws/aws-controllers-k8s/issues/205) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/6)
+| AWS [Step Functions](#aws-step-functions) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/239) |
+| Amazon [S3](#amazon-s3) | [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/issues/204) |
 
 !!! note "Don't see a service listed?"
     If you don't see a particular AWS service listed, feel free to
@@ -124,12 +124,6 @@ Controller Release Roadmap](https://github.com/aws/aws-controllers-k8s/projects/
 * Current release status: `BUILD`
 * Next milestone: [`DEVELOPER PREVIEW`](https://github.com/aws/aws-controllers-k8s/milestone/10)
 * AWS service documentation: https://aws.amazon.com/lambda/
-
-## Amazon EFS
-
-* Proposed: https://github.com/aws/aws-controllers-k8s/issues/328
-* Current release status: `PROPOSED`
-* AWS service documentation: https://aws.amazon.com/efs/
 
 ## Amazon Kinesis
 
