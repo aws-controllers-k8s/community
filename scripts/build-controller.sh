@@ -7,7 +7,6 @@ set -eo pipefail
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
-TEMPLATES_DIR="$ROOT_DIR/templates"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
@@ -21,9 +20,14 @@ if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
 fi
 
 ACK_GENERATE_CACHE_DIR=${ACK_GENERATE_CACHE_DIR:-"~/.cache/aws-controllers-k8s"}
-ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-"$BIN_DIR/ack-generate"}
+# The ack-generate code generator is in a separate source code repository,
+# typically at $GOPATH/src/github.com/aws-controllers-k8s/code-generator
+DEFAULT_ACK_GENERATE_BIN_PATH="$ROOT_DIR/../../aws-controllers-k8s/code-generator/bin/ack-generate"
+ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-$DEFAULT_ACK_GENERATE_BIN_PATH}
 ACK_GENERATE_API_VERSION=${ACK_GENERATE_API_VERSION:-"v1alpha1"}
 ACK_GENERATE_CONFIG_PATH=${ACK_GENERATE_CONFIG_PATH:-""}
+DEFAULT_TEMPLATES_DIR="$ROOT_DIR/../../aws-controllers-k8s/code-generator/templates"
+TEMPLATES_DIR=${TEMPLATES_DIR:-$DEFAULT_TEMPLATES_DIR}
 
 USAGE="
 Usage:
@@ -44,9 +48,12 @@ Environment variables:
                             previously generated, the latest generated API
                             version is used. If the service controller has yet
                             to be generated, 'v1alpha1' is used.
+  SERVICE_CONTROLLER_SOURCE_PATH: Path to the service controller source code
+                            repository.
+                            Default: ../{SERVICE}-controller
   ACK_GENERATE_CONFIG_PATH: Specify a path to the generator config YAML file to
                             instruct the code generator for the service.
-                            Default: services/{SERVICE}/generator.yaml
+                            Default: {SERVICE_CONTROLLER_SOURCE_PATH}/generator.yaml
   K8S_RBAC_ROLE_NAME:       Name of the Kubernetes Role to use when generating
                             the RBAC manifests for the custom resource
                             definitions.
@@ -71,23 +78,35 @@ run:
  
 from the root directory or install ack-generate using:
 
-   go get -u github.com/aws/aws-controllers-k8s/cmd/ack-generate" 1>&2
+   go get -u github.com/aws-controllers-k8s/code-generator/cmd/ack-generate" 1>&2
         exit 1;
     fi
 fi
 SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+# Source code for the controller will be in a separate repo, typically in
+# $GOPATH/src/github.com/aws-controllers-k8s/$AWS_SERVICE-controller/
+DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH="$ROOT_DIR/../$SERVICE-controller"
+SERVICE_CONTROLLER_SOURCE_PATH=${SERVICE_CONTROLLER_SOURCE_PATH:-$DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH}
+
+if [[ ! -d $SERVICE_CONTROLLER_SOURCE_PATH ]]; then
+    echo "Error evaluating SERVICE_CONTROLLER_SOURCE_PATH environment variable:" 1>&2
+    echo "$SERVICE_CONTROLLER_SOURCE_PATH is not a directory." 1>&2
+    echo "${USAGE}"
+    exit 1
+fi
 
 K8S_RBAC_ROLE_NAME=${K8S_RBAC_ROLE_NAME:-"ack-$SERVICE-controller"}
 
 # If there's a generator.yaml in the service's directory and the caller hasn't
 # specified an override, use that.
 if [ -z "$ACK_GENERATE_CONFIG_PATH" ]; then
-    if [ -f "$ROOT_DIR/services/$SERVICE/generator.yaml" ]; then
-        ACK_GENERATE_CONFIG_PATH="$ROOT_DIR/services/$SERVICE/generator.yaml"
+    if [ -f "$SERVICE_CONTROLLER_SOURCE_PATH/generator.yaml" ]; then
+        ACK_GENERATE_CONFIG_PATH="$SERVICE_CONTROLLER_SOURCE_PATH/generator.yaml"
     fi
 fi
 
-ag_args="$SERVICE"
+ag_args="$SERVICE -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
 fi
@@ -108,9 +127,9 @@ if [ $? -ne 0 ]; then
     exit 2
 fi
 
-config_output_dir="$ROOT_DIR/services/$SERVICE/config/"
+config_output_dir="$SERVICE_CONTROLLER_SOURCE_PATH/config/"
 
-pushd services/$SERVICE/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
+pushd $SERVICE_CONTROLLER_SOURCE_PATH/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
 
 echo "Generating deepcopy code for $SERVICE"
 controller-gen object:headerFile=$TEMPLATES_DIR/boilerplate.txt paths=./...
@@ -130,7 +149,7 @@ if [ $? -ne 0 ]; then
     exit 2
 fi
 
-pushd services/$SERVICE/pkg/resource 1>/dev/null
+pushd $SERVICE_CONTROLLER_SOURCE_PATH/pkg/resource 1>/dev/null
 
 echo "Generating RBAC manifests for $SERVICE"
 controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifacts:config=$config_output_dir/rbac
@@ -143,4 +162,4 @@ mv $config_output_dir/rbac/role.yaml $config_output_dir/rbac/cluster-role-contro
 popd 1>/dev/null
 
 echo "Running gofmt against generated code for $SERVICE"
-gofmt -w "services/$SERVICE"
+gofmt -w "$SERVICE_CONTROLLER_SOURCE_PATH"
