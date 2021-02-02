@@ -45,7 +45,7 @@ ROOT_DIR="$THIS_DIR/.."
 ```
 
 It is consistent with how it's done in other folders like `/test`.
-It works even if the scripts are sourced. Otherwise, whit alternatives that make use of `dirname $0`, it will point to the bash binary when sourced instead. E.g.:
+It works even if the scripts are sourced. Otherwise, with alternatives that make use of `dirname $0`, it will point to the bash binary when sourced instead, e.g.:
 
 ``` bash
 #!/usr/bin/env bash
@@ -71,7 +71,7 @@ Then,
 ### Default values for variables
 
 
-Use `VAR=${VAR:-default}`. E.g.:
+Use `VAR=${VAR:-default}`:
 
 ``` bash
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
