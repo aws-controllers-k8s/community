@@ -16,15 +16,14 @@ package v1alpha1
 const (
 	// AnnotationPrefix is the prefix for all ACK annotations
 	AnnotationPrefix = "services.k8s.aws/"
-	// AnnotationARN is an annotation whose value is an Amazon Resource Name,
-	// which is a globally-unique identifier, for the backend AWS service API
-	// resource. If this annotation is SET on a CR, that means the user is
+	// AnnotationAdopted is an annotation whose value is a boolean value,
+	// If this annotation is set to true on a CR, that means the user is
 	// indicating to the ACK service controller that it should expect a backend
 	// AWS service API resource to already exist (and that ACK should "adopt"
-	// the resource into its management). If this annotation is NOT SET on a
-	// CR, that means the user expects the ACK service controller to create the
-	// backend AWS service API resource.
-	AnnotationARN = AnnotationPrefix + "arn"
+	// the resource into its management). If this annotation is set to false on
+	// a CR, that means the user expects the ACK service controller to create
+	// the backend AWS service API resource.
+	AnnotationAdopted = AnnotationPrefix + "adopted"
 	// AnnotationOwnerAccountID is an annotation whose value is the identifier
 	// for the AWS account to which the resource belongs.  If this annotation
 	// is set on a CR, the Kubernetes user is indicating that the ACK service

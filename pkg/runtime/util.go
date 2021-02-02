@@ -14,6 +14,8 @@
 package runtime
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
@@ -32,9 +34,12 @@ func IsAdopted(res acktypes.AWSResource) bool {
 		// Should never happen... if it does, it's buggy code.
 		panic("IsAdopted received resource with nil RuntimeObject")
 	}
-	for k := range mo.GetAnnotations() {
-		if k == ackv1alpha1.AnnotationARN {
-			return true
+	for k, v := range mo.GetAnnotations() {
+		if k == ackv1alpha1.AnnotationAdopted {
+			if strings.ToLower(v) == "true" {
+				return true
+			}
+			return false
 		}
 	}
 	return false

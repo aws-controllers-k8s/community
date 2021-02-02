@@ -94,6 +94,8 @@ type CRD struct {
 	// ShortNames represent the CRD list of aliases. Short names allow shorter
 	// strings to match a CR on the CLI.
 	ShortNames []string
+	// NameField is the original SDK member name of the identifier spec field
+	NameField string
 }
 
 // Config returns a pointer to the generator config
@@ -405,7 +407,7 @@ func (r *CRD) UpdateConditionsCustomMethodName() string {
 }
 
 // NameField returns the name of the "Name" or string identifier field in the Spec
-func (r *CRD) NameField() string {
+func (r *CRD) GetNameField() string {
 	if r.cfg != nil {
 		rConfig, found := r.cfg.Resources[r.Names.Original]
 		if found {

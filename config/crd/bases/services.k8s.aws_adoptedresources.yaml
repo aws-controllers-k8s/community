@@ -184,6 +184,9 @@ spec:
           status:
             description: AdoptedResourceStatus defines the observed status of the
               AdoptedResource.
+            properties:
+              adoptionStatus:
+                type: string
             type: object
         type: object
     served: true

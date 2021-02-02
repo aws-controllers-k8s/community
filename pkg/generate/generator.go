@@ -223,6 +223,9 @@ func (g *Generator) GetCRDs() ([]*ackmodel.CRD, error) {
 			}
 		}
 
+		// TODO(nithomso): Is this the correct casing?
+		crd.NameField = crd.GetNameField()
+
 		crds = append(crds, crd)
 	}
 	sort.Slice(crds, func(i, j int) bool {

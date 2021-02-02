@@ -90,3 +90,10 @@ type PartialObjectMeta struct {
 	// +patchStrategy=merge
 	OwnerReferences []metav1.OwnerReference `json:"ownerReferences,omitempty" patchStrategy:"merge" patchMergeKey:"uid" protobuf:"bytes,6,rep,name=ownerReferences"`
 }
+
+type AdoptionStatus string
+
+const (
+	AdoptionStatus_Adopted AdoptionStatus = "Adopted"
+	AdoptionStatus_Error   AdoptionStatus = "Error"
+)

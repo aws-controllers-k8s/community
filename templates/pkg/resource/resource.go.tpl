@@ -54,3 +54,13 @@ func (r *resource) RuntimeMetaObject() acktypes.RuntimeMetaObject {
 func (r *resource) Conditions() []*ackv1alpha1.Condition {
 	return r.ko.Status.Conditions
 }
+
+// SetNameField sets the name spec field for the resource to a given value
+func (r *resource) SetNameField(identifier string) {
+	r.ko.Spec.{{ .CRD.NameField }} = &identifier;
+}
+
+// SetObjectMeta sets the ObjectMeta field for the resource
+func (r *resource) SetObjectMeta(meta metav1.ObjectMeta) {
+	r.ko.ObjectMeta = meta;
+}

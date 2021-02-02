@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
 	ctrlrt "sigs.k8s.io/controller-runtime"
 
@@ -32,6 +33,12 @@ import (
 	ackrtcache "github.com/aws/aws-controllers-k8s/pkg/runtime/cache"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8sctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+const (
+	finalizerString = "finalizers.services.k8s.aws/AdoptedResource"
 )
 
 // adoptionReconciler is responsible for reconciling the state of any adopted resources
@@ -99,12 +106,12 @@ func (r *adoptionReconciler) reconcile(req ctrlrt.Request) error {
 		return ackerr.ResourceManagerFactoryNotFound
 	}
 
-	targetRD := rmf.ResourceDescriptor()
+	targetDescriptor := rmf.ResourceDescriptor()
 	acctID := r.getOwnerAccountID(res)
 	region := r.getRegion(res)
 	roleARN := r.getRoleARN(acctID)
 
-	sess, err := NewSession(region, roleARN, targetRD.EmptyRuntimeObject().GetObjectKind().GroupVersionKind())
+	sess, err := NewSession(region, roleARN, targetDescriptor.EmptyRuntimeObject().GetObjectKind().GroupVersionKind())
 	if err != nil {
 		return err
 	}
@@ -119,16 +126,122 @@ func (r *adoptionReconciler) reconcile(req ctrlrt.Request) error {
 		return err
 	}
 
-	return r.sync(ctx, rm, res)
+	if res.DeletionTimestamp != nil {
+		return r.cleanup(ctx, *res)
+	}
+
+	// TODO(RedbackThomson): Should we early return here? Or what criteria would be better for stopping?
+	// Another option is to get the name and namespace of the target resource and check whether it exists
+	if r.isManaged(*res) {
+		return nil
+	}
+
+	return r.sync(ctx, targetDescriptor, rm, res)
 }
 
 func (r *adoptionReconciler) sync(
 	ctx context.Context,
+	targetDescriptor acktypes.AWSResourceDescriptor,
 	rm acktypes.AWSResourceManager,
 	desired *ackv1alpha1.AdoptedResource,
 ) error {
-	fmt.Printf("RM: %v", rm)
-	fmt.Printf("Res: %v", desired)
+	readableResource := targetDescriptor.ResourceFromRuntimeObject(targetDescriptor.EmptyRuntimeObject())
+
+	if desired.Spec.AWS.Name != nil {
+		readableResource.SetNameField(*desired.Spec.AWS.Name)
+	} else if desired.Spec.AWS.ID != nil {
+		readableResource.SetNameField(*desired.Spec.AWS.ID)
+	} else if desired.Spec.AWS.ARN != nil {
+		// TODO(nithomso): Set ARN
+	} else {
+		return fmt.Errorf("must provide at least one value for identifier")
+	}
+
+	described, err := rm.ReadOne(ctx, readableResource)
+	if err != nil {
+		return err
+	}
+
+	rmo := described.RuntimeMetaObject()
+
+	// Use values from ReadOne output by default
+	targetMeta := &metav1.ObjectMeta{
+		Labels:          rmo.GetLabels(),
+		Annotations:     rmo.GetAnnotations(),
+		Finalizers:      rmo.GetFinalizers(),
+		OwnerReferences: rmo.GetOwnerReferences(),
+		GenerateName:    rmo.GetGenerateName(),
+	}
+
+	desiredMetadata := desired.Spec.Kubernetes.Metadata
+
+	// Attempt to use metadata values from the adopted resource target metadata
+	if desiredMetadata != nil {
+		if desiredMetadata.Name != "" {
+			targetMeta.SetName(desiredMetadata.Name)
+		}
+
+		if desiredMetadata.Namespace != "" {
+			targetMeta.SetNamespace(desiredMetadata.Namespace)
+		}
+
+		if len(desiredMetadata.Annotations) > 0 {
+			targetMeta.SetAnnotations(desiredMetadata.Annotations)
+		}
+
+		if len(desiredMetadata.Labels) > 0 {
+			targetMeta.SetLabels(desiredMetadata.Labels)
+		}
+
+		if len(desiredMetadata.OwnerReferences) > 0 {
+			targetMeta.SetOwnerReferences(desiredMetadata.OwnerReferences)
+		}
+
+		if desiredMetadata.GenerateName != "" {
+			targetMeta.SetGenerateName(desiredMetadata.GenerateName)
+		}
+	}
+
+	// If name and namespace not are specified, use the ones from the adopted
+	// resource directly.
+	if targetMeta.Name == "" {
+		targetMeta.SetName(desired.ObjectMeta.Name)
+	}
+
+	if targetMeta.Namespace == "" {
+		targetMeta.SetNamespace(desired.ObjectMeta.Namespace)
+	}
+
+	described.SetObjectMeta(*targetMeta)
+	targetDescriptor.MarkAdopted(described)
+
+	err = r.kc.Create(ctx, described.RuntimeObject())
+	if err != nil {
+		return err
+	}
+
+	if err := r.markManaged(ctx, *desired); err != nil {
+		return err
+	}
+
+	err = r.patchAdoptedResourceStatus(ctx, desired, ackv1alpha1.AdoptionStatus_Adopted)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// cleanup ensures that the supplied AWSResource's backing API resource is
+// destroyed along with all child dependent resources
+func (r *adoptionReconciler) cleanup(
+	ctx context.Context,
+	current ackv1alpha1.AdoptedResource,
+) error {
+	if err := r.markUnmanaged(ctx, current); err != nil {
+		return err
+	}
+	// Additional logic?
 	return nil
 }
 
@@ -145,6 +258,16 @@ func (r *adoptionReconciler) getAdoptedResource(
 	return ro, nil
 }
 
+// patchAdoptedResourceStatus updates the status of the adopted resource
+func (r *adoptionReconciler) patchAdoptedResourceStatus(
+	ctx context.Context,
+	res *ackv1alpha1.AdoptedResource,
+	status ackv1alpha1.AdoptionStatus,
+) error {
+	res.Status.AdoptionStatus = &status
+	return r.kc.Status().Update(ctx, res)
+}
+
 // getTargetResourceGroupKind returns the GroupKind as specified in the spec of
 // the AdoptedResource object.
 func (r *adoptionReconciler) getTargetResourceGroupKind(
@@ -154,6 +277,62 @@ func (r *adoptionReconciler) getTargetResourceGroupKind(
 		Group: *res.Spec.Kubernetes.Group,
 		Kind:  *res.Spec.Kubernetes.Kind,
 	}
+}
+
+// isManaged returns true if the supplied AdoptedResource is under the management
+// of an ACK service controller.
+func (r *adoptionReconciler) isManaged(
+	res ackv1alpha1.AdoptedResource,
+) bool {
+	return containsFinalizer(res.ObjectMeta, finalizerString)
+}
+
+// Remove once https://github.com/kubernetes-sigs/controller-runtime/issues/994
+// is fixed.
+func containsFinalizer(obj metav1.ObjectMeta, finalizer string) bool {
+	f := obj.GetFinalizers()
+	for _, e := range f {
+		if e == finalizer {
+			return true
+		}
+	}
+	return false
+}
+
+// markManaged places the supplied resource under the management of ACK.
+func (r *adoptionReconciler) markManaged(
+	ctx context.Context,
+	res ackv1alpha1.AdoptedResource,
+) error {
+	orig := res.DeepCopyObject()
+	k8sctrlutil.AddFinalizer(&res.ObjectMeta, finalizerString)
+	err := r.kc.Patch(
+		ctx,
+		res.DeepCopyObject(),
+		client.MergeFrom(orig),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// markUnmanaged removes the supplied resource from management by ACK.
+func (r *adoptionReconciler) markUnmanaged(
+	ctx context.Context,
+	res ackv1alpha1.AdoptedResource,
+) error {
+	orig := res.DeepCopyObject()
+	k8sctrlutil.RemoveFinalizer(&res.ObjectMeta, finalizerString)
+	err := r.kc.Patch(
+		ctx,
+		res.DeepCopyObject(),
+		client.MergeFrom(orig),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // handleReconcileError will handle errors from reconcile handlers, which

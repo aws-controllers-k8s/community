@@ -16,6 +16,7 @@
 package bucket
 
 import (
+	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
 	acktypes "github.com/aws/aws-controllers-k8s/pkg/types"
 	"github.com/google/go-cmp/cmp"
@@ -36,6 +37,7 @@ var (
 		Group: "s3.services.k8s.aws",
 		Kind:  "Bucket",
 	}
+	nameField string = "Name"
 )
 
 // resourceDescriptor implements the
@@ -53,6 +55,12 @@ func (d *resourceDescriptor) GroupKind() *metav1.GroupKind {
 // apimachinery and k8s client operations
 func (d *resourceDescriptor) EmptyRuntimeObject() k8sapirt.Object {
 	return &svcapitypes.Bucket{}
+}
+
+// NameField returns the name of the spec field which specifies the unique
+// identifier for any resource of the given type
+func (d *resourceDescriptor) NameField() string {
+	return nameField
 }
 
 // ResourceFromRuntimeObject returns an AWSResource that has been initialized
@@ -170,4 +178,22 @@ func (d *resourceDescriptor) MarkUnmanaged(
 		panic("nil RuntimeMetaObject in AWSResource")
 	}
 	k8sctrlutil.RemoveFinalizer(obj, finalizerString)
+}
+
+// MarkAdopted places descriptors on the custom resource that indicate the
+// resource was not created from within ACK.
+func (d *resourceDescriptor) MarkAdopted(
+	res acktypes.AWSResource,
+) {
+	obj := res.RuntimeMetaObject()
+	if obj == nil {
+		// Should not happen. If it does, there is a bug in the code
+		panic("nil RuntimeMetaObject in AWSResource")
+	}
+	curr := obj.GetAnnotations()
+	if curr == nil {
+		curr = make(map[string]string)
+	}
+	curr[ackv1alpha1.AnnotationAdopted] = "true"
+	obj.SetAnnotations(curr)
 }

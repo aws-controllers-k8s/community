@@ -27,6 +27,7 @@ type AdoptedResourceSpec struct {
 
 // AdoptedResourceStatus defines the observed status of the AdoptedResource.
 type AdoptedResourceStatus struct {
+	AdoptionStatus *AdoptionStatus `json:"adoptionStatus,omitempty"`
 }
 
 // AdoptedResource is the schema for the AdoptedResource API.
@@ -41,6 +42,7 @@ type AdoptedResource struct {
 
 // AdoptedResourceList defines a list of AdoptedResources.
 // +kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="AdoptionStatus",type=string,JSONPath=`.status.adoptionStatus`
 type AdoptedResourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

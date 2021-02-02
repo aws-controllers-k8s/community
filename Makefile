@@ -9,6 +9,8 @@ DOCKER_PASSWORD ?= ""
 
 AWS_SERVICE=$(shell echo $(SERVICE) | tr '[:upper:]' '[:lower:]')
 
+AUTHENTICATED_ACCOUNT_ID=$(shell source ./scripts/lib/aws.sh && daws sts get-caller-identity --output text --query "Account")
+
 # Build ldflags
 VERSION ?= "v0.0.0"
 GITCOMMIT=$(shell git rev-parse HEAD)
@@ -36,6 +38,13 @@ test: | mocks	## Run code tests
 
 clean-mocks:	## Remove mocks directory
 	rm -rf mocks
+
+local-run-controller: ## Run a controller image locally for SERVICE
+	@go run ./services/$(AWS_SERVICE)/cmd/controller/main.go \
+		--aws-account-id=$(AUTHENTICATED_ACCOUNT_ID) \
+		--aws-region=us-west-2 \
+		--enable-development-logging \
+		--log-level=debug
 
 build-controller-image:	## Build container image for SERVICE
 	@./scripts/build-controller-image.sh $(AWS_SERVICE)

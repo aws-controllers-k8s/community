@@ -33,6 +33,9 @@ type AWSResourceDescriptor interface {
 	// ResourceFromRuntimeObject returns an AWSResource that has been
 	// initialized with the supplied runtime.Object
 	ResourceFromRuntimeObject(k8srt.Object) AWSResource
+	// NameField returns the name of the spec field which specifies the unique
+	// identifier for any resource of the given type
+	NameField() string
 	// Equal returns true if the two supplied AWSResources have the same
 	// content. The underlying types of the two supplied AWSResources should be
 	// the same. In other words, the Equal() method should be called with the
@@ -65,4 +68,7 @@ type AWSResourceDescriptor interface {
 	// the resource. This will allow the Kubernetes API server to delete the
 	// underlying CR.
 	MarkUnmanaged(AWSResource)
+	// MarkAdopted places descriptors on the custom resource that indicate the
+	// resource was not created from within ACK.
+	MarkAdopted(AWSResource)
 }
