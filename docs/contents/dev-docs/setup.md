@@ -70,10 +70,10 @@ at your forked repository location in your personal Github space).
 You can use this script to do this for you:
 
 ```bash
-GITHUB_ID="your GH userid"
+GITHUB_ID="your GH username"
 
 # Set this to "" if you did NOT take my advice above in the tip about prefixing
-your personal forked ACK repository names with "ack-"
+# your personal forked ACK repository names with "ack-"
 ACK_REPO_PREFIX="ack-"
 
 # Clone all the common ACK repositories...
@@ -149,3 +149,8 @@ source repository and there open the pull request as depicted below:
 
 We monitor the GitHub repo and try to follow up with comments within a working
 day.
+
+## Next Steps
+
+After getting familiar with the various ACK source code repositories, now learn
+[how to build an ACK service controller](../build-controller).

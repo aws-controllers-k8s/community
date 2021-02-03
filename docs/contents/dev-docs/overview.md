@@ -53,18 +53,23 @@ charts for the controller installation (`/helm`).
 Read about [how the code generator infers][api-inference] information about a
 Kubernetes Custom Resource Definitions (CRDs) from an AWS API model file.
 
+[api-inference]: https://aws.github.io/aws-controllers-k8s/dev-docs/api-inference/
+
 ## Code Generation
 
 The [code generation](../code-generation/) section gives you a bit of background
 on how we go about automating the code generation for controllers and supporting
 artifacts.
 
-[api-inference]: https://aws.github.io/aws-controllers-k8s/dev-docs/api-inference/
-
 ## Setting up a Development Environemnt
 
 In the [setup](../setup/) section we walk you through setting up your local Git
 environment with the repo and how advise you on how we handle contributions.
+
+## Building an ACK Service Controller
+
+After getting your development environment established, you will want to learn
+[how to build an ACK service controller](../build-controller).
 
 ## Testing an ACK Service Controller
 
