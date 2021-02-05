@@ -17,6 +17,8 @@ GO_LDFLAGS=-ldflags "-X main.version=$(VERSION) \
 			-X main.buildHash=$(GITCOMMIT) \
 			-X main.buildDate=$(BUILDDATE)"
 
+ACK_CODE_GENERATOR_SOURCE_PATH = "../../aws-controllers-k8s/code-generator"
+
 # We need to use the codegen tag when building and testing because the
 # aws-sdk-go/private/model/api package is gated behind a build tag "codegen"...
 GO_TAGS=-tags codegen
@@ -27,9 +29,15 @@ GO_TAGS=-tags codegen
 all: test
 
 build-ack-generate:	## Build ack-generate binary
-	@echo -n "building ack-generate ... "
-	@go build ${GO_TAGS} ${GO_LDFLAGS} -o bin/ack-generate cmd/ack-generate/main.go
-	@echo "ok."
+	@if [ ! -d "$(ACK_CODE_GENERATOR_SOURCE_PATH)" ]; then \
+		echo "Unable to find aws-controllers-k8s/code-generator source repository. Please git clone the aws-controllers-k8s/code-generator repository into your Go src path."; \
+	else \
+		echo -n "building ack-generate in aws-controllers-k8s/code-generator repo ... "; \
+		pushd "$(ACK_CODE_GENERATOR_SOURCE_PATH)" 1>/dev/null; \
+		go build $(GO_TAGS) $(GO_LDFLAGS) -o bin/ack-generate cmd/ack-generate/main.go; \
+		popd 1>/dev/null; \
+		echo "ok."; \
+	fi
 
 test: | mocks	## Run code tests
 	go test ${GO_TAGS} ./...

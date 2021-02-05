@@ -77,6 +77,9 @@ Example: export AWS_ROLE_ARN=\"\$ROLE_ARN\"; $(basename "$0") ecr
 <AWS_SERVICE> should be an AWS Service name (ecr, sns, sqs, petstore, bookstore)
 
 Environment variables:
+  SERVICE_CONTROLLER_SOURCE_PATH: Path to the service controller source code
+                            repository.
+                            Default: ../{SERVICE}-controller
   AWS_ROLE_ARN:             Provide AWS Role ARN for functional testing on local KinD Cluster. Mandatory.
   PRESERVE:                 Preserve kind k8s cluster for inspection (<true|false>)
                             Default: false
@@ -95,6 +98,18 @@ if [ $# -ne 1 ]; then
 fi
 
 AWS_SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+# Source code for the controller will be in a separate repo, typically in
+# $GOPATH/src/github.com/aws-controllers-k8s/$AWS_SERVICE-controller/
+DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH="$ROOT_DIR/../$AWS_SERVICE-controller"
+SERVICE_CONTROLLER_SOURCE_PATH=${SERVICE_CONTROLLER_SOURCE_PATH:-$DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH}
+
+if [[ ! -d $SERVICE_CONTROLLER_SOURCE_PATH ]]; then
+    echo "Error evaluating SERVICE_CONTROLLER_SOURCE_PATH environment variable:" 1>&2
+    echo "$SERVICE_CONTROLLER_SOURCE_PATH is not a directory." 1>&2
+    echo "${USAGE}"
+    exit 1
+fi
 
 if [ -z "$AWS_ROLE_ARN" ]; then
     echo "AWS_ROLE_ARN is not defined. Set <AWS_ROLE_ARN> env variable to indicate the ARN of the IAM Role to use in testing"
@@ -150,7 +165,7 @@ export ENABLE_PROMETHEUS
 export ACK_RESOURCE_TAGS
 export ACK_LOG_LEVEL
 
-service_config_dir="$ROOT_DIR/services/$AWS_SERVICE/config"
+service_config_dir="$SERVICE_CONTROLLER_SOURCE_PATH/config"
 
 ## Register the ACK service controller's CRDs in the target k8s cluster
 echo -n "loading CRD manifests for $AWS_SERVICE into the cluster ... "

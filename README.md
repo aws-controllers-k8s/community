@@ -1,14 +1,13 @@
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/aws/aws-controllers-k8s/issues)
-![status is preview](https://img.shields.io/badge/status-preview-brightgreen?style=flat)
-![GitHub issues](https://img.shields.io/github/issues-raw/aws/aws-controllers-k8s?style=flat)
-![GitHub](https://img.shields.io/github/license/aws/aws-controllers-k8s?style=flat)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/aws-controllers-k8s/community/issues)
+![GitHub issues](https://img.shields.io/github/issues-raw/aws-controllers-k8s/community?style=flat)
+![GitHub](https://img.shields.io/github/license/aws-controllers-k8s/community?style=flat)
 
 
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/aws/aws-controllers-k8s)
-[![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-controllers-k8s)](https://goreportcard.com/report/github.com/aws/aws-controllers-k8s)
-![GitHub watchers](https://img.shields.io/github/watchers/aws/aws-controllers-k8s?style=social)
-![GitHub stars](https://img.shields.io/github/stars/aws/aws-controllers-k8s?style=social)
-![GitHub forks](https://img.shields.io/github/forks/aws/aws-controllers-k8s?style=social)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/aws-controllers-k8s/community)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws-controllers-k8s/community)](https://goreportcard.com/report/github.com/aws-controllers-k8s/community)
+![GitHub watchers](https://img.shields.io/github/watchers/aws-controllers-k8s/community?style=social)
+![GitHub stars](https://img.shields.io/github/stars/aws-controllers-k8s/community?style=social)
+![GitHub forks](https://img.shields.io/github/forks/aws-controllers-k8s/community?style=social)
 
 
 
@@ -39,14 +38,14 @@ Until we've graduated ACK [service controllers](https://aws.github.io/aws-contro
 For help, please consider the following venues (in order):
 
 * [ACK project documentation](https://aws.github.io/aws-controllers-k8s/)
-* [Search open issues](https://github.com/aws/aws-controllers-k8s/issues)
-* [File an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
+* [Search open issues](https://github.com/aws-controllers-k8s/community/issues)
+* [File an issue](https://github.com/aws-controllers-k8s/community/issues/new/choose)
 * Chat with us on the `#provider-aws` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.
 
 ## Contributing
 We welcome community contributions and pull requests. See our [contribution guide](/CONTRIBUTING.md) for more information on how to report issues, set up a development environment, and submit code.
 
-Check the [issues list](https://github.com/aws/aws-controllers-k8s/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
+Check the [issues list](https://github.com/aws-controllers-k8s/community/issues) for descriptions of work items. We invite any and all feedback and contributions, so please don't hesitate to submit an issue, a pull request or comment on an existing issue.
 
 ACK adheres to the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct). You can also learn more about our [Governance](/GOVERNANCE.md) structure.
 

@@ -1,18 +1,11 @@
 # Testing
 
-Welcome to the ACK developer preview! In the following, we will take you
-through the steps to test ACK for the currently supported AWS services:
+In the following, we will take you through the steps to run end-to-end (e2e)
+tests for the ACK service controller for S3. You may use these steps to run e2e
+tests for other ACK service controllers.
 
-- Amazon ECR
-- Amazon S3
-- Amazon SNS
-- Amazon API Gateway V2
-- Amazon DynamoDB
-- [Amazon ElastiCache](https://github.com/aws/aws-controllers-k8s/tree/main/services/elasticache)
-- AWS Step Functions
-
-If you run into any problems when testing one of the above services,
-[raise an issue](https://github.com/aws/aws-controllers-k8s/issues/new/choose)
+If you run into any problems when testing a service controller, please
+[raise an issue](https://github.com/aws-controllers-k8s/community/issues/new/choose)
 with the details so we can reproduce your issue.
 
 ## Prerequisites
@@ -33,85 +26,25 @@ In summary, in order to test ACK you will need to have the following tools
 installed and configured:
 
 1. [Golang 1.14+](https://golang.org/doc/install)
+1. `make`
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) version 1
 1. [jq](https://github.com/stedolan/jq/wiki/Installation)
-1. `make`
 
-To build and test an ACK controller with `kind`, execute the commands as 
-described in the following from the root directory of your
-[checked-out source repository](../setup/).
+To build and test an ACK controller with `kind`, execute the commands as
+described in the following from the root directory of the
+`github.com/aws-controllers-k8s/community` repository.
+
+You should have forked this repository and `git clone`'d it locally when
+[setting up your development environment](../setup/).
 
 !!! tip "Recommended RAM"
     Given that our test setup creates the container images and then launches
     a test cluster, we recommend that you have at least 4GB of RAM available
     for the tests.
 
-With the prerequisites out of the way, let's move on to the first step:
-building the code generator.
-
-## Build code generator
-
-To build the latest `ack-generate` binary, execute the following command:
-
-```
-make build-ack-generate
-```
-
-!!! note "One-off build"
-    You only have to do this once, overall. In other words: unless we change
-    something upstream in terms of the code generation process, this is 
-    a one-off operation. Internally, the Makefile executes an `go build` here.
-
-Don't worry if you forget this step, the script in the next step will complain 
-with a message along the line of `ERROR: Unable to find an ack-generate binary`
-and will give you another opportunity to rectify the situation.
-
-## Build an ACK service controller
-
-Now that we have the basic code generation step done we will create the
-respective ACK service controller and its supporting artifacts.
-
-So first you have to select a service that you want to build and test.
-You do that by setting the `SERVICE` environment variable. Let's say we want 
-to test the S3 service (creating an S3 bucket), so we would execute the
-following:
-
-```
-export SERVICE=s3
-```
-
-Now we are in a position to generate the ACK service controller for the S3 API.
-
-The following outputs the generated code to the `services/$SERVICE` directory:
-
-```
-make build-controller SERVICE=$SERVICE
-```
-
-!!! bug "Handle `controller-gen: command not found`"
-    If you run into the `controller-gen: command not found` message when
-    executing `make build-controller` then you want to check if the
-    `controller-gen` binary is available in `$GOPATH/bin`, also ensure that `$GOPATH/bin` is part of your `$PATH`, see also
-    [`#234`](https://github.com/aws/aws-controllers-k8s/issues/234).
-
-In addition to the ACK service controller code, above generates the
-custom resource definition (CRD) manifests as well as the necessary RBAC
-settings using the [`build-controller.sh`](https://github.com/aws/aws-controllers-k8s/blob/main/scripts/build-controller.sh)
-script.
-
-!!! note "Beyond dev preview"
-    In future, this step will also generate the end-user install artifacts, that
-    is the Helm chart etc. that can be used to install those CRD manifests, 
-    and a deployment manifest that runs the ACK service controller in a pod.
-
-Now that we have the generation part completed, we want to see if the
-generated artifacts indeed are able to create an S3 bucket for us.
-
-You don't have to do the next steps, if all you want to test is if the
-generation works, however, for an end-to-end test, the next, final step is
-a necessary one.
+With the prerequisites out of the way, let's move on to running e2e tests for a
+service controller.
 
 ## Run tests
 
@@ -293,9 +226,9 @@ by running our handy script at `./scripts/install-mockery.sh` for general
 Linux environments.
 
 
- We track testing in the umbrella [issue 6](https://github.com/aws/aws-controllers-k8s/issues/6).
- on GitHub. Use this issue as a starting point and if you create a new
- testing-related issue, mention it from there.
+We track testing in the umbrella [issue 6](https://github.com/aws-controllers-k8s/community/issues/6).
+on GitHub. Use this issue as a starting point and if you create a new
+testing-related issue, mention it from there.
 
 ## Clean up
 
