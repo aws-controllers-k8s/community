@@ -19,7 +19,7 @@ resources in a specific AWS API.
 
 The `github.com/aws-controllers-k8s/community` source code repository (this
 repo) contains the common test scripts and documentation that gets published to
-https://aws.github.io/aws-controllers-k8s/.
+https://aws-controllers-k8s.github.io/community/.
 
 ### `github.com/aws-controllers-k8s/runtime`
 
@@ -53,7 +53,7 @@ charts for the controller installation (`/helm`).
 Read about [how the code generator infers][api-inference] information about a
 Kubernetes Custom Resource Definitions (CRDs) from an AWS API model file.
 
-[api-inference]: https://aws.github.io/aws-controllers-k8s/dev-docs/api-inference/
+[api-inference]: https://aws-controllers-k8s.github.io/community/dev-docs/api-inference/
 
 ## Code Generation
 

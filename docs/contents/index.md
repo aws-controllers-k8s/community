@@ -52,13 +52,13 @@ Read more about [how ACK works][how-it-works].
 [gh]: https://github.com/aws/aws-controllers-k8s/
 [controller]: https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller
 [crd]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
-[how-it-works]: https://aws.github.io/aws-controllers-k8s/how-it-works/
+[how-it-works]: https://aws-controllers-k8s.github.io/community/how-it-works/
 
 ## Getting started
 
-Until we've graduated ACK [service controllers][services] we ask you to [test-drive](https://aws.github.io/aws-controllers-k8s/dev-docs/testing/) them.
+Until we've graduated ACK [service controllers][services] we ask you to [test-drive](https://aws-controllers-k8s.github.io/community/dev-docs/testing/) them.
 
-[services]: https://aws.github.io/aws-controllers-k8s/services/
+[services]: https://aws-controllers-k8s.github.io/community/services/
 
 ## Getting help
 
