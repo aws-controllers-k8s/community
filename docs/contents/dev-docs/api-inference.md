@@ -80,7 +80,7 @@ structure of the AWS service API, including a set of *Operation* definitions
 (commonly called "Actions" in the official AWS API documentation) and a set of
 *Shape* definitions.
 
-[codegen]: https://aws.github.io/aws-controllers-k8s/dev-docs/code-generation/
+[codegen]: https://aws-controllers-k8s.github.io/community/dev-docs/code-generation/
 
 Some AWS APIs have dozens (hundreds even!) of Operations exposed by the API.
 Consider EC2's API. It has over **400 separate Actions**. Out of all those
@@ -517,7 +517,7 @@ Account ID is the 12-digit AWS account ID that is billed for the resource.
     AWS Account ID of the IAM Role that the ACK service controller is executing
     under.
 
-[carm]: https://aws.github.io/aws-controllers-k8s/user-docs/authorization/#create-resource-in-different-aws-accounts
+[carm]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/#create-resource-in-different-aws-accounts
 
 The `Conditions` field is also included in every ACK CRD's Status field. It is
 a slice of pointers to [`ackv1alpha1.Condition`][ack-cond] structs. The

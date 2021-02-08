@@ -14,7 +14,7 @@
 # AWS Controllers for Kubernetes (ACK)
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
-This is a new open source project built with ❤️ by AWS and available as a **Developer Preview**. We encourage you to [try it out](https://aws.github.io/aws-controllers-k8s/dev-docs/testing/), provide feedback and contribute to development.
+This is a new open source project built with ❤️ by AWS and available as a **Developer Preview**. We encourage you to [try it out](https://aws-controllers-k8s.github.io/community/dev-docs/testing/), provide feedback and contribute to development.
 
 > **IMPORTANT** Because this project is in developer preview, you may see breaking changes throughout. We encourage you to experiment with ACK but DO NOT adopt it for production use. Use of ACK controllers in preview is subject to the terms and conditions contained in the [AWS Service Terms](https://aws.amazon.com/service-terms), particularly the Beta Service Participation Service Terms, and apply to any service controllers not marked as 'Generally Available'.
 
@@ -32,12 +32,12 @@ ACK is a collection of Kubernetes [custom resource definitions](https://kubernet
 
 ## Getting Started
 
-Until we've graduated ACK [service controllers](https://aws.github.io/aws-controllers-k8s/services/) we ask you to [test-drive](https://aws.github.io/aws-controllers-k8s/dev-docs/testing/) them.
+Until we've graduated ACK [service controllers](https://aws-controllers-k8s.github.io/community/services/) we ask you to [test-drive](https://aws-controllers-k8s.github.io/community/dev-docs/testing/) them.
 
 ## Help & Feedback
 For help, please consider the following venues (in order):
 
-* [ACK project documentation](https://aws.github.io/aws-controllers-k8s/)
+* [ACK project documentation](https://aws-controllers-k8s.github.io/community/)
 * [Search open issues](https://github.com/aws-controllers-k8s/community/issues)
 * [File an issue](https://github.com/aws-controllers-k8s/community/issues/new/choose)
 * Chat with us on the `#provider-aws` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.

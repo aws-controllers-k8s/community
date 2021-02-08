@@ -13,7 +13,7 @@ to change about a particular service controller.
 
 ## Supported services
 
-See the [documentation](https://aws.github.io/aws-controllers-k8s/services) for a list of supported services.
+See the [documentation](https://aws-controllers-k8s.github.io/community/services) for a list of supported services.
 
 ### Adding a service controller
 
