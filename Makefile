@@ -45,7 +45,12 @@ test: | mocks	## Run code tests
 clean-mocks:	## Remove mocks directory
 	rm -rf mocks
 
+build-controller-image: export LOCAL_MODULES = false
 build-controller-image:	## Build container image for SERVICE
+	@./scripts/build-controller-image.sh $(AWS_SERVICE)
+
+local-build-controller-image: export LOCAL_MODULES = true
+local-build-controller-image:	## Build container image for SERVICE allowing local modules
 	@./scripts/build-controller-image.sh $(AWS_SERVICE)
 
 publish-controller-image:  ## docker push a container image for SERVICE
@@ -57,7 +62,13 @@ build-controller: build-ack-generate ## Generate controller code for SERVICE
 	@./scripts/build-controller.sh $(AWS_SERVICE)
 
 kind-test: export PRESERVE = true
+kind-test: export LOCAL_MODULES = false
 kind-test: ## Run functional tests for SERVICE with AWS_ROLE_ARN
+	@./scripts/kind-build-test.sh $(AWS_SERVICE)
+
+local-kind-test: export PRESERVE = true
+local-kind-test: export LOCAL_MODULES = true
+local-kind-test: ## Run functional tests for SERVICE with AWS_ROLE_ARN allowing local modules
 	@./scripts/kind-build-test.sh $(AWS_SERVICE)
 
 delete-all-kind-clusters:	## Delete all local kind clusters

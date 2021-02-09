@@ -5,8 +5,10 @@ set -eo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SCRIPTS_DIR=$DIR
 ROOT_DIR=$DIR/..
-DOCKERFILE_PATH=$DIR/../Dockerfile
+DOCKERFILE_PATH=$ROOT_DIR/Dockerfile
+ACK_DIR=$ROOT_DIR/..
 DOCKERFILE=${DOCKERFILE:-"$DOCKERFILE_PATH"}
+LOCAL_MODULES=${LOCAL_MODULES:-"false"}
 BUILD_DATE=$(date +%Y-%m-%dT%H:%M)
 QUIET=${QUIET:-"false"}
 
@@ -28,6 +30,8 @@ Example: $(basename "$0") ecr
 
 Environment variables:
   QUIET:                            Build controller container image quietly (<true|false>)
+                                    Default: false
+  LOCAL_MODULES:                    Enables use of local modules during AWS Service controller docker image build
                                     Default: false
   AWS_SERVICE_DOCKER_IMG:           Controller container image tag
                                     Default: aws-controllers-k8s:\$AWS_SERVICE-\$VERSION
@@ -70,15 +74,24 @@ if [[ $QUIET = "false" ]]; then
     echo " git commit: $SERVICE_CONTROLLER_GIT_COMMIT"
 fi
 
+# if local build
+# then use Dockerfile which allows references to local modules from service controller
+if [[ "$LOCAL_MODULES" = "true" ]]; then
+  DOCKER_BUILD_CONTEXT="$ACK_DIR"
+  DOCKERFILE="${ROOT_DIR}"/Dockerfile.local
+else
+  DOCKER_BUILD_CONTEXT="$SERVICE_CONTROLLER_SOURCE_PATH"
+fi
+
 docker build \
   --quiet=${QUIET} \
-  -t ${AWS_SERVICE_DOCKER_IMG} \
-  -f ${DOCKERFILE} \
+  -t "${AWS_SERVICE_DOCKER_IMG}" \
+  -f "${DOCKERFILE}" \
   --build-arg service_alias=${AWS_SERVICE} \
   --build-arg service_controller_git_version="$SERVICE_CONTROLLER_GIT_VERSION" \
   --build-arg service_controller_git_commit="$SERVICE_CONTROLLER_GIT_COMMIT" \
   --build-arg build_date="$BUILD_DATE" \
-  ${SERVICE_CONTROLLER_SOURCE_PATH}
+  "${DOCKER_BUILD_CONTEXT}"
 
 if [ $? -ne 0 ]; then
   exit 2
