@@ -1,0 +1,11 @@
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: User
+metadata:
+  name: $USER_ID
+spec:
+  accessString: $ACCESS_STRING
+  engine: redis
+  passwords:
+    - testplaintextpassword
+  userID: $USER_ID
+  userName: $USER_ID

@@ -82,6 +82,17 @@ def create_custom_resource(
     return _api.create_namespaced_custom_object(
         reference.group, reference.version, reference.namespace, reference.plural, custom_resource)
 
+def patch_custom_resource(
+        reference: CustomResourceReference, custom_resource: dict):
+    _api_client = _get_k8s_api_client()
+    _api = client.CustomObjectsApi(_api_client)
+
+    if reference.namespace is None:
+        return _api.patch_cluster_custom_object(
+            reference.group, reference.version, reference.plural, reference.name, custom_resource)
+    return _api.patch_namespaced_custom_object(
+        reference.group, reference.version, reference.namespace, reference.plural, reference.name, custom_resource)
+
 
 def delete_custom_resource(reference: CustomResourceReference):
     _api_client = _get_k8s_api_client()
@@ -199,6 +210,39 @@ def wait_resource_synced(reference: CustomResourceReference,
         sleep(period_length)
 
     logging.error(f"Wait for resource {reference} to be synced timed out")
+    return False
+
+def wait_resource_status_desired(reference: CustomResourceReference,
+                                 desired_value: str,
+                                 wait_periods: int = 2,
+                                 period_length: int = 60):
+    """Wait for a resource's status.status field to reach the desired status.
+    This can potentially be generalized to wait on any field.
+
+    Returns:
+        True: if status.status field equal to desired_value before timing out
+        False: in any other case, including if status.status is None
+    """
+
+    # implicitly checks that resource exists
+    if wait_resource_consumed_by_controller(reference) is None:
+        return False
+
+    for _ in range(wait_periods):
+        logging.debug(f"Waiting for resource {reference} to reach status {desired_value}")
+        sleep(period_length)
+
+        resource = get_resource(reference)
+        status_field = resource["status"]["status"]
+
+        if status_field is None:
+            logging.error(f"Expected resource {reference} to contain a status.status field")
+            return False
+
+        if status_field == desired_value:
+            return True
+
+    logging.error(f"Wait for status.status field of resource {reference} to reach {desired_value} timed out")
     return False
 
 
