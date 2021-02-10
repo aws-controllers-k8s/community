@@ -1,6 +1,0 @@
-resources:
-  Table:
-    exceptions:
-      errors:
-        404:
-          code: ResourceNotFoundException
