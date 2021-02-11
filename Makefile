@@ -23,7 +23,7 @@ ACK_CODE_GENERATOR_SOURCE_PATH = "../../aws-controllers-k8s/code-generator"
 # aws-sdk-go/private/model/api package is gated behind a build tag "codegen"...
 GO_TAGS=-tags codegen
 
-.PHONY: all build-ack-generate test clean-mocks mocks build-controller-image \
+.PHONY: all build-ack-generate build-controller-image \
 	build-controller kind-test delete-all-kind-clusters
 
 all: test
@@ -39,11 +39,6 @@ build-ack-generate:	## Build ack-generate binary
 		echo "ok."; \
 	fi
 
-test: | mocks	## Run code tests
-	go test ${GO_TAGS} ./...
-
-clean-mocks:	## Remove mocks directory
-	rm -rf mocks
 
 build-controller-image: export LOCAL_MODULES = false
 build-controller-image:	## Build container image for SERVICE
@@ -77,14 +72,6 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 	kind delete cluster --name $$name; \
 	done
 	@rm -rf build/tmp-test*
-
-install-mockery:
-	@scripts/install-mockery.sh
-
-mocks: install-mockery ## Build mocks
-	@echo -n "building mocks for pkg/types ... "
-	@bin/mockery --quiet --all --tags=codegen --case=underscore --output=mocks/pkg/types --dir=pkg/types
-	@echo "ok."
 
 help:           ## Show this help.
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' \

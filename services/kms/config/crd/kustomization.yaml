@@ -1,7 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - bases/kms.services.k8s.aws_aliases.yaml
-  - bases/kms.services.k8s.aws_customkeystores.yaml
-  - bases/kms.services.k8s.aws_grants.yaml
-  - bases/kms.services.k8s.aws_keys.yaml
