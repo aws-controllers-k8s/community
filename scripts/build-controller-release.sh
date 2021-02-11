@@ -123,7 +123,12 @@ if [ -z "$ACK_GENERATE_CONFIG_PATH" ]; then
 fi
 
 helm_output_dir="$SERVICE_CONTROLLER_SOURCE_PATH/helm"
-ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR"
+# The --aws-sdk-version-go 1.35.5 is a hack here to prevent ack-generate
+# from looking for a go.mod file in the local working directory. It does
+# not affect the release artifacts produced from `ack-generate release`.
+# TODO(jaypipes): Clean this up so the `ack-generate release` command
+# doesn't need to look up a go.mod file for aws-sdk-go version.
+ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR --aws-sdk-version-go 1.35.5"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
 fi

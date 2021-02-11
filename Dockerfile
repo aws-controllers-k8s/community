@@ -18,18 +18,19 @@ ENV GOOS=linux
 ENV CGO_ENABLED=0
 ENV VERSION_PKG=github.com/aws-controllers-k8s/$service_alias-controller/pkg/version
 # Copy the Go Modules manifests and LICENSE/ATTRIBUTION
-COPY LICENSE $work_dir/LICENSE
-COPY ATTRIBUTION.md $work_dir/ATTRIBUTION.md
-COPY go.mod $work_dir/go.mod
-COPY go.sum $work_dir/go.sum
+COPY $service_alias-controller/LICENSE $work_dir/LICENSE
+COPY $service_alias-controller/ATTRIBUTION.md $work_dir/ATTRIBUTION.md
+# Copy Go mod files
+COPY $service_alias-controller/go.mod $work_dir/go.mod
+COPY $service_alias-controller/go.sum $work_dir/go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
-RUN  go mod download
+RUN go mod download
 
 # Now copy the go source code for the controller...
-COPY apis $work_dir/apis
-COPY cmd $work_dir/cmd
-COPY pkg $work_dir/pkg
+COPY $service_alias-controller/apis $work_dir/apis
+COPY $service_alias-controller/cmd $work_dir/cmd
+COPY $service_alias-controller/pkg $work_dir/pkg
 # Build
 RUN GIT_VERSION=$service_controller_git_version && \
     GIT_COMMIT=$service_controller_git_commit && \

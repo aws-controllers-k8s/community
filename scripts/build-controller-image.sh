@@ -76,11 +76,9 @@ fi
 
 # if local build
 # then use Dockerfile which allows references to local modules from service controller
+DOCKER_BUILD_CONTEXT="$ACK_DIR"
 if [[ "$LOCAL_MODULES" = "true" ]]; then
-  DOCKER_BUILD_CONTEXT="$ACK_DIR"
   DOCKERFILE="${ROOT_DIR}"/Dockerfile.local
-else
-  DOCKER_BUILD_CONTEXT="$SERVICE_CONTROLLER_SOURCE_PATH"
 fi
 
 docker build \
