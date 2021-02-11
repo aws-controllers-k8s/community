@@ -23,6 +23,7 @@ ACK_RESOURCE_TAGS='services.k8s.aws/managed=true, services.k8s.aws/created=%UTCN
 DELETE_CLUSTER_ARGS=""
 K8S_VERSION=${K8S_VERSION:-"1.16"}
 PRESERVE=${PRESERVE:-"false"}
+LOCAL_MODULES=${LOCAL_MODULES:-"false"}
 START=$(date +%s)
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
@@ -83,6 +84,8 @@ Environment variables:
   AWS_ROLE_ARN:             Provide AWS Role ARN for functional testing on local KinD Cluster. Mandatory.
   PRESERVE:                 Preserve kind k8s cluster for inspection (<true|false>)
                             Default: false
+  LOCAL_MODULES:            Enables use of local modules during AWS Service controller docker image build
+                            Default: false
   AWS_SERVICE_DOCKER_IMG:   Provide AWS Service docker image
                             Default: aws-controllers-k8s:$AWS_SERVICE-$VERSION
   TMP_DIR                   Cluster context directory, if operating on an existing cluster
@@ -135,6 +138,7 @@ if [ -z "$AWS_SERVICE_DOCKER_IMG" ]; then
     echo -n "building $DEFAULT_AWS_SERVICE_DOCKER_IMG docker image ... "
     AWS_SERVICE_DOCKER_IMG="${DEFAULT_AWS_SERVICE_DOCKER_IMG}"
     export AWS_SERVICE_DOCKER_IMG
+    export LOCAL_MODULES
     ${SCRIPTS_DIR}/build-controller-image.sh ${AWS_SERVICE} 1>/dev/null || exit 1
     echo "ok."
 else
