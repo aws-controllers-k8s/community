@@ -57,8 +57,8 @@ git checkout -b release-$RELEASE_VERSION
    do:
 
 ```bash
-for SERVICE in sns s3;\
-    do ./scripts/build-controller-release.sh $SERVICE $RELEASE_VERSION;
+for SERVICE in sns s3; do
+    ./scripts/build-controller-release.sh $SERVICE $RELEASE_VERSION;
 done
 ```
 
@@ -146,10 +146,15 @@ Login succeeded
     something similar.
 
 Now publish all the controller images to the ECR public repository for
-controller images using the `scripts/helm-publish-charts.sh` script:
+controller image using the `scripts/helm-publish-chart.sh` script for each service:
 
 ```bash
-RELEASE_VERSION=v0.0.1 ./scripts/helm-publish-charts.sh 
+for SERVICE in apigatewayv2 sns; do
+    RELEASE_VERSION=v0.0.1 ./scripts/helm-publish-chart.sh $SERVICE;
+done
+```
+
+```bash
 Generating Helm chart package for apigatewayv2@v0.0.1 ... ref:     public.ecr.aws/aws-controllers-k8s/chart:apigatewayv2-v0.0.1
 digest:  0e24159c9afb840677ba64e63c19a65a6de2dcc87e80df95b3daf0cdb5c54de6
 size:    6.4 KiB
@@ -181,5 +186,5 @@ version: v0.0.1
 sns-v0.0.1: pushed to remote (1 layer, 4.0 KiB total)
 ```
 
-All services that have had a Helm chart generated from step #2 will have a
+All services that have had a Helm chart generated will have a
 corresponding Helm chart pushed to the ECR public repository.
