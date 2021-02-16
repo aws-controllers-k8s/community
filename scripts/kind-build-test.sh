@@ -18,6 +18,7 @@ AWS_REGION=${AWS_REGION:-"us-west-2"}
 AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-"false"}
+TEST_HELM_CHARTS=${TEST_HELM_CHARTS:-"true"}
 ACK_LOG_LEVEL="debug"
 ACK_RESOURCE_TAGS='services.k8s.aws/managed=true, services.k8s.aws/created=%UTCNOW%, services.k8s.aws/namespace=%KUBERNETES_NAMESPACE%'
 DELETE_CLUSTER_ARGS=""
@@ -233,7 +234,9 @@ if [[ "$ENABLE_PROMETHEUS" == true ]]; then
     k8_wait_for_pod_status "prometheus-deployment" "Running" 60 || (echo 'FAIL: prometheus-deployment failed to Run' && exit 1)
 fi
 
-$TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
+if [[ "$TEST_HELM_CHARTS" == true ]]; then
+  $TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
+fi
 
 # Fork E2E tests based on bash or Python
 service_test_dir="$TEST_E2E_DIR/$AWS_SERVICE"

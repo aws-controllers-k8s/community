@@ -1,0 +1,46 @@
+name: e2e-test-elasticache
+on:
+  # Allow manual trigger of e2e tests
+  workflow_dispatch:
+
+jobs:
+  test-elasticache-controller:
+    name: test elasticache controller
+    runs-on: [self-hosted, aws-controllers-k8s]
+    steps:
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+      - name: checkout community code
+        uses: actions/checkout@v2
+        with:
+          path: aws-controllers-k8s/community
+      - name: checkout code-generator code
+        uses: actions/checkout@v2
+        with:
+          repository: aws-controllers-k8s/code-generator
+          path: aws-controllers-k8s/code-generator
+      - name: checkout elasticache-controller code
+        uses: actions/checkout@v2
+        with:
+          repository: aws-controllers-k8s/elasticache-controller
+          path: aws-controllers-k8s/elasticache-controller
+      - name: build ack-generate
+        run: make build-ack-generate
+        working-directory: ./aws-controllers-k8s/community
+      - name: build elasticache controller
+        run: ./scripts/build-controller.sh $SERVICE
+        working-directory: ./aws-controllers-k8s/community
+        env:
+          SERVICE: elasticache
+      - name: execute elasticache e2e tests
+        run: |
+          export TEST_HELM_CHARTS=false
+          export AWS_ROLE_ARN=$(aws ssm get-parameter --name ACK_ROLE_ARN | jq -r '.Parameter.Value')
+          export AWS_ROLE_ARN_ALT=$(aws ssm get-parameter --name ACK_ROLE_ARN_ALT | jq -r '.Parameter.Value')
+          ./scripts/kind-build-test.sh $SERVICE
+        working-directory: ./aws-controllers-k8s/community
+        env:
+          SERVICE: elasticache
