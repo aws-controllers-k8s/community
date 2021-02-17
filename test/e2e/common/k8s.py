@@ -196,51 +196,52 @@ def get_resource_arn(resource: object) -> Union[None, str]:
         return resource['status']['ackResourceMetadata']['arn']
     return None
 
-def _get_resource_synced(resource: object) -> Union[None, bool]:
-    """Get the .status.ACK.ResourceSynced boolean from a given resource.
+
+def wait_on_condition(reference: CustomResourceReference,
+                      condition_name: str,
+                      desired_condition_status: str,
+                      wait_periods: int = 2,
+                      period_length: int = 60) -> bool:
+    """
+    Waits for the specified condition in .status.conditions to reach the desired value.
+
+    Precondition:
+        resource must be consumed by the controller (i.e. have a .status field)
 
     Returns:
-        None or bool: None if the status field doesn't exist, otherwise the
-            field value cast to a boolean (default False).
+        False if the resource doesn't exist, have .status.conditions at all, have the requested
+            condition type, or if the wait times out. True otherwise.
     """
-    if 'status' not in resource or 'conditions' not in resource['status']:
-        return None
 
-    conditions: Dict = resource['status']['conditions']
-    if 'ACK' not in conditions or 'ResourceSynced' not in conditions['ACK']:
-        return None
-    resource_synced: Dict = conditions['ACK']['ResourceSynced']
-    return bool(resource_synced.get('status', False))
-
-def wait_resource_synced(reference: CustomResourceReference,
-                         wait_periods: int = 2, period_length: int = 60):
     if not get_resource_exists(reference):
         logging.error(f"Resource {reference} does not exist")
         return False
 
-    if wait_resource_consumed_by_controller(reference) is None:
-        return False
-
-    for _ in range(wait_periods):
-        logging.debug(f"Waiting for resource {reference} to be synced")
-
+    for i in range(wait_periods):
+        logging.debug(f"Waiting on condition {condition_name} to reach {desired_condition_status} for resource {reference} ({i})")
         resource = get_resource(reference)
 
-        sync_status = _get_resource_synced(resource)
-        # Ensure the status existed
-        if sync_status is None:
-            logging.error(f"Expected .ACK.ResourceSynced to exist in {reference}")
+        if 'conditions' not in resource['status']:
+            logging.error(f"Resource {reference} does not have a .status.conditions field.")
             return False
 
-        if sync_status:
-            logging.info(f"Resource {reference} is synced, continuing...")
-            return True
+        desired_condition = None
+        for condition in resource['status']['conditions']:
+            if condition['type'] == condition_name:
+                desired_condition = condition
+
+        if not desired_condition:
+            logging.error(f"Resource {reference} does not have a condition of type {condition_name}.")
+            return False
+        else:
+            if desired_condition['status'] == desired_condition_status:
+                logging.info(f"Condition {condition_name} has status {desired_condition_status}, continuing...")
+                return True
 
         sleep(period_length)
 
-    logging.error(f"Wait for resource {reference} to be synced timed out")
+    logging.error(f"Wait for condition {condition_name} to reach status {desired_condition_status} timed out")
     return False
-
 
 def is_resource_in_terminal_condition(
         reference: CustomResourceReference, expected_substring: str):
