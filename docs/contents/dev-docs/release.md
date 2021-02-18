@@ -119,8 +119,9 @@ controller images:
 
 ```bash
 export DOCKER_REPOSITORY=public.ecr.aws/aws-controllers-k8s/controller
-for SERVICE in s3 sns; 
-    do ./scripts/publish-controller-image.sh $SERVICE
+for SERVICE in s3 sns; do
+    export AWS_SERVICE_DOCKER_IMG=$DOCKER_REPOSITORY:$SERVICE-$RELEASE_VERSION
+    ./scripts/publish-controller-image.sh $SERVICE
 done
 ```
 
