@@ -153,4 +153,4 @@ day.
 ## Next Steps
 
 After getting familiar with the various ACK source code repositories, now learn
-[how to build an ACK service controller](../build-controller).
+[how to build an ACK service controller](../building-controller).

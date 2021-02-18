@@ -17,6 +17,7 @@ nav:
   - Overview: 'dev-docs/overview.md'
   - Code generation: 'dev-docs/code-generation.md'
   - Setup: 'dev-docs/setup.md'
+  - Building controller: 'dev-docs/building-controller.md'
   - Testing: 'dev-docs/testing.md'
 - Community:
   - Background: 'community/background.md'

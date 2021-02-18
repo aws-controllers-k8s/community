@@ -69,7 +69,7 @@ environment with the repo and how advise you on how we handle contributions.
 ## Building an ACK Service Controller
 
 After getting your development environment established, you will want to learn
-[how to build an ACK service controller](../build-controller).
+[how to build an ACK service controller](../building-controller).
 
 ## Testing an ACK Service Controller
 
