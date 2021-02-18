@@ -8,7 +8,6 @@ set -eo pipefail
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
-TEMPLATES_DIR="$ROOT_DIR/templates"
 DEFAULT_IMAGE_REPOSITORY="public.ecr.aws/aws-controllers-k8s/controller"
 
 source "$SCRIPTS_DIR/lib/common.sh"
@@ -128,7 +127,7 @@ helm_output_dir="$SERVICE_CONTROLLER_SOURCE_PATH/helm"
 # not affect the release artifacts produced from `ack-generate release`.
 # TODO(jaypipes): Clean this up so the `ack-generate release` command
 # doesn't need to look up a go.mod file for aws-sdk-go version.
-ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR --aws-sdk-go-version 1.35.5"
+ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR --aws-sdk-go-version v1.35.5"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
 fi
