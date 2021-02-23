@@ -1,0 +1,7 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: Endpoint
+metadata:
+  name: $ENDPOINT_NAME
+spec:
+  endpointName: $ENDPOINT_NAME
+  endpointConfigName: $CONFIG_NAME

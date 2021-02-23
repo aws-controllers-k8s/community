@@ -17,5 +17,9 @@ SERVICE_NAME = "sagemaker"
 CRD_GROUP = "sagemaker.services.k8s.aws"
 CRD_VERSION = "v1alpha1"
 
+CONFIG_RESOURCE_PLURAL = 'endpointconfigs'
+MODEL_RESOURCE_PLURAL = 'models'
+ENDPOINT_RESOURCE_PLURAL = 'endpoints'
+
 # PyTest marker for the current service
 service_marker = pytest.mark.service(arg=SERVICE_NAME)
