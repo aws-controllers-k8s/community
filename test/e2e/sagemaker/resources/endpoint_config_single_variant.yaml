@@ -1,0 +1,16 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: EndpointConfig
+metadata:
+  name: $CONFIG_NAME
+spec:
+  endpointConfigName: $CONFIG_NAME
+  productionVariants:
+    - variantName: variant-1
+      modelName: $MODEL_NAME
+      initialInstanceCount: 1
+      # This is the smallest instance type which will support scaling
+      instanceType: ml.c5.large
+      initialVariantWeight: 1
+  tags:
+    - key: var
+      value: val

@@ -21,6 +21,7 @@ from typing import Dict, Optional, Union
 from dataclasses import dataclass
 from kubernetes import config, client
 from kubernetes.client.api_client import ApiClient
+from kubernetes.client.rest import ApiException
 
 _k8s_api_client = None
 
@@ -82,18 +83,54 @@ def create_custom_resource(
     return _api.create_namespaced_custom_object(
         reference.group, reference.version, reference.namespace, reference.plural, custom_resource)
 
-
-def delete_custom_resource(reference: CustomResourceReference):
+def patch_custom_resource(
+    reference: CustomResourceReference, custom_resource: dict):
     _api_client = _get_k8s_api_client()
     _api = client.CustomObjectsApi(_api_client)
+
     if reference.namespace is None:
-        return _api.delete_cluster_custom_object(
+        return _api.patch_cluster_custom_object(
+            reference.group, reference.version, reference.plural, reference.name, custom_resource)
+    return _api.patch_namespaced_custom_object(
+        reference.group, reference.version, reference.namespace, reference.plural, reference.name, custom_resource)
+
+def delete_custom_resource(
+    reference: CustomResourceReference, wait_periods: int = 1, period_length: int = 5):
+    """Delete custom resource from cluster and wait for it to be removed by the server
+    for wait_periods * period_length seconds.
+
+    Returns:
+        response, bool:
+        response is APIserver response for the operation.
+        bool is true if resource was removed from the server and false otherwise
+    """
+    _api_client = _get_k8s_api_client()
+    _api = client.CustomObjectsApi(_api_client)
+
+    _response = None
+    if reference.namespace is None:
+        _response = _api.delete_cluster_custom_object(
             reference.group, reference.version, reference.plural, reference.name)
-    return _api.delete_namespaced_custom_object(
+    _response = _api.delete_namespaced_custom_object(
         reference.group, reference.version, reference.namespace, reference.plural, reference.name)
+
+    for _ in range(wait_periods):
+        sleep(period_length)
+        if not get_resource_exists(reference):
+            return _response, True
+
+    logging.error(
+        f"Wait for resource {reference} to be removed by server timed out")
+    return _response, False
 
 
 def get_resource(reference: CustomResourceReference):
+    """Get the resource from a given reference.
+
+    Returns:
+        None or object: None if the resource doesnt exist in server, otherwise the
+            custom object.
+    """
     _api_client = _get_k8s_api_client()
     _api = client.CustomObjectsApi(_api_client)
 
@@ -106,7 +143,10 @@ def get_resource(reference: CustomResourceReference):
 
 
 def get_resource_exists(reference: CustomResourceReference) -> bool:
-    return get_resource(reference) is not None
+    try:
+        return get_resource(reference) is not None
+    except ApiException:
+        return False
 
 
 def wait_resource_consumed_by_controller(
