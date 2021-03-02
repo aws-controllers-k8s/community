@@ -23,7 +23,7 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 [releases]: https://aws-controllers-k8s.github.io/community/releases
 
 | AWS Service | Project Stage | Maintenance Phase | Next Milestone
-| ----------- | -------------- | --------------
+| ----------- | --------------| ----------------- |---------------|
 | Amazon [ACM](#amazon-acm) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/482) | |
 | Amazon [API Gateway V2](#amazon-api-gateway-v2) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/207) | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/15
 | Amazon [CloudFront Distribution](#amazon-cloudfront-distribution) | [`PLANNED`](https://github.com/aws-controllers-k8s/community/issues/249) | | https://github.com/aws-controllers-k8s/community/milestone/14
