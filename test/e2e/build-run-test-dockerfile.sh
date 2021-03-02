@@ -23,10 +23,10 @@ SERVICE="$1"
 KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
 
 # Ensure we are inside the correct build context
-pushd "${THIS_DIR}" > /dev/null
+pushd "${THIS_DIR}" 1> /dev/null
   # Build the dockerfile first
-  TEST_DOCKER_SHA="$(docker build . --quiet)"
-popd
+  TEST_DOCKER_SHA="$(docker build . --quiet )"
+popd 1>/dev/null
 
 # Ensure it can connect to KIND cluster on host device by running on host 
 # network. 
@@ -35,7 +35,7 @@ docker run --rm -it \
     --network="host" \
     -v $KUBECONFIG_LOCATION:/root/.kube/config:z \
     -v $HOME/.aws/credentials:/root/.aws/credentials:z \
-    -v $THIS_DIR:/root/tests \
+    -v $THIS_DIR:/root/tests:z \
     -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-"us-west-2"}" \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
