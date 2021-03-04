@@ -1,0 +1,49 @@
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: ReplicationGroup
+metadata:
+  name: $RG_ID
+spec:
+  atRestEncryptionEnabled: true
+  authToken: testplaintexttoken
+  autoMinorVersionUpgrade: true
+  automaticFailoverEnabled: true
+  cacheNodeType: cache.t3.small
+  cacheParameterGroupName: default.redis6.x.cluster.on
+  cacheSubnetGroupName: default
+  engine: redis
+  engineVersion: 6.x
+  kmsKeyID: $KMS_KEY_ID
+  multiAZEnabled: true
+  nodeGroupConfiguration:
+    - nodeGroupID: "1111"
+      primaryAvailabilityZone: us-east-1a
+      replicaAvailabilityZones:
+        - us-east-1b
+      replicaCount: 1
+      slots: 0-5999
+    - nodeGroupID: "2222"
+      primaryAvailabilityZone: us-east-1c
+      replicaAvailabilityZones:
+        - us-east-1d
+        - us-east-1a
+        - us-east-1b
+      replicaCount: 3
+      slots: 6000-16383
+  notificationTopicARN: $SNS_TOPIC_ARN
+  numNodeGroups: 2
+  port: 6380
+  preferredMaintenanceWindow: sun:23:00-mon:01:30
+  replicationGroupDescription: test replication group for input field coverage
+  replicationGroupID: $RG_ID
+  securityGroupIDs:
+    - $SG_ID
+  snapshotRetentionLimit: 5
+  snapshotWindow: 05:00-06:00
+  tags:
+    - key: service
+      value: elasticache
+    - key: region
+      value: us-east-1
+  transitEncryptionEnabled: true
+  userGroupIDs:
+    - $USERGROUP_ID
