@@ -310,8 +310,10 @@ test_rg_failover_roles() {
   local shard_json=$(aws_get_replication_group_json "$rg_id" | jq -r '.NodeGroups[0]')
   local node1_role=$(echo "$shard_json" | jq -r '.NodeGroupMembers[] | select(.CacheClusterId=="rg-failover-roles-001") | .CurrentRole')
   local node2_role=$(echo "$shard_json" | jq -r '.NodeGroupMembers[] | select(.CacheClusterId=="rg-failover-roles-002") | .CurrentRole')
-  assert_equal "primary" "$node1_role" "Node $rg_id-001 has role $node1_role, but expected primary before failover" || exit 1
-  assert_equal "replica" "$node2_role" "Node $rg_id-002 has role $node2_role, but expected replica before failover" || exit 1
+  assert_equal "primary" "$node1_role" "Node $rg_id-001 has role $node1_role, but expected primary before failover" || \
+    log_and_exit "replicationgroups/$rg_id"
+  assert_equal "replica" "$node2_role" "Node $rg_id-002 has role $node2_role, but expected replica before failover" || \
+    log_and_exit "replicationgroups/$rg_id"
 
   # call test-failover API to trigger failover to replica
   daws elasticache test-failover --replication-group-id "$rg_id" --node-group-id "0001" 1>/dev/null 2>&1
@@ -325,7 +327,7 @@ test_rg_failover_roles() {
     k8s_controller_reload_credentials "$service_name"
     local shard_json=$(aws_get_replication_group_json "$rg_id" | jq -r '.NodeGroups[0]')
     local node1_role=$(echo "$shard_json" | jq -r -e '.NodeGroupMembers[] | select(.CacheClusterId=="rg-failover-roles-001") | .CurrentRole')
-    assert_equal "0" "$?" "Node roles missing in replication group $rg_id" || exit 1
+    assert_equal "0" "$?" "Node roles missing in replication group $rg_id" || log_and_exit "replicationgroups/$rg_id"
     if [[ "$node1_role" == "replica" ]]; then
       wait_failed="false"
       break
@@ -333,7 +335,7 @@ test_rg_failover_roles() {
   done
   if [[ $wait_failed == "true" ]]; then
     echo "FAIL: node $rg_id-001 should have role replica after failover operation"
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 
   # roles updated in service at this point, ensure roles in k8s status match
@@ -341,8 +343,10 @@ test_rg_failover_roles() {
   local node1_role_k8s=$(echo "$shard_k8s" | jq -r '.nodeGroupMembers[] | select(.cacheClusterID=="rg-failover-roles-001") | .currentRole')
   local node2_role_k8s=$(echo "$shard_k8s" | jq -r '.nodeGroupMembers[] | select(.cacheClusterID=="rg-failover-roles-002") | .currentRole')
 
-  assert_equal "replica" "$node1_role_k8s" "Node $rg_id-001 has role $node1_role, but expected replica after failover" || exit 1
-  assert_equal "primary" "$node2_role_k8s" "Node $rg_id-002 has role $node2_role, but expected primary after failover" || exit 1
+  assert_equal "replica" "$node1_role_k8s" "Node $rg_id-001 has role $node1_role, but expected replica after failover" || \
+    log_and_exit "replicationgroups/$rg_id"
+  assert_equal "primary" "$node2_role_k8s" "Node $rg_id-002 has role $node2_role, but expected primary after failover" || \
+    log_and_exit "replicationgroups/$rg_id"
 }
 
 # run tests

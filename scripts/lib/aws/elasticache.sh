@@ -21,6 +21,69 @@ print_k8s_ack_controller_pod_logs() {
   kubectl logs -n ack-system "$ack_ctrl_pod_id"
 }
 
+# To be called upon test failure: prints resource state from k8s,
+#   aws resource state, and k8s controller logs. The correct aws CLI describe call is
+#   identified from the resource plural in k8s_resource_name.
+
+# log_and_exit requires 1 or 2 arguments:
+#   k8s_resource_name: the full name of the k8s resource, including the plural (e.g. "replicationgroups/rg-1")
+#   aws_name_override (optional): used in the AWS CLI describe call if the .metadata.name field does not match
+#                                 the AWS resource name
+log_and_exit() {
+  if [[ $# < 1 || $# > 2 ]]; then
+    echo "FATAL: Wrong number of arguments passed to ${FUNCNAME[0]}"
+    echo "Usage: ${FUNCNAME[0]} k8s_resource_name [aws_name_override]"
+    exit 1
+  fi
+  local k8s_resource_name="$1"
+
+  # validate and process input
+  if [[ "$k8s_resource_name" != *"/"* ]]; then
+    echo "FATAL: k8s_resource_name must be of form 'plural/resource_name'"
+    exit 1
+  fi
+  local resource_plural=$(echo $k8s_resource_name | cut -f 1 -d "/")
+  local aws_resource_name=$(echo $k8s_resource_name | cut -f 2 -d "/")
+  aws_resource_name="${2:-$aws_resource_name}" # apply aws_name_override if provided
+
+  # controller logs
+  echo
+  print_k8s_ack_controller_pod_logs
+
+  # k8s resource state
+  printf "\nk8s state of %s:\n" "$k8s_resource_name"
+  kubectl get "$k8s_resource_name" -o json
+
+  # aws CLI describe call
+  printf "\nAWS CLI describe call\n"
+  resource_plural=$(echo "$resource_plural" | tr '[:upper:]' '[:lower:]')
+  case $resource_plural in
+
+    cacheparametergroups)
+      daws elasticache describe-cache-parameter-groups --cache-parameter-group-name "$aws_resource_name"
+      ;;
+
+    cachesubnetgroups)
+      daws elasticache describe-cache-subnet-groups --cache-subnet-group-name "$aws_resource_name"
+      ;;
+
+    replicationgroups)
+      daws elasticache describe-replication-groups --replication-group-id "$aws_resource_name"
+      ;;
+
+    snapshots)
+      daws elasticache describe-snapshots --snapshot-name "$aws_resource_name"
+      ;;
+
+    *)
+      echo "FATAL: unkown resource plural $resource_plural"
+      exit 1
+      ;;
+  esac
+
+  exit 1
+}
+
 #################################################
 # functions for test data preparation
 #################################################
@@ -457,8 +520,7 @@ k8s_assert_replication_group_status_property() {
   local actual_value=$(k8s_get_rg_field "$rg_id" ".status | $property_json_path")
   if [[ "$expected_value" != "$actual_value" ]]; then
     echo "FAIL: property $property_json_path for replication group $rg_id has value '$actual_value', but expected '$expected_value'"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -479,8 +541,7 @@ k8s_assert_replication_group_shard_count() {
   local actual_value=$(k8s_get_rg_field "$rg_id" ".status.nodeGroups" | jq length)
   if [[ "$expected_count" -ne "$actual_value" ]]; then
     echo "FAIL: expected $expected_count node groups in replication group $rg_id, actual: $actual_value"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -502,8 +563,7 @@ k8s_assert_replication_group_replica_count() {
   actual_replica_count=$(( node_group_size - 1 ))
   if [[ "$expected_count" -ne "$actual_replica_count" ]]; then
     echo "FAIL: expected $expected_count replicas per node group for replication group $rg_id, actual: $actual_replica_count"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -524,8 +584,7 @@ k8s_assert_replication_group_total_node_count() {
   local actual_value=$(k8s_get_rg_field "$rg_id" ".status.memberClusters" | jq length)
   if [[ "$expected_count" != "$actual_value" ]]; then
     echo "FAIL: expected $expected_count total nodes for replication group $rg_id, actual: $actual_value"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -555,22 +614,19 @@ assert_rg_terminal_condition_true() {
   terminal_cond=$(k8s_get_rg_field "$rg_id" ".status.conditions[]" | jq -r -e 'select(.type == "ACK.Terminal")')
   if [[ $? != 0 ]]; then
     echo "FAIL: expected replication group $rg_id to have a terminal condition"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 
   status=$(echo $terminal_cond | jq -r ".status")
   if [[ $status != "True" ]]; then
     echo "FAIL: expected status of terminal condition to be True for replication group $rg_id"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 
   cond_msg=$(echo $terminal_cond | jq -r ".message")
   if [[ $cond_msg != *"$expected_substring"* ]]; then
     echo "FAIL: replication group $rg_id has terminal condition set True, but with unexpected message"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -638,8 +694,7 @@ assert_replication_list_allowed_node_type_modifications() {
 
   if [[ "allowed_scale_up_count" -eq 0 && "allowed_scale_down_count" -eq 0 ]]; then
     echo "FAIL: expected at least one allowed node type modification for Replication group $rg_id"
-    print_k8s_ack_controller_pod_logs
-    exit 1
+    log_and_exit "replicationgroups/$rg_id"
   fi
 }
 
@@ -758,8 +813,7 @@ assert_cache_parameter_group_does_not_exist() {
   k8s_describe_cache_parameter_group "$cpg_name"
   if [[ $? -ne 1 ]]; then
       echo "FAIL: expected CacheParameterGroup $cpg_name to not exist in Kubernetes cluster."
-      print_k8s_ack_controller_pod_logs
-      exit 1
+      log_and_exit "cacheparametergroups/$cpg_name"
   fi
 }
 

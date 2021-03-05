@@ -66,7 +66,8 @@ debug_msg "Testing Add Parameters to Cache Parameter Group: $cpg_name."
 
 assert_no_custom_cache_parameters() {
   local actual_value=$(aws_get_cache_parameters_property "$cpg_name" ".Parameters" "user" | jq length)
-  assert_equal "0" "$actual_value" "Expected: 0 actual: $actual_value found for user parameters in cache parameter group $cpg_name" || exit 1
+  assert_equal "0" "$actual_value" "Expected: 0 actual: $actual_value found for user parameters in cache parameter group $cpg_name" || \
+    log_and_exit "cacheparametergroups/$cpg_name"
 }
 
 ack_set_custom_cache_parameters() {
@@ -166,7 +167,7 @@ debug_msg "Testing delete Cache Parameter Group: $cpg_name."
 
 ack_delete_cache_parameter_group() {
   kubectl delete CacheParameterGroup/"$cpg_name" 2>/dev/null
-  assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || exit 1
+  assert_equal "0" "$?" "Expected success from kubectl delete but got $?" || log_and_exit "cacheparametergroups/$cpg_name"
   sleep 5
 }
 ack_delete_cache_parameter_group
