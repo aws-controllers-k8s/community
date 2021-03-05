@@ -1,0 +1,19 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: TransformJob
+metadata:
+  name: $TRANSFORM_JOB_NAME
+spec:
+  transformJobName: $TRANSFORM_JOB_NAME
+  roleARN: $SAGEMAKER_EXECUTION_ROLE_ARN
+  modelName: $MODEL_NAME
+  transformInput:
+    contentType: text/csv
+    dataSource:
+      s3DataSource:
+        s3DataType: S3Prefix
+        s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/batch/input-data
+  transformOutput:
+    s3OutputPath: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/batch/output
+  transformResources:
+    instanceCount: 1
+    instanceType: ml.m5.large
