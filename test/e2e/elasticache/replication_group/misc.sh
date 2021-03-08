@@ -50,9 +50,9 @@ EOF
   # ensure resource successfully created and available, check resource is as expected
   wait_and_assert_replication_group_synced_and_available "$rg_id"
   local primary_cluster=$(aws_get_replication_group_json "$rg_id" | jq -r -e ".MemberClusters[0]")
-  assert_equal "0" "$?" "Could not find cache cluster for replication group $rg_id" || exit 1
+  assert_equal "0" "$?" "Could not find cache cluster for replication group $rg_id" || log_and_exit "replicationgroups/$rg_id"
   daws elasticache describe-cache-clusters --cache-cluster-id "$primary_cluster" | jq -r '.CacheClusters[0]' | grep "$sg_id"
-  assert_equal "0" "$?" "Expected replication group $rg_id to have security group $sg_id" || exit 1
+  assert_equal "0" "$?" "Expected replication group $rg_id to have security group $sg_id" || log_and_exit "replicationgroups/$rg_id"
 }
 
 # create multiple RGs and check deletion succeeds

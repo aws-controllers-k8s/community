@@ -110,8 +110,7 @@ sleep 20
 actual_subnet_group_desc="$(get_subnet_group_description $aws_resource_name)"
 if [ "$expected_subnet_group_desc" != "$actual_subnet_group_desc" ]; then
   echo "FAIL: expected $aws_resource_name to have been modified in ${service_name}"
-  kubectl logs -n ack-system "$ack_ctrl_pod_id"
-  exit 1
+  log_and_exit "cachesubnetgroups/$aws_resource_name"
 fi
 debug_msg "subnet group $aws_resource_name modified in ${service_name}"
 

@@ -37,6 +37,8 @@ jobs:
           SERVICE: elasticache
       - name: execute elasticache e2e tests
         run: |
+          export AWS_PROFILE=default
+          export AWS_REGION=$(aws configure get region --profile default)
           export TEST_HELM_CHARTS=false
           export AWS_ROLE_ARN=$(aws ssm get-parameter --name ACK_ROLE_ARN | jq -r '.Parameter.Value')
           export AWS_ROLE_ARN_ALT=$(aws ssm get-parameter --name ACK_ROLE_ARN_ALT | jq -r '.Parameter.Value')
