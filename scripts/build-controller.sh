@@ -26,6 +26,7 @@ DEFAULT_ACK_GENERATE_BIN_PATH="$ROOT_DIR/../../aws-controllers-k8s/code-generato
 ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-$DEFAULT_ACK_GENERATE_BIN_PATH}
 ACK_GENERATE_API_VERSION=${ACK_GENERATE_API_VERSION:-"v1alpha1"}
 ACK_GENERATE_CONFIG_PATH=${ACK_GENERATE_CONFIG_PATH:-""}
+AWS_SDK_GO_VERSION=${AWS_SDK_GO_VERSION:-""}
 DEFAULT_TEMPLATES_DIR="$ROOT_DIR/../../aws-controllers-k8s/code-generator/templates"
 TEMPLATES_DIR=${TEMPLATES_DIR:-$DEFAULT_TEMPLATES_DIR}
 
@@ -37,7 +38,7 @@ Usage:
 's3' 'sns' or 'sqs'
 
 Environment variables:
-  ACK_GENERATE_CACHE_DIR    Overrides the directory used for caching AWS API
+  ACK_GENERATE_CACHE_DIR:   Overrides the directory used for caching AWS API
                             models used by the ack-generate tool.
                             Default: $ACK_GENERATE_CACHE_DIR
   ACK_GENERATE_BIN_PATH:    Overrides the path to the the ack-generate binary.
@@ -54,6 +55,10 @@ Environment variables:
   ACK_GENERATE_CONFIG_PATH: Specify a path to the generator config YAML file to
                             instruct the code generator for the service.
                             Default: {SERVICE_CONTROLLER_SOURCE_PATH}/generator.yaml
+  AWS_SDK_GO_VERSION:       Overrides the version of github.com/aws/aws-sdk-go used
+                            by 'ack-generate' to fetch the service API Specifications.
+  TEMPLATES_DIR:            Overrides the directory containg ack-generate templates
+                            Default: $TEMPLATES_DIR
   K8S_RBAC_ROLE_NAME:       Name of the Kubernetes Role to use when generating
                             the RBAC manifests for the custom resource
                             definitions.
@@ -78,7 +83,7 @@ run:
  
 from the root directory or install ack-generate using:
 
-   go get -u github.com/aws-controllers-k8s/code-generator/cmd/ack-generate" 1>&2
+   go get -u -tags codegen github.com/aws-controllers-k8s/code-generator/cmd/ack-generate" 1>&2
         exit 1;
     fi
 fi
@@ -119,6 +124,10 @@ fi
 if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
     ag_args="$ag_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
     apis_args="$apis_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
+fi
+
+if [ -n "$AWS_SDK_GO_VERSION" ]; then
+    ag_args="$ag_args --aws-sdk-go-version $AWS_SDK_GO_VERSION"
 fi
 
 echo "Building Kubernetes API objects for $SERVICE"
