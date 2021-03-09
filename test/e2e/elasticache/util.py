@@ -18,10 +18,11 @@ import boto3
 
 from time import sleep
 
+ec = boto3.client("elasticache")
+
 def wait_usergroup_active(usergroup_id: str,
                            wait_periods: int = 10,
                            period_length: int = 60) -> bool:
-    ec = boto3.client("elasticache")
     for i in range(wait_periods):
         logging.debug(f"Waiting for user group {usergroup_id} to be active ({i})")
         response = ec.describe_user_groups(UserGroupId=usergroup_id)
@@ -43,7 +44,6 @@ def wait_usergroup_active(usergroup_id: str,
 def wait_snapshot_available(snapshot_name: str,
                             wait_periods: int = 10,
                             period_length: int = 60) -> bool:
-    ec = boto3.client("elasticache")
     for i in range(wait_periods):
         logging.debug(f"Waiting for snapshot {snapshot_name} to be available ({i})")
         response = ec.describe_snapshots(SnapshotName=snapshot_name)
@@ -60,4 +60,19 @@ def wait_snapshot_available(snapshot_name: str,
         sleep(period_length)
 
     logging.error(f"Wait for snapshot {snapshot_name} to be available timed out")
+    return False
+
+def wait_snapshot_deleted(snapshot_name: str,
+                          wait_periods: int = 10,
+                          period_length: int = 60) -> bool:
+    for i in range(wait_periods):
+        logging.debug(f"Waiting for snapshot {snapshot_name} to be deleted ({i})")
+        response = ec.describe_snapshots(SnapshotName=snapshot_name)
+
+        if len(response['Snapshots']) == 0:
+            return True
+
+        sleep(period_length)
+
+    logging.error(f"Wait for snapshot {snapshot_name} to be deleted timed out")
     return False
