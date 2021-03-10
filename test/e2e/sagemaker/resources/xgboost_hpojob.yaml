@@ -4,17 +4,14 @@ metadata:
   name: $HPO_JOB_NAME
 spec:
   hyperParameterTuningJobName: $HPO_JOB_NAME
-  tags:
-    - key: test-key
-      value: test-value
   hyperParameterTuningJobConfig:
     strategy: Bayesian
     hyperParameterTuningJobObjective:
       type_: Minimize
       metricName: validation:error
     resourceLimits:
-      maxNumberOfTrainingJobs: 10
-      maxParallelTrainingJobs: 5
+      maxNumberOfTrainingJobs: 2
+      maxParallelTrainingJobs: 1
     parameterRanges:
       integerParameterRanges:
       - name: num_round
@@ -53,9 +50,9 @@ spec:
       recordWrapperType: None
       inputMode: File
     outputDataConfig:
-      s3OutputPath: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/hpo_output
+      s3OutputPath: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/hpo/output
     resourceConfig:
-      instanceType: ml.m4.xlarge
+      instanceType: ml.m5.large
       instanceCount: 1
       volumeSizeInGB: 25
     stoppingCondition:
