@@ -1,0 +1,8 @@
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: Snapshot
+metadata:
+  name: $SNAPSHOT_NAME
+spec:
+  snapshotName: $SNAPSHOT_NAME
+  cacheClusterID: $CC_ID
+  kmsKeyID: $KMS_KEY_ID
