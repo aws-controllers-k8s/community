@@ -6,20 +6,20 @@ New ACK users typically have existing AWS resources in their accounts. These res
 
 The current method for migrating management of resources over to ACK requires users to store the current state of their applications, delete the resources, and re-create them using ACK. This process introduces places for bugs, loss of the state of existing deployments and downtime in production workloads.
 
-ACK aims to provide the ability to “adopt” existing resources into your Kubernetes environment. Given the user can provide an IAM role which has access to existing resource, and that ACK operators exist for each resource’s associated service, the ACK controller will be able to determine the current specification and status of the AWS resource and reconcile said resource as if it were created natively in k8s.
+ACK aims to provide the ability to “adopt” existing resources into your Kubernetes environment. Given the user can provide an IAM role which has access to existing resource, and that ACK controllers exist for each resource’s associated service, the ACK controller will be able to determine the current specification and status of the AWS resource and reconcile said resource as if the ACK controller had originally created it.
 
 ## Use Cases
 
 1. Migrating existing architecture from another platform (CFN, CDK, Terraform, etc.)
-    1. Resources exist but have never been managed by K8s - no spec files
+    1. Resources exist but have never been managed by an ACK controller
 3. Migrating architecture across K8s environments
-    1. Resource are being managed by another K8s environment
+    1. Resources are being managed by an ACK controller installed in another K8s cluster
 
 # Proposed Implementation
 
 ## Overview
 
-The proposed solution will provide an alternate workflow by which to adopt resources through a separate set of manifests. A new custom resource definition, the `AdoptedResource` CRD, provides a signal to ACK to adopt an existing resource. 
+The proposed solution will provide an explicit workflow by which to adopt resources through a separate set of manifests. A new custom resource definition, the `AdoptedResource` CRD, provides a signal to ACK to adopt an existing resource. 
 The `AdoptedResource` CRD references an existing AWS resource (either through ARN, name or other unique identifier) and a target Kubernetes `GroupVersionKind`. Each ACK controller will reconcile all adopted resources that match any of the types it controls (for the service it manages).
 The manager will describe the referenced AWS resource, typically through a `Describe*` SDK call, and use the returned values to compile a new custom resource - with filled spec and status fields. The manager will then apply this custom resource to the cluster using the metadata applied in the `AdoptedResource` spec.
 
