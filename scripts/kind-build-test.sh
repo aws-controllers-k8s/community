@@ -19,6 +19,8 @@ AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-"false"}
 TEST_HELM_CHARTS=${TEST_HELM_CHARTS:-"true"}
+SKIP_PYTHON_TESTS=${SKIP_PYTHON_TESTS:-"false"}
+RUN_PYTEST_LOCALLY=${RUN_PYTEST_LOCALLY:="false"}
 ACK_LOG_LEVEL="debug"
 ACK_RESOURCE_TAGS='services.k8s.aws/managed=true, services.k8s.aws/created=%UTCNOW%, services.k8s.aws/namespace=%KUBERNETES_NAMESPACE%'
 DELETE_CLUSTER_ARGS=""
@@ -93,6 +95,14 @@ Environment variables:
                             Default: $ROOT_DIR/build/tmp-$CLUSTER_NAME
   K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, and 1.18]
                             Default: 1.16
+  TEST_HELM_CHARTS          Whether to run the test-helm.sh script (<true|false>)
+                            Default: true
+  SKIP_PYTHON_TESTS         Whether to skip python tests and run bash tests instead for
+                            the service controller (<true|false>)
+                            Default: false
+  RUN_PYTEST_LOCALLY        If python tests exist, whether to run them locally instead of
+                            inside Docker (<true|false>)
+                            Default: false
 "
 
 if [ $# -ne 1 ]; then
@@ -238,21 +248,7 @@ if [[ "$TEST_HELM_CHARTS" == true ]]; then
   $TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
 fi
 
-# Fork E2E tests based on bash or Python
-service_test_dir="$TEST_E2E_DIR/$AWS_SERVICE"
-
-if [ ! -d "$service_test_dir" ]; then
-    echo "No tests for service $SERVICE"
-    exit 0
-fi
-
-# check to see if the tests use pytest
-[[ -f "$service_test_dir/__init__.py" ]] && enable_python_tests="true" || enable_python_tests="false"
-
-if [[ "$enable_python_tests" == "false" ]]; then
-    # Run tests directly
-    $TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
-else
-    # Run tests inside Dockerfile
-    $TEST_E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
-fi
+# run e2e tests
+export SKIP_PYTHON_TESTS
+export RUN_PYTEST_LOCALLY
+$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
