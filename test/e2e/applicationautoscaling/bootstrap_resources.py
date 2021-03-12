@@ -20,7 +20,8 @@ from dataclasses import dataclass
 
 @dataclass
 class TestBootstrapResources:
-    ScalableDynamoTableName: str
+    ScalableDynamoTableName: str # To be used for testing RegisterScalableTarget
+    RegisteredDynamoTableName: str # Already registered, for testing scaling policies
 
 _bootstrap_resources = None
 

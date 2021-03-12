@@ -38,3 +38,8 @@ def service_cleanup(config: dict):
         delete_dynamodb_table(resources.ScalableDynamoTableName)
     except:
         logging.exception(f"Unable to delete DynamoDB table {resources.ScalableDynamoTableName}")
+
+    try:
+        delete_dynamodb_table(resources.RegisteredDynamoTableName)
+    except:
+        logging.exception(f"Unable to delete DynamoDB table {resources.RegisteredDynamoTableName}")

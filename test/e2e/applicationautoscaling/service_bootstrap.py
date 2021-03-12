@@ -42,13 +42,34 @@ def create_dynamodb_table() -> str:
             }
         ],
         ProvisionedThroughput={
-            'ReadCapacityUnits': 10,
-            'WriteCapacityUnits': 10
+            "ReadCapacityUnits": 10,
+            "WriteCapacityUnits": 10
         }
     )
 
-    assert table['TableDescription']['TableName'] == table_name
+    assert table["TableDescription"]["TableName"] == table_name
     logging.info(f"Created DynamoDB table {table_name}")
+
+    return table_name
+
+def register_scalable_dynamodb_table(table_name: str) -> str:
+    """Registers a DynamoDB table as a scalable target.
+
+    Returns:
+        str: The name of the DynamoDB table
+    """
+    region = get_aws_region()
+
+    applicationautoscaling_client = boto3.client("application-autoscaling", region_name=region)
+    applicationautoscaling_client.register_scalable_target(
+        ServiceNamespace="dynamodb",
+        ResourceId=f"table/{table_name}",
+        ScalableDimension="dynamodb:table:WriteCapacityUnits",
+        MinCapacity=50,
+        MaxCapacity=100,
+    )
+
+    logging.info(f"Registered DynamoDB table {table_name} as scalable target")
 
     return table_name
 
@@ -56,5 +77,6 @@ def service_bootstrap() -> dict:
     logging.getLogger().setLevel(logging.INFO)
 
     return TestBootstrapResources(
-        create_dynamodb_table()
+        create_dynamodb_table(),
+        register_scalable_dynamodb_table(create_dynamodb_table())
     ).__dict__

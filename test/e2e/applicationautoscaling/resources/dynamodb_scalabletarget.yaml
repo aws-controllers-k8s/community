@@ -1,0 +1,10 @@
+apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
+kind: ScalableTarget
+metadata:
+  name: $SCALABLETARGET_NAME
+spec:
+  maxCapacity: 50
+  minCapacity: 10
+  resourceID: "table/$DYNAMODB_TABLE"
+  scalableDimension: "dynamodb:table:WriteCapacityUnits"
+  serviceNamespace: dynamodb
