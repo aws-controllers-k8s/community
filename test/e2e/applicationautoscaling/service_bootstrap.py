@@ -15,15 +15,46 @@ integration tests.
 """
 
 import boto3
-import json
 import logging
 
+from common.resources import random_suffix_name
+from common.aws import get_aws_account_id, get_aws_region
 from applicationautoscaling.bootstrap_resources import TestBootstrapResources
 
+def create_dynamodb_table() -> str:
+    region = get_aws_region()
+    account_id = get_aws_account_id()
+    table_name = random_suffix_name(f"ack-autoscaling-table-{region}-{account_id}", 63)
+
+    dynamodb = boto3.client("dynamodb", region_name=region)
+    table = dynamodb.create_table(
+        TableName=table_name,
+        KeySchema=[
+            {
+                "AttributeName": "TablePrimaryAttribute",
+                "KeyType": "HASH"
+            }
+        ],
+        AttributeDefinitions=[
+            {
+                "AttributeName": "TablePrimaryAttribute",
+                "AttributeType": "N"
+            }
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 10,
+            'WriteCapacityUnits': 10
+        }
+    )
+
+    assert table['TableDescription']['TableName'] == table_name
+    logging.info(f"Created DynamoDB table {table_name}")
+
+    return table_name
 
 def service_bootstrap() -> dict:
     logging.getLogger().setLevel(logging.INFO)
 
     return TestBootstrapResources(
-        
+        create_dynamodb_table()
     ).__dict__

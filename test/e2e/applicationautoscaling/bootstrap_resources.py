@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 @dataclass
 class TestBootstrapResources:
-    pass
+    ScalableDynamoTableName: str
 
 _bootstrap_resources = None
 

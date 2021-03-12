@@ -19,9 +19,22 @@ import logging
 from common.aws import get_aws_region
 from applicationautoscaling.bootstrap_resources import TestBootstrapResources
 
+def delete_dynamodb_table(table_name: str):
+    region = get_aws_region()
+    dynamodb = boto3.client("dynamodb", region_name=region)
+
+    dynamodb.delete_table(TableName=table_name)
+
+    logging.info(f"Deleted DynamoDB table {table_name}")
+
 def service_cleanup(config: dict):
     logging.getLogger().setLevel(logging.INFO)
 
     resources = TestBootstrapResources(
         **config
     )
+
+    try:
+        delete_dynamodb_table(resources.ScalableDynamoTableName)
+    except:
+        logging.exception(f"Unable to delete DynamoDB table {resources.ScalableDynamoTableName}")
