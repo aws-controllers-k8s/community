@@ -25,127 +25,71 @@ from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = 'hyperparametertuningjobs'
+HPO_JOB_STATUS_CREATED = ("InProgress", "Completed")
+HPO_JOB_STATUS_STOPPED = ("Stopped", "Stopping")
 
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
+def _sagemaker_client():
     return boto3.client('sagemaker')
 
-
-@pytest.fixture(scope="module")
-def xgboost_hpojob():
+def _make_hpojob():
     resource_name = random_suffix_name("xgboost-hpojob", 32)
 
     replacements = REPLACEMENT_VALUES.copy()
     replacements["HPO_JOB_NAME"] = resource_name
 
-    hpojob = load_resource_file(
-        SERVICE_NAME, "xgboost_hpojob", additional_replacements=replacements)
-    logging.debug(hpojob)
+    data = load_resource_file(
+        SERVICE_NAME, "xgboost_hpojob", additional_replacements=replacements
+    )
+    logging.debug(data)
 
-    # Create the k8s resource
     reference = k8s.CustomResourceReference(
-        CRD_GROUP, CRD_VERSION, RESOURCE_PLURAL, resource_name, namespace="default")
-    resource = k8s.create_custom_resource(reference, hpojob)
-    resource = k8s.wait_resource_consumed_by_controller(reference)
+        CRD_GROUP, CRD_VERSION, RESOURCE_PLURAL, resource_name, namespace="default"
+    )
 
-    assert resource is not None
+    return reference, data
 
-    yield (reference, resource)    
+@pytest.fixture(scope="module")
+def xgboost_hpojob():
+    hpo_job, data = _make_hpojob()
+    resource = k8s.create_custom_resource(hpo_job, data)
+    resource = k8s.wait_resource_consumed_by_controller(hpo_job)
 
-    # Delete the k8s resource if not already deleted by tests
+    yield (hpo_job, resource) 
+
+    if k8s.get_resource_exists(hpo_job):
+        k8s.delete_custom_resource(hpo_job)
+
+def get_sagemaker_hpo_job(hpo_job_name: str):
     try:
-        k8s.delete_custom_resource(reference)
-    except:
-        pass
-
+        hpo_desc = _sagemaker_client().describe_hyper_parameter_tuning_job(
+            HyperParameterTuningJobName=hpo_job_name
+        )
+        return hpo_desc
+    except BaseException:
+        logging.error(
+            f"SageMaker could not find an hpo job with the name {hpo_job_name}"
+        )
+        return None
 
 @service_marker
 @pytest.mark.canary
 class TestHPO:
-    def _get_created_hpo_job_status_list(self):
-        return ["InProgress", "Completed"]
-
-    def _get_stopped_hpo_job_status_list(self):
-        return ["Stopped", "Stopping"]
-
-    def _get_sagemaker_hpo_job_arn(self, sagemaker_client, hpo_job_name: str):
-        try:
-            hpo_desc = sagemaker_client.describe_hyper_parameter_tuning_job(
-                HyperParameterTuningJobName=hpo_job_name
-            )
-            return hpo_desc["HyperParameterTuningJobArn"]
-        except BaseException:
-            logging.error(
-                f"SageMaker could not find an hpo job with the name {hpo_job_name}"
-            )
-            return None
-
-    def _get_sagemaker_hpo_job_status(
-        self, sagemaker_client, hpo_job_name: str
-    ):
-        try:
-            hpo_job = sagemaker_client.describe_hyper_parameter_tuning_job(
-                HyperParameterTuningJobName=hpo_job_name
-            )
-            return hpo_job["HyperParameterTuningJobStatus"]
-        except BaseException:
-            logging.error(
-                f"SageMaker could not find an hpo job with the name {hpo_job_name}"
-            )
-            return None
-
     def test_create_hpo(self, xgboost_hpojob):
         (reference, resource) = xgboost_hpojob
         assert k8s.get_resource_exists(reference)
-
-    def test_hpo_has_correct_arn(self, sagemaker_client, xgboost_hpojob):
-        (reference, _) = xgboost_hpojob
-        resource = k8s.get_resource(reference)
+    
         hpo_job_name = resource["spec"].get("hyperParameterTuningJobName", None)
-
         assert hpo_job_name is not None
 
-        assert k8s.get_resource_arn(resource) == self._get_sagemaker_hpo_job_arn(
-            sagemaker_client, hpo_job_name
-        )
-
-    def test_hpo_job_has_created_status(
-        self, sagemaker_client, xgboost_hpojob
-    ):
-        (reference, _) = xgboost_hpojob
-        resource = k8s.get_resource(reference)
-        hpo_job_name = resource["spec"].get("hyperParameterTuningJobName", None)
-
-        assert hpo_job_name is not None
-
-        current_hpo_job_status = self._get_sagemaker_hpo_job_status(
-            sagemaker_client, hpo_job_name
-        )
-        expected_hpo_job_status_list = (
-            self._get_created_hpo_job_status_list()
-        )
-        assert current_hpo_job_status in expected_hpo_job_status_list
-
-    def test_hpo_job_has_stopped_status(
-        self, sagemaker_client, xgboost_hpojob
-    ):
-        (reference, _) = xgboost_hpojob
-        resource = k8s.get_resource(reference)
-        hpo_job_name = resource["spec"].get("hyperParameterTuningJobName", None)
-
-        assert hpo_job_name is not None
+        hpo_sm_desc = get_sagemaker_hpo_job(hpo_job_name)
+        assert k8s.get_resource_arn(resource) == hpo_sm_desc["HyperParameterTuningJobArn"]
+        assert hpo_sm_desc["HyperParameterTuningJobStatus"] in HPO_JOB_STATUS_CREATED
 
         # Delete the k8s resource.
         _, deleted = k8s.delete_custom_resource(reference)
         assert deleted is True
 
-        current_hpo_job_status = self._get_sagemaker_hpo_job_status(
-            sagemaker_client, hpo_job_name
-        )
-        expected_hpo_job_status_list = (
-            self._get_stopped_hpo_job_status_list()
-        )
-        assert current_hpo_job_status in expected_hpo_job_status_list
+        hpo_sm_desc = get_sagemaker_hpo_job(hpo_job_name)
+        assert hpo_sm_desc["HyperParameterTuningJobStatus"] in HPO_JOB_STATUS_STOPPED
 
 
