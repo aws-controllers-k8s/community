@@ -40,6 +40,7 @@ jobs:
           export AWS_PROFILE=default
           export AWS_REGION=$(aws configure get region --profile default)
           export TEST_HELM_CHARTS=false
+          export SKIP_PYTHON_TESTS=true
           export AWS_ROLE_ARN=$(aws ssm get-parameter --name ACK_ROLE_ARN | jq -r '.Parameter.Value')
           export AWS_ROLE_ARN_ALT=$(aws ssm get-parameter --name ACK_ROLE_ARN_ALT | jq -r '.Parameter.Value')
           ./scripts/kind-build-test.sh $SERVICE
