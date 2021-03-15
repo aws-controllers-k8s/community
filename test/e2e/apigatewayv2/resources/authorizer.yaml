@@ -1,0 +1,13 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: Authorizer
+metadata:
+  name: $AUTHORIZER_NAME
+spec:
+  apiID: $API_ID
+  authorizerType: REQUEST
+  identitySource:
+    - $IDENTITY_SOURCE
+  name: $AUTHORIZER_TITLE
+  authorizerURI: $AUTHORIZER_URI
+  authorizerPayloadFormatVersion: '2.0'
+  enableSimpleResponses: true

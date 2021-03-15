@@ -1,0 +1,7 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: API
+metadata:
+  name: "$API_NAME"
+spec:
+  name: "$API_TITLE"
+  protocolType: HTTP
