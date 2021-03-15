@@ -1,0 +1,9 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: Stage
+metadata:
+  name: $STAGE_NAME
+spec:
+  apiID: $API_ID
+  stageName: $STAGE_NAME
+  autoDeploy: true
+  description: $STAGE_DESCRIPTION

@@ -1,0 +1,25 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: API
+metadata:
+  name: "$API_NAME"
+spec:
+  body: '{
+            "openapi": "3.0.1",
+            "info": {
+              "title": "$API_TITLE",
+              "version": "v1"
+            },
+            "paths": {
+              "/": {
+                "get": {
+                  "x-amazon-apigateway-integration": {
+                    "uri": "http://example.com",
+                    "httpMethod": "GET",
+                    "type": "HTTP_PROXY",
+                    "payloadFormatVersion": "1.0"
+                  }
+                }
+              }
+            },
+            "components": {}
+        }'

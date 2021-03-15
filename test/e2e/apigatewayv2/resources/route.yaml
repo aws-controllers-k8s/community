@@ -1,0 +1,10 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: Route
+metadata:
+  name: $ROUTE_NAME
+spec:
+  apiID: $API_ID
+  routeKey: $ROUTE_KEY
+  target: integrations/$INTEGRATION_ID
+  authorizationType: CUSTOM
+  authorizerID: $AUTHORIZER_ID

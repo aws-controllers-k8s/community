@@ -1,0 +1,10 @@
+apiVersion: apigatewayv2.services.k8s.aws/v1alpha1
+kind: Integration
+metadata:
+  name: "$INTEGRATION_NAME"
+spec:
+  apiID: "$API_ID"
+  integrationType: HTTP_PROXY
+  integrationURI: "$INTEGRATION_URI"
+  integrationMethod: GET
+  payloadFormatVersion: "1.0"
