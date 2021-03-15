@@ -13,8 +13,6 @@ SKIP_PYTHON_TESTS=${SKIP_PYTHON_TESTS:-"false"}
 RUN_PYTEST_LOCALLY=${RUN_PYTEST_LOCALLY:="false"}
 PYTEST_LOG_LEVEL="${PYTEST_LOG_LEVEL:-"INFO"}"
 
-source "$SCRIPTS_DIR/lib/common.sh"
-
 USAGE="
 Usage:
   $(basename "$0") <service>
@@ -53,6 +51,8 @@ fi
 
 # run tests
 if [[ "$python_tests_exist" == "false" ]] || [[ "$SKIP_PYTHON_TESTS" == "true" ]]; then
+  source "$SCRIPTS_DIR/lib/common.sh"
+
   echo "running bash tests..."
   service_test_files=$( find "$service_test_dir" -type f -name '*.sh' | sort )
   for service_test_file in $service_test_files; do
