@@ -25,7 +25,7 @@ KUBECONFIG_LOCATION="${KUBECONFIG:-"$HOME/.kube/config"}"
 # Ensure we are inside the correct build context
 pushd "${THIS_DIR}" 1> /dev/null
   # Build the dockerfile first
-  TEST_DOCKER_SHA="$(docker build . --quiet )"
+  TEST_DOCKER_SHA="$(docker build . --quiet)"
 popd 1>/dev/null
 
 # Ensure it can connect to KIND cluster on host device by running on host 
@@ -40,4 +40,5 @@ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
     -e AWS_SESSION_TOKEN \
+    -e RUN_PYTEST_LOCALLY="true" \
     $TEST_DOCKER_SHA "${SERVICE}"

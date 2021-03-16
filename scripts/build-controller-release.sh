@@ -127,7 +127,7 @@ helm_output_dir="$SERVICE_CONTROLLER_SOURCE_PATH/helm"
 # not affect the release artifacts produced from `ack-generate release`.
 # TODO(jaypipes): Clean this up so the `ack-generate release` command
 # doesn't need to look up a go.mod file for aws-sdk-go version.
-ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --templates-dir $TEMPLATES_DIR --aws-sdk-go-version v1.35.5"
+ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --aws-sdk-go-version v1.35.5"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
 fi
