@@ -21,8 +21,8 @@ import time
 
 from applicationautoscaling import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
 from applicationautoscaling.replacement_values import REPLACEMENT_VALUES
-from applicationautoscaling.bootstrap_resources import TestBootstrapResources
-from common.resources import load_resource_file, random_suffix_name, read_bootstrap_config
+from applicationautoscaling.bootstrap_resources import TestBootstrapResources, get_bootstrap_resources
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = "scalabletargets"
@@ -34,7 +34,7 @@ def applicationautoscaling_client():
 
 @pytest.fixture(scope="module")
 def bootstrap_resources() -> TestBootstrapResources:
-    return TestBootstrapResources(**read_bootstrap_config(SERVICE_NAME))
+    return get_bootstrap_resources()
 
 @service_marker
 @pytest.mark.canary
