@@ -81,6 +81,32 @@ def rg_input_coverage(bootstrap_resources, make_rg_name, make_replication_group,
     rg_deletion_waiter.wait(ReplicationGroupId=input_dict["RG_ID"]) #throws exception if wait fails
 
 @pytest.fixture(scope="module")
+def first_secret():
+    k8s.create_opaque_secret("default", "first", "secret1", "securetoken123456")
+    yield
+    k8s.delete_secret("default", "first")
+
+@pytest.fixture(scope="module")
+def second_secret():
+    k8s.create_opaque_secret("default", "second", "secret2", "newsecuretoken123456")
+    yield
+    k8s.delete_secret("default", "second")
+
+
+@pytest.fixture(scope="module")
+def rg_auth_token(make_rg_name, make_replication_group, rg_deletion_waiter, first_secret, second_secret):
+    input_dict = {
+        "RG_ID": make_rg_name("rg-auth-token"),
+        "NAME": "first",
+        "KEY": "secret1"
+    }
+    (reference, resource) = make_replication_group("replicationgroup_authtoken", input_dict, input_dict["RG_ID"])
+    yield (reference, resource)
+    k8s.delete_custom_resource(reference)
+    sleep(DEFAULT_WAIT_SECS)
+    rg_deletion_waiter.wait(ReplicationGroupId=input_dict["RG_ID"]) #throws exception if wait fails
+
+@pytest.fixture(scope="module")
 def rg_cmd_fromsnapshot(bootstrap_resources, make_rg_name, make_replication_group, rg_deletion_waiter):
     input_dict = {
         "RG_ID": make_rg_name("rg-cmd-fromsnapshot"),
@@ -105,4 +131,20 @@ class TestReplicationGroup:
 
     def test_rg_cmd_fromsnapshot(self, rg_cmd_fromsnapshot):
         (reference, _) = rg_cmd_fromsnapshot
+        assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "True", wait_periods=30)
+
+    def test_rg_auth_token(self, rg_auth_token):
+        (reference, _) = rg_auth_token
+        assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "True", wait_periods=30)
+
+        update_dict = {
+            "RG_ID": reference.name,
+            "NAME": "second",
+            "KEY": "secret2"
+        }
+
+        updated_spec = load_resource_file(
+            SERVICE_NAME, "replicationgroup_authtoken", additional_replacements=update_dict)
+
+        k8s.patch_custom_resource(reference, updated_spec)
         assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "True", wait_periods=30)
