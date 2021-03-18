@@ -16,6 +16,7 @@
 import boto3
 import json
 import logging
+import time
 
 from common.aws import get_aws_account_id, get_aws_region, duplicate_s3_contents
 from common.resources import random_suffix_name
@@ -45,6 +46,11 @@ def create_execution_role() -> str:
 
     iam_resource = iam.get_role(RoleName=role_name)
     resource_arn = iam_resource['Role']['Arn']
+
+    # There appears to be a delay in role availability after role creation
+    # resulting in failure that role is not present. So adding a delay
+    # to allow for the role to become available
+    time.sleep(10)
     logging.info(f"Created SageMaker execution role {resource_arn}")
 
     return resource_arn
