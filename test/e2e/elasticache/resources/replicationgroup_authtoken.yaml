@@ -1,0 +1,17 @@
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: ReplicationGroup
+metadata:
+  name: $RG_ID
+spec:
+    engine: redis
+    replicationGroupID: $RG_ID
+    replicationGroupDescription: Auth token test
+    cacheNodeType: cache.t3.micro
+    numNodeGroups: 1
+    replicasPerNodeGroup: 0
+    transitEncryptionEnabled: true
+    cacheSubnetGroupName: default
+    authToken:
+      namespace: default
+      name: $NAME
+      key: $KEY

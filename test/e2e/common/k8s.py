@@ -15,7 +15,7 @@ CustomResource APIs.
 """
 
 import logging
-
+import base64
 from time import sleep
 from typing import Dict, Optional, Union
 from dataclasses import dataclass
@@ -196,6 +196,42 @@ def get_resource_arn(resource: object) -> Union[None, str]:
         return resource['status']['ackResourceMetadata']['arn']
     return None
 
+
+def create_opaque_secret(namespace: str,
+                         name: str,
+                         key: str,
+                         value: str):
+    """
+    Create new k8 Opaque Secret.
+
+    :param namespace: Namespace of the secret.
+    :param name: Name of the secret
+    :param key: Key of the secret
+    :param value: Value of the secret
+    :return: None
+    """
+    _api_client = _get_k8s_api_client()
+    body = client.V1Secret()
+    body.api_version = 'v1'
+    body.data = {key:base64.b64encode(value.encode('ascii')).decode('utf-8')}
+    body.kind = 'Secret'
+    body.metadata = {'name': name}
+    body.type = 'Opaque'
+    body = _api_client.sanitize_for_serialization(body)
+    client.CoreV1Api(_api_client).create_namespaced_secret(namespace,body)
+
+
+def delete_secret(namespace: str,
+                  name: str):
+    """
+    Delete an existing k8 secret.
+
+    :param namespace: Namespace of the secret.
+    :param name: Name of the secret
+    :return: None
+    """
+    _api_client = _get_k8s_api_client()
+    client.CoreV1Api(_api_client).delete_namespaced_secret(name, namespace)
 
 def wait_on_condition(reference: CustomResourceReference,
                       condition_name: str,
