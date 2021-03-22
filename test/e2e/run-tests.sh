@@ -70,9 +70,7 @@ elif [[ "$RUN_PYTEST_LOCALLY" == "true" ]]; then
   PYTHONPATH=. pytest -n auto --dist loadfile --log-cli-level "${PYTEST_LOG_LEVEL}" "${SERVICE}"
   python cleanup.py "${SERVICE}"
   set -eo pipefail
-
 else
   echo "running python tests in Docker..."
-  $E2E_DIR/build-run-test-dockerfile.sh $AWS_SERVICE
-
+  $E2E_DIR/build-run-test-dockerfile.sh $SERVICE
 fi
