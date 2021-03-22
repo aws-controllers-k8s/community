@@ -1,0 +1,24 @@
+piVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: EndpointConfig
+metadata:
+  name: $CONFIG_NAME
+spec:
+  endpointConfigName: $CONFIG_NAME
+  productionVariants:
+  - modelName: $MODEL_NAME
+    variantName: AllTraffic
+    instanceType: ml.c5.large
+    initialVariantWeight: 1
+    initialInstanceCount: 1
+  dataCaptureConfig:
+    enableCapture: true
+    destinationS3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/endpoint_config/datacapture
+    initialSamplingPercentage: 100
+    captureOptions:
+    - captureMode: Input
+    - captureMode: Output
+    captureContentTypeHeader:
+      csvContentTypes:
+      - "text/csv"
+      jsonContentTypes:
+      - "application/json"

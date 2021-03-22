@@ -1,0 +1,37 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: DataQualityJobDefinition
+metadata:
+  name: $JOB_DEFINITION_NAME
+spec:
+  jobDefinitionName: $JOB_DEFINITION_NAME
+  jobResources:
+    clusterConfig:
+      instanceCount: 1
+      instanceType: ml.m5.large
+      volumeSizeInGB: 20
+  dataQualityAppSpecification:
+    # https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-pre-built-container.html
+    imageURI: 159807026194.dkr.ecr.us-west-2.amazonaws.com/sagemaker-model-monitor-analyzer
+    postAnalyticsProcessorSourceURI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/code/postprocessor.py"
+    environment:
+      publish_cloudwatch_metrics: "Enabled"
+  dataQualityBaselineConfig:
+    constraintsResource:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/baselining/constraints.json"
+    statisticsResource:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/baselining/statistics.json"
+  dataQualityJobInput:
+    endpointInput:
+      endpointName: $ENDPOINT_NAME
+      localPath: "/opt/ml/processing/input/endpoint"
+      s3InputMode: File
+      s3DataDistributionType: FullyReplicated
+  dataQualityJobOutputConfig:
+    monitoringOutputs:
+    - s3Output:
+        localPath: "/opt/ml/processing/output"
+        s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/reports"
+        s3UploadMode: Continuous
+  stoppingCondition:
+    maxRuntimeInSeconds: 1800
+  roleARN: "SAGEMAKER_EXECUTION_ROLE_ARN"

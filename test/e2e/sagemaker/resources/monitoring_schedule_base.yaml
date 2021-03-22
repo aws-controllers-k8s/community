@@ -1,0 +1,11 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: MonitoringSchedule
+metadata:
+  name: $SCHEDULE_NAME
+spec:
+  monitoringScheduleName: $SCHEDULE_NAME
+  monitoringScheduleConfig: 
+    monitoringType: $MONITORING_TYPE
+    monitoringJobDefinitionName: $JOB_DEFINITION_NAME
+    scheduleConfig:
+      scheduleExpression: "cron(0 * ? * * *)"
