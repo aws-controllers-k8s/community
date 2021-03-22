@@ -1,0 +1,37 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: ModelBiasJobDefinition
+metadata:
+  name: $JOB_DEFINITION_NAME
+spec:
+  jobDefinitionName: $JOB_DEFINITION_NAME
+  jobResources:
+    clusterConfig:
+      instanceCount: 1
+      instanceType: ml.m5.large
+      volumeSizeInGB: 30
+  modelBiasAppSpecification:
+    imageURI: $CLARIFY_IMAGE_URI
+    configURI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_bias_job_definition/baselining/analysis_config.json
+  modelBiasBaselineConfig:
+    constraintsResource:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_bias_job_definition/baselining/analysis.json"
+  modelBiasJobInput:
+    endpointInput:
+      endpointName: $ENDPOINT_NAME
+      localPath: "/opt/ml/processing/input/endpoint"
+      s3InputMode: File
+      s3DataDistributionType: FullyReplicated
+      probabilityThresholdAttribute: 0.8
+      startTimeOffset: "-PT1H"
+      endTimeOffset: "-PT0H"
+    groundTruthS3Input:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_bias_job_definition/ground_truth_data"
+  modelBiasJobOutputConfig:
+    monitoringOutputs:
+    - s3Output:
+        localPath: "/opt/ml/processing/output"
+        s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_bias_job_definition/reports"
+        s3UploadMode: Continuous
+  stoppingCondition:
+    maxRuntimeInSeconds: 1800
+  roleARN: "$SAGEMAKER_EXECUTION_ROLE_ARN"

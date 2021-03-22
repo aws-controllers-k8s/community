@@ -28,7 +28,8 @@ from sagemaker import (
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.aws import copy_s3_object, delete_s3_object
-from common.resources import random_suffix_name
+from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 
@@ -227,33 +228,11 @@ class TestEndpoint:
 
         return resource_status
 
-    def _wait_sagemaker_endpoint_status(
-        self,
-        sagemaker_client,
-        endpoint_name,
-        expected_status: str,
-        wait_periods: int = 60,
-    ):
-        actual_status = None
-        for _ in range(wait_periods):
-            time.sleep(30)
-            actual_status = sagemaker_client.describe_endpoint(
-                EndpointName=endpoint_name
-            )["EndpointStatus"]
-            if actual_status == expected_status:
-                break
-        else:
-            logging.error(
-                f"Wait for sagemaker endpoint status: {expected_status} timed out. Actual status: {actual_status}"
-            )
-
-        return actual_status
-
     def _assert_endpoint_status_in_sync(
         self, sagemaker_client, endpoint_name, reference, expected_status
     ):
         assert (
-            self._wait_sagemaker_endpoint_status(
+            _wait_sagemaker_endpoint_status(
                 sagemaker_client, endpoint_name, expected_status
             )
             == self._wait_resource_endpoint_status(reference, expected_status, 2)

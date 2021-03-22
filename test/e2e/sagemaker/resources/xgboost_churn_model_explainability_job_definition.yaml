@@ -1,0 +1,32 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: ModelExplainabilityJobDefinition
+metadata:
+  name: $JOB_DEFINITION_NAME
+spec:
+  jobDefinitionName: $JOB_DEFINITION_NAME
+  jobResources:
+    clusterConfig:
+      instanceCount: 1
+      instanceType: ml.m5.large
+      volumeSizeInGB: 30
+  modelExplainabilityAppSpecification:
+    imageURI: $CLARIFY_IMAGE_URI
+    configURI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_explainability_job_definition/baselining/analysis_config.json
+  modelExplainabilityBaselineConfig:
+    constraintsResource:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_explainability_job_definition/baselining/analysis.json"
+  modelExplainabilityJobInput:
+    endpointInput:
+      endpointName: $ENDPOINT_NAME
+      localPath: "/opt/ml/processing/input/endpoint"
+      s3InputMode: File
+      s3DataDistributionType: FullyReplicated
+  modelExplainabilityJobOutputConfig:
+    monitoringOutputs:
+    - s3Output:
+        localPath: "/opt/ml/processing/output"
+        s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_explainability_job_definition/reports"
+        s3UploadMode: Continuous
+  stoppingCondition:
+    maxRuntimeInSeconds: 1800
+  roleARN: "$SAGEMAKER_EXECUTION_ROLE_ARN"

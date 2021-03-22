@@ -1,5 +1,5 @@
 apiVersion: sagemaker.services.k8s.aws/v1alpha1
-kind: DataQualityJobDefinition
+kind: ModelQualityJobDefinition
 metadata:
   name: $JOB_DEFINITION_NAME
 spec:
@@ -9,25 +9,27 @@ spec:
       instanceCount: 1
       instanceType: ml.m5.large
       volumeSizeInGB: 20
-  dataQualityAppSpecification:
+  modelQualityAppSpecification:
     imageURI: $MODEL_MONITOR_ANALYZER_IMAGE_URI
-    postAnalyticsProcessorSourceURI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/code/postprocessor.py"
-  dataQualityBaselineConfig:
+    problemType: BinaryClassification
+  modelQualityBaselineConfig:
     constraintsResource:
-      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/baselining/constraints.json"
-    statisticsResource:
-      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/baselining/statistics.json"
-  dataQualityJobInput:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_quality_job_definition/baselining/constraints.json"
+  modelQualityJobInput:
     endpointInput:
       endpointName: $ENDPOINT_NAME
-      localPath: "/opt/ml/processing/input/endpoint"
+      localPath: "/opt/ml/processing/input_data"
       s3InputMode: File
       s3DataDistributionType: FullyReplicated
-  dataQualityJobOutputConfig:
+      probabilityThresholdAttribute: 0.5
+      probabilityAttribute: "0"
+    groundTruthS3Input:
+      s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_quality_job_definition/ground_truth_data"
+  modelQualityJobOutputConfig:
     monitoringOutputs:
     - s3Output:
         localPath: "/opt/ml/processing/output"
-        s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/data_quality_job_definition/reports"
+        s3URI: "s3://$SAGEMAKER_DATA_BUCKET/sagemaker/model_quality_job_definition/results"
         s3UploadMode: Continuous
   stoppingCondition:
     maxRuntimeInSeconds: 1800
