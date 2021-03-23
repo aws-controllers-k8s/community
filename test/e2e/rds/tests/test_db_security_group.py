@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""Integration tests for the RDS API DBSubnetGroup resource
+"""Integration tests for the RDS API DBSecurityGroup resource
 """
 
 import boto3
@@ -28,11 +28,9 @@ from rds.replacement_values import REPLACEMENT_VALUES
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
-RESOURCE_PLURAL = 'dbsubnetgroups'
+RESOURCE_PLURAL = 'dbsecuritygroups'
 
 DELETE_WAIT_AFTER_SECONDS = 10
-CREATE_INTERVAL_SLEEP_SECONDS = 15
-CREATE_TIMEOUT_SECONDS = 10
 
 
 @pytest.fixture(scope="module")
@@ -42,22 +40,20 @@ def rds_client():
 
 @service_marker
 @pytest.mark.canary
-class TestDBSubnetGroup:
-    def test_create_delete_2az(self, rds_client):
-        resource_name = "my-db-subnet-group"
-        resource_desc = "my-db-subnet-group description"
+class TestDBSecurityGroup:
+    def test_create_delete_simple(self, rds_client):
+        resource_name = "my-db-security-group"
+        resource_desc = "my-db-security-group description"
 
         br_resources = get_bootstrap_resources()
 
         replacements = REPLACEMENT_VALUES.copy()
-        replacements["DB_SUBNET_GROUP_NAME"] = resource_name
-        replacements["DB_SUBNET_GROUP_DESC"] = resource_desc
-        replacements["SUBNET_AZ1"] = br_resources.SubnetAZ1
-        replacements["SUBNET_AZ2"] = br_resources.SubnetAZ2
+        replacements["DB_SECURITY_GROUP_NAME"] = resource_name
+        replacements["DB_SECURITY_GROUP_DESC"] = resource_desc
 
         resource_data = load_resource_file(
             SERVICE_NAME,
-            "db_subnet_group_2az",
+            "db_security_group_simple",
             additional_replacements=replacements,
         )
         logging.debug(resource_data)
@@ -73,31 +69,20 @@ class TestDBSubnetGroup:
         assert cr is not None
         assert k8s.get_resource_exists(ref)
 
-        # Let's check that the DB subnet group appears in RDS
-        aws_res = rds_client.describe_db_subnet_groups(DBSubnetGroupName=resource_name)
+        # Let's check that the DB security group appears in RDS
+        aws_res = rds_client.describe_db_security_groups(DBSecurityGroupName=resource_name)
         assert aws_res is not None
-        assert len(aws_res['DBSubnetGroups']) == 1
-
-        now = datetime.datetime.now()
-        timeout = now + datetime.timedelta(seconds=CREATE_TIMEOUT_SECONDS)
-
-        # TODO(jaypipes): Move this into generic AWS-side waiter
-        while aws_res['DBSubnetGroups'][0]['SubnetGroupStatus'] != "Complete":
-            if datetime.datetime.now() >= timeout:
-                raise Exception("failed to find DB subnet group in Complete status before timeout")
-            time.sleep(CREATE_INTERVAL_SLEEP_SECONDS)
-            aws_res = rds_client.describe_db_subnet_groups(DBSubnetGroupName=resource_name)
-            assert aws_res is not None
-            assert len(aws_res['DBSubnetGroups']) == 1
+        assert len(aws_res['DBSecurityGroups']) == 1
 
         # Delete the k8s resource on teardown of the module
         k8s.delete_custom_resource(ref)
 
         time.sleep(DELETE_WAIT_AFTER_SECONDS)
 
-        # DB subnet group should no longer appear in RDS
+        # DB security group should no longer appear in RDS
         try:
-            aws_res = rds_client.describe_db_subnet_groups(DBSubnetGroupName=resource_name)
+            aws_res = rds_client.describe_db_security_groups(DBSecurityGroupName=resource_name)
             assert False
-        except rds_client.exceptions.DBSubnetGroupNotFoundFault:
+        except rds_client.exceptions.DBSecurityGroupNotFoundFault:
             pass
+

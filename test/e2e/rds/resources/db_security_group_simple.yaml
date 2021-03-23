@@ -1,0 +1,8 @@
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBSecurityGroup
+metadata:
+  name: $DB_SECURITY_GROUP_NAME
+spec:
+  name: $DB_SECURITY_GROUP_NAME
+  description: $DB_SECURITY_GROUP_DESC
+
