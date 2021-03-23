@@ -1,0 +1,11 @@
+apiVersion: elasticache.services.k8s.aws/v1alpha1
+kind: ReplicationGroup
+metadata:
+  name: $RG_ID
+spec:
+  cacheNodeType: cache.t3.micro
+  engine: redis
+  numNodeGroups: $NUM_NODE_GROUPS
+  replicasPerNodeGroup: $REPLICAS_PER_NODE_GROUP
+  replicationGroupDescription: large cluster mode enabled RG
+  replicationGroupID: $RG_ID
