@@ -15,10 +15,6 @@
 
 import pytest
 import logging
-import json
-import pickle
-
-from filelock import FileLock
 
 from sagemaker import (
     SERVICE_NAME,
@@ -92,7 +88,8 @@ def _make_xgboost_churn_endpoint():
     return (model_reference, config_reference, endpoint_reference, \
         model, config, endpoint_spec)
 
-def _xgboost_churn_endpoint():
+@pytest.fixture(scope="module")
+def xgboost_churn_endpoint():
     (model_reference, config_reference, endpoint_reference, \
         model, config, endpoint_spec) = _make_xgboost_churn_endpoint()
 
@@ -108,42 +105,12 @@ def _xgboost_churn_endpoint():
     endpoint_resource = k8s.wait_resource_consumed_by_controller(endpoint_reference)
     assert endpoint_resource is not None
 
-    return (endpoint_reference, endpoint_resource, endpoint_spec)
-
-@pytest.fixture(scope="session")
-def xgboost_churn_endpoint(tmp_path_factory, worker_id):
-    if worker_id == "master":
-        data = _xgboost_churn_endpoint()
-
-        yield data
-
-        # Delete the k8s resource if not already deleted by tests
-        if k8s.get_resource_exists(data[0]):
-            k8s.delete_custom_resource(data[0])
-        
-        return
-
-    root_tmp_dir = tmp_path_factory.getbasetemp().parent
-
-    fn = root_tmp_dir / "xgboost_churn_endpoint.pkl"
-    lock = FileLock(str(fn) + ".lock") 
-    with lock:
-        if fn.is_file():
-            with open(fn, "rb") as file:
-                # data = pickle.loads(fn.read_text())
-                data = pickle.load(file)
-        else:
-            data = _xgboost_churn_endpoint()
-            with open(fn, "wb") as file:
-                print(data)
-                pickle.dump(data, file)
-            # fn.write_text(pickle.dumps(data))
-    
-    yield data
+    yield (endpoint_reference, endpoint_resource, endpoint_spec)
 
     # Delete the k8s resource if not already deleted by tests
-    if k8s.get_resource_exists(data[0]):
-        k8s.delete_custom_resource(data[0])
+    if k8s.get_resource_exists(endpoint_reference):
+        k8s.delete_custom_resource(endpoint_reference)
+
 
 def _make_data_quality_job_definition(endpoint_name):
     resource_name = random_suffix_name("data-quality-job-definition", 32)

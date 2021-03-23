@@ -17,11 +17,9 @@ import boto3
 import pytest
 import logging
 
-from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
-from sagemaker.replacement_values import REPLACEMENT_VALUES
+from sagemaker import service_marker
 from sagemaker.tests._fixtures import xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn, _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from sagemaker.tests._helpers import _get_job_definition_arn, _sagemaker_client
 from common import k8s
 
 RESOURCE_PLURAL = 'dataqualityjobdefinitions'
