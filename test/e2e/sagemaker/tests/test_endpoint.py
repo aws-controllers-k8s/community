@@ -28,14 +28,9 @@ from sagemaker import (
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.aws import copy_s3_object, delete_s3_object
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status
+from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _sagemaker_client
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
-
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
 
 
 @pytest.fixture(scope="module")
@@ -198,9 +193,9 @@ class TestEndpoint:
         )
         return resource["status"]["ackResourceMetadata"]["arn"]
 
-    def _describe_sagemaker_endpoint(self, sagemaker_client, endpoint_name: str):
+    def _describe_sagemaker_endpoint(self, endpoint_name: str):
         try:
-            return sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
+            return _sagemaker_client().describe_endpoint(EndpointName=endpoint_name)
         except BaseException:
             logging.error(
                 f"SageMaker could not find a endpoint with the name {endpoint_name}"
@@ -229,11 +224,11 @@ class TestEndpoint:
         return resource_status
 
     def _assert_endpoint_status_in_sync(
-        self, sagemaker_client, endpoint_name, reference, expected_status
+        self, endpoint_name, reference, expected_status
     ):
         assert (
             _wait_sagemaker_endpoint_status(
-                sagemaker_client, endpoint_name, expected_status
+                endpoint_name, expected_status
             )
             == self._wait_resource_endpoint_status(reference, expected_status, 2)
             == expected_status
@@ -249,19 +244,19 @@ class TestEndpoint:
 
         assert (
             self._get_resource_endpoint_arn(resource)
-            == self._describe_sagemaker_endpoint(sagemaker_client, endpoint_name)[
+            == self._describe_sagemaker_endpoint(endpoint_name)[
                 "EndpointArn"
             ]
         )
 
         # endpoint transitions Creating -> InService state
         self._assert_endpoint_status_in_sync(
-            sagemaker_client, endpoint_name, reference, self.status_creating
+            endpoint_name, reference, self.status_creating
         )
         assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "False")
 
         self._assert_endpoint_status_in_sync(
-            sagemaker_client, endpoint_name, reference, self.status_inservice
+            endpoint_name, reference, self.status_inservice
         )
         assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "True")
 
@@ -396,7 +391,7 @@ class TestEndpoint:
         # to wait for SageMaker
         time.sleep(10)
         assert (
-            self._describe_sagemaker_endpoint(sagemaker_client, endpoint_name) is None
+            self._describe_sagemaker_endpoint(endpoint_name) is None
         )
 
     def test_driver(

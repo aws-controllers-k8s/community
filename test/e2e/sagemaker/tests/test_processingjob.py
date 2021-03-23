@@ -23,15 +23,11 @@ from sagemaker import (
     create_sagemaker_resource,
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import random_suffix_name
+from sagemaker.tests._helpers import _sagemaker_client
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = "processingjobs"
-
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
 
 
 @pytest.fixture(scope="module")
@@ -66,10 +62,10 @@ class TestProcessingJob:
         return ["Stopped", "Stopping"]
 
     def _get_sagemaker_processing_job_arn(
-        self, sagemaker_client, processing_job_name: str
+        self, processing_job_name: str
     ):
         try:
-            processing_job = sagemaker_client.describe_processing_job(
+            processing_job = _sagemaker_client().describe_processing_job(
                 ProcessingJobName=processing_job_name
             )
             return processing_job["ProcessingJobArn"]
@@ -80,10 +76,10 @@ class TestProcessingJob:
             return None
 
     def _get_sagemaker_processing_job_status(
-        self, sagemaker_client, processing_job_name: str
+        self, processing_job_name: str
     ):
         try:
-            processing_job = sagemaker_client.describe_processing_job(
+            processing_job = _sagemaker_client().describe_processing_job(
                 ProcessingJobName=processing_job_name
             )
             return processing_job["ProcessingJobStatus"]
@@ -98,7 +94,7 @@ class TestProcessingJob:
         assert k8s.get_resource_exists(reference)
 
     def test_processing_job_has_correct_arn(
-        self, sagemaker_client, kmeans_processing_job
+        self, kmeans_processing_job
     ):
         (reference, _) = kmeans_processing_job
         resource = k8s.get_resource(reference)
@@ -108,13 +104,13 @@ class TestProcessingJob:
 
         resource_processing_job_arn = k8s.get_resource_arn(resource)
         expected_processing_job_arn = self._get_sagemaker_processing_job_arn(
-            sagemaker_client, processing_job_name
+            processing_job_name
         )
 
         assert resource_processing_job_arn == expected_processing_job_arn
 
     def test_processing_job_has_created_status(
-        self, sagemaker_client, kmeans_processing_job
+        self, kmeans_processing_job
     ):
         (reference, _) = kmeans_processing_job
         resource = k8s.get_resource(reference)
@@ -123,7 +119,7 @@ class TestProcessingJob:
         assert processing_job_name is not None
 
         current_processing_job_status = self._get_sagemaker_processing_job_status(
-            sagemaker_client, processing_job_name
+            processing_job_name
         )
         expected_processing_job_status_list = (
             self._get_created_processing_job_status_list()
@@ -131,7 +127,7 @@ class TestProcessingJob:
         assert current_processing_job_status in expected_processing_job_status_list
 
     def test_processing_job_has_stopped_status(
-        self, sagemaker_client, kmeans_processing_job
+        self, kmeans_processing_job
     ):
         (reference, _) = kmeans_processing_job
         resource = k8s.get_resource(reference)
@@ -144,7 +140,7 @@ class TestProcessingJob:
         assert deleted is True
 
         current_processing_job_status = self._get_sagemaker_processing_job_status(
-            sagemaker_client, processing_job_name
+            processing_job_name
         )
         expected_processing_job_status_list = (
             self._get_stopped_processing_job_status_list()

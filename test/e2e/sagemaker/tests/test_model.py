@@ -24,13 +24,9 @@ from sagemaker import (
     MODEL_RESOURCE_PLURAL,
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import random_suffix_name
+from sagemaker.tests._helpers import _sagemaker_client
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
-
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
 
 
 @pytest.fixture(scope="module")
@@ -65,9 +61,9 @@ class TestModel:
         )
         return resource["status"]["ackResourceMetadata"]["arn"]
 
-    def _get_sagemaker_model_arn(self, sagemaker_client, model_name: str):
+    def _get_sagemaker_model_arn(self, model_name: str):
         try:
-            model = sagemaker_client.describe_model(ModelName=model_name)
+            model = _sagemaker_client().describe_model(ModelName=model_name)
             return model["ModelArn"]
         except BaseException:
             logging.error(
@@ -79,7 +75,7 @@ class TestModel:
         (reference, resource) = xgboost_model
         assert k8s.get_resource_exists(reference)
 
-    def test_model_has_correct_arn(self, sagemaker_client, xgboost_model):
+    def test_model_has_correct_arn(self, xgboost_model):
         (reference, _) = xgboost_model
         resource = k8s.get_resource(reference)
         model_name = resource["spec"].get("modelName", None)
@@ -87,10 +83,10 @@ class TestModel:
         assert model_name is not None
 
         assert self._get_resource_model_arn(resource) == self._get_sagemaker_model_arn(
-            sagemaker_client, model_name
+            model_name
         )
 
-    def test_model_is_deleted(self, sagemaker_client, xgboost_model):
+    def test_model_is_deleted(self, xgboost_model):
         (reference, _) = xgboost_model
         resource = k8s.get_resource(reference)
         model_name = resource["spec"].get("modelName", None)
@@ -99,4 +95,4 @@ class TestModel:
         _, deleted = k8s.delete_custom_resource(reference)
         assert deleted is True
 
-        assert self._get_sagemaker_model_arn(sagemaker_client, model_name) is None
+        assert self._get_sagemaker_model_arn(model_name) is None

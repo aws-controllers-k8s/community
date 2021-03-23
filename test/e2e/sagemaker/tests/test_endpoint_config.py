@@ -24,14 +24,10 @@ from sagemaker import (
     MODEL_RESOURCE_PLURAL,
     create_sagemaker_resource,
 )
+from sagemaker.tests._helpers import _sagemaker_client
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.resources import random_suffix_name
 from common import k8s
-
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
 
 
 @pytest.fixture(scope="module")
@@ -77,9 +73,9 @@ class TestEndpointConfig:
         )
         return resource["status"]["ackResourceMetadata"]["arn"]
 
-    def _get_sagemaker_endpoint_config_arn(self, sagemaker_client, config_name: str):
+    def _get_sagemaker_endpoint_config_arn(self, config_name: str):
         try:
-            response = sagemaker_client.describe_endpoint_config(
+            response = _sagemaker_client().describe_endpoint_config(
                 EndpointConfigName=config_name
             )
             return response["EndpointConfigArn"]
@@ -93,7 +89,7 @@ class TestEndpointConfig:
         (reference, resource) = single_variant_config
         assert k8s.get_resource_exists(reference)
 
-    def test_config_has_correct_arn(self, sagemaker_client, single_variant_config):
+    def test_config_has_correct_arn(self, single_variant_config):
         (reference, _) = single_variant_config
         resource = k8s.get_resource(reference)
         config_name = resource["spec"].get("endpointConfigName", None)
@@ -102,9 +98,9 @@ class TestEndpointConfig:
 
         assert self._get_resource_endpoint_config_arn(
             resource
-        ) == self._get_sagemaker_endpoint_config_arn(sagemaker_client, config_name)
+        ) == self._get_sagemaker_endpoint_config_arn(config_name)
 
-    def test_config_is_deleted(self, sagemaker_client, single_variant_config):
+    def test_config_is_deleted(self, single_variant_config):
         (reference, _) = single_variant_config
         resource = k8s.get_resource(reference)
         config_name = resource["spec"].get("endpointConfigName", None)
@@ -114,6 +110,6 @@ class TestEndpointConfig:
         assert deleted is True
 
         assert (
-            self._get_sagemaker_endpoint_config_arn(sagemaker_client, config_name)
+            self._get_sagemaker_endpoint_config_arn(config_name)
             is None
         )

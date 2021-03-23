@@ -13,6 +13,7 @@
 
 import os
 import pytest
+import json
 
 from common import k8s
 

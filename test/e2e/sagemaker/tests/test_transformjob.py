@@ -23,28 +23,23 @@ from sagemaker import (
     create_sagemaker_resource,
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import random_suffix_name
+from sagemaker.tests._helpers import _sagemaker_client
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 from common.aws import get_aws_region
 from sagemaker.bootstrap_resources import get_bootstrap_resources
 
 RESOURCE_PLURAL = "transformjobs"
 
-
 @pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
-
-
-@pytest.fixture(scope="module")
-def xgboost_transformjob(sagemaker_client):
+def xgboost_transformjob():
     # Create model using boto3 for TransformJob
     transform_model_file = (
         f"s3://{get_bootstrap_resources().DataBucketName}/sagemaker/batch/model.tar.gz"
     )
     model_name = random_suffix_name("xgboost-model", 32)
 
-    create_response = sagemaker_client.create_model(
+    create_response = _sagemaker_client().create_model(
         ModelName=model_name,
         PrimaryContainer={
             "Image": REPLACEMENT_VALUES["XGBOOST_IMAGE_URI"],
@@ -56,7 +51,7 @@ def xgboost_transformjob(sagemaker_client):
     logging.debug(create_response)
 
     # Check if the model is created successfully
-    describe_model_response = sagemaker_client.describe_model(ModelName=model_name)
+    describe_model_response = _sagemaker_client().describe_model(ModelName=model_name)
     assert describe_model_response["ModelName"] is not None
 
     resource_name = random_suffix_name("xgboost-transformjob", 32)
@@ -77,7 +72,7 @@ def xgboost_transformjob(sagemaker_client):
     yield (reference, resource)
 
     # Delete the model created
-    sagemaker_client.delete_model(ModelName=model_name)
+    _sagemaker_client().delete_model(ModelName=model_name)
 
     # Delete the k8s resource if not already deleted by tests
     if k8s.get_resource_exists(reference):
@@ -100,9 +95,9 @@ class TestTransformJob:
         )
         return resource["status"]["ackResourceMetadata"]["arn"]
 
-    def _get_sagemaker_transformjob_arn(self, sagemaker_client, transformjob_name: str):
+    def _get_sagemaker_transformjob_arn(self, transformjob_name: str):
         try:
-            transformjob = sagemaker_client.describe_transform_job(
+            transformjob = _sagemaker_client().describe_transform_job(
                 TransformJobName=transformjob_name
             )
             return transformjob["TransformJobArn"]
@@ -112,14 +107,10 @@ class TestTransformJob:
             )
             return None
 
-    def _get_sagemaker_transformjob_status(
-        self, sagemaker_client, transformjob_name: str
-    ):
+    def _get_sagemaker_transformjob_status(self, transformjob_name: str):
         try:
-            transformjob = sagemaker_client.describe_transform_job(
-                TransformJobName=transformjob_name
-            )
-            return transformjob["TransformJobStatus"]
+            transformjob = _sagemaker_client().describe_transform_job(TransformJobName=transformjob_name)
+            return transformjob['TransformJobStatus']
         except BaseException:
             logging.error(
                 f"SageMaker could not find a transformJob with the name {transformjob_name}"
@@ -130,32 +121,27 @@ class TestTransformJob:
         (reference, _) = xgboost_transformjob
         assert k8s.get_resource_exists(reference)
 
-    def test_transformjob_has_correct_arn(self, sagemaker_client, xgboost_transformjob):
+    def test_transformjob_has_correct_arn(self, xgboost_transformjob):
         (reference, resource) = xgboost_transformjob
         transformjob_name = resource["spec"].get("transformJobName", None)
 
         assert transformjob_name is not None
 
         resource_transformjob_arn = self._get_resource_transformjob_arn(resource)
-        assert (
-            self._get_sagemaker_transformjob_arn(sagemaker_client, transformjob_name)
-        ) == resource_transformjob_arn
+        assert (self._get_sagemaker_transformjob_arn(
+            transformjob_name)) == resource_transformjob_arn
 
-    def test_transformjob_has_created_status(
-        self, sagemaker_client, xgboost_transformjob
-    ):
+    def test_transformjob_has_created_status(self, xgboost_transformjob):
         (reference, resource) = xgboost_transformjob
         transformjob_name = resource["spec"].get("transformJobName", None)
 
         assert transformjob_name is not None
 
-        assert (
-            self._get_sagemaker_transformjob_status(sagemaker_client, transformjob_name)
-        ) in self._get_created_transformjob_status_list()
+        assert (self._get_sagemaker_transformjob_status(
+            transformjob_name)) in self._get_created_transformjob_status_list()
+        
 
-    def test_transformjob_has_stopped_status(
-        self, sagemaker_client, xgboost_transformjob
-    ):
+    def test_transformjob_has_stopped_status(self, xgboost_transformjob):
         (reference, resource) = xgboost_transformjob
         transformjob_name = resource["spec"].get("transformJobName", None)
 
@@ -165,6 +151,5 @@ class TestTransformJob:
         _, deleted = k8s.delete_custom_resource(reference)
         assert deleted is True
 
-        assert (
-            self._get_sagemaker_transformjob_status(sagemaker_client, transformjob_name)
-        ) in self._get_stopped_transformjob_status_list()
+        assert (self._get_sagemaker_transformjob_status(
+            transformjob_name)) in self._get_stopped_transformjob_status_list()

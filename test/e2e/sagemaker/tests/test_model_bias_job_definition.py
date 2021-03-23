@@ -20,7 +20,7 @@ import logging
 from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from sagemaker.tests._fixtures import xgboost_churn_endpoint
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn
+from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn, _sagemaker_client
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
@@ -28,9 +28,6 @@ RESOURCE_PLURAL = 'modelbiasjobdefinitions'
 
 # Access variable so it is loaded as a fixture
 _accessed = xgboost_churn_endpoint
-
-def _sagemaker_client():
-    return boto3.client('sagemaker')
 
 def _make_job_definition(endpoint_name):
     resource_name = random_suffix_name("model-bias-job-definition", 32)
@@ -57,7 +54,7 @@ def xgboost_churn_model_bias_job_definition(xgboost_churn_endpoint):
     endpoint_name = endpoint_spec["spec"].get("endpointName")
     assert endpoint_name is not None
 
-    _wait_sagemaker_endpoint_status(_sagemaker_client(), endpoint_name, "InService")
+    _wait_sagemaker_endpoint_status(endpoint_name, "InService")
 
     job_definition_reference, job_definition_data = _make_job_definition(endpoint_name)
     resource = k8s.create_custom_resource(job_definition_reference, job_definition_data)

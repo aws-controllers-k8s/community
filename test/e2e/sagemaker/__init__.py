@@ -22,7 +22,7 @@ CRD_VERSION = "v1alpha1"
 CONFIG_RESOURCE_PLURAL = "endpointconfigs"
 MODEL_RESOURCE_PLURAL = "models"
 ENDPOINT_RESOURCE_PLURAL = "endpoints"
-MONITORING_SCHEDULE_RESOURCE_PLURAL = "monitoringschedules"
+DATA_QUALITY_JOB_DEFINITION_RESOURCE_PLURAL = "dataqualityjobdefinitions"
 
 # PyTest marker for the current service
 service_marker = pytest.mark.service(arg=SERVICE_NAME)

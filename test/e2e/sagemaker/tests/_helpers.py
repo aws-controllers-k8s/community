@@ -14,6 +14,15 @@
 """
 import logging
 import time
+import boto3
+
+__sagemaker_client = None
+
+def _sagemaker_client():
+    global __sagemaker_client
+    if __sagemaker_client is None:
+        __sagemaker_client = boto3.client('sagemaker')
+    return __sagemaker_client
 
 def _get_job_definition_arn(resource: object):
     if 'status' not in resource:
@@ -21,7 +30,6 @@ def _get_job_definition_arn(resource: object):
     return resource['status'].get('jobDefinitionARN')
 
 def _wait_sagemaker_endpoint_status(
-    sagemaker_client,
     endpoint_name,
     expected_status: str,
     wait_periods: int = 18,
@@ -29,7 +37,7 @@ def _wait_sagemaker_endpoint_status(
     actual_status = None
     for _ in range(wait_periods):
         time.sleep(30)
-        actual_status = sagemaker_client.describe_endpoint(
+        actual_status = _sagemaker_client().describe_endpoint(
             EndpointName=endpoint_name
         )["EndpointStatus"]
         if actual_status == expected_status:

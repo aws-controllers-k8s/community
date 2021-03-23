@@ -23,15 +23,11 @@ from sagemaker import (
     create_sagemaker_resource,
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import random_suffix_name
+from sagemaker.tests._helpers import _sagemaker_client
+from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = "trainingjobs"
-
-
-@pytest.fixture(scope="module")
-def sagemaker_client():
-    return boto3.client("sagemaker")
 
 
 @pytest.fixture(scope="module")
@@ -72,9 +68,9 @@ class TestTrainingJob:
         )
         return resource["status"]["ackResourceMetadata"]["arn"]
 
-    def _get_sagemaker_trainingjob_arn(self, sagemaker_client, trainingjob_name: str):
+    def _get_sagemaker_trainingjob_arn(self, trainingjob_name: str):
         try:
-            trainingjob = sagemaker_client.describe_training_job(
+            trainingjob = _sagemaker_client().describe_training_job(
                 TrainingJobName=trainingjob_name
             )
             return trainingjob["TrainingJobArn"]
@@ -85,10 +81,10 @@ class TestTrainingJob:
             return None
 
     def _get_sagemaker_trainingjob_status(
-        self, sagemaker_client, trainingjob_name: str
+        self, trainingjob_name: str
     ):
         try:
-            trainingjob = sagemaker_client.describe_training_job(
+            trainingjob = _sagemaker_client().describe_training_job(
                 TrainingJobName=trainingjob_name
             )
             return trainingjob["TrainingJobStatus"]
@@ -102,7 +98,7 @@ class TestTrainingJob:
         (reference, resource) = xgboost_trainingjob
         assert k8s.get_resource_exists(reference)
 
-    def test_trainingjob_has_correct_arn(self, sagemaker_client, xgboost_trainingjob):
+    def test_trainingjob_has_correct_arn(self, xgboost_trainingjob):
         (reference, _) = xgboost_trainingjob
         resource = k8s.get_resource(reference)
         trainingjob_name = resource["spec"].get("trainingJobName", None)
@@ -111,13 +107,13 @@ class TestTrainingJob:
 
         resource_trainingjob_arn = k8s.get_resource_arn(resource)
         expected_trainingjob_arn = self._get_sagemaker_trainingjob_arn(
-            sagemaker_client, trainingjob_name
+            trainingjob_name
         )
 
         assert resource_trainingjob_arn == expected_trainingjob_arn
 
     def test_trainingjob_has_created_status(
-        self, sagemaker_client, xgboost_trainingjob
+        self, xgboost_trainingjob
     ):
         (reference, _) = xgboost_trainingjob
         resource = k8s.get_resource(reference)
@@ -126,13 +122,13 @@ class TestTrainingJob:
         assert trainingjob_name is not None
 
         current_trainingjob_status = self._get_sagemaker_trainingjob_status(
-            sagemaker_client, trainingjob_name
+            trainingjob_name
         )
         expected_trainingjob_status_list = self._get_created_trainingjob_status_list()
         assert current_trainingjob_status in expected_trainingjob_status_list
 
     def test_trainingjob_has_stopped_status(
-        self, sagemaker_client, xgboost_trainingjob
+        self, xgboost_trainingjob
     ):
         (reference, _) = xgboost_trainingjob
         resource = k8s.get_resource(reference)
@@ -145,7 +141,7 @@ class TestTrainingJob:
         assert deleted is True
 
         current_trainingjob_status = self._get_sagemaker_trainingjob_status(
-            sagemaker_client, trainingjob_name
+            trainingjob_name
         )
         expected_trainingjob_status_list = self._get_stopped_trainingjob_status_list()
         assert current_trainingjob_status in expected_trainingjob_status_list

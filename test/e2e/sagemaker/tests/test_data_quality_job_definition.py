@@ -19,57 +19,15 @@ import logging
 
 from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from sagemaker.tests._fixtures import xgboost_churn_endpoint
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn
+from sagemaker.tests._fixtures import xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
+from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn, _sagemaker_client
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = 'dataqualityjobdefinitions'
 
 # Access variable so it is loaded as a fixture
-_accessed = xgboost_churn_endpoint
-
-def _sagemaker_client():
-    return boto3.client('sagemaker')
-
-def _make_job_definition(endpoint_name):
-    resource_name = random_suffix_name("data-quality-job-definition", 32)
-
-    replacements = REPLACEMENT_VALUES.copy()
-    replacements["JOB_DEFINITION_NAME"] = resource_name
-    replacements["ENDPOINT_NAME"] = endpoint_name
-
-    data = load_resource_file(
-        SERVICE_NAME, "xgboost_churn_data_quality_job_definition", additional_replacements=replacements
-    )
-    logging.debug(data)
-
-    reference = k8s.CustomResourceReference(
-        CRD_GROUP, CRD_VERSION, RESOURCE_PLURAL, resource_name, namespace="default"
-    )
-
-    return reference, data
-
-@pytest.fixture(scope="module")
-def xgboost_churn_data_quality_job_definition(xgboost_churn_endpoint):
-    (_, _, endpoint_spec) = xgboost_churn_endpoint
-
-    endpoint_name = endpoint_spec["spec"].get("endpointName")
-    assert endpoint_name is not None
-
-    _wait_sagemaker_endpoint_status(_sagemaker_client(), endpoint_name, "InService")
-
-    job_definition_reference, job_definition_data = _make_job_definition(endpoint_name)
-    resource = k8s.create_custom_resource(job_definition_reference, job_definition_data)
-    resource = k8s.wait_resource_consumed_by_controller(job_definition_reference)
-
-    job_definition_name = resource["spec"].get("jobDefinitionName")
-    assert job_definition_name is not None
-
-    yield (job_definition_reference, resource)
-
-    if k8s.get_resource_exists(job_definition_reference):
-        k8s.delete_custom_resource(job_definition_reference)
+_accessed = xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
 
 def get_sagemaker_data_quality_job_definition(job_definition_name: str):
     try:
