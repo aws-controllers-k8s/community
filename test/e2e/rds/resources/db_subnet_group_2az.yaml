@@ -1,0 +1,13 @@
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBSubnetGroup
+metadata:
+  name: $DB_SUBNET_GROUP_NAME
+spec:
+  name: $DB_SUBNET_GROUP_NAME
+  description: $DB_SUBNET_GROUP_DESC
+  subnetIDs:
+    - $SUBNET_AZ1
+    - $SUBNET_AZ2
+  tags:
+    - key: key1
+      value: value1
