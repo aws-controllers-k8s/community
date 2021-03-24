@@ -42,6 +42,3 @@ spec:
           s3DataDistributionType: FullyReplicated
       contentType: text/csv
       compressionType: None
-  tags:
-    - key: key
-      value: value

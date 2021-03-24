@@ -16,13 +16,15 @@
 import boto3
 import pytest
 import logging
-import time
 from typing import Dict
 
-from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
-from sagemaker import MODEL_RESOURCE_PLURAL as RESOURCE_PLURAL
+from sagemaker import (
+    service_marker,
+    create_sagemaker_resource,
+    MODEL_RESOURCE_PLURAL,
+)
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 
@@ -38,27 +40,19 @@ def xgboost_model():
     replacements = REPLACEMENT_VALUES.copy()
     replacements["MODEL_NAME"] = resource_name
 
-    model = load_resource_file(
-        SERVICE_NAME, "xgboost_model", additional_replacements=replacements
+    reference, spec, resource = create_sagemaker_resource(
+        resource_plural=MODEL_RESOURCE_PLURAL,
+        resource_name=resource_name,
+        spec_file="xgboost_model",
+        replacements=replacements,
     )
-    logging.debug(model)
-
-    # Create the k8s resource
-    reference = k8s.CustomResourceReference(
-        CRD_GROUP, CRD_VERSION, RESOURCE_PLURAL, resource_name, namespace="default"
-    )
-    resource = k8s.create_custom_resource(reference, model)
-    resource = k8s.wait_resource_consumed_by_controller(reference)
-
     assert resource is not None
 
     yield (reference, resource)
 
     # Delete the k8s resource if not already deleted by tests
-    try:
+    if k8s.get_resource_exists(reference):
         k8s.delete_custom_resource(reference)
-    except:
-        pass
 
 
 @service_marker

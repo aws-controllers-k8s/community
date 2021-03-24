@@ -23,6 +23,8 @@ from kubernetes import config, client
 from kubernetes.client.api_client import ApiClient
 from kubernetes.client.rest import ApiException
 
+from common.resources import load_resource_file
+
 _k8s_api_client = None
 
 
@@ -53,6 +55,78 @@ class CustomResourceReference:
     def to_long_resource_string(self):
         return f"{self.plural}.{self.version}.{self.group}/{self._printable_namespace}:{self.name}"
 
+def load_resource(service_name: str,
+                  spec_file: str,
+                  replacements: object):
+    """
+    Load a yaml spec to memory from root_test_path/{service}/resources and replace the values in replacement dict
+    
+    :param service_name: name of service
+    :param spec_file: Name of the spec file under resources directory of the service
+    :param replacements: A dictionary of values to be replaced
+
+    :return: spec as json object
+    """
+    spec = load_resource_file(
+        service_name, spec_file, additional_replacements=replacements
+    )
+    logging.debug(f"loaded spec: {spec}")
+    return spec
+
+def create_reference(crd_group: str,
+                     crd_version: str,
+                     resource_plural: str,
+                     resource_name: str,
+                     namespace: str):
+    """
+    Create an instance of CustomResourceReference based on the parameters
+
+    :param crd_group: CRD Group
+    :param crd_version: CRD version
+    :param resource_plural: resource plural
+    :param resource_name: name of resource to be created in cluster
+    :param namespace: namespace in which resource should be created
+
+    :return: an instance of CustomResourceReference
+    """
+    reference = CustomResourceReference(
+        crd_group, crd_version, resource_plural, resource_name, namespace=namespace
+    )
+    return reference
+
+def create_resource(reference: CustomResourceReference,
+                    spec: object):
+    """
+    Create a resource from the reference and wait to be consumed by controller
+    
+    :param reference: instance of CustomResourceReference which needs to be created
+    :param spec: spec of the resource corresponding to the reference
+
+    :return: resource if it was created successfully, otherwise None
+    """
+    resource = create_custom_resource(reference, spec)
+    resource = wait_resource_consumed_by_controller(reference)
+    return resource
+
+def load_and_create_resource(service_name: str,
+                             crd_group: str,
+                             crd_version: str,
+                             resource_plural: str,
+                             resource_name: str,
+                             spec_file_name: str,
+                             replacements: object,
+                             namespace: str = "default"):
+    """
+    Helper method to encapsulate the common methods used to create a resource.
+    Load a spec file from disk, create an instance of CustomResourceReference and resource in K8s cluster.
+    See respective methods for paramater definitions and return types
+
+    :returns: an instance of CustomResourceReference, spec loaded from disk, resource created from the reference
+    """
+    spec = load_resource(service_name, spec_file_name, replacements)
+    reference = create_reference(crd_group, crd_version, resource_plural, resource_name, namespace)
+    resource = create_resource(reference, spec)
+    return reference, spec, resource
 
 def _get_k8s_api_client() -> ApiClient:
     global _k8s_api_client
@@ -167,22 +241,6 @@ def wait_resource_consumed_by_controller(
         f"Wait for resource {reference} to be consumed by controller timed out")
     return None
 
-def _get_terminal_condition(resource: object) -> Union[None, bool]:
-    """Get the .status.ACK.Terminal boolean from a given resource.
-
-    Returns:
-        None or bool: None if the status field doesn't exist, otherwise the
-            field value cast to a boolean (default False).
-    """
-    if 'status' not in resource or 'conditions' not in resource['status']:
-        return None
-
-    conditions: Dict = resource['status']['conditions']
-    if 'ACK' not in conditions or 'Terminal' not in conditions['ACK']:
-        return None
-
-    terminal: Dict = conditions['ACK']['Terminal']
-    return bool(terminal.get('status', False))
 
 def get_resource_arn(resource: object) -> Union[None, str]:
     """Get the .status.ackResourceMetadata.arn value from a given resource.
@@ -253,54 +311,71 @@ def wait_on_condition(reference: CustomResourceReference,
         logging.error(f"Resource {reference} does not exist")
         return False
 
+    desired_condition = None
     for i in range(wait_periods):
         logging.debug(f"Waiting on condition {condition_name} to reach {desired_condition_status} for resource {reference} ({i})")
-        resource = get_resource(reference)
 
-        if 'conditions' not in resource['status']:
-            logging.error(f"Resource {reference} does not have a .status.conditions field.")
-            return False
-
-        desired_condition = None
-        for condition in resource['status']['conditions']:
-            if condition['type'] == condition_name:
-                desired_condition = condition
-
-        if not desired_condition:
-            logging.error(f"Resource {reference} does not have a condition of type {condition_name}.")
-            return False
-        else:
-            if desired_condition['status'] == desired_condition_status:
-                logging.info(f"Condition {condition_name} has status {desired_condition_status}, continuing...")
-                return True
+        desired_condition = get_resource_condition(reference, condition_name)
+        if desired_condition is not None and desired_condition['status'] == desired_condition_status:
+            logging.info(f"Condition {condition_name} has status {desired_condition_status}, continuing...")
+            return True
 
         sleep(period_length)
 
-    logging.error(f"Wait for condition {condition_name} to reach status {desired_condition_status} timed out")
+    if not desired_condition:
+        logging.error(f"Resource {reference} does not have a condition of type {condition_name}.")
+    else:
+        logging.error(f"Wait for condition {condition_name} to reach status {desired_condition_status} timed out")
     return False
 
-def is_resource_in_terminal_condition(
-        reference: CustomResourceReference, expected_substring: str):
+def get_resource_condition(reference: CustomResourceReference, condition_name: str):
+    """
+    Returns the required condition from .status.conditions
+
+    Precondition:
+        resource must exist in the cluster
+
+    Returns:
+        condition json if it exists. None otherwise
+    """
     if not get_resource_exists(reference):
         logging.error(f"Resource {reference} does not exist")
-        return False
+        return None
 
     resource = get_resource(reference)
-    terminal_status = _get_terminal_condition(resource)
+    if 'status' not in resource or 'conditions' not in resource['status']:
+        logging.error(f"Resource {reference} does not have a .status.conditions field.")
+        return None
+
+    for condition in resource['status']['conditions']:
+        if condition['type'] == condition_name:
+            return condition
+
+    return None
+
+def assert_condition_state_message(reference: CustomResourceReference,
+                                   condition_name: str,
+                                   desired_condition_status: str,
+                                   desired_condition_message: Union[None, str]):
+    """
+    Helper method to check the state and message of a condition on resource.
+    Caller can pass None for desired_condition_message if expected message is nil
+
+    Returns:
+        bool: True if condition exists and both the status and message match the desired values
+    """
+    condition = get_resource_condition(reference, condition_name)
     # Ensure the status existed
-    if terminal_status is None:
-        logging.error(f"Expected .ACK.Terminal to exist in {reference}")
+    if condition is None:
+        logging.error(f"Resource {reference} does not have a condition of type {condition_name}")
         return False
 
-    if not terminal_status:
-        logging.error(
-            f"Expected terminal condition for resource {reference} to be true")
-        return False
+    current_condition_status = condition.get('status', None)
+    current_condition_message = condition.get('message', None)
+    if current_condition_status == desired_condition_status and current_condition_message == desired_condition_message:
+        logging.info(f"Condition {condition_name} has status {desired_condition_status} and message {desired_condition_message}, continuing...")
+        return True
 
-    terminal_message = terminal.get('message', None)
-    if terminal_message != expected_substring:
-        logging.error(f"Resource {reference} has terminal condition set True, but with a different message than expected."
-                      f" Expected '{expected_substring}', found '{terminal_message}'")
-        return False
-
-    return True
+    logging.error(f"Resource {reference} has {condition_name} set {current_condition_status}, expected {desired_condition_status}; with message"
+                    f" {current_condition_message}, expected {desired_condition_message}")
+    return False

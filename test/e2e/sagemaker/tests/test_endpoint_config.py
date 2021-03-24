@@ -19,15 +19,13 @@ import logging
 from typing import Dict
 
 from sagemaker import (
-    SERVICE_NAME,
     service_marker,
-    CRD_GROUP,
-    CRD_VERSION,
     CONFIG_RESOURCE_PLURAL,
     MODEL_RESOURCE_PLURAL,
+    create_sagemaker_resource,
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 
@@ -45,49 +43,28 @@ def single_variant_config():
     replacements["CONFIG_NAME"] = config_resource_name
     replacements["MODEL_NAME"] = model_resource_name
 
-    model = load_resource_file(
-        SERVICE_NAME, "xgboost_model", additional_replacements=replacements
+    model_reference, model_spec, model_resource = create_sagemaker_resource(
+        resource_plural=MODEL_RESOURCE_PLURAL,
+        resource_name=model_resource_name,
+        spec_file="xgboost_model",
+        replacements=replacements,
     )
-    logging.debug(model)
-
-    config = load_resource_file(
-        SERVICE_NAME,
-        "endpoint_config_single_variant",
-        additional_replacements=replacements,
-    )
-    logging.debug(config)
-
-    # Create the k8s resources
-    model_reference = k8s.CustomResourceReference(
-        CRD_GROUP,
-        CRD_VERSION,
-        MODEL_RESOURCE_PLURAL,
-        model_resource_name,
-        namespace="default",
-    )
-    model_resource = k8s.create_custom_resource(model_reference, model)
-    model_resource = k8s.wait_resource_consumed_by_controller(model_reference)
     assert model_resource is not None
 
-    config_reference = k8s.CustomResourceReference(
-        CRD_GROUP,
-        CRD_VERSION,
-        CONFIG_RESOURCE_PLURAL,
-        config_resource_name,
-        namespace="default",
+    config_reference, config_spec, config_resource = create_sagemaker_resource(
+        resource_plural=CONFIG_RESOURCE_PLURAL,
+        resource_name=config_resource_name,
+        spec_file="endpoint_config_single_variant",
+        replacements=replacements,
     )
-    config_resource = k8s.create_custom_resource(config_reference, config)
-    config_resource = k8s.wait_resource_consumed_by_controller(config_reference)
     assert config_resource is not None
 
     yield (config_reference, config_resource)
 
+    k8s.delete_custom_resource(model_reference)
     # Delete the k8s resource if not already deleted by tests
-    try:
-        k8s.delete_custom_resource(model_reference)
+    if k8s.get_resource_exists(config_reference):
         k8s.delete_custom_resource(config_reference)
-    except:
-        pass
 
 
 @service_marker
