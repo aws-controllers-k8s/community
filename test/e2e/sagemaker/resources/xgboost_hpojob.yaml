@@ -1,0 +1,61 @@
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: HyperParameterTuningJob
+metadata:
+  name: $HPO_JOB_NAME
+spec:
+  hyperParameterTuningJobName: $HPO_JOB_NAME
+  hyperParameterTuningJobConfig:
+    strategy: Bayesian
+    hyperParameterTuningJobObjective:
+      type_: Minimize
+      metricName: validation:error
+    resourceLimits:
+      maxNumberOfTrainingJobs: 2
+      maxParallelTrainingJobs: 1
+    parameterRanges:
+      integerParameterRanges:
+      - name: num_round
+        minValue: '10'
+        maxValue: '20'
+        scalingType: Linear
+      continuousParameterRanges: []
+      categoricalParameterRanges: []
+    trainingJobEarlyStoppingType: Auto
+  trainingJobDefinition:
+    staticHyperParameters:
+      base_score: '0.5'
+    algorithmSpecification:
+      trainingImage: $XGBOOST_IMAGE_URI
+      trainingInputMode: File
+    roleARN: $SAGEMAKER_EXECUTION_ROLE_ARN
+    inputDataConfig:
+    - channelName: train
+      dataSource:
+        s3DataSource:
+          s3DataType: S3Prefix
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/train
+          s3DataDistributionType: FullyReplicated
+      contentType: text/csv
+      compressionType: None
+      recordWrapperType: None
+      inputMode: File
+    - channelName: validation
+      dataSource:
+        s3DataSource:
+          s3DataType: S3Prefix
+          s3URI: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/training/validation/
+          s3DataDistributionType: FullyReplicated
+      contentType: text/csv
+      compressionType: None
+      recordWrapperType: None
+      inputMode: File
+    outputDataConfig:
+      s3OutputPath: s3://$SAGEMAKER_DATA_BUCKET/sagemaker/hpo/output
+    resourceConfig:
+      instanceType: ml.m5.large
+      instanceCount: 1
+      volumeSizeInGB: 25
+    stoppingCondition:
+      maxRuntimeInSeconds: 3600
+    enableNetworkIsolation: true
+    enableInterContainerTrafficEncryption: false
