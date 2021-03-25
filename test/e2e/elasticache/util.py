@@ -76,3 +76,10 @@ def wait_snapshot_deleted(snapshot_name: str,
 
     logging.error(f"Wait for snapshot {snapshot_name} to be deleted timed out")
     return False
+
+# provide a basic nodeGroupConfiguration object of desired size
+def provide_node_group_configuration(size: int):
+    ngc = []
+    for i in range(1, size+1):
+        ngc.append({"nodeGroupID": str(i).rjust(4, '0')})
+    return ngc
