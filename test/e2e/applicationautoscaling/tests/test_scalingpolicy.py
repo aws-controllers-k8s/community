@@ -32,10 +32,6 @@ RESOURCE_PLURAL = "scalingpolicies"
 def applicationautoscaling_client():
     return boto3.client("application-autoscaling")
 
-@pytest.fixture(scope="module")
-def bootstrap_resources() -> TestBootstrapResources:
-    return get_bootstrap_resources()
-
 @service_marker
 @pytest.mark.canary
 class TestScalingPolicy:
@@ -66,8 +62,8 @@ class TestScalingPolicy:
         
         return len(targets["ScalingPolicies"]) == 1
 
-    def test_smoke(self, applicationautoscaling_client, bootstrap_resources):
-        (reference, policy) = self._generate_dynamodb_policy(bootstrap_resources)
+    def test_smoke(self, applicationautoscaling_client):
+        (reference, policy) = self._generate_dynamodb_policy(get_bootstrap_resources())
         resource = k8s.create_custom_resource(reference, policy)
         resource = k8s.wait_resource_consumed_by_controller(reference)
         assert k8s.get_resource_exists(reference)

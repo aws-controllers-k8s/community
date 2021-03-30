@@ -32,10 +32,6 @@ RESOURCE_PLURAL = "scalabletargets"
 def applicationautoscaling_client():
     return boto3.client("application-autoscaling")
 
-@pytest.fixture(scope="module")
-def bootstrap_resources() -> TestBootstrapResources:
-    return get_bootstrap_resources()
-
 @service_marker
 @pytest.mark.canary
 class TestScalableTarget:
@@ -66,8 +62,8 @@ class TestScalableTarget:
         
         return len(targets["ScalableTargets"]) == 1
 
-    def test_smoke(self, applicationautoscaling_client, bootstrap_resources):
-        (reference, target) = self._generate_dynamodb_target(bootstrap_resources)
+    def test_smoke(self, applicationautoscaling_client):
+        (reference, target) = self._generate_dynamodb_target(get_bootstrap_resources())
         resource = k8s.create_custom_resource(reference, target)
         resource = k8s.wait_resource_consumed_by_controller(reference)
         assert k8s.get_resource_exists(reference)
