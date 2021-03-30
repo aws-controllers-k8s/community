@@ -7,11 +7,12 @@ spec:
   productionVariants:
     - variantName: variant-1
       modelName: $MODEL_NAME
-      # instanceCount is 2 to test retainAllVariantProperties
-      initialInstanceCount: 2
+      initialInstanceCount: 1
       # This is the smallest instance type which will support scaling
       instanceType: ml.c5.large
       initialVariantWeight: 1
-  tags:
-    - key: var
-      value: val
+    - variantName: variant-2
+      modelName: $MODEL_NAME
+      initialInstanceCount: 1
+      instanceType: ml.c5.large
+      initialVariantWeight: 1

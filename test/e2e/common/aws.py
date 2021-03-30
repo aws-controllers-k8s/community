@@ -30,3 +30,30 @@ def duplicate_s3_contents(source_bucket: object, destination_bucket: object):
             "Bucket": source_object.bucket_name,
             "Key": source_object.key,
         }, source_object.key)
+
+def copy_s3_object(bucket_name: str, copy_source: object, key: str):
+    """
+    Copy an S3 object. Check the following API documentation for input format of the arguments
+    https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket.copy
+    """
+    region = get_aws_region()
+    bucket = boto3.resource("s3", region_name=region).Bucket(bucket_name)
+    bucket.copy(copy_source, key)
+
+def delete_s3_object(bucket_name: str, key: str):
+    """
+    Delete an S3 object. Check the following API documentation for input format of the arguments
+    https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.delete_objects
+    """
+    region = get_aws_region()
+    bucket = boto3.resource("s3", region_name=region).Bucket(bucket_name)
+    bucket.delete_objects(
+        Delete={
+            "Objects": [
+                {
+                    "Key": key,
+                },
+            ],
+            "Quiet": False,
+        },
+    )
