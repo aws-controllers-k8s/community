@@ -44,7 +44,7 @@ class TestScalingPolicy:
 
         replacements = REPLACEMENT_VALUES.copy()
         replacements["SCALINGPOLICY_NAME"] = resource_name
-        replacements["DYNAMODB_TABLE"] = bootstrap_resources.ScalableDynamoTableName
+        replacements["DYNAMODB_TABLE"] = bootstrap_resources.RegisteredDynamoTableName
 
         policy = load_resource_file(
             SERVICE_NAME, "dynamodb_scalingpolicy", additional_replacements=replacements
