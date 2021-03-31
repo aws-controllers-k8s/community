@@ -25,11 +25,12 @@ from sagemaker import (
     MODEL_RESOURCE_PLURAL,
     ENDPOINT_RESOURCE_PLURAL,
     create_sagemaker_resource,
+    wait_sagemaker_endpoint_status,
+    get_sagemaker_client
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.aws import copy_s3_object, delete_s3_object
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 
@@ -195,7 +196,7 @@ class TestEndpoint:
 
     def _describe_sagemaker_endpoint(self, endpoint_name: str):
         try:
-            return _sagemaker_client().describe_endpoint(EndpointName=endpoint_name)
+            return get_sagemaker_client().describe_endpoint(EndpointName=endpoint_name)
         except BaseException:
             logging.error(
                 f"SageMaker could not find a endpoint with the name {endpoint_name}"
@@ -227,14 +228,14 @@ class TestEndpoint:
         self, endpoint_name, reference, expected_status
     ):
         assert (
-            _wait_sagemaker_endpoint_status(
+            wait_sagemaker_endpoint_status(
                 endpoint_name, expected_status
             )
             == self._wait_resource_endpoint_status(reference, expected_status, 2)
             == expected_status
         )
 
-    def create_endpoint_test(self, sagemaker_client, xgboost_endpoint):
+    def create_endpoint_test(self, xgboost_endpoint):
         (reference, resource, _) = xgboost_endpoint
         assert k8s.get_resource_exists(reference)
 
@@ -261,7 +262,7 @@ class TestEndpoint:
         assert k8s.wait_on_condition(reference, "ACK.ResourceSynced", "True")
 
     def update_endpoint_failed_test(
-        self, sagemaker_client, single_variant_config, faulty_config, xgboost_endpoint
+        self, single_variant_config, faulty_config, xgboost_endpoint
     ):
         (endpoint_reference, _, endpoint_spec) = xgboost_endpoint
         (_, faulty_config_resource) = faulty_config
@@ -275,7 +276,6 @@ class TestEndpoint:
 
         # endpoint transitions Updating -> InService state
         self._assert_endpoint_status_in_sync(
-            sagemaker_client,
             endpoint_reference.name,
             endpoint_reference,
             self.status_udpating,
@@ -288,7 +288,6 @@ class TestEndpoint:
         )
 
         self._assert_endpoint_status_in_sync(
-            sagemaker_client,
             endpoint_reference.name,
             endpoint_reference,
             self.status_inservice,
@@ -317,13 +316,13 @@ class TestEndpoint:
         )
 
     def update_endpoint_successful_test(
-        self, sagemaker_client, multi_variant_config, xgboost_endpoint
+        self, multi_variant_config, xgboost_endpoint
     ):
         (endpoint_reference, endpoint_resource, endpoint_spec) = xgboost_endpoint
 
         endpoint_name = endpoint_resource["spec"].get("endpointName", None)
         production_variants = self._describe_sagemaker_endpoint(
-            sagemaker_client, endpoint_name
+            endpoint_name
         )["ProductionVariants"]
         old_variant_instance_count = production_variants[0]["CurrentInstanceCount"]
         old_variant_name = production_variants[0]["VariantName"]
@@ -337,7 +336,6 @@ class TestEndpoint:
 
         # endpoint transitions Updating -> InService state
         self._assert_endpoint_status_in_sync(
-            sagemaker_client,
             endpoint_reference.name,
             endpoint_reference,
             self.status_udpating,
@@ -354,7 +352,6 @@ class TestEndpoint:
         )
 
         self._assert_endpoint_status_in_sync(
-            sagemaker_client,
             endpoint_reference.name,
             endpoint_reference,
             self.status_inservice,
@@ -368,7 +365,7 @@ class TestEndpoint:
 
         # RetainAllVariantProperties - variant properties were retained + is a multi-variant endpoint
         new_production_variants = self._describe_sagemaker_endpoint(
-            sagemaker_client, endpoint_name
+            endpoint_name
         )["ProductionVariants"]
         assert len(new_production_variants) > 1
         new_variant_instance_count = None
@@ -378,7 +375,7 @@ class TestEndpoint:
 
         assert new_variant_instance_count == old_variant_instance_count
 
-    def delete_endpoint_test(self, sagemaker_client, xgboost_endpoint):
+    def delete_endpoint_test(self, xgboost_endpoint):
         (reference, resource, _) = xgboost_endpoint
         endpoint_name = resource["spec"].get("endpointName", None)
 
@@ -396,19 +393,18 @@ class TestEndpoint:
 
     def test_driver(
         self,
-        sagemaker_client,
         single_variant_config,
         faulty_config,
         multi_variant_config,
         xgboost_endpoint,
     ):
-        self.create_endpoint_test(sagemaker_client, xgboost_endpoint)
+        self.create_endpoint_test(xgboost_endpoint)
         self.update_endpoint_failed_test(
-            sagemaker_client, single_variant_config, faulty_config, xgboost_endpoint
+            single_variant_config, faulty_config, xgboost_endpoint
         )
         # Note: the test has been intentionally ordered to run a successful update after a failed update
         # check that controller updates the endpoint, removes the terminal condition and clears the failure reason
         self.update_endpoint_successful_test(
-            sagemaker_client, multi_variant_config, xgboost_endpoint
+            multi_variant_config, xgboost_endpoint
         )
-        self.delete_endpoint_test(sagemaker_client, xgboost_endpoint)
+        self.delete_endpoint_test(xgboost_endpoint)

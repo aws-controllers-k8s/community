@@ -13,13 +13,11 @@
 """Integration tests for the SageMaker DataQualityJobDefinition API.
 """
 
-import boto3
 import pytest
 import logging
 
-from sagemaker import service_marker
+from sagemaker import service_marker, get_job_definition_arn, get_sagemaker_client
 from sagemaker.tests._fixtures import xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
-from sagemaker.tests._helpers import _get_job_definition_arn, _sagemaker_client
 from common import k8s
 
 RESOURCE_PLURAL = 'dataqualityjobdefinitions'
@@ -29,7 +27,7 @@ _accessed = xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
 
 def get_sagemaker_data_quality_job_definition(job_definition_name: str):
     try:
-        return _sagemaker_client().describe_data_quality_job_definition(
+        return get_sagemaker_client().describe_data_quality_job_definition(
             JobDefinitionName=job_definition_name
         )
     except BaseException:
@@ -49,7 +47,7 @@ class TestDataQualityJobDefinition:
         assert job_definition_name is not None
 
         description = get_sagemaker_data_quality_job_definition(job_definition_name)
-        assert _get_job_definition_arn(resource) == description["JobDefinitionArn"]
+        assert get_job_definition_arn(resource) == description["JobDefinitionArn"]
 
         # Delete the k8s resource.
         _, deleted = k8s.delete_custom_resource(job_definition_reference)

@@ -23,8 +23,8 @@ from sagemaker import (
     CONFIG_RESOURCE_PLURAL,
     MODEL_RESOURCE_PLURAL,
     create_sagemaker_resource,
+    get_sagemaker_client
 )
-from sagemaker.tests._helpers import _sagemaker_client
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.resources import random_suffix_name
 from common import k8s
@@ -75,7 +75,7 @@ class TestEndpointConfig:
 
     def _get_sagemaker_endpoint_config_arn(self, config_name: str):
         try:
-            response = _sagemaker_client().describe_endpoint_config(
+            response = get_sagemaker_client().describe_endpoint_config(
                 EndpointConfigName=config_name
             )
             return response["EndpointConfigArn"]

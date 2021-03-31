@@ -23,10 +23,11 @@ from sagemaker import (
     CONFIG_RESOURCE_PLURAL,
     MODEL_RESOURCE_PLURAL,
     ENDPOINT_RESOURCE_PLURAL,
-    DATA_QUALITY_JOB_DEFINITION_RESOURCE_PLURAL
+    DATA_QUALITY_JOB_DEFINITION_RESOURCE_PLURAL,
+    create_sagemaker_resource,
+    wait_sagemaker_endpoint_status
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _sagemaker_client
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
@@ -111,25 +112,6 @@ def xgboost_churn_endpoint():
     if k8s.get_resource_exists(endpoint_reference):
         k8s.delete_custom_resource(endpoint_reference)
 
-
-def _make_data_quality_job_definition(endpoint_name):
-    resource_name = random_suffix_name("data-quality-job-definition", 32)
-
-    replacements = REPLACEMENT_VALUES.copy()
-    replacements["JOB_DEFINITION_NAME"] = resource_name
-    replacements["ENDPOINT_NAME"] = endpoint_name
-
-    data = load_resource_file(
-        SERVICE_NAME, "xgboost_churn_data_quality_job_definition", additional_replacements=replacements
-    )
-    logging.debug(data)
-
-    reference = k8s.CustomResourceReference(
-        CRD_GROUP, CRD_VERSION, DATA_QUALITY_JOB_DEFINITION_RESOURCE_PLURAL, resource_name, namespace="default"
-    )
-
-    return reference, data
-
 @pytest.fixture(scope="module")
 def xgboost_churn_data_quality_job_definition(xgboost_churn_endpoint):
     (_, _, endpoint_spec) = xgboost_churn_endpoint
@@ -137,11 +119,21 @@ def xgboost_churn_data_quality_job_definition(xgboost_churn_endpoint):
     endpoint_name = endpoint_spec["spec"].get("endpointName")
     assert endpoint_name is not None
 
-    _wait_sagemaker_endpoint_status(endpoint_name, "InService")
+    wait_sagemaker_endpoint_status(endpoint_name, "InService")
 
-    job_definition_reference, job_definition_data = _make_data_quality_job_definition(endpoint_name)
-    resource = k8s.create_custom_resource(job_definition_reference, job_definition_data)
-    resource = k8s.wait_resource_consumed_by_controller(job_definition_reference)
+    resource_name = random_suffix_name("data-quality-job-definition", 32)
+
+    replacements = REPLACEMENT_VALUES.copy()
+    replacements["JOB_DEFINITION_NAME"] = resource_name
+    replacements["ENDPOINT_NAME"] = endpoint_name
+
+    job_definition_reference, job_definition_data, resource = create_sagemaker_resource(
+        resource_plural=DATA_QUALITY_JOB_DEFINITION_RESOURCE_PLURAL,
+        resource_name=resource_name,
+        spec_file="xgboost_churn_data_quality_job_definition",
+        replacements=replacements,
+    )
+    assert resource is not None
 
     job_definition_name = resource["spec"].get("jobDefinitionName")
     assert job_definition_name is not None

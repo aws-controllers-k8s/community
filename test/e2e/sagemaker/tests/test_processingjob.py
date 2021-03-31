@@ -13,18 +13,16 @@
 """Integration tests for the SageMaker ProcessingJob API.
 """
 
-import boto3
 import pytest
 import logging
-from typing import Dict
 
 from sagemaker import (
     service_marker,
     create_sagemaker_resource,
+    get_sagemaker_client
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from sagemaker.tests._helpers import _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = "processingjobs"
@@ -65,7 +63,7 @@ class TestProcessingJob:
         self, processing_job_name: str
     ):
         try:
-            processing_job = _sagemaker_client().describe_processing_job(
+            processing_job = get_sagemaker_client().describe_processing_job(
                 ProcessingJobName=processing_job_name
             )
             return processing_job["ProcessingJobArn"]
@@ -79,7 +77,7 @@ class TestProcessingJob:
         self, processing_job_name: str
     ):
         try:
-            processing_job = _sagemaker_client().describe_processing_job(
+            processing_job = get_sagemaker_client().describe_processing_job(
                 ProcessingJobName=processing_job_name
             )
             return processing_job["ProcessingJobStatus"]

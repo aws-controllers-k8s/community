@@ -13,12 +13,10 @@
 """Integration tests for the SageMaker HyperParameterTuning API.
 """
 
-import boto3
 import pytest
 import logging
-from typing import Dict
 
-from sagemaker import service_marker, create_sagemaker_resource
+from sagemaker import service_marker, create_sagemaker_resource, get_sagemaker_client
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from common.resources import random_suffix_name
 from common import k8s
@@ -26,11 +24,6 @@ from common import k8s
 RESOURCE_PLURAL = "hyperparametertuningjobs"
 HPO_JOB_STATUS_CREATED = ("InProgress", "Completed")
 HPO_JOB_STATUS_STOPPED = ("Stopped", "Stopping")
-
-
-def _sagemaker_client():
-    return boto3.client("sagemaker")
-
 
 @pytest.fixture(scope="module")
 def xgboost_hpojob():
@@ -55,7 +48,7 @@ def xgboost_hpojob():
 
 def get_sagemaker_hpo_job(hpo_job_name: str):
     try:
-        hpo_desc = _sagemaker_client().describe_hyper_parameter_tuning_job(
+        hpo_desc = get_sagemaker_client().describe_hyper_parameter_tuning_job(
             HyperParameterTuningJobName=hpo_job_name
         )
         return hpo_desc

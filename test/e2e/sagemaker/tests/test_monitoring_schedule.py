@@ -17,10 +17,9 @@ import time
 import pytest
 import logging
 
-from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
+from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION, get_sagemaker_client
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from sagemaker.tests._fixtures import xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
-from sagemaker.tests._helpers import _sagemaker_client
 from common.resources import load_resource_file, random_suffix_name
 from common import k8s
 
@@ -66,7 +65,7 @@ def xgboost_churn_data_quality_monitoring_schedule(xgboost_churn_data_quality_jo
 
 def get_sagemaker_monitoring_schedule(monitoring_schedule_name: str):
     try:
-        hpo_desc = _sagemaker_client().describe_monitoring_schedule(
+        hpo_desc = get_sagemaker_client().describe_monitoring_schedule(
             MonitoringScheduleName=monitoring_schedule_name
         )
         return hpo_desc

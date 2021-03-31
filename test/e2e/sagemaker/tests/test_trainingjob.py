@@ -13,7 +13,6 @@
 """Integration tests for the SageMaker TrainingJob API.
 """
 
-import boto3
 import pytest
 import logging
 from typing import Dict
@@ -21,10 +20,10 @@ from typing import Dict
 from sagemaker import (
     service_marker,
     create_sagemaker_resource,
+    get_sagemaker_client
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from sagemaker.tests._helpers import _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = "trainingjobs"
@@ -70,7 +69,7 @@ class TestTrainingJob:
 
     def _get_sagemaker_trainingjob_arn(self, trainingjob_name: str):
         try:
-            trainingjob = _sagemaker_client().describe_training_job(
+            trainingjob = get_sagemaker_client().describe_training_job(
                 TrainingJobName=trainingjob_name
             )
             return trainingjob["TrainingJobArn"]
@@ -84,7 +83,7 @@ class TestTrainingJob:
         self, trainingjob_name: str
     ):
         try:
-            trainingjob = _sagemaker_client().describe_training_job(
+            trainingjob = get_sagemaker_client().describe_training_job(
                 TrainingJobName=trainingjob_name
             )
             return trainingjob["TrainingJobStatus"]

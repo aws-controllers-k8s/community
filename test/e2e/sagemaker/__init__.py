@@ -13,6 +13,8 @@
 
 import pytest
 import logging
+import time
+import boto3
 from common import k8s
 
 SERVICE_NAME = "sagemaker"
@@ -47,3 +49,35 @@ def create_sagemaker_resource(
     )
 
     return reference, spec, resource
+
+_sagemaker_client = None
+def get_sagemaker_client():
+    global _sagemaker_client
+    if _sagemaker_client is None:
+        _sagemaker_client = boto3.client('sagemaker')
+    return _sagemaker_client
+
+def get_job_definition_arn(resource: object):
+    if 'status' not in resource:
+        return None
+    return resource['status'].get('jobDefinitionARN')
+
+def wait_sagemaker_endpoint_status(
+    endpoint_name,
+    expected_status: str,
+    wait_periods: int = 18,
+):
+    actual_status = None
+    for _ in range(wait_periods):
+        time.sleep(30)
+        actual_status = get_sagemaker_client().describe_endpoint(
+            EndpointName=endpoint_name
+        )["EndpointStatus"]
+        if actual_status == expected_status:
+            break
+    else:
+        logging.error(
+            f"Wait for sagemaker endpoint status: {expected_status} timed out. Actual status: {actual_status}"
+        )
+
+    return actual_status

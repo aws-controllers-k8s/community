@@ -13,15 +13,19 @@
 """Integration tests for the SageMaker ModelBiasJobDefinition API.
 """
 
-import boto3
 import pytest
 import logging
 
-from sagemaker import SERVICE_NAME, service_marker, CRD_GROUP, CRD_VERSION
+from sagemaker import (
+    service_marker,
+    create_sagemaker_resource,
+    wait_sagemaker_endpoint_status,
+    get_job_definition_arn,
+    get_sagemaker_client
+)
 from sagemaker.replacement_values import REPLACEMENT_VALUES
 from sagemaker.tests._fixtures import xgboost_churn_endpoint
-from sagemaker.tests._helpers import _wait_sagemaker_endpoint_status, _get_job_definition_arn, _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
 
 RESOURCE_PLURAL = 'modelbiasjobdefinitions'
@@ -29,48 +33,42 @@ RESOURCE_PLURAL = 'modelbiasjobdefinitions'
 # Access variable so it is loaded as a fixture
 _accessed = xgboost_churn_endpoint
 
-def _make_job_definition(endpoint_name):
-    resource_name = random_suffix_name("model-bias-job-definition", 32)
-
-    replacements = REPLACEMENT_VALUES.copy()
-    replacements["JOB_DEFINITION_NAME"] = resource_name
-    replacements["ENDPOINT_NAME"] = endpoint_name
-
-    data = load_resource_file(
-        SERVICE_NAME, "xgboost_churn_model_bias_job_definition", additional_replacements=replacements
-    )
-    logging.debug(data)
-
-    reference = k8s.CustomResourceReference(
-        CRD_GROUP, CRD_VERSION, RESOURCE_PLURAL, resource_name, namespace="default"
-    )
-
-    return reference, data
+@pytest.fixture(scope="module")
+def name_suffix():
+    return random_suffix_name("model-bias-job-definition", 32)
 
 @pytest.fixture(scope="module")
-def xgboost_churn_model_bias_job_definition(xgboost_churn_endpoint):
+def xgboost_churn_model_bias_job_definition(name_suffix, xgboost_churn_endpoint):
     (_, _, endpoint_spec) = xgboost_churn_endpoint
 
     endpoint_name = endpoint_spec["spec"].get("endpointName")
     assert endpoint_name is not None
 
-    _wait_sagemaker_endpoint_status(endpoint_name, "InService")
+    wait_sagemaker_endpoint_status(endpoint_name, "InService")
 
-    job_definition_reference, job_definition_data = _make_job_definition(endpoint_name)
-    resource = k8s.create_custom_resource(job_definition_reference, job_definition_data)
-    resource = k8s.wait_resource_consumed_by_controller(job_definition_reference)
+    replacements = REPLACEMENT_VALUES.copy()
+    replacements["JOB_DEFINITION_NAME"] = name_suffix
+    replacements["ENDPOINT_NAME"] = endpoint_name
+
+    job_definition_reference, job_definition_data, resource = create_sagemaker_resource(
+        resource_plural=RESOURCE_PLURAL,
+        resource_name=name_suffix,
+        spec_file="xgboost_churn_model_bias_job_definition",
+        replacements=replacements,
+    )
+    assert resource is not None
 
     job_definition_name = resource["spec"].get("jobDefinitionName")
     assert job_definition_name is not None
 
     yield (job_definition_reference, resource)
 
-    _, deleted = k8s.delete_custom_resource(job_definition_reference)
-    assert deleted is True
+    if k8s.get_resource_exists(job_definition_reference):
+        k8s.delete_custom_resource(job_definition_reference) 
 
 def get_sagemaker_model_bias_job_definition(job_definition_name: str):
     try:
-        return _sagemaker_client().describe_model_bias_job_definition(
+        return get_sagemaker_client().describe_model_bias_job_definition(
             JobDefinitionName=job_definition_name
         )
     except BaseException:
@@ -90,7 +88,7 @@ class TestModelBiasJobDefinition:
         assert job_definition_name is not None
 
         description = get_sagemaker_model_bias_job_definition(job_definition_name)
-        assert _get_job_definition_arn(resource) == description["JobDefinitionArn"]
+        assert get_job_definition_arn(resource) == description["JobDefinitionArn"]
 
         # Delete the k8s resource.
         _, deleted = k8s.delete_custom_resource(job_definition_reference)

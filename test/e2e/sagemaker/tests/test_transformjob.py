@@ -13,7 +13,6 @@
 """Integration tests for the SageMaker TransformJob API.
 """
 
-import boto3
 import pytest
 import logging
 from typing import Dict
@@ -21,12 +20,11 @@ from typing import Dict
 from sagemaker import (
     service_marker,
     create_sagemaker_resource,
+    get_sagemaker_client
 )
 from sagemaker.replacement_values import REPLACEMENT_VALUES
-from sagemaker.tests._helpers import _sagemaker_client
-from common.resources import load_resource_file, random_suffix_name
+from common.resources import random_suffix_name
 from common import k8s
-from common.aws import get_aws_region
 from sagemaker.bootstrap_resources import get_bootstrap_resources
 
 RESOURCE_PLURAL = "transformjobs"
@@ -39,7 +37,7 @@ def xgboost_transformjob():
     )
     model_name = random_suffix_name("xgboost-model", 32)
 
-    create_response = _sagemaker_client().create_model(
+    create_response = get_sagemaker_client().create_model(
         ModelName=model_name,
         PrimaryContainer={
             "Image": REPLACEMENT_VALUES["XGBOOST_IMAGE_URI"],
@@ -51,7 +49,7 @@ def xgboost_transformjob():
     logging.debug(create_response)
 
     # Check if the model is created successfully
-    describe_model_response = _sagemaker_client().describe_model(ModelName=model_name)
+    describe_model_response = get_sagemaker_client().describe_model(ModelName=model_name)
     assert describe_model_response["ModelName"] is not None
 
     resource_name = random_suffix_name("xgboost-transformjob", 32)
@@ -72,7 +70,7 @@ def xgboost_transformjob():
     yield (reference, resource)
 
     # Delete the model created
-    _sagemaker_client().delete_model(ModelName=model_name)
+    get_sagemaker_client().delete_model(ModelName=model_name)
 
     # Delete the k8s resource if not already deleted by tests
     if k8s.get_resource_exists(reference):
@@ -97,7 +95,7 @@ class TestTransformJob:
 
     def _get_sagemaker_transformjob_arn(self, transformjob_name: str):
         try:
-            transformjob = _sagemaker_client().describe_transform_job(
+            transformjob = get_sagemaker_client().describe_transform_job(
                 TransformJobName=transformjob_name
             )
             return transformjob["TransformJobArn"]
@@ -109,7 +107,7 @@ class TestTransformJob:
 
     def _get_sagemaker_transformjob_status(self, transformjob_name: str):
         try:
-            transformjob = _sagemaker_client().describe_transform_job(TransformJobName=transformjob_name)
+            transformjob = get_sagemaker_client().describe_transform_job(TransformJobName=transformjob_name)
             return transformjob['TransformJobStatus']
         except BaseException:
             logging.error(
