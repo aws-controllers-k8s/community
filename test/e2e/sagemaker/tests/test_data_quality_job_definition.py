@@ -29,10 +29,9 @@ _accessed = xgboost_churn_data_quality_job_definition, xgboost_churn_endpoint
 
 def get_sagemaker_data_quality_job_definition(job_definition_name: str):
     try:
-        hpo_desc = _sagemaker_client().describe_data_quality_job_definition(
+        return _sagemaker_client().describe_data_quality_job_definition(
             JobDefinitionName=job_definition_name
         )
-        return hpo_desc
     except BaseException:
         logging.error(
             f"Could not find Data Quality Job Definition with name {job_definition_name}"

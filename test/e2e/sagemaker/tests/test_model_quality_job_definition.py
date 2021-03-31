@@ -65,15 +65,14 @@ def xgboost_churn_model_quality_job_definition(xgboost_churn_endpoint):
 
     yield (job_definition_reference, resource)
 
-    if k8s.get_resource_exists(job_definition_reference):
-        k8s.delete_custom_resource(job_definition_reference)
+    _, deleted = k8s.delete_custom_resource(job_definition_reference)
+    assert deleted is True
 
 def get_sagemaker_model_quality_job_definition(job_definition_name: str):
     try:
-        hpo_desc = _sagemaker_client().describe_model_quality_job_definition(
+        return _sagemaker_client().describe_model_quality_job_definition(
             JobDefinitionName=job_definition_name
         )
-        return hpo_desc
     except BaseException:
         logging.error(
             f"Could not find Model Quality Job Definition with name {job_definition_name}"
