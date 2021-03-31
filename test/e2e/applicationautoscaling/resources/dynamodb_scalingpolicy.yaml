@@ -1,0 +1,16 @@
+apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
+kind: ScalingPolicy
+metadata:
+  name: $SCALINGPOLICY_NAME
+spec:
+  policyName: $SCALINGPOLICY_NAME
+  policyType: TargetTrackingScaling
+  resourceID: "table/$DYNAMODB_TABLE"
+  scalableDimension: "dynamodb:table:WriteCapacityUnits"
+  serviceNamespace: dynamodb
+  targetTrackingScalingPolicyConfiguration: 
+    targetValue: 70
+    scaleInCooldown: 60
+    scaleOutCooldown: 60
+    predefinedMetricSpecification: 
+        predefinedMetricType: DynamoDBWriteCapacityUtilization
