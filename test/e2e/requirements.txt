@@ -8,7 +8,6 @@ cachetools==4.2.0
 certifi==2020.12.5
 chardet==3.0.4
 execnet==1.7.1
-filelock==3.0.12
 google-auth==1.24.0
 google-pasta==0.2.0
 idna==2.10
