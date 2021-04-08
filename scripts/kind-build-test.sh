@@ -8,9 +8,6 @@ set -Eeo pipefail
 
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
-TEST_DIR="$ROOT_DIR/test"
-TEST_E2E_DIR="$TEST_DIR/e2e"
-TEST_RELEASE_DIR="$TEST_DIR/release"
 
 CLUSTER_NAME_BASE=${CLUSTER_NAME_BASE:-"test"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
@@ -30,6 +27,9 @@ LOCAL_MODULES=${LOCAL_MODULES:-"false"}
 START=$(date +%s)
 # VERSION is the source revision that executables and images are built from.
 VERSION=$(git describe --tags --always --dirty || echo "unknown")
+
+DEFAULT_TEST_INFRA_SOURCE_PATH="$ROOT_DIR/../test-infra"
+TEST_INFRA_SOURCE_PATH=${TEST_INFRA_SOURCE_PATH:-$DEFAULT_TEST_INFRA_SOURCE_PATH}
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/aws.sh"
@@ -244,11 +244,14 @@ if [[ "$ENABLE_PROMETHEUS" == true ]]; then
     k8_wait_for_pod_status "prometheus-deployment" "Running" 60 || (echo 'FAIL: prometheus-deployment failed to Run' && exit 1)
 fi
 
-if [[ "$TEST_HELM_CHARTS" == true ]]; then
-  $TEST_RELEASE_DIR/test-helm.sh "$AWS_SERVICE" "$VERSION"
-fi
+# TODO (nithomso): Find a way to reconnect Helm tests
+# These tests call back to ./build-controller-release.sh 
+
+# if [[ "$TEST_HELM_CHARTS" == true ]]; then
+#   $TEST_INFRA_SOURCE_PATH/scripts/test-helm.sh "$AWS_SERVICE" "$VERSION"
+# fi
 
 # run e2e tests
 export SKIP_PYTHON_TESTS
 export RUN_PYTEST_LOCALLY
-$TEST_E2E_DIR/run-tests.sh $AWS_SERVICE
+$TEST_INFRA_SOURCE_PATH/scripts/run-tests.sh $AWS_SERVICE
