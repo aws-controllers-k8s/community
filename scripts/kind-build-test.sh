@@ -103,6 +103,8 @@ Environment variables:
   RUN_PYTEST_LOCALLY        If python tests exist, whether to run them locally instead of
                             inside Docker (<true|false>)
                             Default: false
+  ENABLE_PROMETHEUS:        Enables a different cluster config to enable Prometheus support.
+                            Default: false
 "
 
 if [ $# -ne 1 ]; then
@@ -136,7 +138,7 @@ if [ -z "$TMP_DIR" ]; then
     CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
     CLUSTER_NAME="ack-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
     TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
-    K8S_VERSION="$K8S_VERSION" $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}"
+    K8S_VERSION="$K8S_VERSION" ENABLE_PROMETHEUS="$ENABLE_PROMETHEUS" $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}"
 fi
 export PATH=$TMP_DIR:$PATH
 

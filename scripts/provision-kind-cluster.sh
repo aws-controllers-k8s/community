@@ -8,6 +8,8 @@ set -eo pipefail
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 
+ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-"false"}
+
 source "$SCRIPTS_DIR"/lib/common.sh
 
 check_is_installed uuidgen
@@ -15,7 +17,11 @@ check_is_installed wget
 check_is_installed docker
 check_is_installed kind "You can install kind with the helper scripts/install-kind.sh"
 
-KIND_CONFIG_FILE="$SCRIPTS_DIR/kind-two-node-cluster.yaml"
+if [[ "$ENABLE_PROMETHEUS" == true ]]; then
+    KIND_CONFIG_FILE="$SCRIPTS_DIR/kind-two-node-prometheus-cluster.yaml"
+else
+    KIND_CONFIG_FILE="$SCRIPTS_DIR/kind-two-node-cluster.yaml"
+fi
 
 K8_1_18="kindest/node:v1.18.4@sha256:9ddbe5ba7dad96e83aec914feae9105ac1cffeb6ebd0d5aa42e820defe840fd4"
 K8_1_17="kindest/node:v1.17.5@sha256:ab3f9e6ec5ad8840eeb1f76c89bb7948c77bbf76bcebe1a8b59790b8ae9a283a"
@@ -34,6 +40,8 @@ Example: $(basename "$0") my-test
 Environment variables:
   K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, and 1.18]           
                             Default: 1.16
+  ENABLE_PROMETHEUS:        Enables a different cluster config to enable Prometheus support.
+                            Default: false
 "
 
 cluster_name="$1"
