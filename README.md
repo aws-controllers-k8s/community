@@ -15,11 +15,12 @@ capabilities like databases or message queues within the cluster.
 
 ACK is an open source project built with ❤️  by AWS. The project is composed of
 many source code repositories containing a [common runtime][runtime-repo], a
-[code generator][codegen-repo] and Kubernetes custom controllers for individual
-AWS service APIs.
+[code generator][codegen-repo], [common testing tools][test-infra-repo] and
+Kubernetes custom controllers for individual AWS service APIs.
 
 [runtime-repo]: https://github.com/aws-controllers-k8s/runtime
 [codegen-repo]: https://github.com/aws-controllers-k8s/code-generator
+[test-infra-repo]: https://github.com/aws-controllers-k8s/test-infra
 
 > **IMPORTANT** Please be sure to read our documentation about
 > [release versioning and maintenance phases][releases] and note that ACK
