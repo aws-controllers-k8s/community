@@ -9,4 +9,8 @@ nodes:
         metadata:
           name: config
   - role: worker
-    
+    extraPortMappings: # Host machine to Prometheus service reachability
+      - containerPort: 30900
+        hostPort: 9090
+        listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+        protocol: tcp # Optional, defaults to tcp
