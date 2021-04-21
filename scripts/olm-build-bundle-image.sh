@@ -61,7 +61,7 @@ Environment variables:
   DOCKER_REPOSITORY:                Name for the Docker repository to push to 
                                     Default: $DEFAULT_DOCKER_REPOSITORY
   BUNDLE_DOCKERFILE_DIR:            Specify the directory where the bundle.Dockerfile exists.
-                                    Default: {SERVICE_CONTROLLER_SOURCE_PATH}}/olm
+                                    Default: {SERVICE_CONTROLLER_SOURCE_PATH}/olm
   BUNDLE_DOCKER_IMG_TAG:            Bundle container image tag
                                     Default: \$AWS_SERVICE-bundle-\$BUNDLE_VERSION
   BUNDLE_DOCKER_IMG:                The bundle container image (including the tag).
