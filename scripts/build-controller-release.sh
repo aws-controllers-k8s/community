@@ -66,7 +66,7 @@ Environment variables:
                                         Default: false
   ACK_GENERATE_OLMCONFIG_PATH:          Path to the service OLM configuration file. Ignored
                                         if ACK_GENERATE_OLM is not true.
-                                        Default: {SERVICE_CONTROLLER_SOURCE_PATH}/{SERVICE}-olmconfig.yaml
+                                        Default: {SERVICE_CONTROLLER_SOURCE_PATH}/olm/olmconfig.yaml
   ACK_GENERATE_CONFIG_PATH:             Specify a path to the generator config YAML file to
                                         instruct the code generator for the service.
                                         Default: {SERVICE_CONTROLLER_SOURCE_PATH}/generator.yaml
@@ -181,9 +181,8 @@ popd 1>/dev/null
 
 if [[ $ACK_GENERATE_OLM == "true" ]]; then
     echo "Generating operator lifecycle manager bundle assets for $SERVICE"
-    # if the user has specified an olm config use that. Otherwise, use the default one
-    # expected in controller source.
-    DEFAULT_ACK_GENERATE_OLMCONFIG_PATH=$SERVICE_CONTROLLER_SOURCE_PATH/$SERVICE-olmconfig.yaml
+
+    DEFAULT_ACK_GENERATE_OLMCONFIG_PATH="$SERVICE_CONTROLLER_SOURCE_PATH/olm/olmconfig.yaml"
     ACK_GENERATE_OLMCONFIG_PATH=${ACK_GENERATE_OLMCONFIG_PATH:-$DEFAULT_ACK_GENERATE_OLMCONFIG_PATH}
 
     olm_version=$(echo $RELEASE_VERSION | tr -d "v")
