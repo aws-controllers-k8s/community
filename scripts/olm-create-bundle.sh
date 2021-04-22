@@ -10,13 +10,25 @@ ROOT_DIR="$SCRIPTS_DIR/.."
 BUILD_DIR="$ROOT_DIR/build"
 DEFAULT_BUNDLE_CHANNEL="alpha"
 DEFAULT_SERVICE_CONTROLLER_CONTAINER_REPOSITORY="public.ecr.aws/aws-controllers-k8s/controller"
+PRESERVE=${PRESERVE:-"false"}
 
 export DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
 
 source "$SCRIPTS_DIR/lib/common.sh"
 
+check_is_installed uuidgen
 check_is_installed kustomize "You can install kustomize with the helper scripts/install-kustomize.sh"
 check_is_installed operator-sdk "You can install Operator SDK with the helmer scripts/install-operator-sdk.sh"
+
+function clean_up {
+    if [[ "$PRESERVE" == false ]]; then
+        rm -r "$TMP_DIR" || :
+        return
+    fi
+    echo "--"
+    echo "To regenerate bundle with the same kustomize configs, re-run with:
+    \"TMP_DIR=$TMP_DIR\""
+}
 
 USAGE="
 Usage:
@@ -49,6 +61,13 @@ Environment variables:
                                             This should include the registry, namespace, and
                                             image name.
                                             Default: $DEFAULT_CONTROLLER_CONTAINER_REPOSITORY
+  TMP_DIR                                   Directory where kustomize assets will be temporarily
+                                            copied before they are modified and passed to bundle
+                                            generation logic.
+                                            Default: $BUILD_DIR/tmp-olm-{RANDOMSTRING}
+  PRESERVE:                                 Preserves modified kustomize configs for
+                                            inspection. (<true|false>)
+                                            Default: false
   BUNDLE_GENERATE_EXTRA_ARGS                Extra arguments to pass into the command
                                             'operator-sdk generate bundle'.
 "
@@ -63,12 +82,18 @@ SERVICE=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 VERSION=$2
 BUNDLE_VERSION=${BUNDLE_VERSION:-$VERSION}
 
-
-
 DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH="$ROOT_DIR/../$SERVICE-controller"
 SERVICE_CONTROLLER_SOURCE_PATH=${SERVICE_CONTROLLER_SOURCE_PATH:-$DEFAULT_SERVICE_CONTROLLER_SOURCE_PATH}
 
 BUNDLE_OUTPUT_PATH=${BUNDLE_OUTPUT_PATH:-$SERVICE_CONTROLLER_SOURCE_PATH/olm}
+
+if [ -z "$TMP_DIR" ]; then
+    TMP_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    TMP_DIR=$BUILD_DIR/tmp-olm-$TMP_ID
+fi
+# if TMP_DIR is provided but doesn't exist, we still use
+# it and create it later.
+tmp_kustomize_config_dir="$TMP_DIR/config"
 
 if [[ ! -d $SERVICE_CONTROLLER_SOURCE_PATH ]]; then
     echo "Error evaluating SERVICE_CONTROLLER_SOURCE_PATH environment variable:" 1>&2
@@ -92,7 +117,12 @@ SERVICE_CONTROLLER_CONTAINER_REPOSITORY=${SERVICE_CONTROLLER_CONTAINER_REPOSITOR
 DEFAULT_AWS_SERVICE_DOCKER_IMAGE="$SERVICE_CONTROLLER_CONTAINER_REPOSITORY:$SERVICE-$VERSION"
 AWS_SERVICE_DOCKER_IMG=${AWS_SERVICE_DOCKER_IMG:-$DEFAULT_AWS_SERVICE_DOCKER_IMAGE}
 
-pushd $SERVICE_CONTROLLER_SOURCE_PATH/config/controller 1>/dev/null
+trap "clean_up" EXIT
+
+# prepare the temporary config dir
+mkdir -p $TMP_DIR
+cp -a $SERVICE_CONTROLLER_SOURCE_PATH/config $TMP_DIR
+pushd $tmp_kustomize_config_dir/controller 1>/dev/null
 kustomize edit set image controller="$AWS_SERVICE_DOCKER_IMG"
 popd 1>/dev/null
 
@@ -116,7 +146,7 @@ fi
 # in the controller-specific repositories.
 mkdir -p $BUNDLE_OUTPUT_PATH
 pushd $BUNDLE_OUTPUT_PATH 1> /dev/null
-kustomize build $SERVICE_CONTROLLER_SOURCE_PATH/config/manifests | operator-sdk generate bundle $opsdk_gen_bundle_args 
+kustomize build $tmp_kustomize_config_dir/manifests | operator-sdk generate bundle $opsdk_gen_bundle_args 
 popd 1> /dev/null
 
 operator-sdk bundle validate $BUNDLE_OUTPUT_PATH/bundle
