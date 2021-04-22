@@ -9,6 +9,7 @@ SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_DIR="$SCRIPTS_DIR/.."
 BIN_DIR="$ROOT_DIR/bin"
 DEFAULT_IMAGE_REPOSITORY="public.ecr.aws/aws-controllers-k8s/controller"
+ACK_GENERATE_OLM=${ACK_GENERATE_OLM:-"false"}
 
 source "$SCRIPTS_DIR/lib/common.sh"
 source "$SCRIPTS_DIR/lib/k8s.sh"
@@ -16,6 +17,10 @@ source "$SCRIPTS_DIR/lib/helm.sh"
 
 check_is_installed controller-gen "You can install controller-gen with the helper scripts/install-controller-gen.sh"
 check_is_installed helm "You can install Helm with the helper scripts/install-helm.sh"
+
+if [[ $ACK_GENERATE_OLM == "true" ]]; then
+    check_is_installed operator-sdk "You can install Operator SDK with the helper scripts/install-operator-sdk.sh"
+fi
 
 if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
     echo "FATAL: Existing version of controller-gen "`controller-gen --version`", required version is $CONTROLLER_TOOLS_VERSION."
@@ -31,8 +36,10 @@ ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-$DEFAULT_ACK_GENERATE_BIN_PATH}
 ACK_GENERATE_API_VERSION=${ACK_GENERATE_API_VERSION:-"v1alpha1"}
 ACK_GENERATE_CONFIG_PATH=${ACK_GENERATE_CONFIG_PATH:-""}
 ACK_GENERATE_IMAGE_REPOSITORY=${ACK_GENERATE_IMAGE_REPOSITORY:-"$DEFAULT_IMAGE_REPOSITORY"}
+
 DEFAULT_TEMPLATES_DIR="$ROOT_DIR/../../aws-controllers-k8s/code-generator/templates"
 TEMPLATES_DIR=${TEMPLATES_DIR:-$DEFAULT_TEMPLATES_DIR}
+
 
 USAGE="
 Usage:
@@ -55,6 +62,11 @@ Environment variables:
   SERVICE_CONTROLLER_SOURCE_PATH:       Path to the service controller source code
                                         repository.
                                         Default: ../{SERVICE}-controller
+  ACK_GENERATE_OLM:                     Enable Operator Lifecycle Manager generators.
+                                        Default: false
+  ACK_GENERATE_OLMCONFIG_PATH:          Path to the service OLM configuration file. Ignored
+                                        if ACK_GENERATE_OLM is not true.
+                                        Default: {SERVICE_CONTROLLER_SOURCE_PATH}/olm/olmconfig.yaml
   ACK_GENERATE_CONFIG_PATH:             Specify a path to the generator config YAML file to
                                         instruct the code generator for the service.
                                         Default: {SERVICE_CONTROLLER_SOURCE_PATH}/generator.yaml
@@ -166,3 +178,15 @@ controller-gen rbac:roleName=$K8S_RBAC_ROLE_NAME paths=./... output:rbac:artifac
 mv $helm_output_dir/templates/role.yaml $helm_output_dir/templates/cluster-role-controller.yaml
 
 popd 1>/dev/null
+
+if [[ $ACK_GENERATE_OLM == "true" ]]; then
+    echo "Generating operator lifecycle manager bundle assets for $SERVICE"
+
+    DEFAULT_ACK_GENERATE_OLMCONFIG_PATH="$SERVICE_CONTROLLER_SOURCE_PATH/olm/olmconfig.yaml"
+    ACK_GENERATE_OLMCONFIG_PATH=${ACK_GENERATE_OLMCONFIG_PATH:-$DEFAULT_ACK_GENERATE_OLMCONFIG_PATH}
+
+    olm_version=$(echo $RELEASE_VERSION | tr -d "v")
+    ag_olm_args="$SERVICE $olm_version -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --olm-config $ACK_GENERATE_OLMCONFIG_PATH --aws-sdk-go-version v1.35.5"
+
+    $ACK_GENERATE_BIN_PATH olm $ag_olm_args
+fi
