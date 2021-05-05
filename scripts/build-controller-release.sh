@@ -188,5 +188,9 @@ if [[ $ACK_GENERATE_OLM == "true" ]]; then
     olm_version=$(echo $RELEASE_VERSION | tr -d "v")
     ag_olm_args="$SERVICE $olm_version -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --olm-config $ACK_GENERATE_OLMCONFIG_PATH --aws-sdk-go-version v1.35.5"
 
+    if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
+        ag_olm_args="$ag_olm_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
+    fi
+
     $ACK_GENERATE_BIN_PATH olm $ag_olm_args
 fi
