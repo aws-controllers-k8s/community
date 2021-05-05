@@ -191,6 +191,12 @@ for crd_file in $service_config_dir/crd/bases; do
 done
 echo "ok."
 
+echo -n "loading common manifests into the cluster ... "
+for crd_file in $service_config_dir/crd/common/bases; do
+    kubectl apply -f "$crd_file" --validate=false 1>/dev/null
+done
+echo "ok."
+
 echo -n "loading RBAC manifests for $AWS_SERVICE into the cluster ... "
 kustomize build "$service_config_dir"/rbac | kubectl apply -f - 1>/dev/null
 echo "ok."
