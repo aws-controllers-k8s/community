@@ -41,6 +41,9 @@ AWS_SDK_GO_VERSION=${AWS_SDK_GO_VERSION:-"v1.35.5"}
 DEFAULT_TEMPLATES_DIR="$ROOT_DIR/../../aws-controllers-k8s/code-generator/templates"
 TEMPLATES_DIR=${TEMPLATES_DIR:-$DEFAULT_TEMPLATES_DIR}
 
+DEFAULT_RUNTIME_DIR="$ROOT_DIR/../runtime"
+RUNTIME_DIR=${RUNTIME_DIR:-$DEFAULT_RUNTIME_DIR}
+RUNTIME_API_VERSION=${RUNTIME_API_VERSION:-"v1alpha1"}
 
 USAGE="
 Usage:
@@ -158,6 +161,13 @@ fi
 
 echo "Building release artifacts for $SERVICE-$RELEASE_VERSION"
 $ACK_GENERATE_BIN_PATH release $ag_args
+
+pushd $RUNTIME_DIR/apis/core/$RUNTIME_API_VERSION 1>/dev/null
+
+echo "Generating common custom resource definitions"
+controller-gen crd:allowDangerousTypes=true paths=./... output:crd:artifacts:config=$helm_output_dir/crds
+
+popd 1>/dev/null
 
 pushd $SERVICE_CONTROLLER_SOURCE_PATH/apis/$ACK_GENERATE_API_VERSION 1>/dev/null
 
