@@ -36,6 +36,7 @@ ACK_GENERATE_BIN_PATH=${ACK_GENERATE_BIN_PATH:-$DEFAULT_ACK_GENERATE_BIN_PATH}
 ACK_GENERATE_API_VERSION=${ACK_GENERATE_API_VERSION:-"v1alpha1"}
 ACK_GENERATE_CONFIG_PATH=${ACK_GENERATE_CONFIG_PATH:-""}
 ACK_GENERATE_IMAGE_REPOSITORY=${ACK_GENERATE_IMAGE_REPOSITORY:-"$DEFAULT_IMAGE_REPOSITORY"}
+AWS_SDK_GO_VERSION=${AWS_SDK_GO_VERSION:-"v1.35.5"}
 
 DEFAULT_TEMPLATES_DIR="$ROOT_DIR/../../aws-controllers-k8s/code-generator/templates"
 TEMPLATES_DIR=${TEMPLATES_DIR:-$DEFAULT_TEMPLATES_DIR}
@@ -79,6 +80,9 @@ Environment variables:
   ACK_GENERATE_SERVICE_ACCOUNT_NAME:    Name of the Kubernetes Service Account and
                                         Cluster Role to use in Helm chart.
                                         Default: $ACK_GENERATE_SERVICE_ACCOUNT_NAME
+  AWS_SDK_GO_VERSION:                   Overrides the version of github.com/aws/aws-sdk-go used
+                                        by 'ack-generate' to fetch the service API Specifications.
+                                        Default: $AWS_SDK_GO_VERSION
   K8S_RBAC_ROLE_NAME:                   Name of the Kubernetes Role to use when
                                         generating the RBAC manifests for the
                                         custom resource definitions.
@@ -134,12 +138,7 @@ if [ -z "$ACK_GENERATE_CONFIG_PATH" ]; then
 fi
 
 helm_output_dir="$SERVICE_CONTROLLER_SOURCE_PATH/helm"
-# The --aws-sdk-version-go 1.35.5 is a hack here to prevent ack-generate
-# from looking for a go.mod file in the local working directory. It does
-# not affect the release artifacts produced from `ack-generate release`.
-# TODO(jaypipes): Clean this up so the `ack-generate release` command
-# doesn't need to look up a go.mod file for aws-sdk-go version.
-ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --aws-sdk-go-version v1.35.5"
+ag_args="$SERVICE $RELEASE_VERSION -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --aws-sdk-go-version $AWS_SDK_GO_VERSION"
 if [ -n "$ACK_GENERATE_CACHE_DIR" ]; then
     ag_args="$ag_args --cache-dir $ACK_GENERATE_CACHE_DIR"
 fi
@@ -186,7 +185,7 @@ if [[ $ACK_GENERATE_OLM == "true" ]]; then
     ACK_GENERATE_OLMCONFIG_PATH=${ACK_GENERATE_OLMCONFIG_PATH:-$DEFAULT_ACK_GENERATE_OLMCONFIG_PATH}
 
     olm_version=$(echo $RELEASE_VERSION | tr -d "v")
-    ag_olm_args="$SERVICE $olm_version -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --olm-config $ACK_GENERATE_OLMCONFIG_PATH --aws-sdk-go-version v1.35.5"
+    ag_olm_args="$SERVICE $olm_version -o $SERVICE_CONTROLLER_SOURCE_PATH --template-dirs $TEMPLATES_DIR --olm-config $ACK_GENERATE_OLMCONFIG_PATH --aws-sdk-go-version $AWS_SDK_GO_VERSION"
 
     if [ -n "$ACK_GENERATE_CONFIG_PATH" ]; then
         ag_olm_args="$ag_olm_args --generator-config-path $ACK_GENERATE_CONFIG_PATH"
