@@ -60,7 +60,7 @@ Environment variables:
   SERVICE_CONTROLLER_CONTAINER_REPOSITORY   The container repository where the controller exists.
                                             This should include the registry, namespace, and
                                             image name.
-                                            Default: $DEFAULT_CONTROLLER_CONTAINER_REPOSITORY
+                                            Default: $DEFAULT_SERVICE_CONTROLLER_CONTAINER_REPOSITORY
   TMP_DIR                                   Directory where kustomize assets will be temporarily
                                             copied before they are modified and passed to bundle
                                             generation logic.
