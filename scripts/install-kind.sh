@@ -23,7 +23,7 @@ if [ "x$__kind_version" == "x" ]; then
 fi
 
 if ! is_installed kind; then
-    __kind_url="https://kind.sigs.k8s.io/dl/v${__kind_version}/kind-linux-amd64"
+    __kind_url="https://kind.sigs.k8s.io/dl/v${__kind_version}/kind-$(uname -s|tr '[:upper:]' '[:lower:]')-amd64"
     echo -n "installing kind from $__kind_url ... "
     curl --silent -Lo ./kind "$__kind_url"
     chmod +x ./kind
