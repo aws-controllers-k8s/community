@@ -102,8 +102,8 @@ if [[ ! -d $SERVICE_CONTROLLER_SOURCE_PATH ]]; then
     exit 1
 fi
 
-# Set controller image. 
-if [ -n "$AWS_SERVICE_DOCKER_IMG" ] && [ -n "$SERVICE_CONTROLLER_CONTAINER_REPOSITORY"] ; then
+# Set controller image.
+if [ -n "$AWS_SERVICE_DOCKER_IMG" ] && [ -n "$SERVICE_CONTROLLER_CONTAINER_REPOSITORY" ] ; then
   # It's possible to set the repository (i.e. everything except the tag) as well as the
   # entire path including the tag using AWS_SERVIC_DOCKER_IMG. If the latter is set, it
   # will take precedence, so inform the user that this will happen in case the usage of
