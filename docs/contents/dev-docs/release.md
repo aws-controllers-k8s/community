@@ -6,10 +6,20 @@ Remember that there is no single ACK binary. Rather, when we build a release
 for ACK, that release is for one or more individual ACK service controllers
 binaries, each of which are installed separately.
 
-This documentation covers the steps involved in building a service controller's
-release artifacts, including the Helm charts and binary Docker images for an
-ACK service controller, publishing those artifacts and tagging the Git source
-repository appropriately to create an official "release".
+This documentation covers the steps involved for officially publishing
+a ACK service controller's release artifacts.
+
+Once ACK service controller changes are tested by the service team and they wish to
+release latest artifacts, service team only needs to create a new release for service-controller
+github repository with a semver tag (Ex: v0.0.1). 
+Steps below show how to create a new release with semver tag.
+
+>For more details on semantic versioning(semver), please read `docs/contents/releases.md` 
+
+Once the git repository is tagged with semver, a postsubmit prowjob builds binary 
+docker image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
+Same prowjob also publishes the Helm charts for the ACK service controller to
+public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`. Here is a sample release [prowjob](https://prow.ack.aws.dev/log?job=elasticsearchservice-post-submit&id=1392554172762558464).
 
 ## What is a release exactly?
 
@@ -100,92 +110,11 @@ which will end up associating a Git tag (and therefore a Github release) with
 the SHA1 commit ID of the source code for the controllers and the release
 artifacts you built for that release version.
 
-7. Publish the controller images
+7. `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
+both docker image and Helm chart to public ECR repository.
+Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
-First, ensure you are logged in to the ECR public repository:
 
-```bash
-aws --profile ecrpush ecr-public get-login-password --region us-east-1 | docker login -u AWS --password-stdin public.ecr.aws
-Login Succeeded
-```
-
-!!! note
-    Above, I have a set of AWS CLI credentials in a profile called "ecrpush"
-    that I use for pushing to the ACK public ECR repository. You will need
-    something similar.
-
-Now publish all the controller images to the ECR public repository for
-controller images:
-
-```bash
-export DOCKER_REPOSITORY=public.ecr.aws/aws-controllers-k8s/controller
-for SERVICE in s3 sns; do
-    export AWS_SERVICE_DOCKER_IMG=$DOCKER_REPOSITORY:$SERVICE-$RELEASE_VERSION
-    ./scripts/publish-controller-image.sh $SERVICE
-done
-```
-
-!!! todo
-
-    The same Github Action should run the
-    `scripts/publish-controller-images.sh` script to build the Docker images
-    for the service controllers included in the release and push the images to
-    the `public.ecr.aws/aws-controllers-k8s/controller` image repository.
-
-8. Publish the Helm Charts
-
-First, ensure you are logged in to the ECR public repository for Helm:
-
-```bash
-aws --profile ecrpush ecr-public get-login-password --region us-east-1 | HELM_EXPERIMENTAL_OCI=1 helm registry login -u AWS --password-stdin public.ecr.aws
-Login succeeded
-```
-
-!!! note
-    Above, I have a set of AWS CLI credentials in a profile called "ecrpush"
-    that I use for pushing to the ACK public ECR repository. You will need
-    something similar.
-
-Now publish all the controller images to the ECR public repository for
-controller image using the `scripts/helm-publish-chart.sh` script for each service:
-
-```bash
-for SERVICE in apigatewayv2 sns; do
-    RELEASE_VERSION=v0.0.1 ./scripts/helm-publish-chart.sh $SERVICE;
-done
-```
-
-```bash
-Generating Helm chart package for apigatewayv2@v0.0.1 ... ref:     public.ecr.aws/aws-controllers-k8s/chart:apigatewayv2-v0.0.1
-digest:  0e24159c9afb840677ba64e63c19a65a6de2dcc87e80df95b3daf0cdb5c54de6
-size:    6.4 KiB
-name:    ack-apigatewayv2-controller
-version: v0.0.1
-apigatewayv2-v0.0.1: saved
-ok.
-The push refers to repository [public.ecr.aws/aws-controllers-k8s/chart]
-ref:     public.ecr.aws/aws-controllers-k8s/chart:apigatewayv2-v0.0.1
-digest:  0e24159c9afb840677ba64e63c19a65a6de2dcc87e80df95b3daf0cdb5c54de6
-size:    6.4 KiB
-name:    ack-apigatewayv2-controller
-version: v0.0.1
-apigatewayv2-v0.0.1: pushed to remote (1 layer, 6.4 KiB total)
-<snip>
-Generating Helm chart package for sns@v0.0.1 ... ref:     public.ecr.aws/aws-controllers-k8s/chart:sns-v0.0.1
-digest:  d5c1a79f85f8c320210c3418e7175da5398fba4e5644cd49f107c19db9e1e6d1
-size:    4.0 KiB
-name:    ack-sns-controller
-version: v0.0.1
-sns-v0.0.1: saved
-ok.
-The push refers to repository [public.ecr.aws/aws-controllers-k8s/chart]
-ref:     public.ecr.aws/aws-controllers-k8s/chart:sns-v0.0.1
-digest:  d5c1a79f85f8c320210c3418e7175da5398fba4e5644cd49f107c19db9e1e6d1
-size:    4.0 KiB
-name:    ack-sns-controller
-version: v0.0.1
-sns-v0.0.1: pushed to remote (1 layer, 4.0 KiB total)
-```
-
-All services that have had a Helm chart generated will have a
-corresponding Helm chart pushed to the ECR public repository.
+NOTE: This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git branch.
+When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm artifacts with
+stable tag. Ex: `elasticache-v1-stable`
