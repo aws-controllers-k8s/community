@@ -40,13 +40,13 @@ aws_check_credentials() {
 aws_generate_temp_creds() {
     __uuid=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
 
-    if [ -z "$AWS_ROLE_ARN" ]; then
+    if [ -z "$ACK_ROLE_ARN" ]; then
         printf "Missing input Role ARN, exiting...\n"
         exit 1
     fi
 
     JSON=$(daws sts assume-role \
-           --role-arn "$AWS_ROLE_ARN"  \
+           --role-arn "$ACK_ROLE_ARN"  \
            --role-session-name tmp-role-"$__uuid" \
            --duration-seconds 900 \
            --output json || exit 1)

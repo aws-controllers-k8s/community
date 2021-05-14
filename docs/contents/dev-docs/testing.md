@@ -118,13 +118,13 @@ To generate the IAM role ARN, do:
 
 ```
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) && \
-export AWS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
+export ACK_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
 ```
 
 !!! info 
      The tests uses the `generate_temp_creds` function from the
      `scripts/lib/aws.sh` script, executing effectively 
-     ` aws sts assume-role --role-session-arn $AWS_ROLE_ARN --role-session-name $TEMP_ROLE `
+     ` aws sts assume-role --role-session-arn $ACK_ROLE_ARN --role-session-name $TEMP_ROLE `
      which fetches temporarily `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
      and an `AWS_SESSION_TOKEN` used in turn to authentication the ACK
      controller. The duration of the session token is 900 seconds (15 minutes).
@@ -138,7 +138,7 @@ step.
 
 !!! warning "IAM troubles?!"
     If you try the following command and you see an error message containing
-    something along the line of `AWS_ROLE_ARN is not defined.` then you know
+    something along the line of `ACK_ROLE_ARN is not defined.` then you know
     that somewhere in the IAM setup you either left out a step or one of the
     commands failed.
 

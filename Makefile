@@ -58,12 +58,12 @@ build-controller: build-ack-generate ## Generate controller code for SERVICE
 
 kind-test: export PRESERVE = true
 kind-test: export LOCAL_MODULES = false
-kind-test: ## Run functional tests for SERVICE with AWS_ROLE_ARN
+kind-test: ## Run functional tests for SERVICE with ACK_ROLE_ARN
 	@./scripts/kind-build-test.sh $(AWS_SERVICE)
 
 local-kind-test: export PRESERVE = true
 local-kind-test: export LOCAL_MODULES = true
-local-kind-test: ## Run functional tests for SERVICE with AWS_ROLE_ARN allowing local modules
+local-kind-test: ## Run functional tests for SERVICE with ACK_ROLE_ARN allowing local modules
 	@./scripts/kind-build-test.sh $(AWS_SERVICE)
 
 delete-all-kind-clusters:	## Delete all local kind clusters
