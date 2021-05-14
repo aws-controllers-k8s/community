@@ -35,8 +35,8 @@ jobs:
           SERVICE: ${{ matrix.service }}
       - name: execute e2e tests
         run: |
-          export AWS_ROLE_ARN=$(aws ssm get-parameter --name ACK_ROLE_ARN | jq -r '.Parameter.Value')
-          export AWS_ROLE_ARN_ALT=$(aws ssm get-parameter --name ACK_ROLE_ARN_ALT | jq -r '.Parameter.Value')
+          export ACK_ROLE_ARN=$(aws ssm get-parameter --name ACK_ROLE_ARN | jq -r '.Parameter.Value')
+          export ACK_ROLE_ARN_ALT=$(aws ssm get-parameter --name ACK_ROLE_ARN_ALT | jq -r '.Parameter.Value')
           ./scripts/kind-build-test.sh $SERVICE
         env:
           SERVICE: ${{ matrix.service }}

@@ -12,7 +12,7 @@ ROOT_DIR="$SCRIPTS_DIR/.."
 CLUSTER_NAME_BASE=${CLUSTER_NAME_BASE:-"test"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
 AWS_REGION=${AWS_REGION:-"us-west-2"}
-AWS_ROLE_ARN=${AWS_ROLE_ARN:-""}
+ACK_ROLE_ARN=${ACK_ROLE_ARN:-""}
 ACK_ENABLE_DEVELOPMENT_LOGGING="true"
 ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-"false"}
 TEST_HELM_CHARTS=${TEST_HELM_CHARTS:-"true"}
@@ -69,14 +69,14 @@ function clean_up {
 
 USAGE="
 Usage:
-  export AWS_ROLE_ARN=\"\$ROLE_ARN\"
+  export ACK_ROLE_ARN=\"\$ROLE_ARN\"
   $(basename "$0") <AWS_SERVICE>
 
 Builds the Docker image for an ACK service controller, loads the Docker image
 into a KinD Kubernetes cluster, creates the Deployment artifact for the ACK
 service controller and executes a set of tests.
 
-Example: export AWS_ROLE_ARN=\"\$ROLE_ARN\"; $(basename "$0") ecr
+Example: export ACK_ROLE_ARN=\"\$ROLE_ARN\"; $(basename "$0") ecr
 
 <AWS_SERVICE> should be an AWS Service name (ecr, sns, sqs, petstore, bookstore)
 
@@ -84,7 +84,7 @@ Environment variables:
   SERVICE_CONTROLLER_SOURCE_PATH: Path to the service controller source code
                             repository.
                             Default: ../{SERVICE}-controller
-  AWS_ROLE_ARN:             Provide AWS Role ARN for functional testing on local KinD Cluster. Mandatory.
+  ACK_ROLE_ARN:             Provide AWS Role ARN for functional testing on local KinD Cluster. Mandatory.
   PRESERVE:                 Preserve kind k8s cluster for inspection (<true|false>)
                             Default: false
   LOCAL_MODULES:            Enables use of local modules during AWS Service controller docker image build
@@ -127,8 +127,8 @@ if [[ ! -d $SERVICE_CONTROLLER_SOURCE_PATH ]]; then
     exit 1
 fi
 
-if [ -z "$AWS_ROLE_ARN" ]; then
-    echo "AWS_ROLE_ARN is not defined. Set <AWS_ROLE_ARN> env variable to indicate the ARN of the IAM Role to use in testing"
+if [ -z "$ACK_ROLE_ARN" ]; then
+    echo "ACK_ROLE_ARN is not defined. Set <ACK_ROLE_ARN> env variable to indicate the ARN of the IAM Role to use in testing"
     echo "${USAGE}"
     exit  1
 fi
@@ -177,6 +177,7 @@ trap "clean_up" EXIT
 export AWS_ACCOUNT_ID
 export AWS_REGION
 export AWS_ROLE_ARN
+export ACK_ROLE_ARN
 export ACK_ENABLE_DEVELOPMENT_LOGGING
 export ENABLE_PROMETHEUS
 export ACK_RESOURCE_TAGS
