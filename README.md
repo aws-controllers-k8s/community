@@ -95,6 +95,22 @@ You can also learn more about our [Governance](/GOVERNANCE.md) structure.
 
 [coc]: https://aws.github.io/code-of-conduct
 
+## Community Meeting
+
+ACK Community meeting is held every week.
+Everyone is welcome to participate.
+
+#### Details 
+* **Agenda/Notes**: [link][meeting-notes]
+  * Notes from each meeting are captured here.
+* **When:** every Monday at 9:00-9:30AM Pacific Time
+* **Where:** [Zoom meeting][zoom-meeting-link]
+* **Past Meeting Recordings:** TBD
+  * Meetings are recorded and posted to Youtube.
+
+[zoom-meeting-link]: https://zoom.us/j/95069096871?pwd=OXc3eWk1NVluUlozcVg3b1VtdGl5Zz09
+[meeting-notes]: https://docs.google.com/document/d/1G9Nl-vBXuOBRoOt-9N-fQMpY05V8fCP8vPg94iTZ9gA
+
 ## License
 
 This project is [licensed](/LICENSE) under the Apache-2.0 License.
