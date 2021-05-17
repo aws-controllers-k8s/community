@@ -22,9 +22,11 @@ DEFAULT_AWS_CLI_VERSION="2.0.52"
 # environment variable, otherwise the value of DEFAULT_AWS_CLI_VERSION is used.
 daws() {
     aws_cli_profile_env=$([ ! -z "$AWS_PROFILE" ] && echo "--env AWS_PROFILE=$AWS_PROFILE")
+    aws_cli_web_identity_env="$([ ! -z "$AWS_WEB_IDENTITY_TOKEN_FILE" ] && \
+        echo "--env AWS_WEB_IDENTITY_TOKEN_FILE=/root/aws_token --env AWS_ROLE_ARN -v $AWS_WEB_IDENTITY_TOKEN_FILE:/root/aws_token:ro" )"
     aws_cli_img_version=${ACK_AWS_CLI_IMAGE_VERSION:-$DEFAULT_AWS_CLI_VERSION}
     aws_cli_img="amazon/aws-cli:$aws_cli_img_version"
-    docker run --rm -v ~/.aws:/root/.aws:z $(echo $aws_cli_profile_env) -v $(pwd):/aws "$aws_cli_img" "$@"
+    docker run --rm -v ~/.aws:/root/.aws:z $(echo $aws_cli_profile_env) $(echo $aws_cli_web_identity_env) -v $(pwd):/aws "$aws_cli_img" "$@"
 }
 
 # aws_check_credentials() calls the STS::GetCallerIdentity API call and
