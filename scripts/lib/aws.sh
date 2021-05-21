@@ -38,7 +38,7 @@ aws_check_credentials() {
     echo "ok."
 }
 
-# generate_aws_temp_creds function will generate temporary AWS CREDENTIALS which are valid for 900 seconds
+# generate_aws_temp_creds function will generate temporary AWS CREDENTIALS which are valid for 3600 seconds
 aws_generate_temp_creds() {
     __uuid=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
 
@@ -50,7 +50,7 @@ aws_generate_temp_creds() {
     JSON=$(daws sts assume-role \
            --role-arn "$ACK_ROLE_ARN"  \
            --role-session-name tmp-role-"$__uuid" \
-           --duration-seconds 900 \
+           --duration-seconds 3600 \
            --output json || exit 1)
 
     AWS_ACCESS_KEY_ID=$(echo "${JSON}" | jq --raw-output ".Credentials[\"AccessKeyId\"]")
