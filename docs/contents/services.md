@@ -42,7 +42,7 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 | Amazon [MSK](#amazon-msk) | [`PLANNED`](https://github.com/aws-controllers-k8s/community/issues/348) | | https://github.com/aws-controllers-k8s/community/milestone/13
 | Amazon [RDS](#amazon-rds) | [`IN PROGRESS`](https://github.com/aws-controllers-k8s/community/issues/237) | | https://github.com/aws-controllers-k8s/community/milestone/8
 | Amazon [Route53](#amazon-route53) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/480) | |
-| Amazon [SageMaker](#amazon-sagemaker) | [`IN PROGRESS`](https://github.com/aws-controllers-k8s/community/issues/385) | | https://github.com/aws-controllers-k8s/community/milestone/11
+| Amazon [SageMaker](#amazon-sagemaker) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/385) | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/11
 | Amazon [SNS](#amazon-sns) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/202) | `PREVIEW` |
 | Amazon [SQS](#amazon-sqs) | [`IN PROGRESS`](https://github.com/aws-controllers-k8s/community/issues/205) | | https://github.com/aws-controllers-k8s/community/milestone/6
 | AWS [Step Functions](#aws-step-functions) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/239) | `PREVIEW` |
@@ -183,7 +183,8 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 ## Amazon SageMaker
 
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/385
-* Current project stage: `IN PROGRESS`
+* Current project stage: `RELEASED`
+* Current maintenance phase: `PREVIEW`
 * Next milestone: https://github.com/aws-controllers-k8s/community/milestone/11
 * AWS service documentation: https://aws.amazon.com/sagemaker/
 * ACK service controller: https://github.com/aws-controllers-k8s/sagemaker-controller
