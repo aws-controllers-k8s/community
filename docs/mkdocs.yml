@@ -19,6 +19,7 @@ nav:
   - Setup: 'dev-docs/setup.md'
   - Building controller: 'dev-docs/building-controller.md'
   - Testing: 'dev-docs/testing.md'
+  - Release: 'dev-docs/release.md'
 - Community:
   - Background: 'community/background.md'
   - FAQ: 'community/faq.md'
@@ -53,4 +54,4 @@ markdown_extensions:
     permalink: true
 - admonition
 - codehilite:
-    linenums: true
+    linenums: False # linenums in codeblock did not play well with numbered list and provided bad experience

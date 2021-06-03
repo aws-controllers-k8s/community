@@ -14,12 +14,13 @@ release latest artifacts, service team only needs to create a new release for se
 github repository with a semver tag (Ex: v0.0.1). 
 Steps below show how to create a new release with semver tag.
 
->For more details on semantic versioning(semver), please read `docs/contents/releases.md` 
+!!! note "Semver"
+    For more details on semantic versioning(semver), please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/) 
 
 Once the git repository is tagged with semver, a postsubmit prowjob builds binary 
 docker image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
 Same prowjob also publishes the Helm charts for the ACK service controller to
-public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`. Here is a sample release [prowjob](https://prow.ack.aws.dev/log?job=elasticsearchservice-post-submit&id=1392554172762558464).
+public ecr repository `public.ecr.aws/aws-controllers-k8s/chart`.
 
 ## What is a release exactly?
 
@@ -51,15 +52,14 @@ Kubernetes Deployment; the Deployment's Pod image will refer to the exact
 Docker image tag matching the release tag.
 
 ## Release steps
-
-1. First check out a git branch for your release:
- 
+<// mkdocs does not support numbered lists with code blocks. So use 1) instead of 1. in numbered list. >
+1) First check out a git branch for your release:
 ```bash
 export RELEASE_VERSION=v0.0.1
 git checkout -b release-$RELEASE_VERSION
- ```
+```
 
-2. Build the release artifacts for the controllers you wish to include in the
+2) Build the release artifacts for the controllers you wish to include in the
    release
 
    Run `scripts/build-controller-release.sh` for each service. For
@@ -72,49 +72,45 @@ for SERVICE in sns s3; do
 done
 ```
 
-3. You can review the release artifacts that were built for each service by
-   looking in the `services/$SERVICE/helm` directory:
+3) You can review the release artifacts that were built for each service by looking in the `services/$SERVICE/helm`
+directory:
 
-    `tree services/$SERVICE/helm`
+`tree services/$SERVICE/helm`
 
-    or by doing:
+or by doing:
 
-    `git diff`
+`git diff`
 
 !!! note
-    When you run `scripts/build-controller-release.sh` for a service, it will
-    overwrite any Helm chart files that had previously been generated in the
-    `services/$SERVICE/helm` directory with files that refer to the
-    Docker image with an image tag referring to the release you've just built
-    artifacts for.
-
-4. Commit your code and create a pull request:
-
+    When you run `scripts/build-controller-release.sh` for a service, it will overwrite any Helm chart files that had
+    previously been generated in the `services/$SERVICE/helm` directory with files that refer to the Docker image with
+    an image tag referring to the release you've just built artifacts for.
+   
+4) Commit your code and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
 ```
 
-5. Get your pull request reviewed and merged.
+5) Get your pull request reviewed and merged.
 
-6. Upon merging the pull request
-
+6) Upon merging the pull request
 ```bash
 git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
 git push upstream main --tags
 ```
 
-!!! todo
-    A Github Action should execute the above
+!!! note "TODO"
+    A Github Action should execute the above step which will end up associating a Git tag (and therefore a Github
+    release) with the SHA1 commit ID of the source code for the controllers and the release artifacts you built for
+    that release version.
 
-which will end up associating a Git tag (and therefore a Github release) with
-the SHA1 commit ID of the source code for the controllers and the release
-artifacts you built for that release version.
-
-7. `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
+7) `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
 both docker image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
-
-NOTE: This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git branch.
-When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm artifacts with
-stable tag. Ex: `elasticache-v1-stable`
+!!! note "Stable Helm Chart"
+    * This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git 
+    branch.
+    * To learn more about how to push changes to stable branch please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/)
+    * When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm 
+    artifacts with stable tag. Ex: `elasticache-v1-stable`
