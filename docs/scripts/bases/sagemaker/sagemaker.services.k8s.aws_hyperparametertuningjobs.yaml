@@ -1,0 +1,686 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: hyperparametertuningjobs.sagemaker.services.k8s.aws
+spec:
+  group: sagemaker.services.k8s.aws
+  names:
+    kind: HyperParameterTuningJob
+    listKind: HyperParameterTuningJobList
+    plural: hyperparametertuningjobs
+    singular: hyperparametertuningjob
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.failureReason
+      name: FailureReason
+      type: string
+    - jsonPath: .status.hyperParameterTuningJobStatus
+      name: HyperParameterTuningJobStatus
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: HyperParameterTuningJob is the Schema for the HyperParameterTuningJobs
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: HyperParameterTuningJobSpec defines the desired state of
+              HyperParameterTuningJob
+            properties:
+              hyperParameterTuningJobConfig:
+                description: The HyperParameterTuningJobConfig object that describes
+                  the tuning job, including the search strategy, the objective metric
+                  used to evaluate training jobs, ranges of parameters to search,
+                  and resource limits for the tuning job. For more information, see
+                  How Hyperparameter Tuning Works (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-how-it-works.html).
+                properties:
+                  hyperParameterTuningJobObjective:
+                    properties:
+                      metricName:
+                        type: string
+                      type_:
+                        type: string
+                    type: object
+                  parameterRanges:
+                    properties:
+                      categoricalParameterRanges:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        type: array
+                      continuousParameterRanges:
+                        items:
+                          properties:
+                            maxValue:
+                              type: string
+                            minValue:
+                              type: string
+                            name:
+                              type: string
+                            scalingType:
+                              type: string
+                          type: object
+                        type: array
+                      integerParameterRanges:
+                        items:
+                          properties:
+                            maxValue:
+                              type: string
+                            minValue:
+                              type: string
+                            name:
+                              type: string
+                            scalingType:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  resourceLimits:
+                    properties:
+                      maxNumberOfTrainingJobs:
+                        format: int64
+                        type: integer
+                      maxParallelTrainingJobs:
+                        format: int64
+                        type: integer
+                    type: object
+                  strategy:
+                    type: string
+                  trainingJobEarlyStoppingType:
+                    type: string
+                  tuningJobCompletionCriteria:
+                    properties:
+                      targetObjectiveMetricValue:
+                        type: number
+                    type: object
+                type: object
+              hyperParameterTuningJobName:
+                description: 'The name of the tuning job. This name is the prefix
+                  for the names of all training jobs that this tuning job launches.
+                  The name must be unique within the same AWS account and AWS Region.
+                  The name must have 1 to 32 characters. Valid characters are a-z,
+                  A-Z, 0-9, and : + = @ _ % - (hyphen). The name is not case sensitive.'
+                type: string
+              trainingJobDefinition:
+                description: The HyperParameterTrainingJobDefinition object that describes
+                  the training jobs that this tuning job launches, including static
+                  hyperparameters, input data configuration, output data configuration,
+                  resource configuration, and stopping condition.
+                properties:
+                  algorithmSpecification:
+                    properties:
+                      algorithmName:
+                        type: string
+                      metricDefinitions:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            regex:
+                              type: string
+                          type: object
+                        type: array
+                      trainingImage:
+                        type: string
+                      trainingInputMode:
+                        type: string
+                    type: object
+                  checkpointConfig:
+                    properties:
+                      localPath:
+                        type: string
+                      s3URI:
+                        type: string
+                    type: object
+                  definitionName:
+                    type: string
+                  enableInterContainerTrafficEncryption:
+                    type: boolean
+                  enableManagedSpotTraining:
+                    type: boolean
+                  enableNetworkIsolation:
+                    type: boolean
+                  hyperParameterRanges:
+                    properties:
+                      categoricalParameterRanges:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        type: array
+                      continuousParameterRanges:
+                        items:
+                          properties:
+                            maxValue:
+                              type: string
+                            minValue:
+                              type: string
+                            name:
+                              type: string
+                            scalingType:
+                              type: string
+                          type: object
+                        type: array
+                      integerParameterRanges:
+                        items:
+                          properties:
+                            maxValue:
+                              type: string
+                            minValue:
+                              type: string
+                            name:
+                              type: string
+                            scalingType:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  inputDataConfig:
+                    items:
+                      properties:
+                        channelName:
+                          type: string
+                        compressionType:
+                          type: string
+                        contentType:
+                          type: string
+                        dataSource:
+                          properties:
+                            fileSystemDataSource:
+                              properties:
+                                directoryPath:
+                                  type: string
+                                fileSystemAccessMode:
+                                  type: string
+                                fileSystemID:
+                                  type: string
+                                fileSystemType:
+                                  type: string
+                              type: object
+                            s3DataSource:
+                              properties:
+                                attributeNames:
+                                  items:
+                                    type: string
+                                  type: array
+                                s3DataDistributionType:
+                                  type: string
+                                s3DataType:
+                                  type: string
+                                s3URI:
+                                  type: string
+                              type: object
+                          type: object
+                        inputMode:
+                          type: string
+                        recordWrapperType:
+                          type: string
+                        shuffleConfig:
+                          properties:
+                            seed:
+                              format: int64
+                              type: integer
+                          type: object
+                      type: object
+                    type: array
+                  outputDataConfig:
+                    properties:
+                      kmsKeyID:
+                        type: string
+                      s3OutputPath:
+                        type: string
+                    type: object
+                  resourceConfig:
+                    properties:
+                      instanceCount:
+                        format: int64
+                        type: integer
+                      instanceType:
+                        type: string
+                      volumeKMSKeyID:
+                        type: string
+                      volumeSizeInGB:
+                        format: int64
+                        type: integer
+                    type: object
+                  roleARN:
+                    type: string
+                  staticHyperParameters:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  stoppingCondition:
+                    properties:
+                      maxRuntimeInSeconds:
+                        format: int64
+                        type: integer
+                      maxWaitTimeInSeconds:
+                        format: int64
+                        type: integer
+                    type: object
+                  tuningObjective:
+                    properties:
+                      metricName:
+                        type: string
+                      type_:
+                        type: string
+                    type: object
+                  vpcConfig:
+                    properties:
+                      securityGroupIDs:
+                        items:
+                          type: string
+                        type: array
+                      subnets:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              trainingJobDefinitions:
+                description: A list of the HyperParameterTrainingJobDefinition objects
+                  launched for this tuning job.
+                items:
+                  properties:
+                    algorithmSpecification:
+                      properties:
+                        algorithmName:
+                          type: string
+                        metricDefinitions:
+                          items:
+                            properties:
+                              name:
+                                type: string
+                              regex:
+                                type: string
+                            type: object
+                          type: array
+                        trainingImage:
+                          type: string
+                        trainingInputMode:
+                          type: string
+                      type: object
+                    checkpointConfig:
+                      properties:
+                        localPath:
+                          type: string
+                        s3URI:
+                          type: string
+                      type: object
+                    definitionName:
+                      type: string
+                    enableInterContainerTrafficEncryption:
+                      type: boolean
+                    enableManagedSpotTraining:
+                      type: boolean
+                    enableNetworkIsolation:
+                      type: boolean
+                    hyperParameterRanges:
+                      properties:
+                        categoricalParameterRanges:
+                          items:
+                            properties:
+                              name:
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
+                        continuousParameterRanges:
+                          items:
+                            properties:
+                              maxValue:
+                                type: string
+                              minValue:
+                                type: string
+                              name:
+                                type: string
+                              scalingType:
+                                type: string
+                            type: object
+                          type: array
+                        integerParameterRanges:
+                          items:
+                            properties:
+                              maxValue:
+                                type: string
+                              minValue:
+                                type: string
+                              name:
+                                type: string
+                              scalingType:
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    inputDataConfig:
+                      items:
+                        properties:
+                          channelName:
+                            type: string
+                          compressionType:
+                            type: string
+                          contentType:
+                            type: string
+                          dataSource:
+                            properties:
+                              fileSystemDataSource:
+                                properties:
+                                  directoryPath:
+                                    type: string
+                                  fileSystemAccessMode:
+                                    type: string
+                                  fileSystemID:
+                                    type: string
+                                  fileSystemType:
+                                    type: string
+                                type: object
+                              s3DataSource:
+                                properties:
+                                  attributeNames:
+                                    items:
+                                      type: string
+                                    type: array
+                                  s3DataDistributionType:
+                                    type: string
+                                  s3DataType:
+                                    type: string
+                                  s3URI:
+                                    type: string
+                                type: object
+                            type: object
+                          inputMode:
+                            type: string
+                          recordWrapperType:
+                            type: string
+                          shuffleConfig:
+                            properties:
+                              seed:
+                                format: int64
+                                type: integer
+                            type: object
+                        type: object
+                      type: array
+                    outputDataConfig:
+                      properties:
+                        kmsKeyID:
+                          type: string
+                        s3OutputPath:
+                          type: string
+                      type: object
+                    resourceConfig:
+                      properties:
+                        instanceCount:
+                          format: int64
+                          type: integer
+                        instanceType:
+                          type: string
+                        volumeKMSKeyID:
+                          type: string
+                        volumeSizeInGB:
+                          format: int64
+                          type: integer
+                      type: object
+                    roleARN:
+                      type: string
+                    staticHyperParameters:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    stoppingCondition:
+                      properties:
+                        maxRuntimeInSeconds:
+                          format: int64
+                          type: integer
+                        maxWaitTimeInSeconds:
+                          format: int64
+                          type: integer
+                      type: object
+                    tuningObjective:
+                      properties:
+                        metricName:
+                          type: string
+                        type_:
+                          type: string
+                      type: object
+                    vpcConfig:
+                      properties:
+                        securityGroupIDs:
+                          items:
+                            type: string
+                          type: array
+                        subnets:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                  type: object
+                type: array
+              warmStartConfig:
+                description: "Specifies the configuration for starting the hyperparameter
+                  tuning job using one or more previous tuning jobs as a starting
+                  point. The results of previous tuning jobs are used to inform which
+                  combinations of hyperparameters to search over in the new tuning
+                  job. \n All training jobs launched by the new hyperparameter tuning
+                  job are evaluated by using the objective metric. If you specify
+                  IDENTICAL_DATA_AND_ALGORITHM as the WarmStartType value for the
+                  warm start configuration, the training job that performs the best
+                  in the new tuning job is compared to the best training jobs from
+                  the parent tuning jobs. From these, the training job that performs
+                  the best as measured by the objective metric is returned as the
+                  overall best training job. \n All training jobs launched by parent
+                  hyperparameter tuning jobs and the new hyperparameter tuning jobs
+                  count against the limit of training jobs for the tuning job."
+                properties:
+                  parentHyperParameterTuningJobs:
+                    items:
+                      properties:
+                        hyperParameterTuningJobName:
+                          type: string
+                      type: object
+                    type: array
+                  warmStartType:
+                    type: string
+                type: object
+            required:
+            - hyperParameterTuningJobConfig
+            - hyperParameterTuningJobName
+            type: object
+          status:
+            description: HyperParameterTuningJobStatus defines the observed state
+              of HyperParameterTuningJob
+            properties:
+              ackResourceMetadata:
+                description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
+                  member that is used to contain resource sync state, account ownership,
+                  constructed ARN for the resource
+                properties:
+                  arn:
+                    description: 'ARN is the Amazon Resource Name for the resource.
+                      This is a globally-unique identifier and is set only by the
+                      ACK service controller once the controller has orchestrated
+                      the creation of the resource OR when it has verified that an
+                      "adopted" resource (a resource where the ARN annotation was
+                      set by the Kubernetes user on the CR) exists and matches the
+                      supplied CR''s Spec field values. TODO(vijat@): Find a better
+                      strategy for resources that do not have ARN in CreateOutputResponse
+                      https://github.com/aws/aws-controllers-k8s/issues/270'
+                    type: string
+                  ownerAccountID:
+                    description: OwnerAccountID is the AWS Account ID of the account
+                      that owns the backend AWS service API resource.
+                    type: string
+                required:
+                - ownerAccountID
+                type: object
+              bestTrainingJob:
+                description: A TrainingJobSummary object that describes the training
+                  job that completed with the best current HyperParameterTuningJobObjective.
+                properties:
+                  creationTime:
+                    format: date-time
+                    type: string
+                  failureReason:
+                    type: string
+                  finalHyperParameterTuningJobObjectiveMetric:
+                    properties:
+                      metricName:
+                        type: string
+                      type_:
+                        type: string
+                      value:
+                        type: number
+                    type: object
+                  objectiveStatus:
+                    type: string
+                  trainingEndTime:
+                    format: date-time
+                    type: string
+                  trainingJobARN:
+                    type: string
+                  trainingJobDefinitionName:
+                    type: string
+                  trainingJobName:
+                    type: string
+                  trainingJobStatus:
+                    type: string
+                  trainingStartTime:
+                    format: date-time
+                    type: string
+                  tunedHyperParameters:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  tuningJobName:
+                    type: string
+                type: object
+              conditions:
+                description: All CRS managed by ACK have a common `Status.Conditions`
+                  member that contains a collection of `ackv1alpha1.Condition` objects
+                  that describe the various terminal states of the CR and its backend
+                  AWS service API resource
+                items:
+                  description: Condition is the common struct used by all CRDs managed
+                    by ACK service controllers to indicate terminal states  of the
+                    CR and its backend AWS service API resource
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the Condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              failureReason:
+                description: If the tuning job failed, the reason it failed.
+                type: string
+              hyperParameterTuningJobStatus:
+                description: 'The status of the tuning job: InProgress, Completed,
+                  Failed, Stopping, or Stopped.'
+                type: string
+              overallBestTrainingJob:
+                description: If the hyperparameter tuning job is an warm start tuning
+                  job with a WarmStartType of IDENTICAL_DATA_AND_ALGORITHM, this is
+                  the TrainingJobSummary for the training job with the best objective
+                  metric value of all training jobs launched by this tuning job and
+                  all parent jobs specified for the warm start tuning job.
+                properties:
+                  creationTime:
+                    format: date-time
+                    type: string
+                  failureReason:
+                    type: string
+                  finalHyperParameterTuningJobObjectiveMetric:
+                    properties:
+                      metricName:
+                        type: string
+                      type_:
+                        type: string
+                      value:
+                        type: number
+                    type: object
+                  objectiveStatus:
+                    type: string
+                  trainingEndTime:
+                    format: date-time
+                    type: string
+                  trainingJobARN:
+                    type: string
+                  trainingJobDefinitionName:
+                    type: string
+                  trainingJobName:
+                    type: string
+                  trainingJobStatus:
+                    type: string
+                  trainingStartTime:
+                    format: date-time
+                    type: string
+                  tunedHyperParameters:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  tuningJobName:
+                    type: string
+                type: object
+            required:
+            - ackResourceMetadata
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

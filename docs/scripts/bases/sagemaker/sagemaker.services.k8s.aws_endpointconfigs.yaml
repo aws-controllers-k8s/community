@@ -1,0 +1,201 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: endpointconfigs.sagemaker.services.k8s.aws
+spec:
+  group: sagemaker.services.k8s.aws
+  names:
+    kind: EndpointConfig
+    listKind: EndpointConfigList
+    plural: endpointconfigs
+    singular: endpointconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: EndpointConfig is the Schema for the EndpointConfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EndpointConfigSpec defines the desired state of EndpointConfig
+            properties:
+              dataCaptureConfig:
+                properties:
+                  captureContentTypeHeader:
+                    properties:
+                      csvContentTypes:
+                        items:
+                          type: string
+                        type: array
+                      jsonContentTypes:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  captureOptions:
+                    items:
+                      properties:
+                        captureMode:
+                          type: string
+                      type: object
+                    type: array
+                  destinationS3URI:
+                    type: string
+                  enableCapture:
+                    type: boolean
+                  initialSamplingPercentage:
+                    format: int64
+                    type: integer
+                  kmsKeyID:
+                    type: string
+                type: object
+              endpointConfigName:
+                description: The name of the endpoint configuration. You specify this
+                  name in a CreateEndpoint request.
+                type: string
+              kmsKeyID:
+                description: "The Amazon Resource Name (ARN) of a AWS Key Management
+                  Service key that Amazon SageMaker uses to encrypt data on the storage
+                  volume attached to the ML compute instance that hosts the endpoint.
+                  \n The KmsKeyId can be any of the following formats: \n    * Key
+                  ID: 1234abcd-12ab-34cd-56ef-1234567890ab \n    * Key ARN: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+                  \n    * Alias name: alias/ExampleAlias \n    * Alias name ARN: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
+                  \n The KMS key policy must grant permission to the IAM role that
+                  you specify in your CreateEndpoint, UpdateEndpoint requests. For
+                  more information, refer to the AWS Key Management Service section
+                  Using Key Policies in AWS KMS (https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+                  \n Certain Nitro-based instances include local storage, dependent
+                  on the instance type. Local storage volumes are encrypted using
+                  a hardware module on the instance. You can't request a KmsKeyId
+                  when using an instance type with local storage. If any of the models
+                  that you specify in the ProductionVariants parameter use nitro-based
+                  instances with local storage, do not specify a value for the KmsKeyId
+                  parameter. If you specify a value for KmsKeyId when using any nitro-based
+                  instances with local storage, the call to CreateEndpointConfig fails.
+                  \n For a list of instance types that support local instance storage,
+                  see Instance Store Volumes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html#instance-store-volumes).
+                  \n For more information about local instance storage encryption,
+                  see SSD Instance Store Volumes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html)."
+                type: string
+              productionVariants:
+                description: An list of ProductionVariant objects, one for each model
+                  that you want to host at this endpoint.
+                items:
+                  properties:
+                    acceleratorType:
+                      type: string
+                    coreDumpConfig:
+                      properties:
+                        destinationS3URI:
+                          type: string
+                        kmsKeyID:
+                          type: string
+                      type: object
+                    initialInstanceCount:
+                      format: int64
+                      type: integer
+                    initialVariantWeight:
+                      type: number
+                    instanceType:
+                      type: string
+                    modelName:
+                      type: string
+                    variantName:
+                      type: string
+                  type: object
+                type: array
+            required:
+            - endpointConfigName
+            - productionVariants
+            type: object
+          status:
+            description: EndpointConfigStatus defines the observed state of EndpointConfig
+            properties:
+              ackResourceMetadata:
+                description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
+                  member that is used to contain resource sync state, account ownership,
+                  constructed ARN for the resource
+                properties:
+                  arn:
+                    description: 'ARN is the Amazon Resource Name for the resource.
+                      This is a globally-unique identifier and is set only by the
+                      ACK service controller once the controller has orchestrated
+                      the creation of the resource OR when it has verified that an
+                      "adopted" resource (a resource where the ARN annotation was
+                      set by the Kubernetes user on the CR) exists and matches the
+                      supplied CR''s Spec field values. TODO(vijat@): Find a better
+                      strategy for resources that do not have ARN in CreateOutputResponse
+                      https://github.com/aws/aws-controllers-k8s/issues/270'
+                    type: string
+                  ownerAccountID:
+                    description: OwnerAccountID is the AWS Account ID of the account
+                      that owns the backend AWS service API resource.
+                    type: string
+                required:
+                - ownerAccountID
+                type: object
+              conditions:
+                description: All CRS managed by ACK have a common `Status.Conditions`
+                  member that contains a collection of `ackv1alpha1.Condition` objects
+                  that describe the various terminal states of the CR and its backend
+                  AWS service API resource
+                items:
+                  description: Condition is the common struct used by all CRDs managed
+                    by ACK service controllers to indicate terminal states  of the
+                    CR and its backend AWS service API resource
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the Condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+            required:
+            - ackResourceMetadata
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -20,6 +20,9 @@ nav:
   - Building controller: 'dev-docs/building-controller.md'
   - Testing: 'dev-docs/testing.md'
   - Release: 'dev-docs/release.md'
+- Reference:
+  - Overview: 'reference/overview.md'
+  - ... | glob=reference/**
 - Community:
   - Background: 'community/background.md'
   - FAQ: 'community/faq.md'
@@ -35,6 +38,7 @@ theme:
   features:
   - navigation.tabs
   - navigation.instant
+  - navigation.top
   custom_dir: 'theme'
   favicon: 'assets/images/favicon.png'
   logo: 'assets/images/logo.png'
@@ -50,8 +54,14 @@ theme:
   - 'bash'
 markdown_extensions:
 - pymdownx.snippets
+- meta
 - toc:
     permalink: true
 - admonition
 - codehilite:
     linenums: False # linenums in codeblock did not play well with numbered list and provided bad experience
+plugins:
+- search
+- macros:
+    include_dir: 'contents/snippets'
+- awesome-pages

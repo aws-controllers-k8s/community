@@ -1,0 +1,313 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: monitoringschedules.sagemaker.services.k8s.aws
+spec:
+  group: sagemaker.services.k8s.aws
+  names:
+    kind: MonitoringSchedule
+    listKind: MonitoringScheduleList
+    plural: monitoringschedules
+    singular: monitoringschedule
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.failureReason
+      name: FailureReason
+      type: string
+    - jsonPath: .status.monitoringScheduleStatus
+      name: MonitoringScheduleStatus
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: MonitoringSchedule is the Schema for the MonitoringSchedules
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MonitoringScheduleSpec defines the desired state of MonitoringSchedule
+            properties:
+              monitoringScheduleConfig:
+                description: The configuration object that specifies the monitoring
+                  schedule and defines the monitoring job.
+                properties:
+                  monitoringJobDefinition:
+                    properties:
+                      baselineConfig:
+                        properties:
+                          baseliningJobName:
+                            type: string
+                          constraintsResource:
+                            properties:
+                              s3URI:
+                                type: string
+                            type: object
+                          statisticsResource:
+                            properties:
+                              s3URI:
+                                type: string
+                            type: object
+                        type: object
+                      environment:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      monitoringAppSpecification:
+                        properties:
+                          containerArguments:
+                            items:
+                              type: string
+                            type: array
+                          containerEntrypoint:
+                            items:
+                              type: string
+                            type: array
+                          imageURI:
+                            type: string
+                          postAnalyticsProcessorSourceURI:
+                            type: string
+                          recordPreprocessorSourceURI:
+                            type: string
+                        type: object
+                      monitoringInputs:
+                        items:
+                          properties:
+                            endpointInput:
+                              properties:
+                                endTimeOffset:
+                                  type: string
+                                endpointName:
+                                  type: string
+                                featuresAttribute:
+                                  type: string
+                                inferenceAttribute:
+                                  type: string
+                                localPath:
+                                  type: string
+                                probabilityAttribute:
+                                  type: string
+                                probabilityThresholdAttribute:
+                                  type: number
+                                s3DataDistributionType:
+                                  type: string
+                                s3InputMode:
+                                  type: string
+                                startTimeOffset:
+                                  type: string
+                              type: object
+                          type: object
+                        type: array
+                      monitoringOutputConfig:
+                        properties:
+                          kmsKeyID:
+                            type: string
+                          monitoringOutputs:
+                            items:
+                              properties:
+                                s3Output:
+                                  properties:
+                                    localPath:
+                                      type: string
+                                    s3URI:
+                                      type: string
+                                    s3UploadMode:
+                                      type: string
+                                  type: object
+                              type: object
+                            type: array
+                        type: object
+                      monitoringResources:
+                        properties:
+                          clusterConfig:
+                            properties:
+                              instanceCount:
+                                format: int64
+                                type: integer
+                              instanceType:
+                                type: string
+                              volumeKMSKeyID:
+                                type: string
+                              volumeSizeInGB:
+                                format: int64
+                                type: integer
+                            type: object
+                        type: object
+                      networkConfig:
+                        properties:
+                          enableInterContainerTrafficEncryption:
+                            type: boolean
+                          enableNetworkIsolation:
+                            type: boolean
+                          vpcConfig:
+                            properties:
+                              securityGroupIDs:
+                                items:
+                                  type: string
+                                type: array
+                              subnets:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                        type: object
+                      roleARN:
+                        type: string
+                      stoppingCondition:
+                        properties:
+                          maxRuntimeInSeconds:
+                            format: int64
+                            type: integer
+                        type: object
+                    type: object
+                  monitoringJobDefinitionName:
+                    type: string
+                  monitoringType:
+                    type: string
+                  scheduleConfig:
+                    properties:
+                      scheduleExpression:
+                        type: string
+                    type: object
+                type: object
+              monitoringScheduleName:
+                description: The name of the monitoring schedule. The name must be
+                  unique within an AWS Region within an AWS account.
+                type: string
+            required:
+            - monitoringScheduleConfig
+            - monitoringScheduleName
+            type: object
+          status:
+            description: MonitoringScheduleStatus defines the observed state of MonitoringSchedule
+            properties:
+              ackResourceMetadata:
+                description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
+                  member that is used to contain resource sync state, account ownership,
+                  constructed ARN for the resource
+                properties:
+                  arn:
+                    description: 'ARN is the Amazon Resource Name for the resource.
+                      This is a globally-unique identifier and is set only by the
+                      ACK service controller once the controller has orchestrated
+                      the creation of the resource OR when it has verified that an
+                      "adopted" resource (a resource where the ARN annotation was
+                      set by the Kubernetes user on the CR) exists and matches the
+                      supplied CR''s Spec field values. TODO(vijat@): Find a better
+                      strategy for resources that do not have ARN in CreateOutputResponse
+                      https://github.com/aws/aws-controllers-k8s/issues/270'
+                    type: string
+                  ownerAccountID:
+                    description: OwnerAccountID is the AWS Account ID of the account
+                      that owns the backend AWS service API resource.
+                    type: string
+                required:
+                - ownerAccountID
+                type: object
+              conditions:
+                description: All CRS managed by ACK have a common `Status.Conditions`
+                  member that contains a collection of `ackv1alpha1.Condition` objects
+                  that describe the various terminal states of the CR and its backend
+                  AWS service API resource
+                items:
+                  description: Condition is the common struct used by all CRDs managed
+                    by ACK service controllers to indicate terminal states  of the
+                    CR and its backend AWS service API resource
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the Condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              creationTime:
+                description: The time at which the monitoring job was created.
+                format: date-time
+                type: string
+              failureReason:
+                description: A string, up to one KB in size, that contains the reason
+                  a monitoring job failed, if it failed.
+                type: string
+              lastModifiedTime:
+                description: The time at which the monitoring job was last modified.
+                format: date-time
+                type: string
+              lastMonitoringExecutionSummary:
+                description: Describes metadata on the last execution to run, if there
+                  was one.
+                properties:
+                  creationTime:
+                    format: date-time
+                    type: string
+                  endpointName:
+                    type: string
+                  failureReason:
+                    type: string
+                  lastModifiedTime:
+                    format: date-time
+                    type: string
+                  monitoringExecutionStatus:
+                    type: string
+                  monitoringJobDefinitionName:
+                    type: string
+                  monitoringScheduleName:
+                    type: string
+                  monitoringType:
+                    type: string
+                  processingJobARN:
+                    type: string
+                  scheduledTime:
+                    format: date-time
+                    type: string
+                type: object
+              monitoringScheduleStatus:
+                description: The status of an monitoring job.
+                type: string
+            required:
+            - ackResourceMetadata
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

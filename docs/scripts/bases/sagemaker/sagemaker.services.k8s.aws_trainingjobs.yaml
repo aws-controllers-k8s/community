@@ -1,0 +1,506 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: trainingjobs.sagemaker.services.k8s.aws
+spec:
+  group: sagemaker.services.k8s.aws
+  names:
+    kind: TrainingJob
+    listKind: TrainingJobList
+    plural: trainingjobs
+    singular: trainingjob
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.failureReason
+      name: FailureReason
+      type: string
+    - jsonPath: .status.secondaryStatus
+      name: SecondaryStatus
+      type: string
+    - jsonPath: .status.trainingJobStatus
+      name: TrainingJobStatus
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: TrainingJob is the Schema for the TrainingJobs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TrainingJobSpec defines the desired state of TrainingJob
+            properties:
+              algorithmSpecification:
+                description: The registry path of the Docker image that contains the
+                  training algorithm and algorithm-specific metadata, including the
+                  input mode. For more information about algorithms provided by Amazon
+                  SageMaker, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+                  For information about providing your own algorithms, see Using Your
+                  Own Algorithms with Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
+                properties:
+                  algorithmName:
+                    type: string
+                  enableSageMakerMetricsTimeSeries:
+                    type: boolean
+                  metricDefinitions:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        regex:
+                          type: string
+                      type: object
+                    type: array
+                  trainingImage:
+                    type: string
+                  trainingInputMode:
+                    type: string
+                type: object
+              checkpointConfig:
+                description: Contains information about the output location for managed
+                  spot training checkpoint data.
+                properties:
+                  localPath:
+                    type: string
+                  s3URI:
+                    type: string
+                type: object
+              debugHookConfig:
+                properties:
+                  collectionConfigurations:
+                    items:
+                      properties:
+                        collectionName:
+                          type: string
+                        collectionParameters:
+                          additionalProperties:
+                            type: string
+                          type: object
+                      type: object
+                    type: array
+                  hookParameters:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  localPath:
+                    type: string
+                  s3OutputPath:
+                    type: string
+                type: object
+              debugRuleConfigurations:
+                description: Configuration information for Debugger rules for debugging
+                  output tensors.
+                items:
+                  properties:
+                    instanceType:
+                      type: string
+                    localPath:
+                      type: string
+                    ruleConfigurationName:
+                      type: string
+                    ruleEvaluatorImage:
+                      type: string
+                    ruleParameters:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    s3OutputPath:
+                      type: string
+                    volumeSizeInGB:
+                      format: int64
+                      type: integer
+                  type: object
+                type: array
+              enableInterContainerTrafficEncryption:
+                description: To encrypt all communications between ML compute instances
+                  in distributed training, choose True. Encryption provides greater
+                  security for distributed training, but training might take longer.
+                  How long it takes depends on the amount of communication between
+                  compute instances, especially if you use a deep learning algorithm
+                  in distributed training. For more information, see Protect Communications
+                  Between ML Compute Instances in a Distributed Training Job (https://docs.aws.amazon.com/sagemaker/latest/dg/train-encrypt.html).
+                type: boolean
+              enableManagedSpotTraining:
+                description: "To train models using managed spot training, choose
+                  True. Managed spot training provides a fully managed and scalable
+                  infrastructure for training machine learning models. this option
+                  is useful when training jobs can be interrupted and when there is
+                  flexibility when the training job is run. \n The complete and intermediate
+                  results of jobs are stored in an Amazon S3 bucket, and can be used
+                  as a starting point to train models incrementally. Amazon SageMaker
+                  provides metrics and logs in CloudWatch. They can be used to see
+                  when managed spot training jobs are running, interrupted, resumed,
+                  or completed."
+                type: boolean
+              enableNetworkIsolation:
+                description: Isolates the training container. No inbound or outbound
+                  network calls can be made, except for calls between peers within
+                  a training cluster for distributed training. If you enable network
+                  isolation for training jobs that are configured to use a VPC, Amazon
+                  SageMaker downloads and uploads customer data and model artifacts
+                  through the specified VPC, but the training container does not have
+                  network access.
+                type: boolean
+              environment:
+                additionalProperties:
+                  type: string
+                description: The environment variables to set in the Docker container.
+                type: object
+              experimentConfig:
+                properties:
+                  experimentName:
+                    type: string
+                  trialComponentDisplayName:
+                    type: string
+                  trialName:
+                    type: string
+                type: object
+              hyperParameters:
+                additionalProperties:
+                  type: string
+                description: "Algorithm-specific parameters that influence the quality
+                  of the model. You set hyperparameters before you start the learning
+                  process. For a list of hyperparameters for each training algorithm
+                  provided by Amazon SageMaker, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+                  \n You can specify a maximum of 100 hyperparameters. Each hyperparameter
+                  is a key-value pair. Each key and value is limited to 256 characters,
+                  as specified by the Length Constraint."
+                type: object
+              inputDataConfig:
+                description: "An array of Channel objects. Each channel is a named
+                  input source. InputDataConfig describes the input data and its location.
+                  \n Algorithms can accept input data from one or more channels. For
+                  example, an algorithm might have two channels of input data, training_data
+                  and validation_data. The configuration for each channel provides
+                  the S3, EFS, or FSx location where the input data is stored. It
+                  also provides information about the stored data: the MIME type,
+                  compression method, and whether the data is wrapped in RecordIO
+                  format. \n Depending on the input mode that the algorithm supports,
+                  Amazon SageMaker either copies input data files from an S3 bucket
+                  to a local directory in the Docker container, or makes it available
+                  as input streams. For example, if you specify an EFS location, input
+                  data files will be made available as input streams. They do not
+                  need to be downloaded."
+                items:
+                  properties:
+                    channelName:
+                      type: string
+                    compressionType:
+                      type: string
+                    contentType:
+                      type: string
+                    dataSource:
+                      properties:
+                        fileSystemDataSource:
+                          properties:
+                            directoryPath:
+                              type: string
+                            fileSystemAccessMode:
+                              type: string
+                            fileSystemID:
+                              type: string
+                            fileSystemType:
+                              type: string
+                          type: object
+                        s3DataSource:
+                          properties:
+                            attributeNames:
+                              items:
+                                type: string
+                              type: array
+                            s3DataDistributionType:
+                              type: string
+                            s3DataType:
+                              type: string
+                            s3URI:
+                              type: string
+                          type: object
+                      type: object
+                    inputMode:
+                      type: string
+                    recordWrapperType:
+                      type: string
+                    shuffleConfig:
+                      properties:
+                        seed:
+                          format: int64
+                          type: integer
+                      type: object
+                  type: object
+                type: array
+              outputDataConfig:
+                description: Specifies the path to the S3 location where you want
+                  to store model artifacts. Amazon SageMaker creates subfolders for
+                  the artifacts.
+                properties:
+                  kmsKeyID:
+                    type: string
+                  s3OutputPath:
+                    type: string
+                type: object
+              profilerConfig:
+                properties:
+                  profilingIntervalInMilliseconds:
+                    format: int64
+                    type: integer
+                  profilingParameters:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  s3OutputPath:
+                    type: string
+                type: object
+              profilerRuleConfigurations:
+                description: Configuration information for Debugger rules for profiling
+                  system and framework metrics.
+                items:
+                  properties:
+                    instanceType:
+                      type: string
+                    localPath:
+                      type: string
+                    ruleConfigurationName:
+                      type: string
+                    ruleEvaluatorImage:
+                      type: string
+                    ruleParameters:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    s3OutputPath:
+                      type: string
+                    volumeSizeInGB:
+                      format: int64
+                      type: integer
+                  type: object
+                type: array
+              resourceConfig:
+                description: "The resources, including the ML compute instances and
+                  ML storage volumes, to use for model training. \n ML storage volumes
+                  store model artifacts and incremental states. Training algorithms
+                  might also use ML storage volumes for scratch space. If you want
+                  Amazon SageMaker to use the ML storage volume to store the training
+                  data, choose File as the TrainingInputMode in the algorithm specification.
+                  For distributed training algorithms, specify an instance count greater
+                  than 1."
+                properties:
+                  instanceCount:
+                    format: int64
+                    type: integer
+                  instanceType:
+                    type: string
+                  volumeKMSKeyID:
+                    type: string
+                  volumeSizeInGB:
+                    format: int64
+                    type: integer
+                type: object
+              roleARN:
+                description: "The Amazon Resource Name (ARN) of an IAM role that Amazon
+                  SageMaker can assume to perform tasks on your behalf. \n During
+                  model training, Amazon SageMaker needs your permission to read input
+                  data from an S3 bucket, download a Docker image that contains training
+                  code, write model artifacts to an S3 bucket, write logs to Amazon
+                  CloudWatch Logs, and publish metrics to Amazon CloudWatch. You grant
+                  permissions for all of these tasks to an IAM role. For more information,
+                  see Amazon SageMaker Roles (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+                  \n To be able to pass this role to Amazon SageMaker, the caller
+                  of this API must have the iam:PassRole permission."
+                type: string
+              stoppingCondition:
+                description: "Specifies a limit to how long a model training job can
+                  run. When the job reaches the time limit, Amazon SageMaker ends
+                  the training job. Use this API to cap model training costs. \n To
+                  stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal,
+                  which delays job termination for 120 seconds. Algorithms can use
+                  this 120-second window to save the model artifacts, so the results
+                  of training are not lost."
+                properties:
+                  maxRuntimeInSeconds:
+                    format: int64
+                    type: integer
+                  maxWaitTimeInSeconds:
+                    format: int64
+                    type: integer
+                type: object
+              tensorBoardOutputConfig:
+                properties:
+                  localPath:
+                    type: string
+                  s3OutputPath:
+                    type: string
+                type: object
+              trainingJobName:
+                description: The name of the training job. The name must be unique
+                  within an AWS Region in an AWS account.
+                type: string
+              vpcConfig:
+                description: A VpcConfig object that specifies the VPC that you want
+                  your training job to connect to. Control access to and from your
+                  training container by configuring the VPC. For more information,
+                  see Protect Training Jobs by Using an Amazon Virtual Private Cloud
+                  (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
+                properties:
+                  securityGroupIDs:
+                    items:
+                      type: string
+                    type: array
+                  subnets:
+                    items:
+                      type: string
+                    type: array
+                type: object
+            required:
+            - algorithmSpecification
+            - outputDataConfig
+            - resourceConfig
+            - roleARN
+            - stoppingCondition
+            - trainingJobName
+            type: object
+          status:
+            description: TrainingJobStatus defines the observed state of TrainingJob
+            properties:
+              ackResourceMetadata:
+                description: All CRs managed by ACK have a common `Status.ACKResourceMetadata`
+                  member that is used to contain resource sync state, account ownership,
+                  constructed ARN for the resource
+                properties:
+                  arn:
+                    description: 'ARN is the Amazon Resource Name for the resource.
+                      This is a globally-unique identifier and is set only by the
+                      ACK service controller once the controller has orchestrated
+                      the creation of the resource OR when it has verified that an
+                      "adopted" resource (a resource where the ARN annotation was
+                      set by the Kubernetes user on the CR) exists and matches the
+                      supplied CR''s Spec field values. TODO(vijat@): Find a better
+                      strategy for resources that do not have ARN in CreateOutputResponse
+                      https://github.com/aws/aws-controllers-k8s/issues/270'
+                    type: string
+                  ownerAccountID:
+                    description: OwnerAccountID is the AWS Account ID of the account
+                      that owns the backend AWS service API resource.
+                    type: string
+                required:
+                - ownerAccountID
+                type: object
+              conditions:
+                description: All CRS managed by ACK have a common `Status.Conditions`
+                  member that contains a collection of `ackv1alpha1.Condition` objects
+                  that describe the various terminal states of the CR and its backend
+                  AWS service API resource
+                items:
+                  description: Condition is the common struct used by all CRDs managed
+                    by ACK service controllers to indicate terminal states  of the
+                    CR and its backend AWS service API resource
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the Condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              debugRuleEvaluationStatuses:
+                description: Evaluation status of Debugger rules for debugging on
+                  a training job.
+                items:
+                  properties:
+                    lastModifiedTime:
+                      format: date-time
+                      type: string
+                    ruleConfigurationName:
+                      type: string
+                    ruleEvaluationJobARN:
+                      type: string
+                    ruleEvaluationStatus:
+                      type: string
+                    statusDetails:
+                      type: string
+                  type: object
+                type: array
+              failureReason:
+                description: If the training job failed, the reason it failed.
+                type: string
+              secondaryStatus:
+                description: "Provides detailed information about the state of the
+                  training job. For detailed information on the secondary status of
+                  the training job, see StatusMessage under SecondaryStatusTransition.
+                  \n Amazon SageMaker provides primary statuses and secondary statuses
+                  that apply to each of them: \n InProgress \n    * Starting - Starting
+                  the training job. \n    * Downloading - An optional stage for algorithms
+                  that support File training    input mode. It indicates that data
+                  is being downloaded to the ML storage    volumes. \n    * Training
+                  - Training is in progress. \n    * Interrupted - The job stopped
+                  because the managed spot training instances    were interrupted.
+                  \n    * Uploading - Training is complete and the model artifacts
+                  are being uploaded    to the S3 location. \n Completed \n    * Completed
+                  - The training job has completed. \n Failed \n    * Failed - The
+                  training job has failed. The reason for the failure is    returned
+                  in the FailureReason field of DescribeTrainingJobResponse. \n Stopped
+                  \n    * MaxRuntimeExceeded - The job stopped because it exceeded
+                  the maximum    allowed runtime. \n    * MaxWaitTimeExceeded - The
+                  job stopped because it exceeded the maximum    allowed wait time.
+                  \n    * Stopped - The training job has stopped. \n Stopping \n    *
+                  Stopping - Stopping the training job. \n Valid values for SecondaryStatus
+                  are subject to change. \n We no longer support the following secondary
+                  statuses: \n    * LaunchingMLInstances \n    * PreparingTrainingStack
+                  \n    * DownloadingTrainingImage"
+                type: string
+              trainingJobStatus:
+                description: "The status of the training job. \n Amazon SageMaker
+                  provides the following training job statuses: \n    * InProgress
+                  - The training is in progress. \n    * Completed - The training
+                  job has completed. \n    * Failed - The training job has failed.
+                  To see the reason for the failure,    see the FailureReason field
+                  in the response to a DescribeTrainingJobResponse    call. \n    *
+                  Stopping - The training job is stopping. \n    * Stopped - The training
+                  job has stopped. \n For more detailed information, see SecondaryStatus."
+                type: string
+            required:
+            - ackResourceMetadata
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
