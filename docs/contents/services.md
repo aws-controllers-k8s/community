@@ -26,6 +26,7 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 | ----------- | ------------- | ----------------- | -------------- 
 | Amazon [ACM](#amazon-acm) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/482) | |
 | Amazon [API Gateway V2](#amazon-api-gateway-v2) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/207) | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/15
+| Amazon [Application Auto Scaling](#amazon-application-auto-scaling) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/589) | `PREVIEW` |
 | Amazon [CloudFront Distribution](#amazon-cloudfront-distribution) | [`PLANNED`](https://github.com/aws-controllers-k8s/community/issues/249) | | https://github.com/aws-controllers-k8s/community/milestone/14
 | Amazon [DynamoDB](#amazon-dynamodb) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/2060) | `PREVIEW` |
 | Amazon [ECR](#amazon-ecr) | [`RELEASED`](https://github.com/aws-controllers-k8s/community/issues/208) | `PREVIEW` |
@@ -66,6 +67,14 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 * Next milestone: https://github.com/aws-controllers-k8s/community/milestone/15
 * AWS service documentation: https://aws.amazon.com/api-gateway/
 * ACK service controller: https://github.com/aws-controllers-k8s/apigatewayv2-controller
+
+## Amazon Application Auto Scaling
+
+* Proposed: https://github.com/aws-controllers-k8s/community/issues/589
+* Current project stage: `RELEASED`
+* Current maintenance phase: `PREVIEW`
+* AWS service documentation: https://docs.aws.amazon.com/autoscaling/application/userguide/what-is-application-auto-scaling.html
+* ACK service controller: https://github.com/aws-controllers-k8s/applicationautoscaling-controller
 
 ## Amazon CloudFront Distribution
 
