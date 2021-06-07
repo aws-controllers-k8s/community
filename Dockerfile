@@ -1,3 +1,5 @@
+# Base image to use for the final stage
+ARG base_image=amazonlinux:2
 # Build the manager binary
 FROM golang:1.14.1 as builder
 
@@ -40,7 +42,7 @@ RUN GIT_VERSION=$service_controller_git_version && \
     -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" \
     -a -o $work_dir/bin/controller $work_dir/cmd/controller/main.go
 
-FROM amazonlinux:2
+FROM $base_image
 ARG service_alias
 ARG work_dir=/github.com/aws-controllers-k8s/$service_alias-controller
 WORKDIR /
