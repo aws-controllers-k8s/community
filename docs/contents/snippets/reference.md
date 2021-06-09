@@ -39,38 +39,29 @@ Singular|`{{ page.meta.resource.names.singular }}`
 ```
 
 {% macro render_field(field, prefix='') -%}
-<tr>
-    <td><strong>{{ prefix }}{{ field.name }}</strong><br/>{{ "Required" if field.required else "Optional" }}</td>
-    <td><strong>{{ field.type }}</strong><br/>{{ field.description }}</td>
-</tr>
-{% if field.type == "array" %}
-    <tr>
-        <td><strong>{{ prefix }}{{ field.name }}.[]</strong><br/>Required</td>
-        <td><strong>{% if field.contains is not string %}object{% else %}{{ field.contains }}{% endif %}</strong><br/>{{ field.contains_description if field.contains_description else "" }}</td>
-    </tr>
-    {% if field.contains is not string %}
-        {% for subfield in field.contains %}
+| **{{ prefix }}{{ field.name }}**<br/>{{ "Required" if field.required else "Optional" }} | **{{ field.type }}**<br/>{{ field.description | replace("\n", "<br/>") }} |
+{% if field.type == "array" -%}
+| **{{ prefix }}{{ field.name }}.[]**<br/>Required | **{% if field.contains is not string %}object{% else %}{{ field.contains }}{% endif %}**<br/>{{ field.contains_description if field.contains_description else "" }} |
+    {%- if field.contains is not string -%}
+        {%- for subfield in field.contains -%}
             {{ render_field(subfield, prefix + field.name + ".[].") }}
-        {% endfor %}
-    {% endif %}
-{% elif field.type == "object" %}
-    {% if field.contains is not string %}
-        {% for subfield in field.contains %}
+        {%- endfor -%}
+    {%- endif -%}
+{%- elif field.type == "object" -%}
+    {%- if field.contains is not string -%}
+        {%- for subfield in field.contains -%}
             {{ render_field(subfield, prefix + field.name + ".") }}
-        {% endfor %}
-    {% endif %}
-{% endif %}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endif -%}
 {%- endmacro %}
 
 
-<table>
-    <tr>
-        <th colspan="2">Fields</th>
-    </tr>
-    {% for field in page.meta.resource.spec %}
-        {{ render_field(field) }}
-    {% endfor %}
-</table>
+| Field | Description |
+| ----- | ----------- |
+{% for field in page.meta.resource.spec -%}
+    {{ render_field(field) }}
+{%- endfor %}
 
 ## Status
 
@@ -79,11 +70,8 @@ Singular|`{{ page.meta.resource.names.singular }}`
 {{ render_yaml_field(field) }}{% endfor %}
 ```
 
-<table>
-    <tr>
-        <th colspan="2">Fields</th>
-    </tr>
-    {% for field in page.meta.resource.status %}
-        {{ render_field(field) }}
-    {% endfor %}
-</table>
+| Field | Description |
+| ----- | ----------- |
+{% for field in page.meta.resource.status -%}
+    {{ render_field(field) }}
+{%- endfor %}

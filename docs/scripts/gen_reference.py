@@ -1,8 +1,10 @@
 #!/usr/bin/env python3.8
 
 from __future__ import annotations
+import os
 
 import yaml
+import argparse
 
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -101,8 +103,8 @@ def convert_field(name: str, property: Dict, required=False) -> Field:
 def convert_crd_to_resource(crd: Dict, service) -> Resource:
     ver = crd['spec']['versions'][0]
     schema = ver['schema']['openAPIV3Schema']
-    spec = []
-    status = []
+    res_spec = []
+    res_status = []
 
     names = ResourceNames(
         kind=crd['spec']['names']['kind'],
@@ -111,15 +113,17 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         singular=crd['spec']['names']['singular']
     )
 
-    spec_properties = schema['properties']['spec']['properties']
+    spec = schema['properties']['spec']
+    spec_properties = spec['properties']
     for field_name, field in spec_properties.items():
-        required  = field_name in schema['properties']['spec']['required']
-        spec.append(convert_field(field_name, field, required))
+        required  = field_name in spec['required'] if 'required' in spec else False
+        res_spec.append(convert_field(field_name, field, required))
 
-    status_properties = schema['properties']['status']['properties']
+    status = schema['properties']['status']
+    status_properties = status['properties']
     for field_name, field in status_properties.items():
-        required  = field_name in schema['properties']['status']['required']
-        status.append(convert_field(field_name, field, required))
+        required  = field_name in status['required'] if 'required' in status else False
+        res_status.append(convert_field(field_name, field, required))
 
     return Resource(
         name=crd['spec']['names']['kind'],
@@ -129,8 +133,8 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         description=schema['description'],
         scope=crd['spec']['scope'],
         names=names,
-        spec=spec,
-        status=status
+        spec=res_spec,
+        status=res_status
     )
 
 def write_service_pages(service: str, service_path: Path, output_path: Path) -> List[ResourceOverview]:
@@ -167,21 +171,47 @@ def write_overview_page(services: List[ServiceOverview], output_path: Path):
         print("---", file=out)
         print('{% include "reference_overview.md" %}', file=out)
 
-def main(base_directory: Path, output_path: Path):
+def main(gopath: Path, go_src_parent: Path, service_bases_path: Path, output_path: Path):
     overviews = []
 
-    for base_path in base_directory.iterdir():
-        if not base_path.is_dir():
+    src_parent = gopath / go_src_parent
+
+    for controller_repo in src_parent.glob("*-controller"):
+        if not controller_repo.is_dir() or \
+            controller_repo.stem.startswith("template"):
             continue
 
-        service = base_path.stem
-        resources = write_service_pages(service, base_path, output_path)
+        service_bases_path = controller_repo / bases_path
+
+        if not service_bases_path.exists():
+            raise ValueError(f"Service base path {service_bases_path} does not exist")
+
+        # Get service name from repository
+        # TODO(RedbackThomson): Find an elegant way to get name-cased 
+        service = controller_repo.stem[:-len("-controller")]
+
+        resources = write_service_pages(service, service_bases_path, output_path)
         overviews.append(ServiceOverview(service, resources))
 
     write_overview_page(overviews, output_path)
 
 
 if __name__ == "__main__":
-    crd_path = Path("./scripts/bases")
-    output_path = Path("./contents/reference")
-    main(crd_path, output_path)
+    parser = argparse.ArgumentParser(description="Generate documentation reference pages")
+    parser.add_argument("--bases_path", type=str, default="./config/crd/bases",
+        help="Relative path to the `bases` directory, relative to the service controller root")
+    parser.add_argument("--gopath", type=str, default=os.environ.get('GOPATH'),
+        help="Path of the GOPATH - Defaults to $GOPATH")
+    parser.add_argument("--go_src_parent", type=str, default="./src/github.com/aws-controllers-k8s",
+        help="Relative path to the ACK src path, relative to the GOPATH")
+    parser.add_argument("--output_path", type=str, default="./contents/reference",
+        help="Relative path to the documentation output directory, relative to the `docs` directory")
+
+    args = parser.parse_args()
+
+    bases_path = Path(args.bases_path)
+    gopath = Path(args.gopath)
+    go_src_parent = Path(args.go_src_parent)
+    output_path = Path(args.output_path)
+
+    main(gopath, go_src_parent, bases_path, output_path)
