@@ -9,7 +9,7 @@ ListKind|`{{ page.meta.resource.names.listKind }}`
 Plural|`{{ page.meta.resource.names.plural }}`
 Singular|`{{ page.meta.resource.names.singular }}`
 
-{{ page.meta.resource.description }}
+{{ page.meta.resource.description.split("\n")[1:] | join("\n") }}
 
 ## Spec
 

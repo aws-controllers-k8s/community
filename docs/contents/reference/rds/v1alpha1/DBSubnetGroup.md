@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: DBSubnetGroup is the Schema for the DBSubnetGroups API
+  description: DBSubnetGroupSpec defines the desired state of DBSubnetGroup
   group: rds.services.k8s.aws
   name: DBSubnetGroup
   names:

@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ScheduledAction is the Schema for the ScheduledActions API
+  description: ScheduledActionSpec defines the desired state of ScheduledAction
   group: applicationautoscaling.services.k8s.aws
   name: ScheduledAction
   names:

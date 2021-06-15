@@ -1,7 +1,9 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ProcessingJob is the Schema for the ProcessingJobs API
+  description: "ProcessingJobSpec defines the desired state of ProcessingJob. \n An\
+    \ Amazon SageMaker processing job that is used to analyze data and evaluate models.\
+    \ For more information, see Process Data and Evaluate Models (https://docs.aws.amazon.com/sagemaker/latest/dg/processing-job.html)."
   group: sagemaker.services.k8s.aws
   name: ProcessingJob
   names:
@@ -64,7 +66,9 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: "Associates a SageMaker job as a trial component with an experiment\
+      \ and trial. Specified when you call the following APIs: \n    * CreateProcessingJob\
+      \ \n    * CreateTrainingJob \n    * CreateTransformJob"
     name: experimentConfig
     required: false
     type: object
@@ -95,7 +99,11 @@ resource:
         required: false
         type: array
       contains_description: null
-      description: ''
+      description: Specifies a VPC that your training jobs and hosted models have
+        access to. Control access to and from your training and model containers by
+        configuring the VPC. For more information, see Protect Endpoints by Using
+        an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/host-vpc.html)
+        and Protect Training Jobs by Using an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
       name: vpcConfig
       required: false
       type: object
@@ -117,13 +125,13 @@ resource:
       - contains:
         - contains: null
           contains_description: null
-          description: ''
+          description: The name of the data catalog used in Athena query execution.
           name: catalog
           required: false
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The name of the database used in the Athena query execution.
           name: database
           required: false
           type: string
@@ -135,13 +143,13 @@ resource:
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The compression used for Athena query results.
           name: outputCompression
           required: false
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The data storage format for Athena query results.
           name: outputFormat
           required: false
           type: string
@@ -153,18 +161,19 @@ resource:
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The SQL query statements, to be executed.
           name: queryString
           required: false
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The name of the workgroup in which the Athena query is being
+            started.
           name: workGroup
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Configuration for Athena Dataset Definition input.
         name: athenaDatasetDefinition
         required: false
         type: object
@@ -189,7 +198,7 @@ resource:
       - contains:
         - contains: null
           contains_description: null
-          description: ''
+          description: The Redshift cluster Identifier.
           name: clusterID
           required: false
           type: string
@@ -201,13 +210,13 @@ resource:
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The name of the Redshift database used in Redshift query execution.
           name: database
           required: false
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The database user name used in Redshift query execution.
           name: dbUser
           required: false
           type: string
@@ -219,13 +228,13 @@ resource:
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The compression used for Redshift query results.
           name: outputCompression
           required: false
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The data storage format for Redshift query results.
           name: outputFormat
           required: false
           type: string
@@ -237,17 +246,19 @@ resource:
           type: string
         - contains: null
           contains_description: null
-          description: ''
+          description: The SQL query statements to be executed.
           name: queryString
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Configuration for Redshift Dataset Definition input.
         name: redshiftDatasetDefinition
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Configuration for Dataset Definition inputs. The Dataset Definition
+        input must specify exactly one of either AthenaDatasetDefinition or RedshiftDatasetDefinition
+        types.
       name: datasetDefinition
       required: false
       type: object
@@ -295,11 +306,13 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Configuration for downloading input data from Amazon S3 into the
+        processing container.
       name: s3Input
       required: false
       type: object
-    contains_description: ''
+    contains_description: The inputs for a processing job. The processing input must
+      specify exactly one of either S3Input or DatasetDefinition types.
     description: An array of inputs configuring the data to download into the processing
       container.
     name: processingInputs
@@ -334,7 +347,8 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Configuration for processing job outputs in Amazon SageMaker
+          Feature Store.
         name: featureStoreOutput
         required: false
         type: object
@@ -364,11 +378,13 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Configuration for uploading output data to Amazon S3 from the
+          processing container.
         name: s3Output
         required: false
         type: object
-      contains_description: ''
+      contains_description: Describes the results of a processing job. The processing
+        output must specify exactly one of either S3Output or FeatureStoreOutput types.
       description: ''
       name: outputs
       required: false
@@ -405,7 +421,7 @@ resource:
         required: false
         type: integer
       contains_description: null
-      description: ''
+      description: Configuration for the cluster used to run a processing job.
       name: clusterConfig
       required: false
       type: object

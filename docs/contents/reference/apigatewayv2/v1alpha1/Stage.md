@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Stage is the Schema for the Stages API
+  description: StageSpec defines the desired state of Stage
   group: apigatewayv2.services.k8s.aws
   name: Stage
   names:

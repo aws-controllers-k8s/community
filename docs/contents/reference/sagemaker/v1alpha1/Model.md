@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Model is the Schema for the Models API
+  description: ModelSpec defines the desired state of Model.
   group: sagemaker.services.k8s.aws
   name: Model
   names:
@@ -46,12 +46,17 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Specifies an authentication configuration for the private docker
+          registry where your model image is hosted. Specify a value for this property
+          only if you specified Vpc as the value for the RepositoryAccessMode field
+          of the ImageConfig object that you passed to a call to CreateModel and the
+          private Docker registry where the model image is hosted requires authentication.
         name: repositoryAuthConfig
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Specifies whether the model container is in Amazon ECR or a private
+        Docker registry accessible from your Amazon Virtual Private Cloud (VPC).
       name: imageConfig
       required: false
       type: object
@@ -81,11 +86,11 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Specifies additional configuration for hosting multi-model endpoints.
       name: multiModelConfig
       required: false
       type: object
-    contains_description: ''
+    contains_description: Describes the container, as part of model definition.
     description: Specifies the containers in the inference pipeline.
     name: containers
     required: false
@@ -162,12 +167,17 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Specifies an authentication configuration for the private docker
+          registry where your model image is hosted. Specify a value for this property
+          only if you specified Vpc as the value for the RepositoryAccessMode field
+          of the ImageConfig object that you passed to a call to CreateModel and the
+          private Docker registry where the model image is hosted requires authentication.
         name: repositoryAuthConfig
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Specifies whether the model container is in Amazon ECR or a private
+        Docker registry accessible from your Amazon Virtual Private Cloud (VPC).
       name: imageConfig
       required: false
       type: object
@@ -197,7 +207,7 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Specifies additional configuration for hosting multi-model endpoints.
       name: multiModelConfig
       required: false
       type: object

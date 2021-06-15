@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Model is the Schema for the Models API
+  description: ModelSpec defines the desired state of Model
   group: apigatewayv2.services.k8s.aws
   name: Model
   names:

@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: APIMapping is the Schema for the APIMappings API
+  description: APIMappingSpec defines the desired state of APIMapping
   group: apigatewayv2.services.k8s.aws
   name: APIMapping
   names:

@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Integration is the Schema for the Integrations API
+  description: IntegrationSpec defines the desired state of Integration
   group: apigatewayv2.services.k8s.aws
   name: Integration
   names:

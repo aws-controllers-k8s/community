@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Deployment is the Schema for the Deployments API
+  description: DeploymentSpec defines the desired state of Deployment
   group: apigatewayv2.services.k8s.aws
   name: Deployment
   names:

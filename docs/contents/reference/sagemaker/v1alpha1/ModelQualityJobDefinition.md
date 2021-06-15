@@ -1,8 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ModelQualityJobDefinition is the Schema for the ModelQualityJobDefinitions
-    API
+  description: ModelQualityJobDefinitionSpec defines the desired state of ModelQualityJobDefinition.
   group: sagemaker.services.k8s.aws
   name: ModelQualityJobDefinition
   names:
@@ -46,12 +45,12 @@ resource:
         required: false
         type: integer
       contains_description: null
-      description: ''
+      description: Configuration for the cluster used to run model monitoring jobs.
       name: clusterConfig
       required: false
       type: object
     contains_description: null
-    description: ''
+    description: Identifies the resources to deploy for a monitoring job.
     name: jobResources
     required: true
     type: object
@@ -118,7 +117,7 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: The constraints resource for a monitoring job.
       name: constraintsResource
       required: false
       type: object
@@ -190,7 +189,7 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Input object for the endpoint
       name: endpointInput
       required: false
       type: object
@@ -202,7 +201,8 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: The ground truth labels for the dataset used for the monitoring
+        job.
       name: groundTruthS3Input
       required: false
       type: object
@@ -240,17 +240,18 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Information about where and how you want to store the results
+          of a monitoring job.
         name: s3Output
         required: false
         type: object
-      contains_description: ''
+      contains_description: The output object for a monitoring job.
       description: ''
       name: monitoringOutputs
       required: false
       type: array
     contains_description: null
-    description: ''
+    description: The output configuration for monitoring jobs.
     name: modelQualityJobOutputConfig
     required: true
     type: object
@@ -281,7 +282,11 @@ resource:
         required: false
         type: array
       contains_description: null
-      description: ''
+      description: Specifies a VPC that your training jobs and hosted models have
+        access to. Control access to and from your training and model containers by
+        configuring the VPC. For more information, see Protect Endpoints by Using
+        an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/host-vpc.html)
+        and Protect Training Jobs by Using an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
       name: vpcConfig
       required: false
       type: object
@@ -305,7 +310,8 @@ resource:
       required: false
       type: integer
     contains_description: null
-    description: ''
+    description: A time limit for how long the monitoring job is allowed to run before
+      stopping.
     name: stoppingCondition
     required: false
     type: object

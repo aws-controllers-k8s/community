@@ -130,7 +130,7 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         service=service, #TODO(RedbackThomson): Load from file path?
         group=crd['spec']['group'],
         apiVersion=ver['name'],
-        description=schema['description'],
+        description=spec['description'],
         scope=crd['spec']['scope'],
         names=names,
         spec=res_spec,

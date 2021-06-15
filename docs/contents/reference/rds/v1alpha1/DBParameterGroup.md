@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: DBParameterGroup is the Schema for the DBParameterGroups API
+  description: DBParameterGroupSpec defines the desired state of DBParameterGroup
   group: rds.services.k8s.aws
   name: DBParameterGroup
   names:

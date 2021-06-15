@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: DomainName is the Schema for the DomainNames API
+  description: DomainNameSpec defines the desired state of DomainName
   group: apigatewayv2.services.k8s.aws
   name: DomainName
   names:

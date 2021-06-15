@@ -1,7 +1,9 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: MonitoringSchedule is the Schema for the MonitoringSchedules API
+  description: "MonitoringScheduleSpec defines the desired state of MonitoringSchedule.\
+    \ \n A schedule for a model monitoring job. For information about model monitor,\
+    \ see Amazon SageMaker Model Monitor (https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html)."
   group: sagemaker.services.k8s.aws
   name: MonitoringSchedule
   names:
@@ -29,7 +31,7 @@ resource:
             required: false
             type: string
           contains_description: null
-          description: ''
+          description: The constraints resource for a monitoring job.
           name: constraintsResource
           required: false
           type: object
@@ -41,12 +43,14 @@ resource:
             required: false
             type: string
           contains_description: null
-          description: ''
+          description: The statistics resource for a monitoring job.
           name: statisticsResource
           required: false
           type: object
         contains_description: null
-        description: ''
+        description: Configuration for monitoring constraints and monitoring statistics.
+          These baseline resources are compared against the results of the current
+          job from the series of jobs scheduled to collect data periodically.
         name: baselineConfig
         required: false
         type: object
@@ -88,7 +92,7 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Container image configuration object for the monitoring job.
         name: monitoringAppSpecification
         required: false
         type: object
@@ -155,11 +159,11 @@ resource:
             required: false
             type: string
           contains_description: null
-          description: ''
+          description: Input object for the endpoint
           name: endpointInput
           required: false
           type: object
-        contains_description: ''
+        contains_description: The inputs for a monitoring job.
         description: ''
         name: monitoringInputs
         required: false
@@ -192,17 +196,18 @@ resource:
               required: false
               type: string
             contains_description: null
-            description: ''
+            description: Information about where and how you want to store the results
+              of a monitoring job.
             name: s3Output
             required: false
             type: object
-          contains_description: ''
+          contains_description: The output object for a monitoring job.
           description: ''
           name: monitoringOutputs
           required: false
           type: array
         contains_description: null
-        description: ''
+        description: The output configuration for monitoring jobs.
         name: monitoringOutputConfig
         required: false
         type: object
@@ -233,12 +238,13 @@ resource:
             required: false
             type: integer
           contains_description: null
-          description: ''
+          description: Configuration for the cluster used to run model monitoring
+            jobs.
           name: clusterConfig
           required: false
           type: object
         contains_description: null
-        description: ''
+        description: Identifies the resources to deploy for a monitoring job.
         name: monitoringResources
         required: false
         type: object
@@ -269,12 +275,19 @@ resource:
             required: false
             type: array
           contains_description: null
-          description: ''
+          description: Specifies a VPC that your training jobs and hosted models have
+            access to. Control access to and from your training and model containers
+            by configuring the VPC. For more information, see Protect Endpoints by
+            Using an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/host-vpc.html)
+            and Protect Training Jobs by Using an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
           name: vpcConfig
           required: false
           type: object
         contains_description: null
-        description: ''
+        description: Networking options for a job, such as network traffic encryption
+          between containers, whether to allow inbound and outbound network calls
+          to and from containers, and the VPC subnets and security groups to use for
+          VPC-enabled jobs.
         name: networkConfig
         required: false
         type: object
@@ -292,12 +305,13 @@ resource:
           required: false
           type: integer
         contains_description: null
-        description: ''
+        description: A time limit for how long the monitoring job is allowed to run
+          before stopping.
         name: stoppingCondition
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Defines the monitoring job.
       name: monitoringJobDefinition
       required: false
       type: object
@@ -321,7 +335,7 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Configuration details about the monitoring schedule.
       name: scheduleConfig
       required: false
       type: object

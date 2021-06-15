@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: EndpointConfig is the Schema for the EndpointConfigs API
+  description: EndpointConfigSpec defines the desired state of EndpointConfig.
   group: sagemaker.services.k8s.aws
   name: EndpointConfig
   names:
@@ -125,7 +125,8 @@ resource:
         required: false
         type: string
       contains_description: null
-      description: ''
+      description: Specifies configuration for a core dump from the model container
+        when the process crashes.
       name: coreDumpConfig
       required: false
       type: object
@@ -159,7 +160,9 @@ resource:
       name: variantName
       required: false
       type: string
-    contains_description: ''
+    contains_description: Identifies a model that you want to host and the resources
+      to deploy for hosting it. If you are deploying multiple models, tell Amazon
+      SageMaker how to distribute traffic among the models by specifying variant weights.
     description: An list of ProductionVariant objects, one for each model that you
       want to host at this endpoint.
     name: productionVariants

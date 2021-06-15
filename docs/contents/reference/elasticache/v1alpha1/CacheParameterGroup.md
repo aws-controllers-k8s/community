@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: CacheParameterGroup is the Schema for the CacheParameterGroups API
+  description: CacheParameterGroupSpec defines the desired state of CacheParameterGroup
   group: elasticache.services.k8s.aws
   name: CacheParameterGroup
   names:

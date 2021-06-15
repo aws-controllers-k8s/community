@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Snapshot is the Schema for the Snapshots API
+  description: SnapshotSpec defines the desired state of Snapshot
   group: elasticache.services.k8s.aws
   name: Snapshot
   names:

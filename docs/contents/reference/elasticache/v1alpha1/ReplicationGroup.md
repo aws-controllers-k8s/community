@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ReplicationGroup is the Schema for the ReplicationGroups API
+  description: ReplicationGroupSpec defines the desired state of ReplicationGroup
   group: elasticache.services.k8s.aws
   name: ReplicationGroup
   names:

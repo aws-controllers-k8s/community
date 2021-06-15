@@ -1,7 +1,8 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: TrainingJob is the Schema for the TrainingJobs API
+  description: "TrainingJobSpec defines the desired state of TrainingJob. \n Contains\
+    \ information about a training job."
   group: sagemaker.services.k8s.aws
   name: TrainingJob
   names:
@@ -38,7 +39,10 @@ resource:
         name: regex
         required: false
         type: string
-      contains_description: ''
+      contains_description: Specifies a metric that the training algorithm writes
+        to stderr or stdout . Amazon SageMakerhyperparameter tuning captures all defined
+        metrics. You specify one metric that a hyperparameter tuning job uses as its
+        objective metric to choose the best training job.
       description: ''
       name: metricDefinitions
       required: false
@@ -97,7 +101,8 @@ resource:
         name: collectionParameters
         required: false
         type: object
-      contains_description: ''
+      contains_description: Configuration information for the Debugger output tensor
+        collections.
       description: ''
       name: collectionConfigurations
       required: false
@@ -121,7 +126,10 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: Configuration information for the Debugger hook parameters, metric
+      and tensor collections, and storage paths. To learn more about how to configure
+      the DebugHookConfig parameter, see Use the SageMaker and Debugger Configuration
+      API Operations to Create, Update, and Debug Your Training Job (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html).
     name: debugHookConfig
     required: false
     type: object
@@ -168,7 +176,10 @@ resource:
       name: volumeSizeInGB
       required: false
       type: integer
-    contains_description: ''
+    contains_description: Configuration information for SageMaker Debugger rules for
+      debugging. To learn more about how to configure the DebugRuleConfiguration parameter,
+      see Use the SageMaker and Debugger Configuration API Operations to Create, Update,
+      and Debug Your Training Job (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html).
     description: Configuration information for Debugger rules for debugging output
       tensors.
     name: debugRuleConfigurations
@@ -235,7 +246,9 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: "Associates a SageMaker job as a trial component with an experiment\
+      \ and trial. Specified when you call the following APIs: \n    * CreateProcessingJob\
+      \ \n    * CreateTrainingJob \n    * CreateTransformJob"
     name: experimentConfig
     required: false
     type: object
@@ -297,7 +310,7 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Specifies a file system data source for a channel.
         name: fileSystemDataSource
         required: false
         type: object
@@ -327,12 +340,12 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Describes the S3 data source.
         name: s3DataSource
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Describes the location of the channel data.
       name: dataSource
       required: false
       type: object
@@ -356,11 +369,24 @@ resource:
         required: false
         type: integer
       contains_description: null
-      description: ''
+      description: "A configuration for a shuffle option for input data in a channel.\
+        \ If you use S3Prefix for S3DataType, the results of the S3 key prefix matches\
+        \ are shuffled. If you use ManifestFile, the order of the S3 object references\
+        \ in the ManifestFile is shuffled. If you use AugmentedManifestFile, the order\
+        \ of the JSON lines in the AugmentedManifestFile is shuffled. The shuffling\
+        \ order is determined using the Seed value. \n For Pipe input mode, when ShuffleConfig\
+        \ is specified shuffling is done at the start of every epoch. With large datasets,\
+        \ this ensures that the order of the training data is different for each epoch,\
+        \ and it helps reduce bias and possible overfitting. In a multi-node training\
+        \ job when ShuffleConfig is combined with S3DataDistributionType of ShardedByS3Key,\
+        \ the data is shuffled across nodes so that the content sent to a particular\
+        \ node on the first epoch might be sent to a different node on the second\
+        \ epoch."
       name: shuffleConfig
       required: false
       type: object
-    contains_description: ''
+    contains_description: A channel is a named input source that training algorithms
+      can consume.
     description: "An array of Channel objects. Each channel is a named input source.\
       \ InputDataConfig describes the input data and its location. \n Algorithms can\
       \ accept input data from one or more channels. For example, an algorithm might\
@@ -415,7 +441,8 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: Configuration information for Debugger system monitoring, framework
+      profiling, and storage paths.
     name: profilerConfig
     required: false
     type: object
@@ -462,7 +489,7 @@ resource:
       name: volumeSizeInGB
       required: false
       type: integer
-    contains_description: ''
+    contains_description: Configuration information for profiling rules.
     description: Configuration information for Debugger rules for profiling system
       and framework metrics.
     name: profilerRuleConfigurations
@@ -555,7 +582,8 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: Configuration of storage locations for the Debugger TensorBoard output
+      data.
     name: tensorBoardOutputConfig
     required: false
     type: object
@@ -686,7 +714,7 @@ resource:
       name: statusDetails
       required: false
       type: string
-    contains_description: ''
+    contains_description: Information about the status of the rule evaluation.
     description: Evaluation status of Debugger rules for debugging on a training job.
     name: debugRuleEvaluationStatuses
     required: false

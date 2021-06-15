@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: RouteResponse is the Schema for the RouteResponses API
+  description: RouteResponseSpec defines the desired state of RouteResponse
   group: apigatewayv2.services.k8s.aws
   name: RouteResponse
   names:

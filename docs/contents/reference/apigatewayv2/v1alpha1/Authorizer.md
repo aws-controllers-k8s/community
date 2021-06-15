@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Authorizer is the Schema for the Authorizers API
+  description: AuthorizerSpec defines the desired state of Authorizer
   group: apigatewayv2.services.k8s.aws
   name: Authorizer
   names:

@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Route is the Schema for the Routes API
+  description: RouteSpec defines the desired state of Route
   group: apigatewayv2.services.k8s.aws
   name: Route
   names:

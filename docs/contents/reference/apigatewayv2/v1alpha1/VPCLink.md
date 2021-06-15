@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: VPCLink is the Schema for the VPCLinks API
+  description: VPCLinkSpec defines the desired state of VPCLink
   group: apigatewayv2.services.k8s.aws
   name: VPCLink
   names:

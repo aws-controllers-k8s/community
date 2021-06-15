@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ScalingPolicy is the Schema for the ScalingPolicies API
+  description: ScalingPolicySpec defines the desired state of ScalingPolicy
   group: applicationautoscaling.services.k8s.aws
   name: ScalingPolicy
   names:

@@ -1,7 +1,9 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Bucket is the Schema for the Buckets API
+  description: "BucketSpec defines the desired state of Bucket. \n In terms of implementation,\
+    \ a Bucket is a resource. An Amazon S3 bucket name is globally unique, and the\
+    \ namespace is shared by all AWS accounts."
   group: s3.services.k8s.aws
   name: Bucket
   names:

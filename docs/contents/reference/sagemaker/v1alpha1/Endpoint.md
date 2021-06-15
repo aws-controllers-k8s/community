@@ -1,7 +1,8 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Endpoint is the Schema for the Endpoints API
+  description: "EndpointSpec defines the desired state of Endpoint. \n A hosted endpoint\
+    \ for real-time inference."
   group: sagemaker.services.k8s.aws
   name: Endpoint
   names:
@@ -181,7 +182,14 @@ resource:
         name: specifiedImage
         required: false
         type: string
-      contains_description: ''
+      contains_description: "Gets the Amazon EC2 Container Registry path of the docker\
+        \ image of the model that is hosted in this ProductionVariant. \n If you used\
+        \ the registry/repository[:tag] form to specify the image path of the primary\
+        \ container when you created the model hosted in this ProductionVariant, the\
+        \ path resolves to a path of the form registry/repository[@digest]. A digest\
+        \ is a hash value that identifies a specific version of an image. For information\
+        \ about Amazon ECR paths, see Pulling an Image (https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-pull-ecr-image.html)\
+        \ in the Amazon ECR User Guide."
       description: ''
       name: deployedImages
       required: false
@@ -204,7 +212,10 @@ resource:
       name: variantName
       required: false
       type: string
-    contains_description: ''
+    contains_description: Describes weight and capacities for a production variant
+      associated with an endpoint. If you sent a request to the UpdateEndpointWeightsAndCapacities
+      API and the endpoint status is Updating, you get different desired and current
+      values.
     description: An array of ProductionVariantSummary objects, one for each model
       hosted behind this endpoint.
     name: productionVariants

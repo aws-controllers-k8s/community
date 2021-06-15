@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: CacheSubnetGroup is the Schema for the CacheSubnetGroups API
+  description: CacheSubnetGroupSpec defines the desired state of CacheSubnetGroup
   group: elasticache.services.k8s.aws
   name: CacheSubnetGroup
   names:

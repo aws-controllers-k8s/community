@@ -1,7 +1,9 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: TransformJob is the Schema for the TransformJobs API
+  description: "TransformJobSpec defines the desired state of TransformJob. \n A batch\
+    \ transform job. For information about SageMaker batch transform, see Use Batch\
+    \ Transform (https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform.html)."
   group: sagemaker.services.k8s.aws
   name: TransformJob
   names:
@@ -82,7 +84,9 @@ resource:
       required: false
       type: string
     contains_description: null
-    description: ''
+    description: "Associates a SageMaker job as a trial component with an experiment\
+      \ and trial. Specified when you call the following APIs: \n    * CreateProcessingJob\
+      \ \n    * CreateTrainingJob \n    * CreateTransformJob"
     name: experimentConfig
     required: false
     type: object
@@ -168,12 +172,12 @@ resource:
           required: false
           type: string
         contains_description: null
-        description: ''
+        description: Describes the S3 data source.
         name: s3DataSource
         required: false
         type: object
       contains_description: null
-      description: ''
+      description: Describes the location of the channel data.
       name: dataSource
       required: false
       type: object

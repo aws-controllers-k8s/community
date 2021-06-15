@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: Broker is the Schema for the Brokers API
+  description: BrokerSpec defines the desired state of Broker
   group: mq.services.k8s.aws
   name: Broker
   names:

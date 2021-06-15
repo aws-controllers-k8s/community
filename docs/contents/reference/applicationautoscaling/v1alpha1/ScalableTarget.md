@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: ScalableTarget is the Schema for the ScalableTargets API
+  description: ScalableTargetSpec defines the desired state of ScalableTarget
   group: applicationautoscaling.services.k8s.aws
   name: ScalableTarget
   names:

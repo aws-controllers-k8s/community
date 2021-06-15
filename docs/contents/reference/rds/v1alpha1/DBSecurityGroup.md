@@ -1,7 +1,7 @@
 ---
 resource:
   apiVersion: v1alpha1
-  description: DBSecurityGroup is the Schema for the DBSecurityGroups API
+  description: DBSecurityGroupSpec defines the desired state of DBSecurityGroup
   group: rds.services.k8s.aws
   name: DBSecurityGroup
   names:
