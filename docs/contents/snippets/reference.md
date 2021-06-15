@@ -1,5 +1,11 @@
-# {{ page.meta.resource.name }} 
+# {{ page.meta.resource.name }}
 `{{ page.meta.resource.group }}/{{ page.meta.resource.apiVersion }}`
+
+Type|Link
+----|----
+GoDoc|[{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.Kind }}](https://pkg.go.dev/github.com/aws-controllers-k8s/{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.Kind }})
+
+## Metadata
 
 Property|Value
 --------|-----
