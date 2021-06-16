@@ -63,5 +63,5 @@ markdown_extensions:
 plugins:
 - search
 - macros:
-    include_dir: 'contents/snippets'
+    include_dir: 'docs/contents/snippets'
 - awesome-pages
