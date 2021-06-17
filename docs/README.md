@@ -6,14 +6,6 @@ Our docs are written in [MkDocs](https://www.mkdocs.org/) using the [Material fo
 
 MkDocs is a static site generator. It converts markdown files to static html pages. Edit the markdown files, and view the rendered site with MkDocs.
 
-## Automatic deployments with github actions
-
-Commits that change a file under the `docs/` directory trigger a github action to build the site, and deploy it to github pages.
-
-The github action is [mkdocs-deploy-gh-pages](https://github.com/mhausenblas/mkdocs-deploy-gh-pages).
-
-🟧 Running `mkdocs gh-deploy` locally will have no effect, the github action will overwrite it.
-
 ## Build the docs locally
 
 ### Install mkdocs-material
@@ -39,7 +31,7 @@ Optionally, use a global `.gitignore` to hide the `venv` directory.
 The docs are just Markdown files and in order to see the rendered preview locally (before PRing the repo), do:
 
 ```
- $ mkdocs serve
+ $ mkdocs serve -f docs/mkdocs.yaml
 INFO    -  Building documentation...
 INFO    -  Cleaning site directory
 WARNING -  A relative path to 'user-docs.md' is included in the 'nav' configuration, which is not found in the documentation files
@@ -69,6 +61,6 @@ To run `scripts/gen_reference.py` navigate to `community/docs` and then run `pyt
 
 ### Publish
 
-To publish updated docs, commit changes to the markdown files and open a pull request. When your commits are merged, a github action will automatically build and deploy the site.
+To publish updated docs, commit changes to the markdown files and open a pull request. When the commit is merged, thepdated documentation is published by a Prow job that runs whenever a new tag of any controller is published, or if any part of the documentation is updated.
 
-[View the status of github action runs.](https://github.com/aws-controllers-k8s/community/actions)
+[View the status of Prow jobs.](https://prow.ack.aws.dev/?job=*-docs-release)

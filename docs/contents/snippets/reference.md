@@ -3,7 +3,7 @@
 
 Type|Link
 ----|----
-GoDoc|[{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.Kind }}](https://pkg.go.dev/github.com/aws-controllers-k8s/{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.Kind }})
+GoDoc|[{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.kind }}](https://pkg.go.dev/github.com/aws-controllers-k8s/{{ page.meta.resource.service }}-controller/apis/{{ page.meta.resource.apiVersion }}#{{ page.meta.resource.names.kind }})
 
 ## Metadata
 
