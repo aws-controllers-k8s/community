@@ -23,6 +23,7 @@ else
     KIND_CONFIG_FILE="$SCRIPTS_DIR/kind-two-node-cluster.yaml"
 fi
 
+K8_1_21="kindest/node:v1.21.1@sha256:f2b782464e6c368487071ed114bc37d7f033658bfa27666f47629c6cf2d515c7"
 K8_1_18="kindest/node:v1.18.4@sha256:9ddbe5ba7dad96e83aec914feae9105ac1cffeb6ebd0d5aa42e820defe840fd4"
 K8_1_17="kindest/node:v1.17.5@sha256:ab3f9e6ec5ad8840eeb1f76c89bb7948c77bbf76bcebe1a8b59790b8ae9a283a"
 K8_1_16="kindest/node:v1.16.9@sha256:7175872357bc85847ec4b1aba46ed1d12fa054c83ac7a8a11f5c268957fd5765"
@@ -38,7 +39,7 @@ Provisions a KinD cluster for local development and testing.
 Example: $(basename "$0") my-test
 
 Environment variables:
-  K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, and 1.18]           
+  K8S_VERSION               Kubernetes Version [1.14, 1.15, 1.16, 1.17, 1.18 and 1.21]
                             Default: 1.16
   ENABLE_PROMETHEUS:        Enables a different cluster config to enable Prometheus support.
                             Default: false
@@ -51,14 +52,14 @@ if [[ -z "$cluster_name" ]]; then
     exit 1
 fi
 
-# Process K8_VERSION env var
+# Process K8S_VERSION env var
 
-if [ ! -z ${K8_VERSION} ]; then
-    K8_VER="K8_$(echo "${K8_VERSION}" | sed 's/\./\_/g')"
+if [ ! -z ${K8S_VERSION} ]; then
+    K8_VER="K8_$(echo "${K8S_VERSION}" | sed 's/\./\_/g')"
     K8_VERSION=${!K8_VER}
-    
+
     # Check if version is supported:
-    if [ -z $K8_VERSION ]; then
+    if [ -z $K8S_VERSION ]; then
         echo "Version set: $K8_VER"
         echo "K8s version not supported" 1>&2
         exit 2
