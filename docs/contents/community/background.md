@@ -15,7 +15,7 @@ Since then, we worked on [design issues](https://github.com/aws/aws-controllers-
 
 AWS service teams use custom controllers, webhooks, and operators for different use cases and based on different approaches. Examples include:
 
-- [Sagemaker operator](https://github.com/aws/amazon-sagemaker-operator-for-k8s), allowing to use Sagemaker from Kubernetes 
+- [SageMaker operator](https://github.com/aws/amazon-sagemaker-operator-for-k8s), allowing to use SageMaker from Kubernetes 
 - [App Mesh controller](https://github.com/aws/aws-app-mesh-controller-for-k8s), managing App Mesh resources from Kubernetes
 - [EKS Pod Identity Webhook](https://github.com/aws/amazon-eks-pod-identity-webhook), providing IAM roles for service accounts functionality
 

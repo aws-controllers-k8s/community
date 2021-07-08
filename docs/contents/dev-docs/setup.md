@@ -27,9 +27,9 @@ upstream ACK source code repositories to your personal Github account.
 
 There are three common upstream repositories you should fork first:
 
-* `github.com/aws-controllers-k8s/community` contains the common docs and tests
 * `github.com/aws-controllers-k8s/runtime` is the core ACK runtime and types
 * `github.com/aws-controllers-k8s/code-generator` is the ACK code generator
+* `github.com/aws-controllers-k8s/test-infra` contains the testing scripts
 
 !!! tip "prefix ACK forked repos with 'ack-'"
     When I fork repositories to my personal Github account, I tend to prefix
@@ -77,7 +77,7 @@ GITHUB_ID="your GH username"
 ACK_REPO_PREFIX="ack-"
 
 # Clone all the common ACK repositories...
-COMMON="community runtime code-generator"
+COMMON="runtime code-generator test-infra"
 for REPO in $COMMON; do
     cd $GOPATH/src/github.com/aws-controllers-k8s
     git clone git@github.com:$GITHUB_ID/$ACK_REPO_PREFIX$REPO $REPO
