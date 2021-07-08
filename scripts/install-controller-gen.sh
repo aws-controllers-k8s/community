@@ -22,7 +22,6 @@ ROOT_DIR="$SCRIPTS_DIR/.."
 CONTROLLER_TOOLS_VERSION="v0.4.0"
 
 source "$SCRIPTS_DIR/lib/common.sh"
-source "$SCRIPTS_DIR/lib/k8s.sh"
 
 if ! is_installed controller-gen; then
     # GOBIN and GOPATH are not always set, so default to GOPATH from `go env`
