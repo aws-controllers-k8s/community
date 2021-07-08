@@ -28,7 +28,7 @@ if ! k8s_controller_gen_version_equals "$CONTROLLER_TOOLS_VERSION"; then
     exit 1
 fi
 
-ACK_GENERATE_CACHE_DIR=${ACK_GENERATE_CACHE_DIR:-"~/.cache/aws-controllers-k8s"}
+ACK_GENERATE_CACHE_DIR=${ACK_GENERATE_CACHE_DIR:-"$HOME/.cache/aws-controllers-k8s"}
 # The ack-generate code generator is in a separate source code repository,
 # typically at $GOPATH/src/github.com/aws-controllers-k8s/code-generator
 DEFAULT_ACK_GENERATE_BIN_PATH="$ROOT_DIR/../../aws-controllers-k8s/code-generator/bin/ack-generate"
