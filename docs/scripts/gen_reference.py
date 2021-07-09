@@ -93,7 +93,7 @@ def convert_field(name: str, property: Dict, required=False) -> Field:
 
     return Field(
         name=name,
-        description=property['description'] if 'description' in property else '',
+        description=property.get('description', ''),
         type=property['type'],
         required=required,
         contains=contains,
@@ -127,10 +127,10 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
 
     return Resource(
         name=crd['spec']['names']['kind'],
-        service=service, #TODO(RedbackThomson): Load from file path?
+        service=service,
         group=crd['spec']['group'],
         apiVersion=ver['name'],
-        description=spec['description'],
+        description=spec.get('description', ''),
         scope=crd['spec']['scope'],
         names=names,
         spec=res_spec,
