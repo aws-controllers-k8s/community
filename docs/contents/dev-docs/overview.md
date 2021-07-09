@@ -8,17 +8,18 @@ ACK is a collection of source repositories containing a common runtime and type
 system, a code generator and individual service controllers that manage
 resources in a specific AWS API.
 
-* `github.com/aws-controllers-k8s/community` docs and common tests (this repo)
+* `github.com/aws-controllers-k8s/community`: docs and project management (this repo)
 * `github.com/aws-controllers-k8s/runtime`: common ACK runtime and types
 * `github.com/aws-controllers-k8s/code-generator`: the code generator and
   templates
+* `github.com/aws-controllers-k8s/test-infra`: common test code and infrastructure
 * `github.com/aws-controllers-k8s/$SERVICE-controller`: individual ACK
   controllers for AWS services.
 
 ### `github.com/aws-controllers-k8s/community` (this repo)
 
 The `github.com/aws-controllers-k8s/community` source code repository (this
-repo) contains the common test scripts and documentation that gets published to
+repo) contains the documentation that gets published to
 https://aws-controllers-k8s.github.io/community/.
 
 ### `github.com/aws-controllers-k8s/runtime`
@@ -34,6 +35,12 @@ contains the `ack-generate` CLI tool (`/cmd/ack-generate`), the Go packages
 that are used in API inference and code generation (`/pkg/generate`,
 `/pkg/model`) and Bash scripts to build an ACK service controller
 (`/scripts/build-controller.sh`).
+
+### `github.com/aws-controllers-k8s/test-infra`
+
+The `github.com/aws-controllers-k8s/test-infra` source code repository
+contains the `acktest` Python package for common ACK e2e test code, the CDK to
+deploy our Prow CI/CD system and the scripts for running tests locally.
 
 ### `github.com/aws-controllers-k8s/$SERVICE-controller`
 
