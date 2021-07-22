@@ -5,6 +5,7 @@ import os
 
 import yaml
 import argparse
+import logging
 
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -39,8 +40,8 @@ class Resource:
     spec: List[Field]
     status: List[Field]
 
-    def output_path(self) -> Path:
-        return Path(f"{self.service}/{self.apiVersion}/{self.name}.md")
+    def output_path(self, short_name: str = None) -> Path:
+        return Path(f"{self.service if short_name is None else short_name}/{self.apiVersion}/{self.name}.md")
 
 @dataclass(frozen=True)
 class ResourcePageMeta:
@@ -52,16 +53,34 @@ class ResourceOverview:
     name: str
     apiVersion: str
 
-@dataclass(frozen=True)
+@dataclass
 class ServiceOverview:
     name: str
     resources: ResourceOverview
+    service_metadata: ServiceMetadata
 
 @dataclass(frozen=True)
 class OverviewPageMeta:
     services: List[ServiceOverview]
 
-def load_crd_yaml(path: str) -> Dict:
+@dataclass(frozen=True)
+class ServiceMetadata:
+    service: MetadataServiceDescription
+    api_versions: List[MetadataAPIVersion]
+
+@dataclass(frozen=True)
+class MetadataServiceDescription:
+    full_name: str
+    short_name: str
+    link: str
+    documentation: str
+
+@dataclass(frozen=True)
+class MetadataAPIVersion:
+    api_version: str
+    status: str
+
+def load_yaml(path: str) -> Dict:
     with open(path, "r") as stream:
         return yaml.safe_load(stream)
 
@@ -137,17 +156,17 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         status=res_status
     )
 
-def write_service_pages(service: str, service_path: Path, output_path: Path) -> List[ResourceOverview]:
+def write_service_pages(service: str, metadata: ServiceMetadata, service_path: Path, output_path: Path) -> List[ResourceOverview]:
     resources = []
 
     for crd_path in Path(service_path).rglob('*.yaml'):
-        crd = load_crd_yaml(crd_path)
+        crd = load_yaml(crd_path)
 
         resource = convert_crd_to_resource(crd, service)
         resources.append(ResourceOverview(name=resource.name,
             apiVersion=resource.apiVersion))
 
-        resource_path = output_path / resource.output_path()
+        resource_path = output_path / resource.output_path(metadata.service.short_name)
         resource_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(resource_path, "w") as out:
@@ -171,7 +190,15 @@ def write_overview_page(services: List[ServiceOverview], output_path: Path):
         print("---", file=out)
         print('{% include "reference_overview.md" %}', file=out)
 
-def main(gopath: Path, go_src_parent: Path, service_bases_path: Path, output_path: Path):
+def load_metadata_config(metadata_config_path: Path) -> ServiceMetadata:
+    yaml_dict = load_yaml(metadata_config_path)
+    description = MetadataServiceDescription(**yaml_dict.get("service", {}))
+    api_versions = []
+    for version in yaml_dict.get("api_versions", []):
+        api_versions.append(MetadataAPIVersion(**version))
+    return ServiceMetadata(description, api_versions)
+
+def main(gopath: Path, metadata_config_path: Path, go_src_parent: Path, service_bases_path: Path, output_path: Path):
     overviews = []
 
     src_parent = gopath / go_src_parent
@@ -181,23 +208,34 @@ def main(gopath: Path, go_src_parent: Path, service_bases_path: Path, output_pat
             controller_repo.stem.startswith("template"):
             continue
 
+        # Get service name from repository
+        service = controller_repo.stem[:-len("-controller")]
+
         service_bases_path = controller_repo / bases_path
 
         if not service_bases_path.exists():
-            raise ValueError(f"Service base path {service_bases_path} does not exist")
+            logging.error(f"Service base path {service_bases_path} does not exist")
+            continue
 
-        # Get service name from repository
-        # TODO(RedbackThomson): Find an elegant way to get name-cased 
-        service = controller_repo.stem[:-len("-controller")]
+        metadata_config = controller_repo / metadata_config_path
+        if not metadata_config.exists():
+            logging.error(f"Could not find metadata file in {service} repository")
+            continue
 
-        resources = write_service_pages(service, service_bases_path, output_path)
-        overviews.append(ServiceOverview(service, resources))
+        metadata = load_metadata_config(metadata_config)
+
+        resources = write_service_pages(service, metadata, service_bases_path, output_path)
+        overview = ServiceOverview(service, resources, metadata)
+
+        overviews.append(overview)
 
     write_overview_page(overviews, output_path)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate documentation reference pages")
+    parser.add_argument("--metadata_config_path", type=str, default="./metadata.yaml",
+        help="Relative path to the `metadata` file, relative to the service controller root")
     parser.add_argument("--bases_path", type=str, default="./config/crd/bases",
         help="Relative path to the `bases` directory, relative to the service controller root")
     parser.add_argument("--gopath", type=str, default=os.environ.get('GOPATH'),
@@ -209,9 +247,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    metadata_config_path = Path(args.metadata_config_path)
     bases_path = Path(args.bases_path)
     gopath = Path(args.gopath)
     go_src_parent = Path(args.go_src_parent)
     output_path = Path(args.output_path)
 
-    main(gopath, go_src_parent, bases_path, output_path)
+    main(gopath, metadata_config_path, go_src_parent, bases_path, output_path)
