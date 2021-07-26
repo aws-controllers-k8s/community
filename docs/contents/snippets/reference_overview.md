@@ -9,4 +9,4 @@ Resource | API Version
 {% endmacro %}
 
 {% for service in page.meta.services | sort(attribute='name') %}
-{{ render_service(service.name, service.resources) }}{% endfor %}
+{{ render_service(service.service_metadata.service.short_name, service.resources) }}{% endfor %}
