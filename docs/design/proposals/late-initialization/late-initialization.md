@@ -68,14 +68,14 @@ In this solution, There will be updates in
         // LateInitializeConfig contains instructions for how to handle the
         // retrieval and setting of server-side defaulted fields.
         type LateInitializationConfig struct {
-            // DelaySeconds provides the base delay to attempt late initialization again after an unsuccessful attempt
-            // to late initialized fields from ReadOne output
-            DelaySeconds int `json:"delay_seconds,omitempty"`
+            // MinBackoffSeconds provides the minimum backoff to attempt late initialization again after an unsuccessful
+     	    // attempt to late initialized fields from ReadOne output
+            // For every attempt, the reconciler will calculate the delay between MinBackoffSeconds and MaxBackoffSeconds
+     	    // using exponential backoff and retry strategy
+            MinBackoffSeconds int `json:"min_backoff_seconds,omitempty"`
             // MaxBackoffSeconds provide the maximum allowed backoff when retrying late initialization after an    
             // unsuccessful attempt
             MaxBackoffSeconds int `json:"max_backoff_seconds,omitempty"`
-            // MaxRetries provide the maximum number of retries for setting late initialized fields.
-            MaxRetries int `json:"max_retries,omitempty"`
         }
 
         type FieldConfig struct {
@@ -105,7 +105,7 @@ In this solution, There will be updates in
         {{- end }}
   
         // 1. Filter all the fields which have LateInitializationConfig.
-        // 2. If there are no field needing late initialization, return  `latest, nil`
+        // 2. If there are no field needing late initialization, return  `latest, nil` 
         // 3. DeepCopy `latest` object into `latestWithDefaults`
         // 4. Perform ReadOne operation and set late initialized fields in `latestWithDefaults` with nil checks
         // 5. Collect the lateInitialized fields which are still not set in `latestWithDefault` into 
