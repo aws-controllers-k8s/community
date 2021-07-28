@@ -68,9 +68,14 @@ In this solution, There will be updates in
         // LateInitializeConfig contains instructions for how to handle the
         // retrieval and setting of server-side defaulted fields.
         type LateInitializationConfig struct {
-            // DelaySeconds provides the number of seconds to wait to set
-            // late initialized fields after successful Create/Update call
+            // DelaySeconds provides the base delay to attempt late initialization again after an unsuccessful attempt
+            // to late initialized fields from ReadOne output
             DelaySeconds int `json:"delay_seconds,omitempty"`
+            // MaxBackoffSeconds provide the maximum allowed backoff when retrying late initialization after an    
+            // unsuccessful attempt
+            MaxBackoffSeconds int `json:"max_backoff_seconds,omitempty"`
+            // MaxRetries provide the maximum number of retries for setting late initialized fields.
+            MaxRetries int `json:"max_retries,omitempty"`
         }
 
         type FieldConfig struct {
@@ -98,27 +103,26 @@ In this solution, There will be updates in
         {{- if $hookCode := Hook .CRD "late_initialize_pre_read_one" }}
             {{ $hookCode }}
         {{- end }}
-
+  
         // 1. Filter all the fields which have LateInitializationConfig.
-        // 2. Filter out the fields from step1 with nil value in latest object.
-        // 3. If number of fields after step2 are nonzero, calculate the delay
-        // for late initialization.
-        // 4. If the latest object has 'LateInitialized=False' condition,
-        // no need to delay the late initialization. Otherwise calculate
-        // net delay for late initialization.(why? see step 7).
-        // 5. Net delay is maximum delay among all the Fields from step2.
-        // 6. If net delay is more than zero, add 'LateInitialized=False'
-        // condition to the resource status indicating that resource is still
-        // being late initalized and return with requeue delay as net delay.
-        // 7. Make the ReadOne call.
-        // 8. Filter out the fields from step2, which are not-nil in ReadOne output.
-        // 9. For all the fields in step 9, set the lateInitialized value.
-        // 10. Upsert resource condition 'LateInitialized=True'.
+        // 2. If there are no field needing late initialization, return  `latest, nil`
+        // 3. DeepCopy `latest` object into `latestWithDefaults`
+        // 4. Perform ReadOne operation and set late initialized fields in `latestWithDefaults` with nil checks
+        // 5. Collect the lateInitialized fields which are still not set in `latestWithDefault` into 
+        // `uninitializedFieldNames` slice.
+        // 6. If `uninitializedFieldNames` is not empty
+                  // 6.a. Using `services.k8s.aws/late-initialization-attempt` annotation, calculate the
+                  //    maximum delay needed for requeue amongst the `uninitializedFieldNames`
+                  // 6.b. Update the `LateInitialized` condition and `services.k8s.aws/late-initialization-attempt` annotation
+                  //    in latestWithDefaults object
+                  // 6.c. return latestWithDefaults, requeueNeededAfter(max-delay-from-6a)
+        //    else
+                  // Update `LateInitialized` condition to true, remove `services.k8s.aws/late-initialization-attempt` annotation
 
         {{- if $hookCode := Hook .CRD "late_initialize_post_read_one" }}
             {{ $hookCode }}
         {{- end }}
-        // return latest with late initialized fields updates 
+        // return latestWithDefaults, nil 
     }
     ```
 
