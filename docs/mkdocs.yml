@@ -10,9 +10,9 @@ nav:
   - Overview: 'index.md'
   - Services: 'services.md'
 - User docs:
-  - Install: 'user-docs/wip.md'
-  - Permissions: 'user-docs/wip.md'
-  - Usage: 'user-docs/wip.md'
+  - Install: 'user-docs/install.md'
+  - Authorization and Access Control: 'user-docs/authorization.md'
+  - IAM Roles for Service Accounts: 'user-docs/irsa.md'
 - Contributor docs:
   - Overview: 'dev-docs/overview.md'
   - Code generation: 'dev-docs/code-generation.md'
@@ -27,8 +27,8 @@ nav:
   - Background: 'community/background.md'
   - FAQ: 'community/faq.md'
   - Discussions: 'community/discussions.md'
-  - Contributing: 'https://github.com/aws/aws-controllers-k8s/blob/master/CONTRIBUTING.md'
-  - Governance: 'https://github.com/aws/aws-controllers-k8s/blob/master/GOVERNANCE.md'
+  - Contributing: 'https://github.com/aws-controllers-k8s/community/blob/master/CONTRIBUTING.md'
+  - Governance: 'https://github.com/aws-controllers-k8s/community/blob/master/GOVERNANCE.md'
 extra:
   social:
   - icon: 'fontawesome/brands/twitter'
