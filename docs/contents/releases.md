@@ -134,29 +134,35 @@ This is by design, and [per the Semantic Versioning specification][semver-zero]:
 [semver-zero]: https://semver.org/#spec-item-4
 
 For ACK components that have a binary distributable -- i.e. a Docker image --
-the creation of a new SemVer Git tag on the source code repository will trigger
+the creation of a new SemVer Git tag on the source code repository triggers the
 automatic building and publishing of a Docker image with an image tag including
-the SemVer version. For example, if a Git tag of `v1.2.6` was created on the
+the SemVer version.
+
+For example, if a Git tag of `v1.2.6` was created on the
 [github.com/aws-controllers-k8s/s3-controller][s3-ctrl] repository, a Docker
-image with a tag `s3-v1.2.6` would be published to the
-[aws-controllers-k8s/controller][ecr-ack-ctrl] ECR repository.
+image with a tag `v1.2.6` would be published to the
+[public.ecr.aws/aws-controllers-k8s/s3-controller][ecr-ack-ctrl] ECR Public
+repository.
 
 [s3-ctrl]: https://github.com/aws-controllers-k8s/s3-controller
-[ecr-ack-ctrl]: https://gallery.ecr.aws/aws-controllers-k8s/controller
+[ecr-ack-ctrl]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller
 
 !!! note
-    Binaries for ACK components are published in our Amazon ECR
-    Public [registry][ecr-ack-ctrl].
+    Binaries for individual ACK service controllers components are published in
+    separate Amazon ECR Public repositories.
 
 For ACK components that have a Helm Chart distributable -- i.e. an ACK service
 controller -- the creation of a new SemVer Git tag on the source code
-repository will trigger automatic building and publishing of a Helm Chart with
-an artifact tag including the SemVer version. For example, a Git tag of
-`v1.2.6` on the [github.com/aws-controllers-k8s/s3-controller][s3-ctrl]
-repository means a Helm chart with a tag `s3-v1.2.6` would be published to the
-[aws-controllers-k8s/chart][ecr-ack-chart] ECR repository.
+repository triggers automatic building and publishing of a Helm Chart with
+an artifact tag including the SemVer version.
 
-[ecr-ack-chart]: https://gallery.ecr.aws/aws-controllers-k8s/chart
+For example, a Git tag of `v1.2.6` on the
+[github.com/aws-controllers-k8s/s3-controller][s3-ctrl]
+repository means a Helm chart with a tag `v1.2.6` would be published to the
+[public.ecr.aws/aws-controllers-k8s/s3-chart][ecr-ack-chart] ECR Public
+repository.
+
+[ecr-ack-chart]: https://gallery.ecr.aws/aws-controllers-k8s/s3-chart
 
 #### A Word About Dependencies
 
@@ -189,14 +195,16 @@ a specific version of the ACK common runtime.
 [recommend-helm]: https://aws-controllers-k8s.github.io/community/user-docs/install/#helm-recommended
 
 Some ACK service controllers will have Helm Charts with a
-`$SERVICE-v$MAJOR_VERSION-stable` tag, referred from here out as just a
+`v$MAJOR_VERSION-stable` tag, referred from here out as just a
 "`stable` artifact tag". There will only be one of these tags for the ACK
-service controller **in a major version series**. For example, the `stable`
-artifact tag for the ElastiCache ACK service controller's "v1" major version
-series would be `elasticache-v1-stable`.
+service controller **in a major version series**. For example, the full
+`stable` artifact tag for the ElastiCache ACK service controller's "v1" major
+version series would be
+`public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable`.
 
 This `stable` artifact tag points to a Helm chart that has configuration values
 that have been tested with a specific SemVer Docker image.
+
 Typically these tests are "soak" tests and allow the team maintaining that ACK
 controller's source code to have a high degree of confidence in the
 controller's long-running operation.
@@ -212,17 +220,17 @@ service controller may update the configuration values and associated SemVer
 Docker image tag for the controller binary to point to a newer image.
 
 For example, consider the ElastiCache ACK service controller maintainer team
-has executed a series of long-running tests of the controller image tagged with
-the `elasticache-v1.2.6` SemVer tag. The maintainer team is confident that the
-controller is stable for production use. In the `stable` Git branch of the
-ElastiCache service controller's source repository, the team would update the
-Helm Chart's Deployment, setting the
-`Deployment.spec.template.spec.containers[0].image` to
-`public.ecr.aws/aws-controllers-k8s/controller/elasticache-v1.2.6`.
+has executed a series of long-running tests of the
+`public.ecr.aws/aws-controllers-k8s/elasticache-controller` image tagged with
+the `v1.2.6` SemVer tag. The maintainer team is confident that the controller
+is stable for production use. In the `stable` Git branch of the ElastiCache
+service controller's source repository, the team would update the Helm Chart's
+Deployment, setting the `Deployment.spec.template.spec.containers[0].image` to
+`public.ecr.aws/aws-controllers-k8s/elasticache-controller:v1.2.6`.
 
 They then package the Helm Chart and publish it as an OCI Artifact to the
-`public.ecr.aws/aws-controllers-k8s/chart` registry, using an OCI artifact tag
-of `elasticache-v1-stable`.
+`public.ecr.aws/aws-controllers-k8s/elasticache-chart` registry, using an OCI
+artifact tag of `v1-stable`.
 
 A couple months later, the maintainer team has added a few minor, non-breaking
 features to their controller along with a number of bug fixes. The latest
@@ -233,10 +241,10 @@ the `v1.3.2` controller image and are confident that this release is
 appropriate for production use. The maintainer team would update the Helm Chart
 in their `stable` Git branch to have its
 `Deployment.spec.template.spec.containers[0].image` set to
-`public.ecr.aws/aws-controllers-k8s/controller/elasticache-v1.3.2`. They would
+`public.ecr.aws/aws-controllers-k8s/elasticache-controller:v1.3.2`. They would
 then package this Helm Chart and push overwrite the
-`public.ecr.aws/aws-controllers-k8s/chart:elasticache-v1-stable` OCI Artifact tag
-to point to this newly-updated Helm Chart that refers to the `v1.3.2`
+`public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable` OCI Artifact
+tag to point to this newly-updated Helm Chart that refers to the `v1.3.2`
 controller image.
 
 ## Maintenance Phases

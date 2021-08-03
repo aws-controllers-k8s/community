@@ -2,6 +2,21 @@
 
 In the following we walk you through installing an ACK service controller.
 
+!!! note **IMPORTANT**
+    Individual ACK service controllers may be in different
+    maintenance phases and follow separate release cadences. Please read our
+    documentation about [project stages][proj-stages] and
+    [maintenance phases][maint-phases] fully, including how we
+    [release and version][rel-ver] our controllers. Controllers in a `PREVIEW`
+    maintenance phase have at least one container image and Helm chart released to
+    an ECR Public repository. However, be aware that controllers in a `PREVIEW`
+    maintenance phase may have significant and breaking changes introduced in a
+    future release.
+
+[proj-stages]: https://aws-controllers-k8s.github.io/community/releases/#project-stages
+[maint-phases]: https://aws-controllers-k8s.github.io/community/releases/#maintenance-phases
+[rel-ver]: https://aws-controllers-k8s.github.io/community/releases/#releases-and-versioning
+
 ## Docker images
 
 !!! note "No single ACK Docker image"
@@ -10,20 +25,31 @@ In the following we walk you through installing an ACK service controller.
     for a particular AWS API.
 
 Each ACK service controller is packaged into a separate container image,
-published on a [public ECR repository][controller-repo].
+published in a public ECR repository that corresponds to that ACK service
+controller.
 
-[controller-repo]: https://gallery.ecr.aws/aws-controllers-k8s/controller
+Controller images can be found in an ECR Public repository following the naming
+scheme `public.ecr.aws/aws-controllers-k8s/{SERVICE}-controller`. For example,
+you can find the Docker images for different releases of the RDS service
+controller for ACK in the `public.ecr.aws/aws-controllers-k8s/rds-controller`
+repository.
 
-Individual ACK service controllers are tagged with `$SERVICE-$VERSION` Docker
-image tags, allowing you to download/test specific ACK service controllers. For
-example, if you wanted to test the `v0.1.0` release image of the ACK service
-controller for S3, you would pull the
-`public.ecr.aws/aws-controllers-k8s/controller:s3-v0.1.0` image.
+There is an ECR Public Gallery link for the controller image repository at a
+similarly-schemed link
+`https://gallery.ecr.aws/aws-controllers-k8s/$SERVICE-controller`. For
+instance, to view the available Docker image releases of the RDS service
+controller for ACK, visit
+[https://gallery.ecr.aws/aws-controllers-k8s/rds-controller][rds-ecr-gallery].
+
+[rds-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s/rds-controller
+
+Individual ACK service controllers are tagged with a Semantic Version release
+tag, for example `v0.5.0`.
 
 !!! note "No 'latest' tag"
     It is [not good practice][no-latest-tag] to rely on a `:latest` default
     image tag. There are actually no images tagged with a `:latest` tag in our
-    image repositories. You should always specify a `$SERVICE-$VERSION` tag
+    image repositories. You should always specify a Semantic Version tag
     when referencing an ACK service controller image.
 
 [no-latest-tag]: https://vsupalov.com/docker-latest-tag/
@@ -40,12 +66,21 @@ Each ACK service controller has a separate Helm chart that installs—as a
 Kubernetes `Deployment`—the ACK service controller, necessary custom resource
 definitions (CRDs), Kubernetes RBAC manifests, and other supporting artifacts.
 
-To view the Helm charts available for installation, check the ECR public
-repository for the [ACK Helm charts][charts-repo]. Click on the "Image tags"
-tab and take a note of the Helm chart tag for the service controller and
-version you wish to install.
+There is a separate ECR Public repository that contains the Helm charts for a
+specific ACK service controller. The ECR Public repository for Helm charts
+follows the naming scheme `public.ecr.aws/aws-controllers-k8s/$SERVICE-chart`.
+For example, you can find the Helm charts for different releases of the RDS
+service controller for ACK in the
+`public.ecr.aws/aws-controllers-k8s/rds-chart` repository.
 
-[charts-repo]: https://gallery.ecr.aws/aws-controllers-k8s/chart
+There is an ECR Public Gallery link for the Helm chart repository at a
+similarly-schemed link
+`https://gallery.ecr.aws/aws-controllers-k8s/$SERVICE-chart`. For
+instance, to view the available Helm charts that install releases of the RDS service
+controller for ACK, visit
+[https://gallery.ecr.aws/aws-controllers-k8s/rds-chart][rds-chart-ecr-gallery].
+
+[rds-chart-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s/rds-chart
 
 Before installing a Helm chart, you must first make the Helm chart available on
 the deployment host. To do so, use the `helm chart pull` and `helm chart
@@ -56,8 +91,8 @@ export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
 export RELEASE_VERSION=v0.0.1
 export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/chart
-export CHART_REF=$CHART_REPO:$SERVICE-$RELEASE_VERSION
+export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
+export CHART_REF=$CHART_REPO:$RELEASE_VERSION
 
 mkdir -p $CHART_EXPORT_PATH
 
@@ -100,7 +135,7 @@ you should see your newly-deployed Helm chart release:
 ```
 $ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 - app_version: v0.0.1
-  chart: ack-s3-controller-v0.0.1
+  chart: s3-controller
   name: ack-s3-controller
   namespace: ack-system
   revision: "1"
@@ -111,12 +146,24 @@ $ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 ## Static Kubernetes manifests
 
 If you prefer not to use Helm, you may install a service controller using
-static Kubernetes manifests.
+static Kubernetes manifests that are included in the source repository for an
+ACK service controller.
 
-Static Kubernetes manifests that install individual service controllers are
-attached as artifacts to releases of AWS Controllers for Kubernetes. Select a
-release from the [list of releases][1] for AWS Controllers for Kubernetes.
+Static Kubernetes manifests that install the individual service controller as a
+Kubernetes `Deployment`, along with the relevant Kubernetes RBAC resources are
+available in the `config/` directory of the associated ACK service controller's
+source repository.
 
-[1]: https://github.com/aws/aws-controllers-k8s/releases
+For example, for the static manifests that will install the RDS service
+controller for ACK, check out the [`config/`][rds-config-dir] directory of the
+[RDS controller's source repo][rds-repo].
 
-TODO(jaypipes)
+[rds-config-dir]: https://github.com/aws-controllers-k8s/rds-controller/tree/main/config
+[rds-repo]: https://github.com/aws-controllers-k8s/rds-controller
+
+## Next Steps
+
+Once finished installing an ACK service controller, read about how
+[Authorization and Access Control][authorization] works.
+
+[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/

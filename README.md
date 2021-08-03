@@ -58,20 +58,25 @@ resources on your behalf.
 
 ## Getting Started
 
-Currently, there are a set of ACK [service controllers][services] that have
-been released in a `Preview` [maintenance phase][maint-phases]. You may
-[install][install] these controllers in binary form using the Helm charts
-published on our ACK public artifact repository.
+Please see the list of ACK [service controllers][services] currently in one of
+our [project stages][proj-stages].
+
+[proj-stages]: https://aws-controllers-k8s.github.io/community/releases/#project-stages
+
+You can [install][install] any of the controllers in the `RELEASED` project stage using
+Helm (recommended) or manually using the raw Kubernetes manifests contained in
+the individual ACK service controller's source repository.
 
 [services]: https://aws-controllers-k8s.github.io/community/services/
-[maint-phases]: https://aws-controllers-k8s.github.io/community/releases#maintenance-phases
-[install]: https://aws-controllers-k8s.github.io/user-docs/install/
+[install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
 
-If you are comfortable building Go code yourself and working with static
-Kubernetes manifests, you are also free to [test-drive][testing] various
-controllers using our KinD-based end-to-end test suite.
+Once installed, Kubernetes users may apply a custom resource (CR) corresponding
+to one of the resources exposed by the ACK service controller for the service.
 
-[testing]: https://aws-controllers-k8s.github.io/community/dev-docs/testing/
+To view the list of custom resources and each CR's schema, visit our
+[reference documentation][ref-docs].
+
+[ref-docs]: https://aws-controllers-k8s.github.io/community/reference/overview/
 
 ## Help & Feedback
 

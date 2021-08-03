@@ -6,13 +6,36 @@ managed services for your Kubernetes applications without needing to define
 resources outside of the cluster or run services that provide supporting
 capabilities like databases or message queues within the cluster.
 
-This is a new open source project built with ❤️ by AWS and available as a
-**Developer Preview**. We encourage you to try it out, provide feedback and
-contribute to development.
+This is a fully open source project built with ❤️  by AWS. The project is
+structured as a set of source code repositories containing a
+[common runtime][rt], a [code generator][code-gen], some
+[common testing infrastructure][test-infra] and a series of individual service
+controllers that correspond to AWS services (e.g. the
+[RDS service controller for ACK][rds-controller]).
 
-*Important: Because this project is a preview, there may be significant and
-breaking changes introduced in the future. We encourage you to try and
-experiment with this project. Please do not adopt it for production use.*
+[rt]: https://github.com/aws-controllers-k8s/runtime
+[code-gen]: https://github.com/aws-controllers-k8s/code-generator
+[test-infra]: https://github.com/aws-controllers-k8s/test-infra
+[rds-controller]: https://github.com/aws-controllers-k8s/rds-controller
+
+Individual ACK service controllers are installable as separate binaries either
+manually via raw manifests or via a Helm chart that corresponds to the
+individual service controller.
+
+!!! note **IMPORTANT**
+    Individual ACK service controllers may be in different
+    maintenance phases and follow separate release cadences. Please read our
+    documentation about [project stages][proj-stages] and
+    [maintenance phases][maint-phases] fully, including how we
+    [release and version][rel-ver] our controllers. Controllers in a `PREVIEW`
+    maintenance phase have at least one container image and Helm chart released to
+    an ECR Public repository. However, be aware that controllers in a `PREVIEW`
+    maintenance phase may have significant and breaking changes introduced in a
+    future release.
+
+[proj-stages]: https://aws-controllers-k8s.github.io/community/releases/#project-stages
+[maint-phases]: https://aws-controllers-k8s.github.io/community/releases/#maintenance-phases
+[rel-ver]: https://aws-controllers-k8s.github.io/community/releases/#releases-and-versioning
 
 ## Background
 
@@ -49,16 +72,30 @@ those applications depend.
 
 Read more about [how ACK works][how-it-works].
 
-[gh]: https://github.com/aws/aws-controllers-k8s/
+[gh]: https://github.com/aws-controllers-k8s/community
 [controller]: https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller
 [crd]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 [how-it-works]: https://aws-controllers-k8s.github.io/community/how-it-works/
 
 ## Getting started
 
-Until we've graduated ACK [service controllers][services] we ask you to [test-drive](https://aws-controllers-k8s.github.io/community/dev-docs/testing/) them.
+Please see the list of ACK [service controllers][services] currently in one of
+our [project stages][proj-stages].
+
+You can [install][install] any of the controllers in the `RELEASED` project stage using
+Helm (recommended) or manually using the raw Kubernetes manifests contained in
+the individual ACK service controller's source repository.
 
 [services]: https://aws-controllers-k8s.github.io/community/services/
+[install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
+
+Once installed, Kubernetes users may apply a custom resource (CR) corresponding
+to one of the resources exposed by the ACK service controller for the service.
+
+To view the list of custom resources and each CR's schema, visit our
+[reference documentation][ref-docs].
+
+[ref-docs]: https://aws-controllers-k8s.github.io/community/reference/overview/
 
 ## Getting help
 
