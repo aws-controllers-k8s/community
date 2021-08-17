@@ -121,15 +121,16 @@ permissions to read and write S3 Buckets.
 We include with each service controller a recommended IAM Policy that restricts
 the ACK service controller to taking only the actions that the IAM Role needs
 to properly manage resources for that specific AWS service API. Within each
-service controller's source code directory is a `config/iam/recommended-policy-arn`
-document that contains the AWS Resource Name (ARN) of the recommended managed
-policy for that service and can be applied to the IAM Role for the ACK service
-controller by calling `aws iam attach-role-policy` on the contents of that file:
+service controller's source code repository is a
+`config/iam/recommended-policy-arn` document that contains the AWS Resource
+Name (ARN) of the recommended managed policy for that service and can be
+applied to the IAM Role for the ACK service controller by calling `aws iam
+attach-role-policy` on the contents of that file:
 
 ```bash
 SERVICE=s3
-BASE_URL=https://github.com/aws/aws-controllers-k8s/blob/main/services
-POLICY_URL=$BASE_URL/$SERVICE/config/iam/recommended-policy-arn
+BASE_URL=https://github.com/aws-controllers-k8s/$SERVICE-controller/blob/main
+POLICY_URL=$BASE_URL/config/iam/recommended-policy-arn
 POLICY_ARN="`wget -qO- $POLICY_URL`"
 aws iam attach-role-policy \
     --role-name $IAM_ROLE \
@@ -150,12 +151,17 @@ Some services may need an additional inline policy, specified in
 
 ## Cross-account resource management
 
-ACK service controllers can manage resources in different AWS accounts. To enable and start using this feature, as an administrator, you will need to:
+ACK service controllers can manage resources in different AWS accounts. To
+enable and start using this feature, as an administrator, you will need to:
+
 1. Configure your AWS accounts, where the resources will be managed.
 2. Create a `ConfigMap` to map AWS accounts with the Role ARNs that needs to be assumed
 3. Annotate namespaces with AWS Account IDs
 
-For detailed information about how ACK service controllers manage resource in multiple AWS accounts, please refer to [CARM](https://github.com/aws/aws-controllers-k8s/blob/main/docs/design/proposals/carm/cross-account-resource-management.md) design document.
+For detailed information about how ACK service controllers manage resource in
+multiple AWS accounts, please refer to the [CARM][carm]design document.
+
+[carm]: https://github.com/aws-controllers-k8s/community/blob/main/docs/design/proposals/carm/cross-account-resource-management.md
 
 ### Setting up AWS accounts
 
