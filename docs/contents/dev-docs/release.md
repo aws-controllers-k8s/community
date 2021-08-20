@@ -68,7 +68,7 @@ git checkout -b release-$RELEASE_VERSION
 
 ```bash
 for SERVICE in sns s3; do
-    ./scripts/build-controller-release.sh $SERVICE $RELEASE_VERSION;
+    ./scripts/build-controller-release.sh $SERVICE;
 done
 ```
 
