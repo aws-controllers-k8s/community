@@ -62,13 +62,15 @@ git checkout -b release-$RELEASE_VERSION
 2) Build the release artifacts for the controllers you wish to include in the
    release
 
-   Run `scripts/build-controller-release.sh` for each service. For
-   instance, to build release artifacts for the SNS and S3 controllers I would
-   do:
+   Run `make build-controller` for each service from code-generator repository.
+    For instance, to build release artifacts for the SNS and S3 controllers I
+    would do:
 
 ```bash
 for SERVICE in sns s3; do
-    ./scripts/build-controller-release.sh $SERVICE;
+    export SERVICE;
+    echo "building ACK controller for $SERVICE, Version: $RELEASE_VERSION"
+    make build-controller;
 done
 ```
 
@@ -82,9 +84,10 @@ or by doing:
 `git diff`
 
 !!! note
-    When you run `scripts/build-controller-release.sh` for a service, it will overwrite any Helm chart files that had
-    previously been generated in the `services/$SERVICE/helm` directory with files that refer to the Docker image with
-    an image tag referring to the release you've just built artifacts for.
+    When you run `make build-controller` for a service, it will overwrite any
+    Helm chart files that had previously been generated in the `services/$SERVICE/helm`
+    directory with files that refer to the Docker image with an image tag
+    referring to the release you've just built artifacts for.
    
 4) Commit your code and create a pull request:
 ```bash
