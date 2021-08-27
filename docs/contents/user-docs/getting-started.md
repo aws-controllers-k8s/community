@@ -50,5 +50,5 @@ In accordance with [best practices][no-latest-tag], we do not include `:latest` 
 [install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
 [authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization-and-access/
 [irsa]: https://aws-controllers-k8s.github.io/community/user-docs/irsa/
-[carm]: https://aws-controllers-k8s.github.io/community/user-docs/carm/
+[carm]: https://aws-controllers-k8s.github.io/community/user-docs/cross-account-resource-management/
 [cleanup]: https://aws-controllers-k8s.github.io/community/user-docs/cleanup/

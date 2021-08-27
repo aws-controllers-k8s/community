@@ -56,5 +56,5 @@ kubectl delete -n ack-system configmap ack-role-account-map
 kubectl delete namespace production
 ```
 
-[carm-docs]: https://aws-controllers-k8s.github.io/community/user-docs/carm/
+[carm-docs]: https://aws-controllers-k8s.github.io/community/user-docs/cross-account-resource-management/
 
