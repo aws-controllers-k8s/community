@@ -98,4 +98,4 @@ For example, the static manifests needed to install the S3 service controller fo
 
 Once you have installed your ACK service controllers, you can [configure Kubernetes and AWS permissions][authorization].
 
-[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization-and-access/
+[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/

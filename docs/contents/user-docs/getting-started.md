@@ -36,7 +36,7 @@ Once you have access to a Kubernetes cluster, you can [install the ACK service c
 [s3-ecr-controller]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller
 [no-latest-tag]: https://vsupalov.com/docker-latest-tag/
 [install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
-[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization-and-access/
+[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/
 [irsa]: https://aws-controllers-k8s.github.io/community/user-docs/irsa/
 [carm]: https://aws-controllers-k8s.github.io/community/user-docs/cross-account-resource-management/
 [cleanup]: https://aws-controllers-k8s.github.io/community/user-docs/cleanup/
