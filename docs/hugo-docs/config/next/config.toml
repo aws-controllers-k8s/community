@@ -1,0 +1,2 @@
+baseurl = "https://doks-next.netlify.app/"
+canonifyURLs = true

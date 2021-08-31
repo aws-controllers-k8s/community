@@ -1,0 +1,74 @@
+# Meta Data for SEO
+
+## Homepage
+title = "ACK"
+titleSeparator = "-"
+titleAddition = "AWS Controllers for K8s"
+description = "Doks is a Hugo theme helping you build modern documentation websites that are secure, fast, and SEO-ready — by default."
+
+## Open Graph
+images = ["og.png"]
+ogLocale = "en_US"
+domainTLD = "aws-controllers-k8s.github.io"
+titleHome = "AWS Controllers for K8s"
+
+## Twitter Cards
+twitterSite = "@awscloud"
+twitterCreator = ""
+
+## JSON-LD
+# schemaType = "Person"
+schemaType = "Organization"
+schemaName = "Doks"
+schemaAuthor = "Henk Verlinde"
+schemaAuthorTwitter = "https://twitter.com/henkverlinde"
+schemaAuthorLinkedIn = "https://www.linkedin.com/in/henkverlinde/"
+schemaAuthorGitHub = "https://github.com/h-enk"
+schemaLocale = "en-US"
+schemaLogo = "logo-doks.png"
+schemaLogoWidth = 512
+schemaLogoHeight = 512
+schemaImage = "doks.png"
+schemaImageWidth = 1280
+schemaImageHeight = 640
+schemaTwitter = "https://twitter.com/getdoks"
+schemaLinkedIn = ""
+schemaGitHub = "https://github.com/h-enk/doks"
+schemaSection = "blog"
+
+## Sitelinks Search Box
+siteLinksSearchBox = false
+
+## Chrome Browser
+themeColor = "#ff9900"
+
+# Images
+quality = 85
+bgColor = "#fff"
+landscapePhotoWidths = [900, 800, 700, 600, 500]
+portraitPhotoWidths = [800, 700, 600, 500]
+lqipWidth = "20x"
+
+# Footer
+footer = "Powered by <a href=\"https://www.netlify.com/\">Netlify</a>, <a href=\"https://gohugo.io/\">Hugo</a>, and <a href=\"https://getdoks.org/\">Doks</a>"
+copyRight = "Copyright (c) 2020-2021 Henk Verlinde"
+
+# Alert
+alert = false
+alertText = "Like Doks? <a class=\"alert-link\" href=\"https://github.com/h-enk/doks/stargazers\">Star on GitHub</a>. Thanks!</a>"
+
+# Edit Page
+docsRepo = "https://github.com/h-enk/doks"
+editPage = false
+
+[options]
+  lazySizes = true
+  clipBoard = true
+  instantPage = true
+  flexSearch = true
+  darkMode = true
+  bootStrapJs = true
+  breadCrumb = false
+  highLight = true
+  kaTex = false
+  collapsibleSidebar = true
