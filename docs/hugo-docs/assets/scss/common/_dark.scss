@@ -47,6 +47,10 @@ body.dark .btn-outline-primary:hover {
   color: $body-bg-dark;
 }
 
+body.dark .header-bar {
+  border-image-source: linear-gradient(90deg, $link-color-dark, lighten($link-color-dark, 20%) 50%, adjust-hue(lighten($link-color-dark, 20%), 35deg));
+}
+
 body.dark .navbar {
   background: $body-bg-dark;
   opacity: 0.975;

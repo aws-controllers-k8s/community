@@ -74,7 +74,7 @@
 
 .header-bar {
   border-top: 4px solid;
-  border-image-source: linear-gradient(90deg, $primary, #8ed6fb 50%, #d32e9d);
+  border-image-source: linear-gradient(90deg, $primary, lighten($primary, 20%) 50%, adjust-hue(lighten($primary, 20%), 35deg));
   border-image-slice: 1;
 }
 
