@@ -5,7 +5,7 @@ lead: "How to build or regenerate an ACK service controller"
 draft: false
 menu: 
   docs:
-    parent: "Contributor Docs"
+    parent: "contributor"
 weight: 50
 toc: true
 ---

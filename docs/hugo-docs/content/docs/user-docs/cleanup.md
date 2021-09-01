@@ -5,7 +5,7 @@ lead: "Uninstalling an ACK controller"
 draft: false
 menu: 
   docs:
-    parent: "Installing a Controller"
+    parent: "installing"
 weight: 100
 toc: true
 ---

@@ -5,7 +5,7 @@ lead: "Configuring RBAC and IAM for Authorization and Access"
 draft: false
 menu: 
   docs:
-    parent: "Installing a Controller"
+    parent: "installing"
 weight: 20
 toc: true
 ---

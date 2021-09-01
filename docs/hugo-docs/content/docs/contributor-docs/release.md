@@ -5,7 +5,7 @@ lead: "The release process for ACK service controller"
 draft: false
 menu: 
   docs:
-    parent: "Contributor Docs"
+    parent: "contributor"
 weight: 70
 toc: true
 ---

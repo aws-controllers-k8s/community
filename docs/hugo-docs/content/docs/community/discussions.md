@@ -7,7 +7,7 @@ lastmod: 2020-10-06T08:47:36+00:00
 draft: false
 menu: 
   docs:
-    parent: "Discussion"
+    parent: "discussion"
 weight: 30
 toc: true
 ---

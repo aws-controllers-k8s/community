@@ -17,16 +17,20 @@
 
 [[docs]]
   name = "Prologue"
+  identifier = "prologue"
   weight = 10
 
 [[docs]]
   name = "Installing a Controller"
+  identifier = "installing"
   weight = 20
 
 [[docs]]
   name = "Contributor Docs"
+  identifier = "contributor"
   weight = 30
 
 [[docs]]
   name = "Discussion"
+  identifier = "discussion"
   weight = 40

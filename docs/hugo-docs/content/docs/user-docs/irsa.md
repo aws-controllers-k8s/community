@@ -5,7 +5,7 @@ lead: "Setting up ACK with IAM Roles for Service Accounts"
 draft: false
 menu: 
   docs:
-    parent: "Installing a Controller"
+    parent: "installing"
 weight: 30
 toc: true
 ---

@@ -5,7 +5,7 @@ lead: ""
 draft: false
 menu: 
   docs:
-    parent: "Contributor Docs"
+    parent: "contributor"
 weight: 60
 toc: true
 ---
