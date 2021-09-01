@@ -1,7 +1,7 @@
 ---
-title: "Authorization"
-description: "How RBAC and IAM work for ACK"
-lead: "How RBAC and IAM work for ACK"
+title: "Configure Permissions"
+description: "Configuring RBAC and IAM for ACK"
+lead: "Configuring RBAC and IAM for Authorization and Access"
 date: 2020-11-12T15:22:20+01:00
 lastmod: 2020-11-12T15:22:20+01:00
 draft: false
@@ -9,7 +9,7 @@ images: []
 menu: 
   docs:
     parent: "Installing a Controller"
-weight: 30
+weight: 20
 toc: true
 ---
 

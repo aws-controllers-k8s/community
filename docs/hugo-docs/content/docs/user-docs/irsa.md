@@ -1,5 +1,5 @@
 ---
-title: "Configuring IRSA"
+title: "Configure IRSA"
 description: "Setting up ACK with IAM Roles for Service Accounts"
 lead: "Setting up ACK with IAM Roles for Service Accounts"
 date: 2020-11-12T15:22:20+01:00
@@ -9,7 +9,7 @@ images: []
 menu: 
   docs:
     parent: "Installing a Controller"
-weight: 20
+weight: 30
 toc: true
 ---
 

@@ -1,4 +1,17 @@
-# Cross-Account Resource Management (CARM)
+---
+title: "Cross-Account Resource Management (CARM)"
+description: "Managing resources in different AWS accounts"
+lead: ""
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Installing a Controller"
+weight: 40
+toc: true
+---
 
 ACK service controllers can manage resources in different AWS accounts. To enable and start using this feature, as an administrator, you will need to:
 
