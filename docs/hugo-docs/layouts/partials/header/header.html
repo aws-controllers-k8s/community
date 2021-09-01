@@ -22,10 +22,8 @@
         {{- $current := . -}}
         {{ range .Site.Menus.main -}}
           {{- $active := or ($current.IsMenuCurrent "main" .) ($current.HasMenuCurrent "main" .) -}}
-          {{- $active = or $active (eq .Name $current.Title) -}}
-          {{- $active = or $active (and (eq .Name "Docs") (eq $current.Section "docs")) -}}
-          {{- $active = or $active (and (eq .Name "Guides") (eq $current.Section "guides")) -}}
-          {{- $active = or $active (and (eq .Name "Blog") (eq $current.Section "blog" "authors")) -}}
+          {{- $active = or $active (in $current.RelPermalink .URL) -}}
+          {{- $active = or $active (and (eq .Name "Documentation") (eq $current.Section "docs")) -}}
           <li class="nav-item{{ if $active }} active{{ end }}">
             <a class="nav-link" href="{{ .URL | relURL }}">{{ .Name }}</a>
           </li>

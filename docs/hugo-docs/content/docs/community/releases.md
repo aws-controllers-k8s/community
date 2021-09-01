@@ -1,4 +1,17 @@
-# Releases, Versioning and Maintenance Phases
+---
+title : "Release Phases"
+description: "Releases, Versioning and Maintenance Phases"
+lead: "Releases, Versioning and Maintenance Phases"
+date: 2020-10-06T08:47:36+00:00
+lastmod: 2020-10-06T08:47:36+00:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Prologue"
+weight: 50
+toc: true
+---
 
 Service controllers are built in separate source code repositories. Below, you
 will find a description of the [Project Stages](#project-stages) that a service

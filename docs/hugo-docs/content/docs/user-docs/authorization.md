@@ -1,4 +1,17 @@
-# Configure permissions for authorization and access
+---
+title: "Authorization"
+description: "How RBAC and IAM work for ACK"
+lead: "How RBAC and IAM work for ACK"
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Installing a Controller"
+weight: 30
+toc: true
+---
 
 There are two different Role-Based Access Control (RBAC) systems needed for ACK service controller authorization: Kubernetes RBAC and AWS IAM. 
 

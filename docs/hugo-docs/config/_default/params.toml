@@ -55,7 +55,7 @@ alertText = "Like ACK? <a class=\"alert-link\" href=\"https://github.com/aws-con
 
 # Edit Page
 docsRepo = "https://github.com/aws-controllers-k8s/community"
-editPage = false
+editPage = true
 
 [options]
   lazySizes = true

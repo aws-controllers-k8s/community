@@ -1,4 +1,17 @@
-# How it works
+---
+title : "How it works"
+description: "How the ACK controller works"
+lead: ""
+date: 2020-10-06T08:47:36+00:00
+lastmod: 2020-10-06T08:47:36+00:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Prologue"
+weight: 20
+toc: true
+---
 
 The idea behind AWS Controllers for Kubernetes (ACK) is to enable Kubernetes
 users to describe the desired state of AWS resources using the Kubernetes API

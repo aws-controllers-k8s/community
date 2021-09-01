@@ -1,4 +1,41 @@
-# IAM Roles for Service Accounts (IRSA)
+---
+title: "Configuring IRSA"
+description: "Setting up ACK with IAM Roles for Service Accounts"
+lead: "Setting up ACK with IAM Roles for Service Accounts"
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Installing a Controller"
+weight: 20
+toc: true
+---
+
+[IAM Roles for Service Accounts][0], or IRSA, is a system that automates the
+provisioning and rotation of IAM temporary credentials (called a Web Identity)
+that a Kubernetes `ServiceAccount` can use to call AWS APIs.
+
+The primary advantage of IRSA is that Kubernetes `Pods` which use the
+`ServiceAccount` associated with an IAM Role can have a reduced IAM permission
+footprint than the IAM Role in use for the Kubernetes EC2 worker node (known as
+the EC2 Instance Profile Role). This security concept is known as **Least
+Privilege**.
+
+For example, assume you have a broadly-scoped IAM Role with permissions to
+access the Instance Metadata Service (IMDS) from the EC2 worker node. If you do
+not want Kubernetes `Pods` running on that EC2 Instance to have access to IMDS,
+you can create a different IAM Role with a reduced permission set and associate
+this reduced-scope IAM Role with the Kubernetes `ServiceAccount` the `Pod`
+uses. IRSA will ensure that a special file is injected (and rotated
+periodically) into the `Pod` that contains a JSON Web Token (JWT) that
+encapsulates a request for temporary credentials to assume the IAM Role with
+reduced permissions.
+
+When AWS clients or SDKs connect to an AWS API, they detect the existence of
+this special token file and call the [`STS::AssumeRoleWithWebIdentity`][2] API
+to assume the IAM Role with reduced permissions.
 
 [IAM Roles for Service Accounts][irsa-docs] (IRSA) automates the provisioning and rotation of AWS Identity and Access Management (IAM) temporary credentials that a Kubernetes service account can use to call AWS APIs.
 
