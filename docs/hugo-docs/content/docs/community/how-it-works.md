@@ -18,7 +18,8 @@ and configuration language. In order to make this happen, let's take a look
 under the covers and walk through how different components in the system
 interact.
 
-![event flow in ACK](ack-how-it-works.png)
+![event flow in ACK](../images/ack-how-it-works.png)
+
 
 In the diagram above, Alice is our Kubernetes user. Her application depends on
 the existence of an Amazon S3 Bucket named `my-bucket`.
