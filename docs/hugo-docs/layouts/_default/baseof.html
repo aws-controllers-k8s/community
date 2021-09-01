@@ -12,7 +12,7 @@
     {{ .Scratch.Set "class" .Type -}}
     {{ .Scratch.Add "class" " list" -}}
   {{ end -}}
-  <body class="{{ .Scratch.Get "class" }}">
+  <body class="{{ .Scratch.Get "class" }} dark">
     {{ partial "header/header.html" . }}
     <div class="wrap container" role="document">
       <div class="content">
