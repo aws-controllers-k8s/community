@@ -1,4 +1,14 @@
-# API Inference
+---
+title: "API Inference"
+description: "How ACK introspects an AWS API model file"
+lead: ""
+draft: false
+menu: 
+  docs:
+    parent: "Contributor Docs"
+weight: 30
+toc: true
+---
 
 This document discusses how ACK introspects an AWS API model file and
 determines which `CustomResourceDefinition`s (CRDs) to construct and what the

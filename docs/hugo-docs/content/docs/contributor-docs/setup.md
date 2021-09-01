@@ -2,14 +2,11 @@
 title: "Setup"
 description: "Setting up the development environment"
 lead: ""
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Contributor Docs"
-weight: 30
+weight: 40
 toc: true
 ---
 

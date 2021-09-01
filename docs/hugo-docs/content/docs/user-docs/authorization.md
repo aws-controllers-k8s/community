@@ -2,10 +2,7 @@
 title: "Configure Permissions"
 description: "Configuring RBAC and IAM for ACK"
 lead: "Configuring RBAC and IAM for Authorization and Access"
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Installing a Controller"

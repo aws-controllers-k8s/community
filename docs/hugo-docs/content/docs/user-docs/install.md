@@ -2,10 +2,7 @@
 title: "Installation"
 description: "Installing an ACK controller"
 lead: "Installing an ACK controller"
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Installing a Controller"

@@ -2,10 +2,7 @@
 title: "Cleanup"
 description: "Uninstalling an ACK controller"
 lead: "Uninstalling an ACK controller"
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Installing a Controller"

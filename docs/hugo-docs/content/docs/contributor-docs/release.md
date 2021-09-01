@@ -2,14 +2,11 @@
 title: "Release"
 description: "The release process for ACK service controller"
 lead: "The release process for ACK service controller"
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Contributor Docs"
-weight: 60
+weight: 70
 toc: true
 ---
 

@@ -2,10 +2,7 @@
 title: "Cross-Account Resource Management (CARM)"
 description: "Managing resources in different AWS accounts"
 lead: ""
-date: 2020-11-12T15:22:20+01:00
-lastmod: 2020-11-12T15:22:20+01:00
 draft: false
-images: []
 menu: 
   docs:
     parent: "Installing a Controller"
