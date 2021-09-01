@@ -10,9 +10,12 @@ nav:
   - Overview: 'index.md'
   - Services: 'services.md'
 - User docs:
-  - Install: 'user-docs/install.md'
-  - Authorization and Access Control: 'user-docs/authorization.md'
-  - IAM Roles for Service Accounts: 'user-docs/irsa.md'
+  - Getting started: 'user-docs/getting-started.md'
+  - Install ACK service controllers: 'user-docs/install.md'
+  - Configure permissions: 'user-docs/authorization.md'
+  - IAM Roles for Service Accounts (IRSA): 'user-docs/irsa.md'
+  - Cross-Account Resource Management (CARM): 'user-docs/cross-account-resource-management.md'
+  - Cleanup: 'user-docs/cleanup.md' 
 - Contributor docs:
   - Overview: 'dev-docs/overview.md'
   - Code generation: 'dev-docs/code-generation.md'
