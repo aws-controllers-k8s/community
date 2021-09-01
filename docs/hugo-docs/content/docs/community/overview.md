@@ -24,17 +24,19 @@ toc: true
 
 Each ACK service controller is packaged into a separate container image that is published in a public repository corresponding to an individual ACK service controller.
 
-!!! note "Choose the ACK Docker image that is right for you"
-    Note that there is no single ACK Docker image. Instead, there are Docker
-    images for each individual ACK service controller that manages resources
-    for a particular AWS API.
+{{% hint title="Choose the ACK Docker image that is right for you" %}}
+Note that there is no single ACK Docker image. Instead, there are Docker
+images for each individual ACK service controller that manages resources
+for a particular AWS API.
+{{% /hint %}}
 
 Docker images for ACK service controllers can be found in the [ACK registry within the Amazon ECR Public Gallery][ack-ecr-gallery]. To find a Docker image for a specific service, you can go to `gallery.ecr.aws/aws-controllers-k8s/$SERVICENAME-controller`. For example, the link to the ACK service controller Docker image for Amazon Simple Storage Service (Amazon S3) is [`gallery.ecr.aws/aws-controllers-k8s/s3-controller`][s3-ecr-controller].
 
 Individual ACK service controllers are tagged with their release version. You can find image URIs for different releases under the `Image tags` section in the image repository on the ECR Public Gallery.
 
-!!! note "Be sure to specify release version"
-    You must always specify a version tag when referencing an ACK service controller image.
+{{% hint title="Be sure to specify a release version" type="info" %}}
+You must always specify a version tag when referencing an ACK service controller image.
+{{% /hint %}}
 
 In accordance with [best practices][no-latest-tag], we do not include `:latest` default tags for our image repositories.
 

@@ -17,10 +17,9 @@ There are two different Role-Based Access Control (RBAC) systems needed for ACK 
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [aws-iam]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access.html
 
-!!! note "These two RBAC systems do not overlap"
-    The Kubernetes user that makes a Kubernetes API call with `kubectl` has no association with an IAM role. Instead, the IAM role is associated with the [service account][k8s-service-account] that runs the ACK service controller's pod.
-
-[k8s-service-account]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+{{% hint type="info" title="These two RBAC systems to not overlap" %}}
+The Kubernetes user that makes a Kubernetes API call with `kubectl` has no association with an IAM role. Instead, the IAM role is associated with the [service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) that runs the ACK service controller's pod.
+{{% /hint %}}
 
 Refer to the following diagram for more details on running a Kubernetes API server with RBAC authorization mode enabled.
 
@@ -32,8 +31,9 @@ You will need to configure Kubernetes RBAC and AWS IAM permissions before using 
 
 As part of installation, Kubernetes `Role` resources are automatically created. These roles contain permissions to modify the Kubernetes custom resources (CRs) that the ACK service controller is responsible for.
 
-!!! note "ACK resources are namespace-scoped"
-    All Kubernetes CRs managed by an ACK service controller are namespace-scoped resources. There are no cluster-scoped ACK-managed CRs.
+{{% hint type="info" title="ACK resources are namespace-scoped" %}}
+All Kubernetes CRs managed by an ACK service controller are namespace-scoped resources. There are no cluster-scoped ACK-managed CRs.
+{{% /hint %}}
 
 By default, the following Kubernetes `Role` resources are created when installing an ACK service controller:
 

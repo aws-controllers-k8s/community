@@ -23,14 +23,15 @@ with the details so we can reproduce your issue.
 For local development and testing we use "Kubernetes in Docker" (`kind`), 
 which in turn requires Docker.
 
-!!! warning "Footprint"
-    When you run the `scripts/kind-build-test.sh` script the first time,
-    the step that builds the container image for the target ACK service
-    controller can take up to 40 or more minutes. This is because the container image
-    contains a lot of dependencies. Once you successfully build the target
-    image this base image layer is cached locally, and the build takes a much 
-    shorter amount of time. We are aware of this (and the storage footprint,
-    ca. 3 GB) and aim to reduce both in the fullness of time.
+{{% hint type="warning" title="Footprint" %}}
+When you run the `scripts/kind-build-test.sh` script the first time,
+the step that builds the container image for the target ACK service
+controller can take up to 40 or more minutes. This is because the container image
+contains a lot of dependencies. Once you successfully build the target
+image this base image layer is cached locally, and the build takes a much 
+shorter amount of time. We are aware of this (and the storage footprint,
+ca. 3 GB) and aim to reduce both in the fullness of time.
+{{% /hint %}}
 
 In summary, in order to test ACK you will need to have the following tools
 installed and configured:
@@ -48,10 +49,11 @@ described in the following from the root directory of the
 You should have forked this repository and `git clone`'d it locally when
 [setting up your development environment](../setup/).
 
-!!! tip "Recommended RAM"
-    Given that our test setup creates the container images and then launches
-    a test cluster, we recommend that you have at least 4GB of RAM available
-    for the tests.
+{{% hint type="info" title="Recommended RAM" %}}
+Given that our test setup creates the container images and then launches
+a test cluster, we recommend that you have at least 4GB of RAM available
+for the tests.
+{{% /hint %}}
 
 With the prerequisites out of the way, let's move on to running e2e tests for a
 service controller.
@@ -118,9 +120,10 @@ aws iam attach-role-policy \
     --policy-arn "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 ```
 
-!!! tip "Access delegation in IAM"
-    If you're not that familiar with IAM access delegation, we recommend you
-    to peruse the [IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html)
+{{% hint title="Access delegation in IAM" %}}
+If you're not that familiar with IAM access delegation, we recommend you
+to peruse the [IAM documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html)
+{{% /hint %}}
 
 Next, in order for our test to generate [temporary credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
 we need to tell it to use the IAM role we created in the previous step.
@@ -131,13 +134,14 @@ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) &&
 export ACK_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
 ```
 
-!!! info 
-     The tests uses the `generate_temp_creds` function from the
-     `scripts/lib/aws.sh` script, executing effectively 
-     ` aws sts assume-role --role-session-arn $ACK_ROLE_ARN --role-session-name $TEMP_ROLE `
-     which fetches temporarily `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-     and an `AWS_SESSION_TOKEN` used in turn to authentication the ACK
-     controller. The duration of the session token is 900 seconds (15 minutes).
+{{% hint type="info" %}}
+The tests uses the `generate_temp_creds` function from the
+`scripts/lib/aws.sh` script, executing effectively 
+` aws sts assume-role --role-session-arn $ACK_ROLE_ARN --role-session-name $TEMP_ROLE `
+which fetches temporarily `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+and an `AWS_SESSION_TOKEN` used in turn to authentication the ACK
+controller. The duration of the session token is 900 seconds (15 minutes).
+{{% /hint %}}
 
 Phew that was a lot to set up, but good news: you're almost there.
 
@@ -146,11 +150,12 @@ Phew that was a lot to set up, but good news: you're almost there.
 Before you proceed, make sure that you've done the IAM setup in the previous
 step.
 
-!!! warning "IAM troubles?!"
-    If you try the following command and you see an error message containing
-    something along the line of `ACK_ROLE_ARN is not defined.` then you know
-    that somewhere in the IAM setup you either left out a step or one of the
-    commands failed.
+{{% hint type="warning" title="IAM troubles‽" %}}
+If you try the following command and you see an error message containing
+something along the line of `ACK_ROLE_ARN is not defined.` then you know
+that somewhere in the IAM setup you either left out a step or one of the
+commands failed.
+{{% /hint %}}
 
 Now we're finally in the position to execute the end-to-end test:
 

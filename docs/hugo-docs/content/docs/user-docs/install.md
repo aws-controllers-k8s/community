@@ -14,12 +14,11 @@ The following guide will walk you through the installation of an [ACK service co
 
 Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository. 
 
-!!! note "Be mindful of maintenance phases"
-    Check the [project stage][proj-stages] and [maintenance phase][maint-phases] of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
+{{% hint title="Be mindful of maintenance phases" %}}
+Check the [project stage](https://aws-controllers-k8s.github.io/community/releases/#project-stages) and [maintenance phase](https://aws-controllers-k8s.github.io/community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
+{{% /hint %}}
 
 [ack-services]: https://aws-controllers-k8s.github.io/community/services/
-[proj-stages]: https://aws-controllers-k8s.github.io/community/releases/#project-stages
-[maint-phases]: https://aws-controllers-k8s.github.io/community/releases/#maintenance-phases
 [rel-ver]: https://aws-controllers-k8s.github.io/community/releases/#releases-and-versioning
 
 ## Install an ACK service controller with Helm (Recommended)

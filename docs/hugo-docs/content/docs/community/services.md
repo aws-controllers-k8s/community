@@ -25,14 +25,13 @@ one of our [maintenance phases][maint-phases].
 For details, including a list of planned AWS service APIs, see the [Service
 Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/projects/1):
 
-!!! note "IMPORTANT"
-    There is no single release of the ACK project. The ACK project contains a
-    series of service controllers, one for each AWS service API. Each
-    individual ACK service controller is released separately. Please see the
-    [release documentation][releases] for information on how we version and
-    release ACK service controllers.
-
-[releases]: https://aws-controllers-k8s.github.io/community/releases
+{{% hint type="danger" title="IMPORTANT" %}}
+There is no single release of the ACK project. The ACK project contains a
+series of service controllers, one for each AWS service API. Each
+individual ACK service controller is released separately. Please see the
+[release documentation](https://aws-controllers-k8s.github.io/community/releases) for information on how we version and
+release ACK service controllers.
+{{% /hint %}}
 
 | AWS Service | Project Stage | Maintenance Phase | Next Milestone 
 | ----------- | ------------- | ----------------- | -------------- 
@@ -61,9 +60,10 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 | AWS [Step Functions](#aws-step-functions) | `RELEASED` | `PREVIEW` |
 | Amazon [S3](#amazon-s3) | `RELEASED` | `PREVIEW` |
 
-!!! note "Don't see a service listed?"
-    If you don't see a particular AWS service listed, feel free to
-    [propose it](https://github.com/aws-controllers-k8s/community/issues/new?labels=Service+Controller&template=propose_new_controller.md&title=%5Bname%5D+service+controller)!
+{{% hint type="info" title="Don't see a service listed?" %}}
+If you don't see a particular AWS service listed, feel free to
+[propose it](https://github.com/aws-controllers-k8s/community/issues/new?labels=Service+Controller&template=propose_new_controller.md&title=%5Bname%5D+service+controller)!
+{{% /hint %}}
 
 ## Amazon ACM
 

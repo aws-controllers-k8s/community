@@ -60,12 +60,13 @@ In the `IN PROGRESS` stage we identify those **AWS service API resources** that
 will be supported by the controller and generate the code that manages the
 lifecycle of these resources.
 
-!!! note "what do we mean by 'AWS service API resources'?
-    An *AWS service API resource* is a top-level object that can be created by
-    a particular AWS service API. For example, an SNS Topic or an S3 Bucket.
-    Some service APIs have multiple top-level resources; SNS, for instance, has
-    Topic, PlatformApplication and PlatformEndpoint top-level resources that
-    may be created.
+{{% hint title="What do we mean by 'AWS service API resources'?" type="info" %}}
+An *AWS service API resource* is a top-level object that can be created by
+a particular AWS service API. For example, an SNS Topic or an S3 Bucket.
+Some service APIs have multiple top-level resources; SNS, for instance, has
+Topic, PlatformApplication and PlatformEndpoint top-level resources that
+may be created.
+{{% /hint %}}
 
 ### RELEASED
 
@@ -88,11 +89,12 @@ full description of changes included in that release.
 
 ## Releases and Versioning
 
-!!! important
-    ACK does *not* have a single release status or version.
-    Different components within the ACK project have different release cadences,
-    versions and statuses. Please read the information below before installing
-    any ACK component.
+{{% hint type="danger" title="Important" %}}
+ACK does *not* have a single release status or version.
+Different components within the ACK project have different release cadences,
+versions and statuses. Please read the information below before installing
+any ACK component.
+{{% /hint %}}
 
 Service controllers in ACK use [Semantic Versioning](#semantic-versioning) to
 indicate whether changes included in a particular binary release introduce
@@ -159,9 +161,10 @@ repository.
 [s3-ctrl]: https://github.com/aws-controllers-k8s/s3-controller
 [ecr-ack-ctrl]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller
 
-!!! note
-    Binaries for individual ACK service controllers components are published in
-    separate Amazon ECR Public repositories.
+{{% hint %}}
+Binaries for individual ACK service controllers components are published in
+separate Amazon ECR Public repositories.
+{{% /hint %}}
 
 For ACK components that have a Helm Chart distributable -- i.e. an ACK service
 controller -- the creation of a new SemVer Git tag on the source code
@@ -185,26 +188,27 @@ specified in the controller's `go.mod` file.
 The ACK code generator that produces Go code for service controllers depends on
 a specific version of the ACK common runtime.
 
-!!! note "dependency between the code generator and common runtime"
-    The ACK code generator depends on the ACK common runtime in a unique way:
-    the Go code that the ACK code generator *produces* adheres to a specific
-    version of the ACK common runtime. Even though no Go code in the ACK code
-    generator actually imports the ACK common runtime, this dependency exists
-    because the Go code produced by the templates inside the code generator imports
-    the ACK common runtime. In order to make this Go code dependency more strict,
-    we have a test package inside the ACK code generator that imports the ACK
-    common runtime. In this way, we're able to include a version-specific
-    dependency line in the ACK code generator's `go.mod` file, thereby allowing
-    Go's module infrastructure to pin the dependency between the code generator and
-    the common runtime.
+{{% hint title="Dependency between the code generator and common runtime" type="info" %}}
+The ACK code generator depends on the ACK common runtime in a unique way:
+the Go code that the ACK code generator *produces* adheres to a specific
+version of the ACK common runtime. Even though no Go code in the ACK code
+generator actually imports the ACK common runtime, this dependency exists
+because the Go code produced by the templates inside the code generator imports
+the ACK common runtime. In order to make this Go code dependency more strict,
+we have a test package inside the ACK code generator that imports the ACK
+common runtime. In this way, we're able to include a version-specific
+dependency line in the ACK code generator's `go.mod` file, thereby allowing
+Go's module infrastructure to pin the dependency between the code generator and
+the common runtime.
+{{% /hint %}}
 
 ### Stable Helm Charts
 
-!!! tip
-    We [recommend][recommend-helm] using Helm to install an ACK service
-    controller.
+{{% hint type="success" title="Tip" %}}
+We [recommend](https://aws-controllers-k8s.github.io/community/user-docs/install/#helm-recommended) using Helm to install an ACK service
+controller.
+{{% /hint %}}
 
-[recommend-helm]: https://aws-controllers-k8s.github.io/community/user-docs/install/#helm-recommended
 
 Some ACK service controllers will have Helm Charts with a
 `v$MAJOR_VERSION-stable` tag, referred from here out as just a
@@ -221,10 +225,12 @@ Typically these tests are "soak" tests and allow the team maintaining that ACK
 controller's source code to have a high degree of confidence in the
 controller's long-running operation.
 
-!!! note
-    Please note that not all ACK service controllers will have a Helm chart
-    with a `stable` artifact tag. Furthermore, there will only ever be a single
-    `stable` Helm Chart tag **per major version series of a controller**.
+{{% hint %}}
+Please note that not all ACK service controllers will have a Helm chart
+with a `stable` artifact tag. Furthermore, there will only ever be a single
+`stable` Helm Chart tag **per major version series of a controller**.
+{{% /hint %}}
+
 
 This `stable` Helm Chart tag (an OCI Artifact tag) will point to different
 Helm Chart packages over time. From time to time, the maintainer team for a

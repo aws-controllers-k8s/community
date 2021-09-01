@@ -74,9 +74,9 @@ files](https://github.com/aws/aws-sdk-go/tree/master/models/apis) from the
 truth and use the `aws-sdk-go/private/model/api` Go package to navigate that
 model.
 
-!!! note
-
-    This step is the `ack-generate apis` command.
+{{% hint %}}
+This step is the `ack-generate apis` command.
+{{% /hint %}}
 
 After generating Kubernetes API type definitions for the top-level resources
 exposed by the AWS API, we then need to generate the "DeepCopy" interface
@@ -85,16 +85,16 @@ be used by the Kubernetes runtime package (it defines an interface called
 `runtime.Object` that requires certain methods that copy the object and its
 component parts).
 
-!!! note
-
-    This step runs the `controller-gen object` command 
+{{% hint %}}
+This step runs the `controller-gen object` command 
+{{% /hint %}}
 
 Next, we generate the custom resource definition (CRD) configuration files, one
 for each top-level resource identified in earlier steps.
 
-!!! note
-
-    This step runs the `controller-gen crd` command
+{{% hint %}}
+This step runs the `controller-gen crd` command
+{{% /hint %}}
 
 Next, we generate the actual implementation of the ACK controller for the
 target service. This step uses a set of templates and code in the `pkg/model`
@@ -104,18 +104,18 @@ implementation Go files, this step also outputs a set of Kubernetes
 configuration files for the `Deployment` and the `ClusterRoleBinding` of the
 `Role` created in the next step.
 
-!!! note
-
-    This step runs the `ack-generate controller` command
+{{% hint %}}
+This step runs the `ack-generate controller` command
+{{% /hint %}}
 
 Finally, we generate the configuration file for a Kubernetes `Role` that the
 Kubernetes `Pod` (running in a Kubernetes `Deployment`) running the ACK service
 controller. This `Role` needs to have permissions to read and write CRs of the
 Kind that the service controller manages.
 
-!!! note
-
-    This step runs the `controller-gen rbac` command
+{{% hint %}}
+This step runs the `controller-gen rbac` command
+{{% /hint %}}
 
 ### Crossplane Provider Generation
 

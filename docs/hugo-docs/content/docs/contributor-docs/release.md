@@ -22,8 +22,9 @@ release latest artifacts, service team only needs to create a new release for se
 github repository with a semver tag (Ex: v0.0.1). 
 Steps below show how to create a new release with semver tag.
 
-!!! note "Semver"
-    For more details on semantic versioning(semver), please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/) 
+{{% hint type="info" title="Semver" %}}
+For more details on semantic versioning(semver), please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/) 
+{{% /hint %}}
 
 Once the git repository is tagged with semver, a postsubmit prowjob builds binary 
 docker image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
@@ -91,11 +92,13 @@ or by doing:
 
 `git diff`
 
-!!! note
-    When you run `make build-controller` for a service, it will overwrite any
-    Helm chart files that had previously been generated in the `services/$SERVICE/helm`
-    directory with files that refer to the Docker image with an image tag
-    referring to the release you've just built artifacts for.
+{{% hint %}}
+When you run `make build-controller` for a service, it will overwrite any
+Helm chart files that had previously been generated in the `services/$SERVICE/helm`
+directory with files that refer to the Docker image with an image tag
+referring to the release you've just built artifacts for.
+
+{{% /hint %}}
    
 4) Commit your code and create a pull request:
 ```bash
@@ -110,18 +113,14 @@ git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
 git push upstream main --tags
 ```
 
-!!! note "TODO"
-    A Github Action should execute the above step which will end up associating a Git tag (and therefore a Github
-    release) with the SHA1 commit ID of the source code for the controllers and the release artifacts you built for
-    that release version.
-
 7) `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
 both docker image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
-!!! note "Stable Helm Chart"
-    * This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git 
-    branch.
-    * To learn more about how to push changes to stable branch please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/)
-    * When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm 
-    artifacts with stable tag. Ex: `elasticache-v1-stable`
+{{% hint type="info" title="Stable Helm Chart" %}}
+* This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git 
+branch.
+* To learn more about how to push changes to stable branch please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/)
+* When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm 
+artifacts with stable tag. Ex: `elasticache-v1-stable`
+{{% /hint %}}

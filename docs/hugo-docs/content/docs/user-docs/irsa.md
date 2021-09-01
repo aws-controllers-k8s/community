@@ -40,8 +40,9 @@ Instead of creating and distributing your AWS credentials to the containers or u
 
 By using the IRSA feature, you no longer need to provide extended permissions to the node IAM role so that pods on that node can call AWS APIs. You can scope IAM permissions to a service account, and only pods that use that service account have access to those permissions. 
 
-!!! note "EKS is not required to use IRSA"
-    You do not need to use the Amazon EKS service in order to use IRSA. You can [set up IRSA on your own Kubernetes installation][k8s-irsa-setup].
+{{% hint type="info" title="EKS is not required to use IRSA" %}}
+You do not need to use the Amazon EKS service in order to use IRSA. You can [set up IRSA on your own Kubernetes installation](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md).
+{{% /hint %}}
 
 The following steps demonstrate how to set up IRSA on an EKS cluster while installing the ACK S3 controller using Helm charts. By modifying the variable values as needed, these steps can be applied for the installation of other ACK service controllers.
 
@@ -176,7 +177,6 @@ AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/to
 ```
 
 [irsa-docs]: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
-[k8s-irsa-setup]: https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md
 [security-token]: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 [oidc-iam-docs]: https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
 [iam-policy]: https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html

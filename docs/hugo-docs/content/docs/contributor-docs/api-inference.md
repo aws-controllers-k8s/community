@@ -45,11 +45,10 @@ spec:
   name: my-amazing-bucket
 ```
 
-!!! note "Manifests"
-    The YAML files containing an object definition like above are typically
-    called [**manifests**][manifest].
-
-[manifest]: https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-manifest
+{{% hint title="Manifests" %}}
+  The YAML files containing an object definition like above are typically
+  called [**manifests**](https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-manifest).
+{{% /hint %}}
 
 Above, the `Object` has a GVK of "s3.services.k8s.aws/v1alpha1:Bucket" with an
 **internal-to-Kubernetes** `Name` of "my-amazing-bucket" and a single
@@ -216,10 +215,11 @@ each ACK service's `services/$SERVICE/apis/$VERSION` directory.
 This section of our documentation discusses how we create those Go type
 definitions.
 
-!!! note "controller-gen crd"
-    The OpenAPIv3 Validating Schema shown above is created by the
-    [`controller-gen crd`][cg] CLI command and is a convenient human-readable
-    representation of the `CustomResourceDefinition`.
+{{% hint title="controller-gen crd" %}}
+The OpenAPIv3 Validating Schema shown above is created by the
+[`controller-gen crd`][cg] CLI command and is a convenient human-readable
+representation of the `CustomResourceDefinition`.
+{{% /hint %}}
 
 [cg]: https://book.kubebuilder.io/reference/controller-gen.html
 
@@ -239,11 +239,12 @@ into the Bucket's `Spec` and which fields go into the Bucket's `Status`?
 Well, it's definitely not a manual process. Everything in ACK is code-generated
 and discovered by inspecting the AWS API model files.
 
-!!! note "what are AWS API model files?"
-    The AWS API model files are JSON files that contain information about a
-    particular AWS service API's Actions and Shapes. We consume the model files
-    [distributed][aws-sdk-go-model-files] in the `aws-sdk-go` project. (Look
-    for the `api-2.json` files in the linked service-specific directories...)
+{{% hint type="info" title="What are AWS API model files?" %}}
+The AWS API model files are JSON files that contain information about a
+particular AWS service API's Actions and Shapes. We consume the model files
+[distributed][aws-sdk-go-model-files] in the `aws-sdk-go` project. (Look
+for the `api-2.json` files in the linked service-specific directories...)
+{{% /hint %}}
 
 [aws-sdk-go-model-files]: https://github.com/aws/aws-sdk-go/tree/master/models/apis
 
@@ -388,12 +389,13 @@ fields actually are differently-named Shapes, not `*string`. Why is this? Well,
 the ACK code generator "flattens" some Shapes when it notices that a named
 Shape is just an alias for a simple scalar type (like `*string`).
 
-!!! "why `*string`?"
-    The astute reader may be wondering why the Go type for string fields is
-    `*string` and not `string`. The reason for this lies in `aws-sdk-go`. All
-    types for all Shape members are pointer types, even when the underlying
-    data type is a simple scalar type like `bool` or `int`. Yes, even when
-    the field is required...
+{{% hint type="info" title="Why `*string`?" %}}
+The astute reader may be wondering why the Go type for string fields is
+`*string` and not `string`. The reason for this lies in `aws-sdk-go`. All
+types for all Shape members are pointer types, even when the underlying
+data type is a simple scalar type like `bool` or `int`. Yes, even when
+the field is required...
+{{% /hint %}}
 
 Note that even though the `ACL` field has a Shape of `BucketCannedACL`, that
 Shape is actually just a `string` with a set of enumerated values. Enumerated
@@ -522,12 +524,11 @@ ID.
 The ARN is a globally-unique identifier for the resource in AWS. The Owner AWS
 Account ID is the 12-digit AWS account ID that is billed for the resource.
 
-!!! note "cross-account resource management"
-    The Owner AWS Account ID for a resource [may be different][carm] from the
-    AWS Account ID of the IAM Role that the ACK service controller is executing
-    under.
-
-[carm]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/#create-resource-in-different-aws-accounts
+{{% hint type="info" title="Cross-account resource management" %}}
+The Owner AWS Account ID for a resource [may be different](https://aws-controllers-k8s.github.io/community/user-docs/authorization/#create-resource-in-different-aws-accounts) from the
+AWS Account ID of the IAM Role that the ACK service controller is executing
+under.
+{{% /hint %}}
 
 The `Conditions` field is also included in every ACK CRD's Status field. It is
 a slice of pointers to [`ackv1alpha1.Condition`][ack-cond] structs. The

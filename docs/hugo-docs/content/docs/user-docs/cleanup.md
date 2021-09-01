@@ -35,8 +35,9 @@ export CHART_EXPORT_PATH=/tmp/chart
 kubectl delete -f $CHART_EXPORT_PATH/ack-$SERVICE-controller/crds/s3.services.k8s.aws_buckets.yaml
 ```
 
-!!! note "Check for CRDs that are common across services"
-    There are a few custom resource definitions (CRDs) that are common across services. If you have multiple controllers installed, you should not delete the common CRDs unless you are uninstalling all of the controllers.
+{{% hint type="warning" title="Check for CRDs that are common across services" %}}
+There are a few custom resource definitions (CRDs) that are common across services. If you have multiple controllers installed, you should not delete the common CRDs unless you are uninstalling all of the controllers.
+{{% /hint %}}
 
 ### Delete all CRDs
 

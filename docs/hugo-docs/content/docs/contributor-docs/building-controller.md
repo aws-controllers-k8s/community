@@ -33,10 +33,11 @@ source repository:
 make build-ack-generate
 ```
 
-!!! note "One-off build"
-    You only have to do this once, overall. In other words: unless we change
-    something upstream in terms of the code generation process, this is
-    a one-off operation. Internally, the Makefile executes an `go build` here.
+{{% hint title="One-off build" %}}
+You only have to do this once, overall. In other words: unless we change
+something upstream in terms of the code generation process, this is
+a one-off operation. Internally, the Makefile executes an `go build` here.
+{{% /hint %}}
 
 Don't worry if you forget this step, the script in the next step will complain
 with a message along the line of `ERROR: Unable to find an ack-generate binary`
@@ -68,13 +69,14 @@ ACK service controller for S3's source code repository (the
 override this behaviour with the `SERVICE_CONTROLLER_SOURCE_PATH` environment
 variable.
 
-!!! bug "Handle `controller-gen: command not found`"
-    If you run into the `controller-gen: command not found` message when
-    executing `make build-controller` then you want to check if the
-    `controller-gen` binary is available in `$GOPATH/bin`, also ensure that `$GOPATH/bin` is part of your `$PATH`, see also
-    [`#234`](https://github.com/aws/aws-controllers-k8s/issues/234).
-    You can also install the required version of `controller-gen` using the
-    `scripts/install-controller-gen.sh` helper script.
+{{% hint type="info" title="Handle `controller-gen: command not found`" %}}
+If you run into the `controller-gen: command not found` message when
+executing `make build-controller` then you want to check if the
+`controller-gen` binary is available in `$GOPATH/bin`, also ensure that `$GOPATH/bin` is part of your `$PATH`, see also
+[`#234`](https://github.com/aws/aws-controllers-k8s/issues/234).
+You can also install the required version of `controller-gen` using the
+`scripts/install-controller-gen.sh` helper script.
+{{% /hint %}}
 
 In addition to the ACK service controller code, above generates the
 custom resource definition (CRD) manifests as well as the necessary RBAC

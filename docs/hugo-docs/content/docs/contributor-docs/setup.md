@@ -14,12 +14,13 @@ We walk you now through the setup to start contributing to the AWS Controller
 for Kubernetes (ACK) project. No matter if you're contributing code or docs,
 follow the steps below to set up your development environment.
 
-!!! tip "Issue before PR"
-    Of course we're happy about code drops via PRs, however, in order to give
-    us time to plan ahead and also to avoid disappointment, consider creating
-    an issue first and submit a PR later. This also helps us to coordinate
-    between different contributors and should in general help keeping everyone
-    happy.
+{{% hint type="success" title="Issue before PR" %}}
+Of course we're happy about code drops via PRs, however, in order to give
+us time to plan ahead and also to avoid disappointment, consider creating
+an issue first and submit a PR later. This also helps us to coordinate
+between different contributors and should in general help keeping everyone
+happy.
+{{% /hint %}}
 
 ## Prerequisites
 
@@ -27,8 +28,9 @@ Please ensure that you have [properly installed Go][install-go].
 
 [install-go]: https://golang.org/doc/install
 
-!!! note "Go version"
-    We recommend to use a Go version of `1.15` or above for development.
+{{% hint title="Go version" %}}
+We recommend to use a Go version of `1.15` or above for development.
+{{% /hint %}}
 
 ## Fork upstream repositories
 
@@ -41,16 +43,17 @@ There are three common upstream repositories you should fork first:
 * `github.com/aws-controllers-k8s/code-generator` is the ACK code generator
 * `github.com/aws-controllers-k8s/test-infra` contains the testing scripts
 
-!!! tip "prefix ACK forked repos with 'ack-'"
-    When I fork repositories to my personal Github account, I tend to prefix
-    the repositories with a common string for grouping purposes. For ACK source
-    repositories that I forked from the `github.com/aws-controllers-k8s` Github
-    Organization, I prefix those repositories with "ack-". For example, when I
-    forked the `github.com/aws-controllers-k8s/code-generator` repository to my
-    `github.com/jaypipes` personal space on Github, I immediately renamed the
-    forked repo to `github.com/jaypipes/ack-code-generator`. This makes it easier
-    to quickly filter repositories that are forked from the
-    `github.com/aws-controllers-k8s` Github Organization.
+{{% hint type="info" title="Prefix ACK forked repos with `ack-`" %}}
+When I fork repositories to my personal Github account, I tend to prefix
+the repositories with a common string for grouping purposes. For ACK source
+repositories that I forked from the `github.com/aws-controllers-k8s` Github
+Organization, I prefix those repositories with "ack-". For example, when I
+forked the `github.com/aws-controllers-k8s/code-generator` repository to my
+`github.com/jaypipes` personal space on Github, I immediately renamed the
+forked repo to `github.com/jaypipes/ack-code-generator`. This makes it easier
+to quickly filter repositories that are forked from the
+`github.com/aws-controllers-k8s` Github Organization.
+{{% /hint %}}
 
 After forking the above common repositories, fork the upstream service
 controller repositories that you wish to work on or test out. The upstream
