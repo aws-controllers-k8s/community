@@ -1,7 +1,17 @@
-# Building an ACK service controller
-
-This document continues our contributor-focused discussion by explaining how to
-build or regenerate an ACK service controller.
+---
+title: "Building a Controller"
+description: "How to build or regenerate an ACK service controller"
+lead: "How to build or regenerate an ACK service controller"
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Contributor Docs"
+weight: 40
+toc: true
+---
 
 ## Prerequisites
 

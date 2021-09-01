@@ -1,6 +1,17 @@
-# Release
-
-Here we document the release process for ACK service controllers.
+---
+title: "Release"
+description: "The release process for ACK service controller"
+lead: "The release process for ACK service controller"
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Contributor Docs"
+weight: 60
+toc: true
+---
 
 Remember that there is no single ACK binary. Rather, when we build a release
 for ACK, that release is for one or more individual ACK service controllers

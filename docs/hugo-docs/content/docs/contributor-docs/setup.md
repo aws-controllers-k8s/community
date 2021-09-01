@@ -1,4 +1,17 @@
-# Setup 
+---
+title: "Setup"
+description: "Setting up the development environment"
+lead: ""
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Contributor Docs"
+weight: 30
+toc: true
+---
 
 We walk you now through the setup to start contributing to the AWS Controller
 for Kubernetes (ACK) project. No matter if you're contributing code or docs,

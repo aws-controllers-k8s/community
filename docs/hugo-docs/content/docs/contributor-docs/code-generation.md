@@ -1,4 +1,17 @@
-# Code generation
+---
+title: "Code Generation"
+description: "How to generate ACK controllers"
+lead: ""
+date: 2020-11-12T15:22:20+01:00
+lastmod: 2020-11-12T15:22:20+01:00
+draft: false
+images: []
+menu: 
+  docs:
+    parent: "Contributor Docs"
+weight: 20
+toc: true
+---
 
 In order to keep the code for all the service controllers consistent, we will
 use a strategy of generating the custom resource definitions and controller
