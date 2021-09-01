@@ -49,7 +49,7 @@ The following steps demonstrate how to set up IRSA on an EKS cluster while insta
 ## Step 1. Create an OIDC identity provider for your cluster
 
 Create an [OpenID Connect (OIDC) identity provider][oidc-docs] for your EKS cluster using the `eksctl utils` command:
-```
+```bash
 export EKS_CLUSTER_NAME=<eks cluster name>
 export AWS_REGION=<aws region id>
 eksctl utils associate-iam-oidc-provider --cluster $EKS_CLUSTER_NAME --region $AWS_REGION --approve
@@ -59,7 +59,7 @@ For detailed instructions, refer to Amazon EKS documentation on how to [create a
 ## Step 2. Create an IAM role and policy for your service account
 
 ### Create an IAM role for your ACK service controller
-```
+```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
 ACK_K8S_NAMESPACE=ack-system
@@ -95,7 +95,7 @@ aws iam create-role --role-name "${ACK_CONTROLLER_IAM_ROLE}" --assume-role-polic
 Take note of the Amazon Resource Name (ARN) that is associated with your new ACK service controller IAM role. You will need this ARN for later steps. 
 
 ### Attach an IAM policy to the IAM role
-```
+```bash
 # This example uses a pre-existing policy for Amazon S3
 # Create an IAM policy and use its ARN and update IAM_POLICY_ARN variable as needed
 IAM_POLICY_ARN='arn:aws:iam::aws:policy/AmazonS3FullAccess'
@@ -111,20 +111,20 @@ For detailed instructions, refer to Amazon EKS documentation on [creating an IAM
 If you [installed your ACK service controller using a Helm chart][install-docs], then a service account already exists on your cluster. However, it is still neccessary to associate an IAM role with the service account. 
 
 Verify that your service account exists using `kubectl describe`:
-```
+```bash
 kubectl describe serviceaccount/$ACK_K8S_SERVICE_ACCOUNT_NAME -n $ACK_K8S_NAMESPACE
 ```
 Note that the Amazon Resource Name (ARN) of the IAM role that you created is not yet set as an annotation for the service account. 
 
 Use the following commands to associate an IAM role to a service account:
-```
+```bash
 # Annotate the service account with the ARN
 export ISRA_ROLE_ARN=eks.amazonaws.com/role-arn=<IAM Role Arn>
 kubectl annotate serviceaccount -n $ACK_K8S_NAMESPACE $ACK_K8S_SERVICE_ACCOUNT_NAME $ISRA_ROLE_ARN
 ```
 
 If you have not done so already, update the AWS region of your ACK service controller using the following commands:
-```
+```bash
 # Update your controller with the correct AWS region. Example: us-east-1
 export AWS_SERVICE_NAME="s3"
 export ACK_K8S_RELEASE_NAME=ack-$AWS_SERVICE_NAME-controller
@@ -138,7 +138,7 @@ If you did not already install your ACK service controller using Helm charts, yo
 
 Update the [`values.yaml` file][s3-helm-values] and set the value for `aws.region` and `serviceAccount.annotations`.
 
-```
+```bash
 # Update variables as needed for your ACK service controller
 ACK_CONTROLLER_HELM_CHARTS_DIR=<directory containing Helm chart for ACK service controller>
 AWS_SERVICE_NAME="s3"
@@ -155,7 +155,7 @@ helm install --create-namespace --namespace "$ACK_K8S_NAMESPACE" "$ACK_K8S_RELEA
 ```
 
 Verify that the service account has been created on your cluster and that its annotations include the IAM role for your ACK service controller.
-```
+```bash
 kubectl describe serviceaccount/$ACK_K8S_SERVICE_ACCOUNT_NAME -n $ACK_K8S_NAMESPACE
 ```
 
@@ -166,12 +166,12 @@ For detailed instructions, refer to Amazon EKS documentation on how to [associat
 When AWS clients or SDKs connect to an AWS API, they detect an [AssumeRoleWithWebIdentity][security-token] security token to assume the IAM role. 
 
 Verify that the `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables exist for your Kubernetes pod using the following commands:
-```
+```bash
 kubectl get pods -A
 kubectl exec -n $ACK_K8S_NAMESPACE <NAME> env | grep ack
 ```
 The output should look similar to the following:
-```
+```bash
 AWS_ROLE_ARN=arn:aws:iam::<AWS_ACCOUNT_ID>:role/<IAM_ROLE_NAME>
 AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
 ```

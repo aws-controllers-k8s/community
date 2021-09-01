@@ -71,14 +71,14 @@ controller towards the S3 service.
 First, define the name of the IAM role that will have the permission to manage
 S3 buckets on your behalf:
 
-```
+```bash
 export ACK_TEST_IAM_ROLE=Admin-k8s
 ```
 
 Now we need to verify the IAM principal (likely an IAM user) that is going to
 assume the IAM role `ACK_TEST_IAM_ROLE`. So to get its ARN, execute:
 
-```
+```bash
 export ACK_TEST_PRINCIPAL_ARN=$(aws sts get-caller-identity --query 'Arn' --output text)
 ```
 
@@ -88,7 +88,7 @@ print something along the lines of `arn:aws:iam::1234567890121:user/ausername`.
 Next up, create the IAM role, adding the necessary trust relationship to the role,
 using the following commands:
 
-```
+```bash
 cat > trust-policy.json << EOF
 {
 	"Version": "2012-10-17",
@@ -105,7 +105,7 @@ EOF
 
 Using above trust policy, we can now create the IAM role:
 
-```
+```bash
 aws iam create-role \
     --role-name $ACK_TEST_IAM_ROLE \
     --assume-role-policy-document file://trust-policy.json
@@ -114,7 +114,7 @@ aws iam create-role \
 Now we're in the position to give the IAM role `ACK_TEST_IAM_ROLE` the permission
 to handle S3 buckets for us, using:
 
-```
+```bash
 aws iam attach-role-policy \
     --role-name $ACK_TEST_IAM_ROLE \
     --policy-arn "arn:aws:iam::aws:policy/AmazonS3FullAccess"
@@ -129,7 +129,7 @@ Next, in order for our test to generate [temporary credentials](https://docs.aws
 we need to tell it to use the IAM role we created in the previous step.
 To generate the IAM role ARN, do:
 
-```
+```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) && \
 export ACK_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE}
 ```
@@ -159,7 +159,7 @@ commands failed.
 
 Now we're finally in the position to execute the end-to-end test:
 
-```
+```bash
 make kind-test SERVICE=$SERVICE
 ```
 
@@ -179,7 +179,7 @@ and verify if the resource has successfully created. In our example case it
 should create an S3 bucket and then destroy it again, yielding something like
 the following (edited down to the relevant parts):
 
-```
+```bash
 ...
 ./scripts/kind-build-test.sh -s s3
 Using Kubernetes kindest/node:v1.16.9@sha256:7175872357bc85847ec4b1aba46ed1d12fa054c83ac7a8a11f5c268957fd5765
@@ -250,12 +250,12 @@ testing-related issue, mention it from there.
 To clean up a `kind` cluster, including the container images and configuration 
 files created by the script specifically for said test cluster, execute:
 
-```
+```bash
 kind delete cluster --name $CLUSTER_NAME
 ```
 
 If you want to delete all `kind` cluster running on your machine, use: 
-```
+```bash
 make delete-all-kind-clusters
 ```
 

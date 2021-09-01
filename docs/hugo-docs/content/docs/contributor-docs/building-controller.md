@@ -29,7 +29,7 @@ To build the latest `ack-generate` binary, execute the following command from
 the root directory of the `github.com/aws-controllers-k8s/code-generator`
 source repository:
 
-```
+```bash
 make build-ack-generate
 ```
 
@@ -53,13 +53,13 @@ You do that by setting the `SERVICE` environment variable. Let's say we want
 to test the S3 service (creating an S3 bucket), so we would execute the
 following:
 
-```
+```bash
 export SERVICE=s3
 ```
 
 Now we are in a position to generate the ACK service controller for the S3 API.
 
-```
+```bash
 make build-controller SERVICE=$SERVICE
 ```
 

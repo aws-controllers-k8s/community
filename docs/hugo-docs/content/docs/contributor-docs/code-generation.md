@@ -123,7 +123,7 @@ We have experimental support for generating API types and controller code for AW
 services to be used in Crossplane AWS Provider. To try it out, you can run the
 following command:
 
-```console
+```bash
 go run -tags codegen cmd/ack-generate/main.go crossplane apis ecr --provider-dir <directory for provider>
 cd <directory for provider>
 go generate ./...

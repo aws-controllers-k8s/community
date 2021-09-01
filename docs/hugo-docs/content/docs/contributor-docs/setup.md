@@ -117,7 +117,7 @@ Next, you create a local branch where you work on your feature or bug fix.
 Let's say you want to enhance the docs, so set `BRANCH_NAME=docs-improve` and
 then:
 
-```
+```bash
 git fetch --all && git checkout -b $BRANCH_NAME upstream/main
 ```
 
@@ -125,7 +125,7 @@ git fetch --all && git checkout -b $BRANCH_NAME upstream/main
 
 Make your changes locally, commit and push using:
 
-```
+```bash
 git commit -a -m "improves the docs a lot"
 
 git push origin $BRANCH_NAME
