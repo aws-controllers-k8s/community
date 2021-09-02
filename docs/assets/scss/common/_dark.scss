@@ -381,3 +381,8 @@ body.dark .copy-status:active::after {
   display: block;
   color: $link-color-dark;
 }
+
+body.dark .list-group-item {
+  background-color: $gray-800;
+  color: $body-color-dark;
+}

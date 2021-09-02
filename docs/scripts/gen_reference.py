@@ -242,7 +242,7 @@ if __name__ == "__main__":
         help="Path of the GOPATH - Defaults to $GOPATH")
     parser.add_argument("--go_src_parent", type=str, default="./src/github.com/aws-controllers-k8s",
         help="Relative path to the ACK src path, relative to the GOPATH")
-    parser.add_argument("--output_path", type=str, default="./contents/reference",
+    parser.add_argument("--output_path", type=str, default="./content/reference",
         help="Relative path to the documentation output directory, relative to the `docs` directory")
 
     args = parser.parse_args()

@@ -4,8 +4,8 @@
   weight = 10
 
 [[main]]
-  name = "Reference"
-  url = "/docs/reference/overview/"
+  name = "API Reference"
+  url = "/reference/overview/"
   weight = 20
 
 [[social]]

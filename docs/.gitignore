@@ -5,3 +5,5 @@ resources
 # Local Netlify folder
 .netlify
 TODO
+content/reference/*
+!content/reference/_index.md
