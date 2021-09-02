@@ -18,7 +18,7 @@ Please ensure that you have [properly installed Go][install-go].
 [install-go]: https://golang.org/doc/install
 
 !!! note "Go version"
-    We recommend to use a Go version of `1.14` or above for development.
+    We recommend to use a Go version of `1.15` or above for development.
 
 ## Fork upstream repositories
 
