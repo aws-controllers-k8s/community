@@ -1,6 +1,11 @@
 {{ define "main" }}
 <div class="row justify-content-center">
-    <div class="col-md-12 col-lg-10 col-xl-8">
+    <div class="col-lg-5 col-xl-4 docs-sidebar">
+        <nav class="docs-links" aria-label="Main navigation">
+            {{ partial "sidebar/reference-menu.html" . }}
+        </nav>
+    </div>
+    <div class="col-lg-11 col-xl-9 mx-xl-auto">
         <article>
             <h1 class="text">{{ .Title }}</h1>
             <div class="text">{{ .Content }}</div>
@@ -12,8 +17,8 @@
                             {{ $service := . }}
                             {{ range sort .resources "name" "asc" }}
                             <div class="list-group-item d-flex flex-row align-items-center">
-                                <a class="stretched-link flex-fill" href="{{ printf "reference/%s/%s/%s/" $service.name .apiVersion .name | relURL }}">{{ .name }}</a>
-                                <small>{{ .apiVersion }}</small>
+                                <a class="stretched-link flex-fill" href="{{ printf "reference/%s/%s/%s/" $service.name .api_version .name | lower | relURL }}">{{ .name }}</a>
+                                <small>{{ .api_version }}</small>
                             </div>
                             {{ end }}
                         </ul>

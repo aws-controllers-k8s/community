@@ -5,7 +5,7 @@
 
 [[main]]
   name = "API Reference"
-  url = "/reference/overview/"
+  url = "/reference/"
   weight = 20
 
 [[social]]
