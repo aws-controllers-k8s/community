@@ -21,7 +21,7 @@
       {{ end -}}
     </ul>
     <div class="collapse navbar-collapse order-4 order-md-1">
-      <ul class="navbar-nav main-nav me-auto order-5 order-md-2">
+      <ul class="navbar-nav flex-grow-1 main-nav me-auto order-5 order-md-2">
         {{- $current := . -}}
         {{ range .Site.Menus.main -}}
           {{- $active := or ($current.IsMenuCurrent "main" .) ($current.HasMenuCurrent "main" .) -}}
