@@ -1,17 +1,16 @@
 {
-  "name": "@hyas/doks",
-  "description": "Doks theme",
-  "version": "0.3.3",
+  "name": "ack-community-docs",
+  "description": "AWS Controllers for Kubernetes documentation website",
+  "version": "0.0.1",
   "browserslist": [
     "defaults"
   ],
-  "repository": "https://github.com/h-enk/doks",
-  "license": "MIT",
+  "repository": "https://github.com/aws-controllers-k8s/community",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "init": "shx rm -rf .git && git init -b main",
     "create": "exec-bin bin/hugo/hugo new",
     "prestart": "npm run clean",
     "start": "exec-bin bin/hugo/hugo server --bind=0.0.0.0 --disableFastRender",
@@ -30,20 +29,19 @@
     "precheck": "npm version",
     "check": "exec-bin bin/hugo/hugo version",
     "copy:katex-fonts": "shx cp ./node_modules/katex/dist/fonts/* ./static/fonts/",
-    "postinstall": "hugo-installer --version otherDependencies.hugo --extended",
-    "version": "auto-changelog -p && git add CHANGELOG.md"
+    "postinstall": "hugo-installer --version otherDependencies.hugo --extended"
   },
   "devDependencies": {
     "@babel/cli": "^7.14",
     "@babel/core": "^7.15",
     "@babel/preset-env": "^7.15",
     "@fullhuman/postcss-purgecss": "^4.0",
-    "auto-changelog": "^2.3.0",
     "autoprefixer": "^10.3",
     "bootstrap": "^5.1",
     "clipboard": "^2.0",
     "eslint": "^7.32",
     "exec-bin": "^1.0.0",
+    "gh-pages": "3.2.3",
     "hugo-installer": "^3.1",
     "flexsearch": "^0.7.21",
     "highlight.js": "^11.2",
