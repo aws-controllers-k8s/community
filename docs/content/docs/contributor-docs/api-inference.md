@@ -89,7 +89,7 @@ structure of the AWS service API, including a set of *Operation* definitions
 (commonly called "Actions" in the official AWS API documentation) and a set of
 *Shape* definitions.
 
-[codegen]: https://aws-controllers-k8s.github.io/community/dev-docs/code-generation/
+[codegen]: ../code-generation/
 
 Some AWS APIs have dozens (hundreds even!) of Operations exposed by the API.
 Consider EC2's API. It has over **400 separate Actions**. Out of all those
@@ -525,7 +525,7 @@ The ARN is a globally-unique identifier for the resource in AWS. The Owner AWS
 Account ID is the 12-digit AWS account ID that is billed for the resource.
 
 {{% hint type="info" title="Cross-account resource management" %}}
-The Owner AWS Account ID for a resource [may be different](https://aws-controllers-k8s.github.io/community/user-docs/authorization/#create-resource-in-different-aws-accounts) from the
+The Owner AWS Account ID for a resource [may be different](../../user-docs/authorization/#create-resource-in-different-aws-accounts) from the
 AWS Account ID of the IAM Role that the ACK service controller is executing
 under.
 {{% /hint %}}

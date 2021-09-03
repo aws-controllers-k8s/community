@@ -203,7 +203,7 @@ the common runtime.
 ### Stable Helm Charts
 
 {{% hint type="success" title="Tip" %}}
-We [recommend](https://aws-controllers-k8s.github.io/community/user-docs/install/#helm-recommended) using Helm to install an ACK service
+We [recommend](../../user-docs/install/#install-an-ack-service-controller-with-helm-recommended) using Helm to install an ACK service
 controller.
 {{% /hint %}}
 

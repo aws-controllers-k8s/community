@@ -47,9 +47,9 @@ Once you have access to a Kubernetes cluster, you can [install the ACK service c
 [ack-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s
 [s3-ecr-controller]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller
 [no-latest-tag]: https://vsupalov.com/docker-latest-tag/
-[install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
-[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/
-[irsa]: https://aws-controllers-k8s.github.io/community/user-docs/irsa/
-[carm]: https://aws-controllers-k8s.github.io/community/user-docs/cross-account-resource-management/
-[cleanup]: https://aws-controllers-k8s.github.io/community/user-docs/cleanup/
+[install]: ../../user-docs/install/
+[authorization]: ../../user-docs/authorization/
+[irsa]: ../../user-docs/irsa/
+[carm]: ../../user-docs/cross-account-resource-management/
+[cleanup]: ../../user-docs/cleanup/
 [eks-setup]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html

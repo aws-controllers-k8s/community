@@ -13,12 +13,12 @@ toc: true
 The following AWS service APIs have service controllers included in ACK or have
 controllers in one of our [several project stages][project-stages].
 
-[project-stages]: https://aws-controllers-k8s.github.io/community/releases#project-stages
+[project-stages]: ../releases#project-stages
 
 ACK controllers that have reached the `RELEASED` project stage will also be in
 one of our [maintenance phases][maint-phases].
 
-[maint-phases]: https://aws-controllers-k8s.github.io/community/releases#maintenance-phases
+[maint-phases]: ../releases#maintenance-phases
 
 For details, including a list of planned AWS service APIs, see the [Service
 Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/projects/1):
@@ -27,7 +27,7 @@ Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/pro
 There is no single release of the ACK project. The ACK project contains a
 series of service controllers, one for each AWS service API. Each
 individual ACK service controller is released separately. Please see the
-[release documentation](https://aws-controllers-k8s.github.io/community/releases) for information on how we version and
+[release documentation](../releases) for information on how we version and
 release ACK service controllers.
 {{% /hint %}}
 
