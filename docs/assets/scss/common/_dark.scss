@@ -266,7 +266,7 @@ body.dark .footer {
 body.dark .docs-links,
 body.dark .docs-toc {
   scrollbar-width: thin;
-  scrollbar-color: $body-bg-dark $body-bg-dark;
+  scrollbar-color: $body-bg-dark transparent;
 }
 
 body.dark .docs-links::-webkit-scrollbar,
@@ -276,7 +276,7 @@ body.dark .docs-toc::-webkit-scrollbar {
 
 body.dark .docs-links::-webkit-scrollbar-track,
 body.dark .docs-toc::-webkit-scrollbar-track {
-  background: $body-bg-dark;
+  background: transparent;
 }
 
 body.dark .docs-links::-webkit-scrollbar-thumb,
@@ -287,7 +287,7 @@ body.dark .docs-toc::-webkit-scrollbar-thumb {
 body.dark .docs-links:hover,
 body.dark .docs-toc:hover {
   scrollbar-width: thin;
-  scrollbar-color: $border-dark $body-bg-dark;
+  scrollbar-color: $border-dark transparent;
 }
 
 body.dark .docs-links:hover::-webkit-scrollbar-thumb,

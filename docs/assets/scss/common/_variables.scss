@@ -10,14 +10,16 @@ $gray-600: #6c757d;
 $gray-700: #495057;
 $gray-800: #343a40;
 $gray-900: #212529;
-$black:    #000;
+
+$amazon-squid-ink: #232F3E;
 
 $yellow:   #ffe000;
-$black:    #1d2d35;
+$black:    $amazon-squid-ink; // Override Bootstrap 5 value
 $beige:    #fbf7f0;
 // $red:      #e55235;
 $purple:   #5d2f86;
 $brown:    #aa9c84;
+
 
 $aws: rgb(255, 102, 51);
 $amazon-plum-medium: rgb(80, 75, 171);
@@ -65,7 +67,7 @@ $navbar-light-toggler-icon-bg: none;
 // Settings for the `<body>` element.
 
 $body-bg:                   $white;
-$body-color:                $black;
+$body-color:                $amazon-squid-ink;
 
 // Links
 //
