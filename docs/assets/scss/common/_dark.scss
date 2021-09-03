@@ -386,3 +386,9 @@ body.dark .list-group-item {
   background-color: $gray-800;
   color: $body-color-dark;
 }
+
+body.dark .docs-content img {
+  background-color: $gray-300;
+  border-radius: $border-radius;
+  max-width: 100%;
+}
