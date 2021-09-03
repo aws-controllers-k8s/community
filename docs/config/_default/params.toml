@@ -51,7 +51,7 @@ copyRight = "Copyright (c) 2021 Amazon"
 
 # Alert
 alert = true
-alertText = "Like ACK? <a class=\"alert-link\" href=\"https://github.com/aws-controllers-k8s/community/stargazers\">Star on GitHub</a>. Thanks!</a>"
+alertText = "Like ACK? <a class=\"alert-link\" href=\"https://github.com/aws-controllers-k8s/community/stargazers\">Star us on GitHub</a>. Thanks!</a>"
 
 # Edit Page
 docsRepo = "https://github.com/aws-controllers-k8s/community"
