@@ -224,7 +224,7 @@ body.dark .border-top {
 @include media-breakpoint-up(lg) {
   body.dark .docs-sidebar {
     order: 0;
-    border-right: 1px solid $border-dark;
+    border-right: 1px solid $body-bg-dark;
   }
 }
 
@@ -238,7 +238,7 @@ body.dark pre code::-webkit-scrollbar-thumb {
 
 body.dark pre code:hover {
   scrollbar-width: thin;
-  scrollbar-color: $border-dark transparent;
+  scrollbar-color: $body-bg-dark transparent;
 }
 
 body.dark pre code::-webkit-scrollbar-thumb:hover {

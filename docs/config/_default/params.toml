@@ -55,6 +55,8 @@ alertText = "Like ACK? <a class=\"alert-link\" href=\"https://github.com/aws-con
 
 # Edit Page
 docsRepo = "https://github.com/aws-controllers-k8s/community"
+docsBranch = "main"
+docsPath = "docs/"
 editPage = true
 
 documentationSections = ["docs", "reference"]
