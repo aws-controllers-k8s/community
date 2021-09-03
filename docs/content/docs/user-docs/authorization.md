@@ -82,4 +82,4 @@ Some services may need an additional inline policy. For example, the service con
 
 If you have not yet created an IAM role, see the user documentation on how to [create an IAM role for your ACK service controller][irsa-docs].
 
-[irsa-docs]: https://aws-controllers-k8s.github.io/community/user-docs/irsa/#create-an-iam-role-for-your-ack-service-controller
+[irsa-docs]: ../irsa/#create-an-iam-role-for-your-ack-service-controller

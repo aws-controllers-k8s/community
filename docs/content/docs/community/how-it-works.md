@@ -54,7 +54,7 @@ the Kubernetes API server to update `(7)` the CR's [`Status`][spec-status] with
 information it received from S3.
 
 [api-kind]: https://kubernetes.io/docs/reference/using-api/api-concepts/#standard-api-terminology
-[authz]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/
+[authz]: ../../user-docs/authorization/
 [pod]: https://kubernetes.io/docs/concepts/workloads/pods/
 [manifest]: https://kubernetes.io/docs/reference/glossary/?all=true#term-manifest
 [controller]: https://kubernetes.io/docs/reference/glossary/?fundamental=true#term-controller

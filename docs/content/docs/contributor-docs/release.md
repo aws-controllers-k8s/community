@@ -23,7 +23,7 @@ github repository with a semver tag (Ex: v0.0.1).
 Steps below show how to create a new release with semver tag.
 
 {{% hint type="info" title="Semver" %}}
-For more details on semantic versioning(semver), please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/) 
+For more details on semantic versioning(semver), please read our [release phase guide](../../community/releases/) 
 {{% /hint %}}
 
 Once the git repository is tagged with semver, a postsubmit prowjob builds binary 
@@ -120,7 +120,7 @@ Service team can see the release prowjobs, their status and logs at https://prow
 {{% hint type="info" title="Stable Helm Chart" %}}
 * This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git 
 branch.
-* To learn more about how to push changes to stable branch please read [releases.md](https://aws-controllers-k8s.github.io/community/releases/)
+* To learn more about how to push changes to stable branch please read our [release phase guide](../../community/releases/)
 * When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm 
 artifacts with stable tag. Ex: `elasticache-v1-stable`
 {{% /hint %}}

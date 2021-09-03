@@ -181,7 +181,7 @@ AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/to
 [oidc-iam-docs]: https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
 [iam-policy]: https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html
 [iam-service-account]: https://docs.aws.amazon.com/eks/latest/userguide/specify-service-account-role.html
-[install-docs]: https://aws-controllers-k8s.github.io/community/user-docs/install/
+[install-docs]: ../install/
 [s3-helm-values]: https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml
 [oidc-docs]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html
 

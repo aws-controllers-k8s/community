@@ -15,11 +15,11 @@ The following guide will walk you through the installation of an [ACK service co
 Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository. 
 
 {{% hint title="Be mindful of maintenance phases" %}}
-Check the [project stage](https://aws-controllers-k8s.github.io/community/releases/#project-stages) and [maintenance phase](https://aws-controllers-k8s.github.io/community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
+Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
 {{% /hint %}}
 
-[ack-services]: https://aws-controllers-k8s.github.io/community/services/
-[rel-ver]: https://aws-controllers-k8s.github.io/community/releases/#releases-and-versioning
+[ack-services]: ../../community/services/
+[rel-ver]: ../../community/releases/#releases-and-versioning
 
 ## Install an ACK service controller with Helm (Recommended)
 
@@ -107,4 +107,4 @@ For example, the static manifests needed to install the S3 service controller fo
 
 Once you have installed your ACK service controllers, you can [configure Kubernetes and AWS permissions][authorization].
 
-[authorization]: https://aws-controllers-k8s.github.io/community/user-docs/authorization/
+[authorization]: ../authorization/

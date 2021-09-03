@@ -70,7 +70,7 @@ charts for the controller installation (`/helm`).
 Read about [how the code generator infers][api-inference] information about a
 Kubernetes Custom Resource Definitions (CRDs) from an AWS API model file.
 
-[api-inference]: https://aws-controllers-k8s.github.io/community/dev-docs/api-inference/
+[api-inference]: ../../contributor-docs/api-inference/
 
 ## Code Generation
 

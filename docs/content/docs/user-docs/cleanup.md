@@ -71,5 +71,5 @@ If you used [cross account resource management][carm-docs], delete the `ConfigMa
 kubectl delete -n ack-system configmap ack-role-account-map
 ```
 
-[carm-docs]: https://aws-controllers-k8s.github.io/community/user-docs/cross-account-resource-management/
+[carm-docs]: ../cross-account-resource-management/
 
