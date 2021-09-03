@@ -7,7 +7,7 @@ menu:
   docs:
     parent: "introduction"
 weight: 20
-toc: false
+toc: true
 ---
 
 The idea behind AWS Controllers for Kubernetes (ACK) is to enable Kubernetes
