@@ -16,8 +16,8 @@
   weight = 10
 
 [[docs]]
-  name = "Prologue"
-  identifier = "prologue"
+  name = "Introduction"
+  identifier = "introduction"
   weight = 10
 
 [[docs]]

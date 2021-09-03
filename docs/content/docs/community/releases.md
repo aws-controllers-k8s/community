@@ -5,7 +5,7 @@ lead: "Releases, Versioning and Maintenance Phases"
 draft: false
 menu: 
   docs:
-    parent: "prologue"
+    parent: "introduction"
 weight: 50
 toc: true
 ---
