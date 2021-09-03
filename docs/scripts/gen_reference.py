@@ -10,7 +10,8 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Union
-
+from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
 
 @dataclass(frozen=True)
 class ResourceNames:
@@ -42,10 +43,6 @@ class Resource:
 
     def output_path(self, short_name: str = None, extension: str = ".md") -> Path:
         return Path(f"{self.service if short_name is None else short_name}/{self.api_version}/{self.name.lower()}{extension}")
-
-@dataclass(frozen=True)
-class ResourcePageMeta:
-    resource: Resource
 
 
 @dataclass(frozen=True)
@@ -161,7 +158,6 @@ def write_service_pages(
     metadata: ServiceMetadata,
     service_path: Path,
     page_output_path: Path,
-    data_output_path: Path
 ) -> List[ResourceOverview]:
     resources = []
 
@@ -175,17 +171,10 @@ def write_service_pages(
         page_path = page_output_path / resource.output_path(service)
         page_path.parent.mkdir(parents=True, exist_ok=True)
 
-        data_path = data_output_path / resource.output_path(service, extension=".yaml")
-        data_path.parent.mkdir(parents=True, exist_ok=True)
-
+        env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True)
+        template = env.get_template("resource.jinja2")
         with open(page_path, "w") as out:
-            page_meta = ResourcePageMeta(resource=resource)
-            print("---", file=out)
-            print("---", file=out)
-
-        with open(data_path, "w") as out:
-            page_meta = ResourcePageMeta(resource=resource)
-            yaml.dump(asdict(page_meta), out)
+            print(template.render(asdict(resource)), file=out)
     
     return resources
 
@@ -237,7 +226,7 @@ def main(
 
         metadata = load_metadata_config(metadata_config)
 
-        resources = write_service_pages(service, metadata, service_bases_path, page_output_path, data_output_path)
+        resources = write_service_pages(service, metadata, service_bases_path, page_output_path)
         overview = ServiceOverview(service, resources, metadata)
 
         overviews.append(overview)

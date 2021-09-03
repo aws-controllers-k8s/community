@@ -1,0 +1,92 @@
+---
+title: "{{ name }}"
+draft: false
+toc: true
+---
+
+`{{ group }}/{{ api_version }}`
+Type|Link
+----|----
+GoDoc|[{{ service }}-controller/apis/{{ api_version }}#{{ names.kind }}](https://pkg.go.dev/github.com/aws-controllers-k8s/{{ service }}-controller/apis/{{ api_version }}#{{ names.kind }})
+
+## Metadata
+Property|Value
+--------|-----
+Scope|{{ scope }}
+Kind|`{{ names.kind }}`
+ListKind|`{{ names.listKind }}`
+Plural|`{{ names.plural }}`
+Singular|`{{ names.singular }}`
+
+{{ description.split("\n")[1:] | join("\n") }}
+
+## Spec
+
+{% macro render_yaml_field(field, indentation=0, has_list_delim=False) %}
+    {%- if field.type == "array" -%}
+{{ field.name }}:
+{%- if field.contains is not string %}
+            {%- for subfield in field.contains %}
+
+{{ render_yaml_field(subfield, indentation + 1, loop.first) | indent(2 + (-2 if loop.first and subfield.type not in ["array", "object"] else 0), True) }}
+            {%- endfor -%}
+        {%- else %}
+
+- {{ field.contains }}
+        {%- endif -%}
+    {%- elif field.type == "object" %}
+{{ field.name }}: {% if field.contains is string %}{}{% else %}
+{% for subfield in field.contains %}
+
+{{ render_yaml_field(subfield, indentation + 1, false) | indent(2, True) }}
+{%- endfor -%}
+        {%- endif -%}
+    {%- else %}
+{{ "- " if has_list_delim }}{{ field.name }}: {{ field.type }}
+    {%- endif -%}
+{%- endmacro %}
+
+```yaml
+{% for field in spec %}
+{{ render_yaml_field(field) }}
+{% endfor %}
+```
+
+{% macro render_field(field, prefix='') -%}
+| **{{ prefix }}{{ field.name }}**<br/>{{ "Required" if field.required else "Optional" }} | **{{ field.type }}**<br/>{{ field.description | replace("\n", "<br/>") }} |
+{% if field.type == "array" -%}
+| **{{ prefix }}{{ field.name }}.[]**<br/>Required | **{% if field.contains is not string %}object{% else %}{{ field.contains }}{% endif %}**<br/>{{ field.contains_description if field.contains_description else "" }} |
+    {%- if field.contains is not string -%}
+        {%- for subfield in field.contains -%}
+            {{ render_field(subfield, prefix + field.name + ".[].") }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- elif field.type == "object" -%}
+    {%- if field.contains is not string -%}
+        {%- for subfield in field.contains -%}
+            {{ render_field(subfield, prefix + field.name + ".") }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+
+| Field | Description |
+| ----- | ----------- |
+{% for field in spec -%}
+    {{ render_field(field) }}
+{%- endfor %}
+
+## Status
+
+```yaml
+{% for field in status %}
+{{ render_yaml_field(field) }}
+{% endfor %}
+```
+
+| Field | Description |
+| ----- | ----------- |
+{% for field in status -%}
+    {{ render_field(field) }}
+{%- endfor %}
