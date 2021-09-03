@@ -81,11 +81,11 @@ $link-decoration:                         none;
 // Define the maximum width of `.container` for different screen sizes.
 
 $container-max-widths: (
-  sm: 540px,
-  md: 720px,
-  lg: 960px,
-  xl: 1240px,
-  xxl: 1320px
+  sm: 640px,
+  md: 820px,
+  lg: 1060px,
+  xl: 1340px,
+  xxl: 1420px
 );
 
 @include _assert-ascending($container-max-widths, "$container-max-widths");
