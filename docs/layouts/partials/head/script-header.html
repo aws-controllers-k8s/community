@@ -1,0 +1,9 @@
+{{ $darkMode := resources.Get "js/darkmode.js" -}}
+{{ $darkMode := $darkMode | js.Build -}}
+
+{{ if eq (hugo.Environment) "development" -}}
+  <script src="{{ $darkMode.RelPermalink }}"></script>
+{{ else -}}
+  {{ $darkMode := $darkMode | minify | fingerprint "sha512" }}
+  <script src="{{ $darkMode.RelPermalink }}" integrity="{{ $darkMode.Data.Integrity }}" crossorigin="anonymous"></script>
+{{ end -}}
