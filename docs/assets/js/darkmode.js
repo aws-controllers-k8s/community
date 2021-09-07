@@ -5,7 +5,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
   });
 
   let systemPreferenceDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (localStorage.getItem('theme') === 'light' || !systemPreferenceDark) {
+  let savedPreference = localStorage.getItem('theme');
+  if (savedPreference === 'light' || (savedPreference === null && !systemPreferenceDark)) {
     document.body.classList.remove('dark');
   }
 });
