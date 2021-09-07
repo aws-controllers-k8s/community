@@ -1,0 +1,27 @@
+{{ define "main" }}
+<div class="row justify-content-center">
+	<div class="col-lg-5 col-xl-4 docs-sidebar">
+		<nav class="docs-links" aria-label="Main navigation">
+			{{ partial "sidebar/docs-menu.html" . }}
+		</nav>
+	</div>
+	<div class="col-lg-11 col-xl-9 mx-xl-auto">
+		<article>
+			<h1 class="text-center">{{ .Title }}</h1>
+			<div class="text-center">{{ .Content }}</div>
+			<div class="card-list">
+				{{ $currentSection := .CurrentSection }}
+				{{ range where .Site.RegularPages.ByTitle "Section" .Section }}
+				{{ if in (.RelPermalink | string) $currentSection.RelPermalink }}
+				<div class="card my-3">
+					<div class="card-body">
+						<a class="stretched-link" href="{{ .RelPermalink }}">{{ .Params.title | title }} &rarr;</a>
+					</div>
+				</div>
+				{{ end }}
+				{{ end }}
+			</div>
+		</article>
+	</div>
+</div>
+{{ end }}

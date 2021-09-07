@@ -10,7 +10,8 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Union
-
+from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
 
 @dataclass(frozen=True)
 class ResourceNames:
@@ -33,25 +34,21 @@ class Resource:
     name: str
     service: str
     group: str
-    apiVersion: str
+    api_version: str
     description: str
     scope: str
     names: ResourceNames
     spec: List[Field]
     status: List[Field]
 
-    def output_path(self, short_name: str = None) -> Path:
-        return Path(f"{self.service if short_name is None else short_name}/{self.apiVersion}/{self.name}.md")
-
-@dataclass(frozen=True)
-class ResourcePageMeta:
-    resource: Resource
+    def output_path(self, short_name: str = None, extension: str = ".md") -> Path:
+        return Path(f"{self.service if short_name is None else short_name}/{self.api_version}/{self.name.lower()}{extension}")
 
 
 @dataclass(frozen=True)
 class ResourceOverview:
     name: str
-    apiVersion: str
+    api_version: str
 
 @dataclass
 class ServiceOverview:
@@ -148,7 +145,7 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         name=crd['spec']['names']['kind'],
         service=service,
         group=crd['spec']['group'],
-        apiVersion=ver['name'],
+        api_version=ver['name'],
         description=spec.get('description', ''),
         scope=crd['spec']['scope'],
         names=names,
@@ -156,7 +153,12 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
         status=res_status
     )
 
-def write_service_pages(service: str, metadata: ServiceMetadata, service_path: Path, output_path: Path) -> List[ResourceOverview]:
+def write_service_pages(
+    service: str,
+    metadata: ServiceMetadata,
+    service_path: Path,
+    page_output_path: Path,
+) -> List[ResourceOverview]:
     resources = []
 
     for crd_path in Path(service_path).rglob('*.yaml'):
@@ -164,31 +166,24 @@ def write_service_pages(service: str, metadata: ServiceMetadata, service_path: P
 
         resource = convert_crd_to_resource(crd, service)
         resources.append(ResourceOverview(name=resource.name,
-            apiVersion=resource.apiVersion))
+            api_version=resource.api_version))
 
-        resource_path = output_path / resource.output_path(metadata.service.short_name)
-        resource_path.parent.mkdir(parents=True, exist_ok=True)
+        page_path = page_output_path / resource.output_path(service)
+        page_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(resource_path, "w") as out:
-            page_meta = ResourcePageMeta(resource=resource)
-            # TODO(RedbackThomson): Clean up templating
-            print("---", file=out)
-            yaml.dump(asdict(page_meta), out)
-            print("---", file=out)
-            print('{% include "reference.md" %}', file=out)
+        env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True)
+        template = env.get_template("resource.jinja2")
+        with open(page_path, "w") as out:
+            print(template.render(asdict(resource)), file=out)
     
     return resources
 
 def write_overview_page(services: List[ServiceOverview], output_path: Path):
-    overview_path = output_path / "overview.md"
+    overview_path = output_path / "overview.yaml"
 
     with open(overview_path, "w") as out:
         page_meta = OverviewPageMeta(services=services)
-        # TODO(RedbackThomson): Clean up templating
-        print("---", file=out)
         yaml.dump(asdict(page_meta), out)
-        print("---", file=out)
-        print('{% include "reference_overview.md" %}', file=out)
 
 def load_metadata_config(metadata_config_path: Path) -> ServiceMetadata:
     yaml_dict = load_yaml(metadata_config_path)
@@ -198,7 +193,14 @@ def load_metadata_config(metadata_config_path: Path) -> ServiceMetadata:
         api_versions.append(MetadataAPIVersion(**version))
     return ServiceMetadata(description, api_versions)
 
-def main(gopath: Path, metadata_config_path: Path, go_src_parent: Path, service_bases_path: Path, output_path: Path):
+def main(
+    gopath: Path,
+    metadata_config_path: Path,
+    go_src_parent: Path,
+    service_bases_path: Path,
+    page_output_path: Path,
+    data_output_path: Path
+):
     overviews = []
 
     src_parent = gopath / go_src_parent
@@ -224,12 +226,12 @@ def main(gopath: Path, metadata_config_path: Path, go_src_parent: Path, service_
 
         metadata = load_metadata_config(metadata_config)
 
-        resources = write_service_pages(service, metadata, service_bases_path, output_path)
+        resources = write_service_pages(service, metadata, service_bases_path, page_output_path)
         overview = ServiceOverview(service, resources, metadata)
 
         overviews.append(overview)
 
-    write_overview_page(overviews, output_path)
+    write_overview_page(overviews, data_output_path)
 
 
 if __name__ == "__main__":
@@ -242,7 +244,9 @@ if __name__ == "__main__":
         help="Path of the GOPATH - Defaults to $GOPATH")
     parser.add_argument("--go_src_parent", type=str, default="./src/github.com/aws-controllers-k8s",
         help="Relative path to the ACK src path, relative to the GOPATH")
-    parser.add_argument("--output_path", type=str, default="./contents/reference",
+    parser.add_argument("--page_output_path", type=str, default="./content/reference",
+        help="Relative path to the documentation output directory, relative to the `docs` directory")
+    parser.add_argument("--data_output_path", type=str, default="./data",
         help="Relative path to the documentation output directory, relative to the `docs` directory")
 
     args = parser.parse_args()
@@ -251,6 +255,7 @@ if __name__ == "__main__":
     bases_path = Path(args.bases_path)
     gopath = Path(args.gopath)
     go_src_parent = Path(args.go_src_parent)
-    output_path = Path(args.output_path)
+    page_output_path = Path(args.page_output_path)
+    data_output_path = Path(args.data_output_path)
 
-    main(gopath, metadata_config_path, go_src_parent, bases_path, output_path)
+    main(gopath, metadata_config_path, go_src_parent, bases_path, page_output_path, data_output_path)

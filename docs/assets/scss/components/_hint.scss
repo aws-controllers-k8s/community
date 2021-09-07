@@ -1,0 +1,48 @@
+.hint {
+    border-color: $primary !important;
+    border-radius: $border-radius;
+}
+
+.hint-title {
+    background-color: rgba($color: $primary, $alpha: 0.2);
+    border-top-right-radius: $border-radius;
+
+    &:before {
+        content: "📝";  
+    }
+}
+
+body.dark {
+    .hint {
+        border-color: $link-color-dark !important;
+        border-radius: $border-radius;
+    }
+    
+    .hint-title {
+        background-color: rgba($color: $link-color-dark, $alpha: 0.2);
+        border-top-right-radius: $border-radius;
+    }    
+}
+
+@mixin hint-type($type, $base-color, $icon) {
+    .hint.hint-#{$type} {
+        border-color: $base-color !important;
+
+        .hint-title {
+            background-color: rgba($color: $base-color, $alpha: 0.2) !important;
+
+            &:before {
+                content: $icon;
+            }
+        }
+    }
+}
+
+// Have to put it inside body so that it overrides the !important
+body {
+    @include hint-type("success", $success, "🔥");
+    @include hint-type("info", $info, "ℹ️");
+    @include hint-type("warning", $warning, "⚠️");
+    @include hint-type("danger", $danger, "🛑");
+    @include hint-type("answer", $gray-300, "📖");
+}

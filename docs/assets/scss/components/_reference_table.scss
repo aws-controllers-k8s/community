@@ -1,0 +1,20 @@
+.reference-content {
+  table {
+    table-layout: fixed;
+    width: 100%;
+
+    tr {
+      display: flex;
+
+      th:first-child, td:first-child {
+        width: 33%;
+        overflow-wrap: break-word;
+      }
+
+      th:not(:first-child), td:not(:first-child) {
+        width: 66%;
+      }
+    }
+  }
+}
+  

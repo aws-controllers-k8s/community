@@ -1,0 +1,19 @@
+/*
+
+Based on Ascetic by (c) Ivan Sagalaev <Maniac@SoftwareManiacs.Org>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1.25rem 1.5rem;
+  background: lighten(#22272e, 15%);
+  color: $body-color;
+  color: $body-color-dark;
+}
+
+body.dark .hljs {
+  background: $body-overlay-dark;
+  color: $body-color-dark;
+}

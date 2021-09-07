@@ -1,0 +1,9 @@
+<div class="hint d-flex flex-column border-start my-4 border-4{{ if (.Get "type") }} hint-{{ .Get "type" | default "alert" }}{{end}}">
+    <div class="hint-title p-2 flex flex-row flex-items-center">
+        {{ .Get "title" | default "Note" | markdownify | chomp }}
+    </div>
+    <div class="hint-body p-2 small">
+        {{ .Inner | markdownify | chomp }}
+    </div>
+</div>
+  

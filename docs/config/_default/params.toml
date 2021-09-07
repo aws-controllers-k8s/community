@@ -1,0 +1,74 @@
+# Meta Data for SEO
+
+## Homepage
+title = "ACK"
+titleSeparator = "-"
+titleAddition = "AWS Controllers for K8s"
+description = "Doks is a Hugo theme helping you build modern documentation websites that are secure, fast, and SEO-ready — by default."
+
+## Open Graph
+images = ["og.png"]
+ogLocale = "en_US"
+domainTLD = "aws-controllers-k8s.github.io"
+titleHome = "AWS Controllers for K8s"
+
+## Twitter Cards
+twitterSite = "@awscloud"
+twitterCreator = ""
+
+## JSON-LD
+# schemaType = "Person"
+schemaType = "Organization"
+schemaName = "AWS Controllers for K8s"
+schemaAuthor = "AWS"
+schemaAuthorTwitter = "https://twitter.com/awscloud"
+schemaAuthorGitHub = "https://github.com/aws-controllers-k8s"
+schemaLocale = "en-US"
+schemaLogo = "ack.png"
+schemaLogoWidth = 512
+schemaLogoHeight = 512
+schemaTwitter = "https://twitter.com/awscloud"
+schemaLinkedIn = ""
+schemaGitHub = "https://github.com/aws-controllers-k8s/community"
+schemaSection = "blog"
+
+## Sitelinks Search Box
+siteLinksSearchBox = false
+
+## Chrome Browser
+themeColor = "#ff9900"
+
+# Images
+quality = 85
+bgColor = "#fff"
+landscapePhotoWidths = [900, 800, 700, 600, 500]
+portraitPhotoWidths = [800, 700, 600, 500]
+lqipWidth = "20x"
+
+# Footer
+footer = "Powered by <a href=\"https://gohugo.io/\">Hugo</a> and <a href=\"https://getdoks.org/\">Doks</a>"
+copyRight = "Copyright (c) 2021 Amazon"
+
+# Alert
+alert = true
+alertText = "Like ACK? <a class=\"alert-link\" href=\"https://github.com/aws-controllers-k8s/community/stargazers\">Star us on GitHub</a>. Thanks!</a>"
+
+# Edit Page
+docsRepo = "https://github.com/aws-controllers-k8s/community"
+docsBranch = "main"
+docsPath = "docs/"
+editPage = true
+
+documentationSections = ["docs", "reference"]
+
+[options]
+  lazySizes = true
+  clipBoard = true
+  instantPage = true
+  flexSearch = true
+  darkMode = true
+  bootStrapJs = true
+  breadCrumb = false
+  highLight = true
+  kaTex = false
+  collapsibleSidebar = true
