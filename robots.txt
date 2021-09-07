@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aws-controllers-k8s.github.io/community/sitemap.xml

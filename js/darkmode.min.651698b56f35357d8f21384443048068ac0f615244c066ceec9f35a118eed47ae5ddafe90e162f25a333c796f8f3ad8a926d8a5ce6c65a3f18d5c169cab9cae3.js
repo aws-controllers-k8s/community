@@ -1,0 +1,1 @@
+(()=>{document.getElementById("mode").addEventListener("click",()=>{document.body.classList.toggle("dark"),localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light")});var a=window.matchMedia("(prefers-color-scheme: dark)").matches;(localStorage.getItem("theme")==="light"||!a)&&document.body.classList.remove("dark")})()
