@@ -1,39 +1,47 @@
 ---
-title: "Example: Machine learning with ACK service controllers and EKS"
-description: "Train, deploy, and scale a machine learning model with the Amazon SageMaker and Application Auto Scaling ACK service controllers"
+title: "Machine learning with ACK SageMaker Operators and EKS"
+description: "Train a machine learning model with the Amazon SageMaker ACK service controller and Amazon Elastic Kubernetes Service"
 lead: ""
 draft: false
 menu: 
   docs:
-    parent: "installing"
+    parent: "tutorials"
 weight: 40
 toc: true
 ---
 
-The SageMaker ACK service controller makes it easier for machine learning developers and data scientists who use Kubernetes as their control plane to train, tune, and deploy machine learning models in Amazon SageMaker without logging into the SageMaker console. The Application Auto Scaling ACK service controller can then be used to scale a SageMaker endpoint.  
+The SageMaker ACK service controller makes it easier for machine learning developers and data scientists who use Kubernetes as their control plane to train, tune, and deploy machine learning models in Amazon SageMaker without logging into the SageMaker console. 
 
-The following steps will guide you through the setup and use of the Amazon SageMaker ACK service controller for training and deploying machine learning models, and the Amazon Application Auto Scaling ACK service controller to dynamically scale your hosted model.
+The following steps will guide you through the setup and use of the Amazon SageMaker ACK service controller for training a machine learning models.
 
-## Step 1: Setup
+## Setup
 
-Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. For automated cluster creation using `eksctl`, see [Create an Amazon EKS Cluster](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html). If this is your first time creating an Amazon EKS cluster, see [Getting started with Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html).
+Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html).
 
 ### Prerequisites
 
 This guide assumes that you have:
   - Created an EKS cluster with Kubernetes version 1.16 or higher. 
-  - [AWS IAM][AWS-IAM] permissions to create roles and attach policies to roles.
+  - AWS IAM permissions to create roles and attach policies to roles.
   - Installed the following tools on the client machine used to access your Kubernetes cluster:
     - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
-    - [helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing.
-[AWS-IAM]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
+      - Linux
+        ```
+        sudo wget https://github.com/mikefarah/yq/releases/download/v4.9.8/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+        ```
+      - Mac
+        ```
+        brew install yq
+        ```
 
-### Create an IAM role and attach IAM policy
+### Configure IAM permissions
 
-Check to make sure that you are connected to an Amazon EKS cluster. 
+Create an IAM role and attach an IAM policy to that role to ensure that your SageMaker service controller has access to the appropriate AWS resources. First, check to make sure that you are connected to an Amazon EKS cluster. 
 
 ```bash
 export CLUSTER_NAME=<CLUSTER_NAME>
@@ -44,22 +52,22 @@ kubectl config get-contexts
 kubectl get nodes
 ```
 
-Before you can deploy your SageMaker service controller using an IAM role, associate an OpenID Connect (OIDC) provider with your role to authenticate with the IAM service.
+Before you can deploy your SageMaker service controller using an IAM role, associate an OpenID Connect (OIDC) provider with your IAM role to authenticate your cluster with the IAM service.
 
 ```bash
 eksctl utils associate-iam-oidc-provider --cluster ${CLUSTER_NAME} \
 --region ${AWS_DEFAULT_REGION} --approve
 ```
 
-Get the OIDC ID. 
+Get the following OIDC information for future reference:
 
 ```bash
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION \
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION \
 --query "cluster.identity.oidc.issuer" --output text | cut -c9-)
 ```
 
-In your working directory, create a file named trust.json and insert the following trust relationship code block into the document:
+In your working directory, create a file named `trust.json` and insert the following trust relationship code block into the document:
 
 ```bash
 printf '{
@@ -86,14 +94,14 @@ printf '{
 ' > ./trust.json
 ```
 
-Run the `iam create-role`command to create an IAM role with the trust relationship you just defined in `trust.json`. This IAM role enables the Amazon EKS cluster to get and refresh credentials from IAM.
+Run the `iam create-role` command to create an IAM role with the trust relationship you just defined in `trust.json`. This IAM role enables the Amazon EKS cluster to get and refresh credentials from IAM.
 
 ```bash
-OIDC_ROLE_NAME=ack-controller-role-$CLUSTER_NAME
+export OIDC_ROLE_NAME=ack-controller-role-$CLUSTER_NAME
 aws --region $AWS_DEFAULT_REGION iam create-role --role-name $OIDC_ROLE_NAME --assume-role-policy-document file://trust.json
 ```
 
-Attach the AmazonSageMakerFullAccess Policy to the IAM Role. 
+Attach the AmazonSageMakerFullAccess Policy to the IAM Role to ensure that your SageMaker service controller has access to the appropriate resources. 
 
 ```bash
 aws --region $AWS_DEFAULT_REGION iam attach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
@@ -103,11 +111,11 @@ echo $IAM_ROLE_ARN_FOR_IRSA
 
 Take note of the `IAM_ROLE_ARN_FOR_IRSA` value printed in the previous step. You will pass this value to the Kubernetes service account used by the ACK service controller. 
 
-For more information on authorization and access for ACK service controllers, including detailes regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
+For more information on authorization and access for ACK service controllers, including details regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
 
 ### Install the SageMaker ACK service controller
 
-Make the SageMaker Helm chart available on the `Deployment` host with the following commands:
+Get the SageMaker Helm chart and make it available on the `Deployment` host with the following commands:
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
@@ -123,30 +131,20 @@ helm chart pull $CHART_REF
 helm chart list
 helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
 ```
-Choose either a cluster-scoped or namespace-scoped `Deployment`.
 
-  - Cluster-scoped `Deployment`
-    - ```bash
-      # Update values in helm chart
-      cd $CHART_EXPORT_PATH/$SERVICE-chart
-      yq e '.aws.region = env(AWS_DEFAULT_REGION)' -i values.yaml
-      yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
-      yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
-      cd -
-      ```
-  - Namespace-scoped `Deployment`
-    - The controller will watch for the resources in the Helm chart release namespace. In this guide, that value is set from the $ACK_K8S_NAMESPACE variable defined above.
-    - ```bash
-      # Update values in helm chart
-      cd $CHART_EXPORT_PATH/$SERVICE-chart
-      yq e '.aws.region = env(AWS_DEFAULT_REGION)' -i values.yaml
-      yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
-      yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
-      yq e '.watchNamespace" = env(WATCH_NAMESPACE)' -i values.yaml
-      cd -
-      ```
+Update the Helm chart values for a cluster-scoped `Deployment`. 
+
+```bash
+# Update the following values in the Helm chart
+cd $CHART_EXPORT_PATH/$SERVICE-chart
+yq e '.aws.region = env(AWS_DEFAULT_REGION)' -i values.yaml
+yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
+yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
+cd -
+```
 
 Install the relevant custom resource definitions (CRDs) for the SageMaker ACK service controller. 
+
 ```bash
 kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 ```
@@ -163,28 +161,7 @@ kubectl get crds
 kubectl get pods -n $ACK_K8S_NAMESPACE
 ```
 
-### Install the Application Auto Scaling ACK service controller
-
-Repeat the installation steps above to install the Application Auto Scaling ACK service controller. Be sure to specify the correct service name and release version. 
-
-```bash
-export HELM_EXPERIMENTAL_OCI=1
-export SERVICE=applicationautoscaling
-export RELEASE_VERSION=v0.0.2
-export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
-export CHART_REF=$CHART_REPO:$RELEASE_VERSION
-
-mkdir -p $CHART_EXPORT_PATH
-helm chart pull $CHART_REF
-helm chart list
-helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
-```
-
-For more information on installing ACK service controllers, see [Installation][install].
-[install]: https://aws-controllers-k8s.github.io/community/docs/user-docs/install/
-
-## Step 2: Training and deployment
+## Train an XGBoost model
 
 ### Prepare your data
 
