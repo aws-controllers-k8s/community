@@ -1,0 +1,21 @@
+.home.dark {
+    background: linear-gradient(to bottom, transparentize($body-bg-dark, .75) 0%, transparentize($body-bg-dark, .75) 5%, transparentize($body-bg-dark, 0.2) 490px, transparentize($body-bg-dark, 0) 550px), url(images/bg-dark-large.png), $body-bg-dark !important;
+    background-repeat: repeat-x;
+    background-clip: border-box;
+}
+
+.home.dark .navbar {
+    background: transparentize($body-bg-dark, $amount: 0.75);
+    opacity: 1;
+}
+
+.home {
+    background: linear-gradient(to bottom, transparentize($body-bg, 1) 30%, transparentize($body-bg, 0) 595px), url(images/bg-large.png), $body-bg !important;
+    background-repeat: repeat-x;
+    background-clip: border-box;
+}
+
+.home .navbar {
+    background: transparentize($body-bg, $amount: 0.75);
+    opacity: 1;
+}
