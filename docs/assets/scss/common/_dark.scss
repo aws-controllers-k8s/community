@@ -18,6 +18,7 @@ $navbar-dark-active-color:          $link-color-dark;
 
 /** Theme styles */
 
+
 body.dark {
   background: $body-bg-dark;
   color: $body-color-dark;
@@ -257,10 +258,6 @@ body.dark pre code.language-mermaid {
 
 body.dark blockquote {
   border-left: 3px solid $border-dark;
-}
-
-body.dark .footer {
-  border-top: 1px solid $border-dark;
 }
 
 body.dark .docs-links,

@@ -1,3 +1,11 @@
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+}
+
 .contributors .content,
 .blog .content,
 .page .content,
@@ -44,6 +52,10 @@ h6,
   .h6 {
     margin-bottom: 1.125rem;
   }
+}
+
+.home {
+  background-image: url(images/escheresque.png);
 }
 
 .home h1 {
