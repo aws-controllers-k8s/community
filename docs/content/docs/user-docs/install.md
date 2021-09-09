@@ -1,7 +1,7 @@
 ---
 title: "Installation"
 description: "Installing an ACK controller"
-lead: "Installing an ACK controller"
+lead: ""
 draft: false
 menu: 
   docs:
@@ -18,6 +18,8 @@ Individual ACK service controllers may be in different maintenance phases and fo
 Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
 {{% /hint %}}
 
+[proj-stages]: ../../community/releases/#project-stages
+[maint-phases]: ../../community/releases/#maintenance-phases
 [ack-services]: ../../community/services/
 [rel-ver]: ../../community/releases/#releases-and-versioning
 
