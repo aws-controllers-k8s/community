@@ -29,15 +29,6 @@ This guide assumes that you have:
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing.
-      - Linux
-        ```
-        sudo wget https://github.com/mikefarah/yq/releases/download/v4.9.8/yq_linux_amd64 -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq
-        ```
-      - Mac
-        ```
-        brew install yq
-        ```
 
 ### Configure IAM permissions
 
@@ -113,12 +104,13 @@ For more information on authorization and access for ACK service controllers, in
 
 ### Install the SageMaker ACK service controller
 
-Get the SageMaker Helm chart and make it available on the `Deployment` host with the following commands:
+Get the SageMaker Helm chart and make it available on the client machine with the following commands:
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=sagemaker
-export RELEASE_VERSION=v0.0.4
+export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/sagemaker-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.0.4}
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
 export CHART_REF=$CHART_REPO:$RELEASE_VERSION
@@ -130,7 +122,7 @@ helm chart list
 helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
 ```
 
-Update the Helm chart values for a cluster-scoped `Deployment`. 
+Update the Helm chart values for a cluster-scoped installation. 
 
 ```bash
 # Update the following values in the Helm chart
@@ -234,7 +226,7 @@ export XGBOOST_IMAGE=683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgbo
 **IMPORTANT**: If your `SERVICE_REGION` is not `us-east-1`, you must change the `XGBOOST_IMAGE` URI. To find your region-specific XGBoost image URI, choose your region in the [SageMaker Docker Registry Paths page](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html), and then select **XGBoost (algorithm)**. For this example, use version 1.2-1.
 {{% /hint %}}
 
-Next, create a `training.yaml` file to specify the parameters for your SageMaker training job. This file specifies your SageMaker training job name, any relevant hyperperameters, and the location of your training and validation data. You can also use this document to specify which Amazon Elastic Container Registry (ECR) image to use for training. 
+Next, create a `training.yaml` file to specify the parameters for your SageMaker training job. This file specifies your SageMaker training job name, any relevant hyperparameters, and the location of your training and validation data. You can also use this document to specify which Amazon Elastic Container Registry (ECR) image to use for training. 
 
 ```yaml
 printf '
@@ -243,7 +235,7 @@ kind: TrainingJob
 metadata:
   name: '$JOB_NAME'
 spec:
-  # Name that will appear in SageMaker console
+  # Name that will appear in the SageMaker console
   trainingJobName: '$JOB_NAME'
   hyperParameters: 
     max_depth: "5"
@@ -255,14 +247,12 @@ spec:
     num_round: "10"
   algorithmSpecification:
     # The URL and tag of your ECR container
-    # If you are not on us-west-1 you can find an imageURI here https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html
     trainingImage: '$XGBOOST_IMAGE'
     trainingInputMode: File
   # A role with SageMaker and S3 access
-  # example arn:aws:iam::1234567890:role/service-role/AmazonSageMaker-ExecutionRole
   roleARN: '$SAGEMAKER_EXECUTION_ROLE_ARN' 
   outputDataConfig:
-    # The output path of our model
+    # The output path of your model
     s3OutputPath: s3://'$SAGEMAKER_BUCKET' 
   resourceConfig:
     instanceCount: 1
@@ -275,7 +265,7 @@ spec:
       dataSource:
         s3DataSource:
           s3DataType: S3Prefix
-          # The input path of our train data 
+          # The input path of your train data 
           s3URI: s3://'$SAGEMAKER_BUCKET'/sagemaker/xgboost/train
           s3DataDistributionType: FullyReplicated
       contentType: text/libsvm
@@ -284,7 +274,7 @@ spec:
       dataSource:
         s3DataSource:
           s3DataType: S3Prefix
-          # The input path of our validation data 
+          # The input path of your validation data 
           s3URI: s3://'$SAGEMAKER_BUCKET'/sagemaker/xgboost/validation
           s3DataDistributionType: FullyReplicated
       contentType: text/libsvm
@@ -356,7 +346,7 @@ aws iam delete-role --role-name $OIDC_ROLE_NAME
 
 To delete your EKS clusters, pods, or nodes, see [Amazon EKS Setup - Cleanup][cleanup-eks].  
 
-[configure-permissions]: https://aws-controllers-k8s.github.io/community/docs/user-docs/authorization/
+[configure-permissions]: /user-docs/authorization/
 [sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
-[cleanup]: https://aws-controllers-k8s.github.io/community/docs/user-docs/cleanup/
+[cleanup]: /user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html#deep-learning-containers-eks-setup-cleanup
