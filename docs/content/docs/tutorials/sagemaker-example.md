@@ -1,5 +1,5 @@
 ---
-title: "Machine learning with the ACK SageMaker controller"
+title: "Machine Learning With the ACK SageMaker Controller"
 description: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
 lead: ""
 draft: false
@@ -347,7 +347,7 @@ aws iam delete-role --role-name $OIDC_ROLE_NAME
 
 To delete your EKS clusters, pods, or nodes, see [Amazon EKS Setup - Cleanup][cleanup-eks].  
 
-[configure-permissions]: /docs/user-docs/authorization/
+[configure-permissions]: ../../user-docs/authorization/
 [sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
-[cleanup]: /docs/user-docs/cleanup/
+[cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html#deep-learning-containers-eks-setup-cleanup
