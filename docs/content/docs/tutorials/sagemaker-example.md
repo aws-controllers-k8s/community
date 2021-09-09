@@ -1,6 +1,6 @@
 ---
-title: "Machine learning with ACK SageMaker Operators and EKS"
-description: "Train a machine learning model with the Amazon SageMaker ACK service controller and Amazon Elastic Kubernetes Service"
+title: "Machine learning with the ACK SageMaker controller"
+description: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
 lead: ""
 draft: false
 menu: 
@@ -12,7 +12,7 @@ toc: true
 
 The SageMaker ACK service controller makes it easier for machine learning developers and data scientists who use Kubernetes as their control plane to train, tune, and deploy machine learning models in Amazon SageMaker without logging into the SageMaker console. 
 
-The following steps will guide you through the setup and use of the Amazon SageMaker ACK service controller for training a machine learning models.
+The following steps will guide you through the setup and use of the Amazon SageMaker ACK service controller for training a machine learning model.
 
 ## Setup
 
@@ -67,7 +67,7 @@ export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --regio
 --query "cluster.identity.oidc.issuer" --output text | cut -c9-)
 ```
 
-In your working directory, create a file named `trust.json` and insert the following trust relationship code block into the document:
+In your working directory, create a file named `trust.json` using the following trust relationship code block:
 
 ```bash
 printf '{
@@ -163,7 +163,7 @@ kubectl get pods -n $ACK_K8S_NAMESPACE
 
 ### Prepare your data
 
-For training a model with SageMaker, we will need an S3 bucket to store the dataset and model training artifacts. For this example, we will use the [UCI Abalone](https://archive.ics.uci.edu/ml/datasets/Abalone) dataset, which is already processed and available on S3.  
+For training a model with SageMaker, we will need an S3 bucket to store the dataset and model training artifacts. For this example, we will use [MNIST](http://yann.lecun.com/exdb/mnist/) data stored in [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) format.
 
 First, create a variable for the S3 bucket:
 
@@ -174,7 +174,7 @@ export SERVICE_REGION=us-east-1
 export SAGEMAKER_BUCKET=ack-sagemaker-bucket-$RANDOM_VAR
 ```
 
-Then, create a file named `create-bucket.sh` and insert the following code block:
+Then, create a file named `create-bucket.sh` with the following code block:
 
 ```bash
 printf '
@@ -231,10 +231,10 @@ Specify your region-specific XGBoost image URI:
 export XGBOOST_IMAGE=683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.2-1
 ```
 {{% hint type="info" title="Change XGBoost image URI based on region" %}}
-**IMPORTANT**: If your `SERVICE_REGION` is **not** **us-east-1**, you must change the `XGBOOST_IMAGE` URI. To find your region-specific XGBoost image URI, choose your region in the [SageMaker Docker Registry Paths page](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html), and then select **XGBoost (algorithm)**. For this example, use version 1.2-1.
+**IMPORTANT**: If your `SERVICE_REGION` is not `us-east-1`, you must change the `XGBOOST_IMAGE` URI. To find your region-specific XGBoost image URI, choose your region in the [SageMaker Docker Registry Paths page](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html), and then select **XGBoost (algorithm)**. For this example, use version 1.2-1.
 {{% /hint %}}
 
-Next, create a `training.yaml` file to specify the parameters for your SageMaker training job. You will need to specify your SageMaker training job name, any relevant hyperperameters, and the location of your training and validation data. You can also use this document to specify which Amazon Elastic Container Registry (ECR) image to use for training. 
+Next, create a `training.yaml` file to specify the parameters for your SageMaker training job. This file specifies your SageMaker training job name, any relevant hyperperameters, and the location of your training and validation data. You can also use this document to specify which Amazon Elastic Container Registry (ECR) image to use for training. 
 
 ```yaml
 printf '
@@ -320,20 +320,39 @@ ack-xgboost-training-job-7420   Training          InProgress
 ack-xgboost-training-job-7420   Completed         Completed
 ```
 
+If your training job failed, look to the `status.failureReason` after running the following command:
+```bash
+kubectl describe trainingjobs $JOB_NAME
+```
+
 ## Next Steps 
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
 ### Cleanup
 
-You can delete your SageMaker training job with the following command:
+You can delete your SageMaker training job with the `kubectl delete` command.
 ```bash
 kubectl delete trainingjob $JOB_NAME
 ```
 
-To uninstall the SageMaker ACK service controller and related CRDs, see [ACK Cleanup][cleanup].
+To remove the SageMaker ACK service controller, related CRDs, and namespaces see [ACK Cleanup][cleanup].
 
-Be sure to remove any additional resources such as [S3 buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-bucket.html), SageMaker execution roles, and [IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-delete.html) when you no longer need them.
+It is recommended to delete any additional resources such as S3 buckets, IAM roles, and IAM policies when you no longer need them. You can delete these resources with the following commands or directly in the AWS console.
+
+```bash
+# Delete S3 bucket
+aws s3 rb s3://$SAGEMAKER_BUCKET --force
+
+# Delete SageMaker execution role
+aws iam detach-role-policy --role-name $SAGEMAKER_EXECUTION_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+aws iam detach-role-policy --role-name $SAGEMAKER_EXECUTION_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+aws iam delete-role --role-name $SAGEMAKER_EXECUTION_ROLE_NAME
+
+# Delete IAM role created for IRSA
+aws iam detach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+aws iam delete-role --role-name $OIDC_ROLE_NAME
+```
 
 To delete your EKS clusters, pods, or nodes, see [Amazon EKS Setup - Cleanup][cleanup-eks].  
 
