@@ -16,7 +16,7 @@ The following steps will guide you through the setup and use of the Amazon SageM
 
 ## Setup
 
-Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html).
+Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes.
 
 ### Prerequisites
 
@@ -28,7 +28,7 @@ This guide assumes that you have:
     - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
-    - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux installation, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
+    - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
 
 ### Configure IAM permissions
 
@@ -133,10 +133,16 @@ yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_AR
 cd -
 ```
 
-Install the SageMaker ACK service controller and relevant custom resource definitions (CRDs) with the Helm chart. 
+Install the relevant custom resource definitions (CRDs) for the SageMaker ACK service controller. 
+
 ```bash
-helm install -n $ACK_K8S_NAMESPACE --create-namespace ack-$SERVICE-controller \
- $CHART_EXPORT_PATH/$SERVICE-chart
+kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
+```
+
+Create a namespace and install the SageMaker ACK service controller with the Helm chart. 
+
+```bash
+helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \ $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
 Verify that the CRDs and Helm charts were deployed with the following commands:
