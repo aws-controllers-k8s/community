@@ -28,7 +28,7 @@ This guide assumes that you have:
     - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
-    - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing.
+    - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux installation, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
 
 ### Configure IAM permissions
 
