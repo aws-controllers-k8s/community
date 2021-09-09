@@ -16,7 +16,7 @@ The following steps will guide you through the setup and use of the Amazon SageM
 
 ## Setup
 
-Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html).
+Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html).
 
 ### Prerequisites
 
@@ -133,15 +133,9 @@ yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_AR
 cd -
 ```
 
-Install the relevant custom resource definitions (CRDs) for the SageMaker ACK service controller. 
-
+Install the SageMaker ACK service controller and relevant custom resource definitions (CRDs) with the Helm chart. 
 ```bash
-kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
-```
-
-Create a namespace and install the SageMaker ACK service controller with the Helm chart. 
-```bash
-helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \
+helm install -n $ACK_K8S_NAMESPACE --create-namespace ack-$SERVICE-controller \
  $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
@@ -160,10 +154,10 @@ For training a model with SageMaker, we will need an S3 bucket to store the data
 First, create a variable for the S3 bucket:
 
 ```bash
-export RANDOM_VAR=$RANDOM
+export ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 # Specify your service region
 export SERVICE_REGION=us-east-1
-export SAGEMAKER_BUCKET=ack-sagemaker-bucket-$RANDOM_VAR
+export SAGEMAKER_BUCKET=ack-sagemaker-bucket-$ACCOUNT_ID
 ```
 
 Then, create a file named `create-bucket.sh` with the following code block:
@@ -197,7 +191,7 @@ python3 s3_sample_data.py $SAGEMAKER_BUCKET
 The SageMaker training job that we execute will need an IAM role to access Amazon S3 and Amazon SageMaker. Run the following commands to create a SageMaker execution IAM role that will be used by SageMaker to access the appropriate AWS resources:
 
 ```bash
-export SAGEMAKER_EXECUTION_ROLE_NAME=ack-sagemaker-execution-role-$RANDOM_VAR
+export SAGEMAKER_EXECUTION_ROLE_NAME=ack-sagemaker-execution-role-$ACCOUNT_ID
 
 TRUST="{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"Service\": \"sagemaker.amazonaws.com\" }, \"Action\": \"sts:AssumeRole\" } ] }"
 aws iam create-role --role-name ${SAGEMAKER_EXECUTION_ROLE_NAME} --assume-role-policy-document "$TRUST"
@@ -214,7 +208,7 @@ echo $SAGEMAKER_EXECUTION_ROLE_ARN
 Give your SageMaker training job a unique name: 
 
 ```bash
-export JOB_NAME=ack-xgboost-training-job-$RANDOM_VAR
+export JOB_NAME=ack-xgboost-training-job-$ACCOUNT_ID
 ```
 
 Specify your region-specific XGBoost image URI: 
