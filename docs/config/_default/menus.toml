@@ -26,6 +26,11 @@
   weight = 20
 
 [[docs]]
+  name = "Tutorials"
+  identifier = "tutorials"
+  weight = 25
+
+[[docs]]
   name = "Contributor Docs"
   identifier = "contributor"
   weight = 30
