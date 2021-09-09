@@ -1,7 +1,7 @@
 ---
-title: "Machine Learning With the ACK SageMaker Controller"
+title: "Machine Learning with the ACK SageMaker Controller"
 description: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
-lead: ""
+lead: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
 draft: false
 menu: 
   docs:
@@ -316,7 +316,7 @@ kubectl describe trainingjobs $JOB_NAME
 
 If your training job completed successfully, you can find the model location under `status.modelArtifacts.s3ModelArtifacts`. If your training job failed, look to the `status.failureReason` for more information.
 
-## Next Steps 
+## Next steps 
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 

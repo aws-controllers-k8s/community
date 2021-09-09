@@ -1,7 +1,7 @@
 ---
 title: "Configure Permissions"
 description: "Configuring RBAC and IAM for ACK"
-lead: "Configuring RBAC and IAM for Authorization and Access"
+lead: "Set up RBAC and IAM for authorization and access"
 draft: false
 menu: 
   docs:

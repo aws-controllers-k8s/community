@@ -1,7 +1,7 @@
 ---
 title: "Installation"
 description: "Installing an ACK controller"
-lead: "Installing an ACK controller"
+lead: ""
 draft: false
 menu: 
   docs:
@@ -15,9 +15,11 @@ The following guide will walk you through the installation of an [ACK service co
 Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository. 
 
 {{% hint title="Be mindful of maintenance phases" %}}
-Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
+Check the [project stage][proj-stages] and [maintenance phase][maint-phases] of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
 {{% /hint %}}
 
+[proj-stages]: ../../community/releases/#project-stages
+[maint-phases]: ../../community/releases/#maintenance-phases
 [ack-services]: ../../community/services/
 [rel-ver]: ../../community/releases/#releases-and-versioning
 

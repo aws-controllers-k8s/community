@@ -1,7 +1,7 @@
 ---
 title: "Cleanup"
 description: "Uninstalling an ACK controller"
-lead: "Uninstalling an ACK controller"
+lead: ""
 draft: false
 menu: 
   docs:

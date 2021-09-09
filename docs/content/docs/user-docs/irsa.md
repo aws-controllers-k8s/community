@@ -1,7 +1,7 @@
 ---
 title: "Configure IRSA"
 description: "Setting up ACK with IAM Roles for Service Accounts"
-lead: "Setting up ACK with IAM Roles for Service Accounts"
+lead: "Set up ACK with IAM roles for service accounts"
 draft: false
 menu: 
   docs:
