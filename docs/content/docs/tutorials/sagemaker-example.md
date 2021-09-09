@@ -36,8 +36,8 @@ Create an IAM role and attach an IAM policy to that role to ensure that your Sag
 
 ```bash
 export CLUSTER_NAME=<CLUSTER_NAME>
-export AWS_DEFAULT_REGION=<CLUSTER_REGION>
-aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION
+export SERVICE_REGION=<CLUSTER_REGION>
+aws eks update-kubeconfig --name $CLUSTER_NAME --region $SERVICE_REGION
 kubectl config get-contexts
 # Ensure cluster has compute
 kubectl get nodes
@@ -47,14 +47,14 @@ Before you can deploy your SageMaker service controller using an IAM role, assoc
 
 ```bash
 eksctl utils associate-iam-oidc-provider --cluster ${CLUSTER_NAME} \
---region ${AWS_DEFAULT_REGION} --approve
+--region ${SERVICE_REGION} --approve
 ```
 
 Get the following OIDC information for future reference:
 
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION \
+export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $SERVICE_REGION \
 --query "cluster.identity.oidc.issuer" --output text | cut -c9-)
 ```
 
@@ -89,14 +89,14 @@ Run the `iam create-role` command to create an IAM role with the trust relations
 
 ```bash
 export OIDC_ROLE_NAME=ack-controller-role-$CLUSTER_NAME
-aws --region $AWS_DEFAULT_REGION iam create-role --role-name $OIDC_ROLE_NAME --assume-role-policy-document file://trust.json
+aws --region $SERVICE_REGION iam create-role --role-name $OIDC_ROLE_NAME --assume-role-policy-document file://trust.json
 ```
 
 Attach the AmazonSageMakerFullAccess Policy to the IAM Role to ensure that your SageMaker service controller has access to the appropriate resources. 
 
 ```bash
-aws --region $AWS_DEFAULT_REGION iam attach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
-export IAM_ROLE_ARN_FOR_IRSA=$(aws --region $AWS_DEFAULT_REGION iam get-role --role-name $OIDC_ROLE_NAME --output text --query 'Role.Arn')
+aws --region $SERVICE_REGION iam attach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+export IAM_ROLE_ARN_FOR_IRSA=$(aws --region $SERVICE_REGION iam get-role --role-name $OIDC_ROLE_NAME --output text --query 'Role.Arn')
 echo $IAM_ROLE_ARN_FOR_IRSA
 ```
 
@@ -127,7 +127,7 @@ Update the Helm chart values for a cluster-scoped installation.
 ```bash
 # Update the following values in the Helm chart
 cd $CHART_EXPORT_PATH/$SERVICE-chart
-yq e '.aws.region = env(AWS_DEFAULT_REGION)' -i values.yaml
+yq e '.aws.region = env(SERVICE_REGION)' -i values.yaml
 yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
 yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
 cd -
@@ -147,7 +147,7 @@ helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-c
 
 Verify that the CRDs and Helm charts were deployed with the following commands:
 ```bash
-kubectl get crds
+kubectl get crds | grep "services.k8s.aws"
 kubectl get pods -n $ACK_K8S_NAMESPACE
 ```
 
@@ -161,8 +161,6 @@ First, create a variable for the S3 bucket:
 
 ```bash
 export ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-# Specify your service region
-export SERVICE_REGION=us-east-1
 export SAGEMAKER_BUCKET=ack-sagemaker-bucket-$ACCOUNT_ID
 ```
 
@@ -310,10 +308,13 @@ ack-xgboost-training-job-7420   Training          InProgress
 ack-xgboost-training-job-7420   Completed         Completed
 ```
 
-If your training job failed, look to the `status.failureReason` after running the following command:
+To see details about your training job, run the following command:
+
 ```bash
 kubectl describe trainingjobs $JOB_NAME
 ```
+
+If your training job completed successfully, you can find the model location under `status.modelArtifacts.s3ModelArtifacts`. If your training job failed, look to the `status.failureReason` for more information.
 
 ## Next Steps 
 
