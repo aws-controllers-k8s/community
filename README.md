@@ -31,7 +31,7 @@ Kubernetes custom controllers for individual AWS service APIs.
 > Participation Service Terms, and apply to any service controllers in a
 > `Preview` maintenance phase.
 
-[releases]: https://aws-controllers-k8s.github.io/community/releases/
+[releases]: https://aws-controllers-k8s.github.io/community/docs/community/releases/
 [aws-service-terms]: https://aws.amazon.com/service-terms
 
 * [Overview](#overview)
@@ -61,14 +61,14 @@ resources on your behalf.
 Please see the list of ACK [service controllers][services] currently in one of
 our [project stages][proj-stages].
 
-[proj-stages]: https://aws-controllers-k8s.github.io/community/releases/#project-stages
+[proj-stages]: https://aws-controllers-k8s.github.io/community/docs/community/releases/#project-stages
 
 You can [install][install] any of the controllers in the `RELEASED` project stage using
 Helm (recommended) or manually using the raw Kubernetes manifests contained in
 the individual ACK service controller's source repository.
 
-[services]: https://aws-controllers-k8s.github.io/community/services/
-[install]: https://aws-controllers-k8s.github.io/community/user-docs/install/
+[services]: https://aws-controllers-k8s.github.io/community/docs/community/services/
+[install]: https://aws-controllers-k8s.github.io/community/docs/user-docs/install/
 
 Once installed, Kubernetes users may apply a custom resource (CR) corresponding
 to one of the resources exposed by the ACK service controller for the service.
@@ -76,7 +76,7 @@ to one of the resources exposed by the ACK service controller for the service.
 To view the list of custom resources and each CR's schema, visit our
 [reference documentation][ref-docs].
 
-[ref-docs]: https://aws-controllers-k8s.github.io/community/reference/overview/
+[ref-docs]: https://aws-controllers-k8s.github.io/community/reference/
 
 ## Help & Feedback
 
