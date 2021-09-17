@@ -10,75 +10,39 @@ weight: 50
 toc: true
 ---
 
-ACK service controllers can manage resources in different AWS accounts. To enable and start using this feature, as an administrator, you will need to:
+If you are using resources across different regions, you can override the default region of a given ACK service controller. ACK service controllers will first look for a region in the following order:
 
-  1. Configure the AWS accounts where the resources will be managed
-  2. Map AWS accounts with the Role ARNs that need to be assumed
-  3. Annotate namespaces with AWS Account IDs
+  1. The region annotation `services.k8s.aws/region` on the resource. If provided, this will override the namespace default region annotation.
+  2. The namespace default region annotation `services.k8s.aws/default-region`.
+  3. Controller flags, such as the `aws.region` variable in a given Helm chart
+  4. Kubernetes pod [IRSA](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) environment variables
 
-For detailed information about how ACK service controllers manage resources in multiple AWS accounts, please refer to the Cross-Account Resource Management (CARM) [design document](https://github.com/aws-controllers-k8s/community/blob/main/docs/design/proposals/carm/cross-account-resource-management.md).
+For example, the ACK service controller default region is `us-west-2`. If you want to create a resource in `us-east-1`, use one of the following options to override the default region
 
-## Step 1: Configure your AWS accounts
+Option 1: Region annotation
 
-AWS account administrators should create and configure IAM roles to allow ACK service controllers to assume roles in different AWS accounts.
+Add the `services.k8s.aws/region` annotation while creating the resource. For example:
 
-To allow account A (000000000000) to create AWS S3 buckets in account B (111111111111), you can use the following commands:
 ```bash
-# Using account B credentials
-aws iam create-role --role-name s3FullAccess \
-  --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"AWS": "arn:aws:iam::000000000000:role/roleA-production"}, "Action": "sts:AssumeRole"}]}'
-aws iam attach-role-policy --role-name s3FullAccess \
-  --policy-arn 'arn:aws:iam::aws:policy/service-role/AmazonS3FullAccess'
+  apiVersion: sagemaker.services.k8s.aws/v1alpha1kind: TrainingJobmetadata:name: ack-sample-tainingjobannotations:services.k8s.aws/region: us-east-1spec:trainingJobName: ack-sample-tainingjobroleARN: <sagemaker_execution_role_arn>...
 ```
 
-## Step 2: Map AWS accounts to their associated role ARNs
+Option 2: Namespace default region annotation
 
-Create a `ConfigMap` to associate each AWS Account ID with the role ARN that needs to be assumed in order to manage resources in that particular account.
+To bind a region to a specific namespace, you will have to annotate the namespace with the `services.k8s.aws/default-region` annotation. For example:
 
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ack-role-account-map
-  namespace: ack-system
-data:
-  "111111111111": arn:aws:iam::111111111111:role/s3FullAccess
-EOF
-```
-
-## Step 3: Bind accounts to namespaces
-
-To bind AWS accounts to a specific namespace you will have to annotate the namespace with an AWS account ID. For example:
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  annotations:
-    services.k8s.aws/owner-account-id: "111111111111"
-EOF
+apiVersion: v1kind: Namespacemetadata:name: productionannotations:services.k8s.aws/default-region: us-east-1
 ```
 
 For existing namespaces, you can run:
+
 ```bash
-kubectl annotate namespace production services.k8s.aws/owner-account-id=111111111111
+kubectl annotate namespace production services.k8s.aws/default-region=us-east-1
 ```
 
-### Create resources in different AWS accounts
+You can also create the resource in the same namespace:
 
-Next, create your custom resources (CRs) in the associated namespace.
-
-For example, to create an S3 bucket in account B, run the following command:
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: s3.services.k8s.aws/v1alpha1
-kind: Bucket
-metadata:
-  name: my-bucket
-  namespace: production
-spec:
-  name: my-bucket
-EOF
+apiVersion: sagemaker.services.k8s.aws/v1alpha1kind: TrainingJobmetadata:name: ack-sample-trainingjobnamespace: productionspec:trainingJobName: ack-sample-trainingjobroleARN: <sagemaker_execution_role_arn>...
 ```
