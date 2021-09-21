@@ -67,6 +67,6 @@ metadata:
   name: my-bucket
   namespace: production
 spec:
-  trainingJobName: my-bucket
+  name: my-bucket
   ...
 ```
