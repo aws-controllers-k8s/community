@@ -31,7 +31,7 @@ encapsulates a request for temporary credentials to assume the IAM Role with
 reduced permissions.
 
 When AWS clients or SDKs connect to an AWS API, they detect the existence of
-this special token file and call the [`STS::AssumeRoleWithWebIdentity`][2] API
+this special token file and call the [`STS::AssumeRoleWithWebIdentity`][security-token] API
 to assume the IAM Role with reduced permissions.
 
 [IAM Roles for Service Accounts][irsa-docs] (IRSA) automates the provisioning and rotation of AWS Identity and Access Management (IAM) temporary credentials that a Kubernetes service account can use to call AWS APIs.
