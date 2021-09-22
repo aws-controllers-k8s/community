@@ -23,7 +23,7 @@ For example, the `--aws-region` ACK service controller flag is `us-west-2`. If y
 
 Add the `services.k8s.aws/region` annotation while creating the resource. For example:
 
-```yaml {linenos=table,hl_lines=["5-6"],linenostart=27}
+```yaml 
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
@@ -43,7 +43,7 @@ To bind a region to a specific namespace, you will have to annotate the namespac
 Use this solution for multi-region resource management on cluster-scoped deployments.
 {{% /hint %}}
 
-```yaml {linenos=table,hl_lines=["5-6"],linenostart=47}
+```yaml 
 apiVersion: v1
 kind: Namespace
 metadata:
