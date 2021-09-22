@@ -27,6 +27,10 @@ Check the [project stage](../../community/releases/#project-stages) and [mainten
 
 The recommended way to install an ACK service controller for Kubernetes is to use [Helm 3][helm-3-install].
 
+{{% hint type="warning" title="Use the correct Helm version" %}}
+Helm 3.7 will introduce breaking changes to this tutorial. Be sure to install a Helm version that is less than 3.7. Acceptable versions include 3.1, 3.2, 3.3, 3.4, 3.5, or 3.6. 
+{{% /hint %}}
+
 [helm-3-install]: https://helm.sh/docs/intro/install/
 
 Each ACK service controller has a separate Helm chart that installs the necessary supporting artifacts as a Kubernetes `Deployment`. This includes the ACK service controller, custom resource definitions (CRDs), and Kubernetes Role-Based Access Control (RBAC) manifests.
