@@ -24,11 +24,15 @@ This guide assumes that you have:
   - Created an EKS cluster with Kubernetes version 1.16 or higher. 
   - AWS IAM permissions to create roles and attach policies to roles.
   - Installed the following tools on the client machine used to access your Kubernetes cluster:
-    - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
-    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
+    - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
+    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+
+{{% hint type="warning" title="Use the correct Helm version" %}}
+Helm 3.7 will introduce breaking changes to this tutorial. Be sure to install a Helm version that is less than 3.7. Acceptable versions include 3.1, 3.2, 3.3, 3.4, 3.5, or 3.6. 
+{{% /hint %}}
 
 ### Configure IAM permissions
 
@@ -174,7 +178,7 @@ if [[ $SERVICE_REGION != "us-east-1" ]]; then
   aws s3api create-bucket --bucket "$SAGEMAKER_BUCKET" --region "$SERVICE_REGION" --create-bucket-configuration LocationConstraint="$SERVICE_REGION"
 else
   aws s3api create-bucket --bucket "$SAGEMAKER_BUCKET" --region "$SERVICE_REGION"
-' > ./create-bucket.sh
+fi' > ./create-bucket.sh
 ```
 
 Run the `create-bucket.sh` script to create an S3 bucket.
