@@ -31,7 +31,7 @@ This guide assumes that you have:
     - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 {{% hint type="warning" title="Use the correct Helm version" %}}
-Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than 3.0 and less than 3.7.
+Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than or equal to 3.7.
 {{% /hint %}}
 
 ### Configure IAM permissions
