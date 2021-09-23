@@ -70,8 +70,7 @@ Why am I seeing `Error: manifest does not contain minimum number of descriptors 
 {{% /hint %}}
 
 {{% hint type="answer" title="Answer" %}}
-[Helm 3.7](https://github.com/helm/helm/releases/tag/v3.7.0) included backward compatibility breaking changes to the manifest format of Helm charts stored in OCI chart repositories. Any images built using Helm <3.7 are not compatible with the latest version of the Helm CLI. This can be solved by using latest version of the chart.
-Also remember to use Helm with version 3.7 or above with latest version of chart.
+[Helm 3.7](https://github.com/helm/helm/releases/tag/v3.7.0) included backward compatibility breaking changes to the manifest format of Helm charts stored in OCI chart repositories. Any images built using Helm <3.7 are not compatible with the latest version of the Helm CLI. This can be solved by using latest version of the chart. Use Helm version 3.7 or above with the latest version of the charts.
 {{% /hint %}}
 
 ## Contributing
