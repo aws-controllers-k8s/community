@@ -63,6 +63,16 @@ The two projects complement each other.
 cdk8s can create the Kubernetes resources and ACK uses those resources to create the AWS infrastructure.
 {{% /hint %}}
 
+## Troubleshooting
+
+{{% hint type="success" title="Question" %}}
+Why am I seeing `Error: manifest does not contain minimum number of descriptors (2), descriptors found: 1` when trying to install the Helm chart?
+{{% /hint %}}
+
+{{% hint type="answer" title="Answer" %}}
+[Helm 3.7](https://github.com/helm/helm/releases/tag/v3.7.0) included backward compatibility breaking changes to the manifest format of Helm charts stored in OCI chart repositories. Any images built using Helm <3.7 are not compatible with the latest version of the Helm CLI. This can be solved by using latest version of the chart. Use Helm version 3.7 or above with the latest version of the charts.
+{{% /hint %}}
+
 ## Contributing
 
 {{% hint type="success" title="Question" %}}

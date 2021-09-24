@@ -25,10 +25,10 @@ Check the [project stage](../../community/releases/#project-stages) and [mainten
 
 ## Install an ACK service controller with Helm (Recommended)
 
-The recommended way to install an ACK service controller for Kubernetes is to use [Helm 3][helm-3-install].
+The recommended way to install an ACK service controller for Kubernetes is to use [Helm 3.7+][helm-3-install].
 
 {{% hint type="warning" title="Use the correct Helm version" %}}
-Helm 3.7 introduced breaking changes to this installation guide. Be sure to install a Helm version that is greater than 3.0 and less than 3.7.
+Helm 3.7 introduced breaking changes to this installation guide. Be sure to install a Helm version that is greater than or equal to 3.7.
 {{% /hint %}}
 
 [helm-3-install]: https://helm.sh/docs/intro/install/
@@ -42,20 +42,21 @@ Helm charts for individual ACK service controllers are tagged with their release
 [ack-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s
 [s3-ecr-chart]: https://gallery.ecr.aws/aws-controllers-k8s/s3-chart
 
-Before installing a Helm chart, you must first make the Helm chart available on the `Deployment` host. To do so, use the `helm chart pull` and `helm chart export` commands:
+Before installing a Helm chart, you must first make the Helm chart available on the `Deployment` host. To do so, use the `helm pull` command and then extract the chart:
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
 export RELEASE_VERSION=v0.0.1
 export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
-export CHART_REF=$CHART_REPO:$RELEASE_VERSION
+export CHART_REF=$SERVICE-chart
+export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
+export CHART_PACKAGE=$CHART_REF-$RELEASE_VERSION.tgz
 
 mkdir -p $CHART_EXPORT_PATH
 
-helm chart pull $CHART_REF
-helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
+helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
+tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
 
 Once the Helm chart is downloaded and exported, you can install a particular ACK service controller using the `helm install` command:
@@ -64,14 +65,14 @@ Once the Helm chart is downloaded and exported, you can install a particular ACK
 export ACK_K8S_NAMESPACE=ack-system
 
 helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
-    $CHART_EXPORT_PATH/ack-$SERVICE-controller
+    $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
 The `helm install` command should return relevant installation information:
 
 ```bash
-helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller $CHART_EXPORT_PATH/ack-$SERVICE-controller
-NAME: ack-s3-controller
+helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller $CHART_EXPORT_PATH/$SERVICE-chart
+NAME: s3-chart
 LAST DEPLOYED: Thu Dec 17 13:09:17 2020
 NAMESPACE: ack-system
 STATUS: deployed
