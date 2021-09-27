@@ -3,7 +3,7 @@ title: "Installation"
 description: "Installing an ACK controller"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
     parent: "installing"
 weight: 10
@@ -12,7 +12,7 @@ toc: true
 
 The following guide will walk you through the installation of an [ACK service controller][ack-services].
 
-Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository. 
+Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository.
 
 {{% hint title="Be mindful of maintenance phases" %}}
 Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
@@ -47,7 +47,7 @@ Before installing a Helm chart, you must first make the Helm chart available on 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
-export RELEASE_VERSION=v0.0.1
+export RELEASE_VERSION=$(git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' https://github.com/aws-controllers-k8s/s3-controller.git | tail -n 1 | cut -d'/' -f3)
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
@@ -58,6 +58,11 @@ mkdir -p $CHART_EXPORT_PATH
 helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
 tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
+
+{{% hint type="info" title="controller version" %}}
+Above commands will download the latest version of `s3-controller`. To select a
+different version, change `RELEASE_VERSION` variable and execute the commands again.
+{{% /hint %}}
 
 Once the Helm chart is downloaded and exported, you can install a particular ACK service controller using the `helm install` command:
 
@@ -101,7 +106,7 @@ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 
 ## Install an ACK service controller with static Kubernetes manifests
 
-If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository. 
+If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository.
 
 Static Kubernetes manifests install an individual service controller as a Kubernetes `Deployment`, including the relevant Kubernetes RBAC resources. Static Kubernetes manifests are available in the `config/` directory of the associated ACK service controller's source repository.
 
