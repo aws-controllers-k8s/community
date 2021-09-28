@@ -59,7 +59,7 @@ helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
 tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
 
-{{% hint type="info" title="controller version" %}}
+{{% hint type="info" title="s3-controller version" %}}
 Above commands will download the latest version of `s3-controller`. To select a
 different version, change `RELEASE_VERSION` variable and execute the commands again.
 {{% /hint %}}
@@ -68,15 +68,19 @@ Once the Helm chart is downloaded and exported, you can install a particular ACK
 
 ```bash
 export ACK_K8S_NAMESPACE=ack-system
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_REGION=us-west-2
 
 helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+    --set aws.account_id="$AWS_ACCOUNT_ID" \
+    --set aws.region="$AWS_REGION" \
     $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
 The `helm install` command should return relevant installation information:
 
 ```bash
-helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller $CHART_EXPORT_PATH/$SERVICE-chart
+helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller --set aws.account_id="$AWS_ACCOUNT_ID" --set aws.region="$AWS_REGION" $CHART_EXPORT_PATH/$SERVICE-chart
 NAME: s3-chart
 LAST DEPLOYED: Thu Dec 17 13:09:17 2020
 NAMESPACE: ack-system
@@ -84,6 +88,12 @@ STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 ```
+
+{{% hint type="info" title="AWS Region" %}}
+Above commands will setup `s3-controller` to use `us-west-2` as AWS region. To
+select a different AWS region, change `AWS_REGION` variable and execute the
+commands again.
+{{% /hint %}}
 
 To verify that the Helm chart was installed, use the `helm list` command:
 
@@ -95,7 +105,7 @@ The `helm list` command should return your newly-deployed Helm chart release inf
 
 ```bash
 helm list --namespace $ACK_K8S_NAMESPACE -o yaml
-- app_version: v0.0.1
+- app_version: v0.0.5
   chart: s3-controller
   name: ack-s3-controller
   namespace: ack-system
