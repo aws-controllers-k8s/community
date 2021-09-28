@@ -80,7 +80,11 @@ helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-cont
 The `helm install` command should return relevant installation information:
 
 ```bash
-helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller --set aws.account_id="$AWS_ACCOUNT_ID" --set aws.region="$AWS_REGION" $CHART_EXPORT_PATH/$SERVICE-chart
+helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+    --set aws.account_id="$AWS_ACCOUNT_ID" \
+    --set aws.region="$AWS_REGION" \
+    $CHART_EXPORT_PATH/$SERVICE-chart
+
 NAME: s3-chart
 LAST DEPLOYED: Thu Dec 17 13:09:17 2020
 NAMESPACE: ack-system
@@ -115,9 +119,9 @@ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 ```
 
 {{% hint type="important" title="NOTE" %}}
-s3-controller should be installed successfully now but it is not fully functional.
-ACK controller needs access to AWS IAM credentials to manage AWS resources. See
-[Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
+The `s3-controller` should be installed successfully now, but it is NOT yet fully
+functional. ACK controller needs access to AWS IAM credentials to manage AWS resources.
+See [Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
 {{% /hint %}}
 
 ## Install an ACK service controller with static Kubernetes manifests
