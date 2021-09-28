@@ -114,6 +114,12 @@ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
   updated: 2020-12-17 13:09:17.309002201 -0500 EST
 ```
 
+{{% hint type="important" title="NOTE" %}}
+s3-controller should be installed successfully now but it is not fully functional.
+ACK controller needs access to AWS IAM credentials to manage AWS resources. See
+[Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
+{{% /hint %}}
+
 ## Install an ACK service controller with static Kubernetes manifests
 
 If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository.
