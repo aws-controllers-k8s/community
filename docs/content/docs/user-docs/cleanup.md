@@ -1,16 +1,14 @@
 ---
-title: "Cleanup"
-description: "Uninstalling an ACK controller"
+title: "Uninstall an ACK Controller"
+description: "Uninstall an ACK Controller"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
-    parent: "installing"
+    parent: "getting-started"
 weight: 100
 toc: true
 ---
-
-## Uninstall ACK service controllers 
 
 Use the `helm uninstall` command to uninstall an ACK service controller:
 ```bash
@@ -24,7 +22,7 @@ helm uninstall -n $ACK_K8S_NAMESPACE ack-$SERVICE-controller
 
 ### Delete individual CRDS
 
-If you have multiple controllers installed and only want to delete CRDs related to a specific resource, use the `kubectl delete` command to delete the CRDs with the the service name prefix. 
+If you have multiple controllers installed and only want to delete CRDs related to a specific resource, use the `kubectl delete` command to delete the CRDs with the the service name prefix.
 
 For example, use the following commands to delete the CRD for Amazon S3 Buckets:
 ```bash
@@ -66,7 +64,7 @@ kubectl delete namespace $ACK_K8S_NAMESPACE
 
 ## Delete ConfigMap
 
-If you used [cross account resource management][carm-docs], delete the `ConfigMap` you created. 
+If you used [cross account resource management][carm-docs], delete the `ConfigMap` you created.
 ```bash
 kubectl delete -n ack-system configmap ack-role-account-map
 ```

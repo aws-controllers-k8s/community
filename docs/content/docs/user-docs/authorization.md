@@ -1,16 +1,26 @@
 ---
-title: "Configure Permissions"
+title: "Permissions Overview"
 description: "Configuring RBAC and IAM for ACK"
-lead: "Set up RBAC and IAM for authorization and access"
+lead: "Overview of RBAC and IAM for authorization and access"
 draft: false
 menu:
   docs:
-    parent: "installing"
-weight: 20
+    parent: "getting-started"
+weight: 60
 toc: true
 ---
 
 There are two different Role-Based Access Control (RBAC) systems needed for ACK service controller authorization: Kubernetes RBAC and AWS IAM.
+
+{{% hint type="info" title="Note" %}}
+This guide is only informative. You do not need to execute any commands from this page.
+
+Kubernetes RBAC permissions below are already handled when you install ACK service
+controller using [Helm chart or static manifests](../install)
+
+AWS IAM permissions are handled using the IAM role created during [IRSA setup](../irsa)
+
+{{% /hint %}}
 
 [Kubernetes RBAC][k8s-rbac] governs a Kubernetes user's ability to read or write Kubernetes resources, while [AWS Identity and Access Management][aws-iam] (IAM) policies govern the ability of an AWS IAM role to read or write AWS resources.
 
@@ -30,13 +40,7 @@ Refer to the following diagram for more details on running a Kubernetes API serv
 
 You will need to configure Kubernetes RBAC and AWS IAM permissions before using ACK service controllers.
 
-{{% hint type="success" title="Note" %}}
-If you performed [controller installation](../install) using Helm or static manifests
-from the [previous guide](../install), then Kubernetes RBAC (`Step 1`) was already configured
-for you. Continue executing the commands from `Step 2` below to setup AWS permissions.
-{{% /hint %}}
-
-## Step 1: Configure Kubernetes RBAC
+## Kubernetes RBAC for ACK controller
 
 As part of installation, Kubernetes `Role` resources are automatically created. These roles contain permissions to modify the Kubernetes custom resources (CRs) that the ACK service controller is responsible for.
 
@@ -65,9 +69,7 @@ You can check the permissions of a particular Kubernetes `User` with the `kubect
 kubectl auth can-i create buckets --namespace default
 ```
 
-## Step 2: Configure AWS IAM
-
-After configuring Kubernetes RBAC permissions, you need to create the necessary AWS IAM roles and policies.
+## AWS IAM permissions for ACK controller
 
 The IAM role needs the correct [IAM policies][aws-iam] for a given ACK service controller. For example, the ACK service controller for AWS S3 needs read and write permission for S3 Buckets. It is recommended that the IAM policy gives only enough access to properly manage the resources needed for a specific AWS service.
 
@@ -75,19 +77,7 @@ To use the recommended IAM policy for a given ACK service controller, refer to t
 
 [s3-recommended-arn]: https://github.com/aws-controllers-k8s/s3-controller/tree/main/config/iam
 
-Apply the IAM policy to the IAM role with the `aws iam attach-role-policy` command:
-
-```bash
-SERVICE=s3
-BASE_URL=https://github.com/aws-controllers-k8s/$SERVICE-controller/blob/main
-POLICY_URL=$BASE_URL/config/iam/recommended-policy-arn
-POLICY_ARN="`wget -qO- $POLICY_URL`"
-aws iam attach-role-policy \
-    --role-name $IAM_ROLE \
-    --policy-arn $POLICY_ARN
-```
-
-Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `additional-policy` file within the `config/iam` folder of a given ACK service controller's public repository. You can apply this policy to an IAM role by replacing the `POLICY_URL` variable in the script above.
+Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `additional-policy` file within the `config/iam` folder of a given ACK service controller's public repository. You can apply this policy to an IAM role by replacing the `POLICY_URL` variable in the script [here](../irsa/#attach-iam-policy-to-the-iam-role)
 
 If you have not yet created an IAM role, see the user documentation on how to [create an IAM role for your ACK service controller][irsa-docs].
 

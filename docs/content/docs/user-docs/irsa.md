@@ -1,18 +1,31 @@
 ---
-title: "Configure IRSA"
+title: "Configure IAM Permissions"
 description: "Setting up ACK with IAM Roles for Service Accounts"
-lead: "Set up ACK with IAM roles for service accounts"
+lead: "Set up ACK with IAM Roles for Service Accounts"
 draft: false
-menu: 
+menu:
   docs:
-    parent: "installing"
-weight: 30
+    parent: "getting-started"
+weight: 20
 toc: true
 ---
 
-[IAM Roles for Service Accounts][0], or IRSA, is a system that automates the
+[IAM Roles for Service Accounts][irsa-docs], or IRSA, is a system that automates the
 provisioning and rotation of IAM temporary credentials (called a Web Identity)
 that a Kubernetes `ServiceAccount` can use to call AWS APIs.
+
+{{% hint type="info" title="TL;DR:" %}}
+Instead of creating and distributing your AWS credentials to the containers or
+using the Amazon EC2 instance’s role, you can associate an IAM role with a Kubernetes
+service account. The applications in a Kubernetes pod container can then use an
+AWS SDK or the AWS CLI to make API requests to authorized AWS services.
+
+Quicklinks:
+* [Setup IRSA for EKS cluster](./#step-1-create-an-oidc-identity-provider-for-your-cluster)
+* [Setup IRSA for non-EKS cluster](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md)
+
+Follow the quicklink OR continue reading for more details about IRSA.
+{{% /hint %}}
 
 The primary advantage of IRSA is that Kubernetes `Pods` which use the
 `ServiceAccount` associated with an IAM Role can have a reduced IAM permission
@@ -38,11 +51,7 @@ to assume the IAM Role with reduced permissions.
 
 Instead of creating and distributing your AWS credentials to the containers or using the Amazon EC2 instance’s role, you can associate an IAM role with a Kubernetes service account. The applications in a Kubernetes pod container can then use an AWS SDK or the AWS CLI to make API requests to authorized AWS services.
 
-By using the IRSA feature, you no longer need to provide extended permissions to the node IAM role so that pods on that node can call AWS APIs. You can scope IAM permissions to a service account, and only pods that use that service account have access to those permissions. 
-
-{{% hint type="info" title="EKS is not required to use IRSA" %}}
-You do not need to use the Amazon EKS service in order to use IRSA. You can [set up IRSA on your own Kubernetes installation](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md).
-{{% /hint %}}
+By using the IRSA feature, you no longer need to provide extended permissions to the node IAM role so that pods on that node can call AWS APIs. You can scope IAM permissions to a service account, and only pods that use that service account have access to those permissions.
 
 The following steps demonstrate how to set up IRSA on an EKS cluster while installing the ACK S3 controller using Helm charts. By modifying the variable values as needed, these steps can be applied for the installation of other ACK service controllers.
 
@@ -60,10 +69,13 @@ For detailed instructions, refer to Amazon EKS documentation on how to [create a
 
 ### Create an IAM role for your ACK service controller
 ```bash
+# Update the service name variables as needed
+SERVICE="s3"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
 ACK_K8S_NAMESPACE=ack-system
-ACK_K8S_SERVICE_ACCOUNT_NAME=ack-s3-controller
+
+ACK_K8S_SERVICE_ACCOUNT_NAME=ack-$SERVICE-controller
 
 read -r -d '' TRUST_RELATIONSHIP <<EOF
 {
@@ -86,19 +98,25 @@ read -r -d '' TRUST_RELATIONSHIP <<EOF
 EOF
 echo "${TRUST_RELATIONSHIP}" > trust.json
 
-# Update the service name variables as needed
-AWS_SERVICE_NAME="s3"
-ACK_CONTROLLER_IAM_ROLE="ack-${AWS_SERVICE_NAME}-controller"
-ACK_CONTROLLER_IAM_ROLE_DESCRIPTION='IRSA role for ACK $AWS_SERVICE_NAME controller deployment on EKS cluster using Helm charts'
+ACK_CONTROLLER_IAM_ROLE="ack-${SERVICE}-controller"
+ACK_CONTROLLER_IAM_ROLE_DESCRIPTION='IRSA role for ACK $SERVICE controller deployment on EKS cluster using Helm charts'
 aws iam create-role --role-name "${ACK_CONTROLLER_IAM_ROLE}" --assume-role-policy-document file://trust.json --description "${ACK_CONTROLLER_IAM_ROLE_DESCRIPTION}"
+ACK_CONTROLLER_IAM_ROLE_ARN=$(aws iam get-role --role-name=$ACK_CONTROLLER_IAM_ROLE --query Role.Arn --output text)
 ```
-Take note of the Amazon Resource Name (ARN) that is associated with your new ACK service controller IAM role. You will need this ARN for later steps. 
 
-### Attach an IAM policy to the IAM role
+### Attach IAM policy to the IAM role
+
+{{% hint type="info" title="Note" %}}
+The command below will attach the ACK recommended policy to the IAM role. If you
+wish to use any other permissions, change `IAM_POLICY_ARN` variable
+{{% /hint %}}
+
 ```bash
 # This example uses a pre-existing policy for Amazon S3
 # Create an IAM policy and use its ARN and update IAM_POLICY_ARN variable as needed
-IAM_POLICY_ARN='arn:aws:iam::aws:policy/AmazonS3FullAccess'
+BASE_URL=https://raw.githubusercontent.com/aws-controllers-k8s/$SERVICE-controller/main
+IAM_POLICY_URL=$BASE_URL/config/iam/recommended-policy-arn
+IAM_POLICY_ARN="`wget -qO- $IAM_POLICY_URL`"
 aws iam attach-role-policy \
     --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
     --policy-arn "$IAM_POLICY_ARN"
@@ -106,75 +124,50 @@ aws iam attach-role-policy \
 
 For detailed instructions, refer to Amazon EKS documentation on [creating an IAM role and policy for your service account][iam-policy].
 
-## Step 3. Associate an IAM role to a service account
+## Step 3. Associate an IAM role to a service account and restart deployment
 
-If you [installed your ACK service controller using a Helm chart][install-docs], then a service account already exists on your cluster. However, it is still neccessary to associate an IAM role with the service account. 
+If you [installed your ACK service controller using a Helm chart][install-docs], then a service account already exists on your cluster. However, it is still neccessary to associate an IAM role with the service account.
 
 Verify that your service account exists using `kubectl describe`:
 ```bash
 kubectl describe serviceaccount/$ACK_K8S_SERVICE_ACCOUNT_NAME -n $ACK_K8S_NAMESPACE
 ```
-Note that the Amazon Resource Name (ARN) of the IAM role that you created is not yet set as an annotation for the service account. 
+Note that the Amazon Resource Name (ARN) of the IAM role that you created is not yet set as an annotation for the service account.
 
 Use the following commands to associate an IAM role to a service account:
 ```bash
 # Annotate the service account with the ARN
-export ISRA_ROLE_ARN=eks.amazonaws.com/role-arn=<IAM Role Arn>
-kubectl annotate serviceaccount -n $ACK_K8S_NAMESPACE $ACK_K8S_SERVICE_ACCOUNT_NAME $ISRA_ROLE_ARN
+export IRSA_ROLE_ARN=eks.amazonaws.com/role-arn=$ACK_CONTROLLER_IAM_ROLE_ARN
+kubectl annotate serviceaccount -n $ACK_K8S_NAMESPACE $ACK_K8S_SERVICE_ACCOUNT_NAME $IRSA_ROLE_ARN
 ```
 
-If you have not done so already, update the AWS region of your ACK service controller using the following commands:
+Restart ACK service controller deployment using the following commands. The restart
+will update service controller pods with IRSA environment variables
 ```bash
-# Update your controller with the correct AWS region. Example: us-east-1
-export AWS_SERVICE_NAME="s3"
-export ACK_K8S_RELEASE_NAME=ack-$AWS_SERVICE_NAME-controller
-kubectl -n $ACK_K8S_NAMESPACE set env deployment/$ACK_K8S_RELEASE_NAME \
-    AWS_REGION="$AWS_ACCOUNT_ID"
+# Note the deployment name for ACK service controller from following command
+kubectl get deployments -n $ACK_K8S_NAMESPACE
+kubectl -n $ACK_K8S_NAMESPACE rollout restart deployment <ACK deployment name>
 ```
-
-### Edit Helm charts directly on your local file system
-
-If you did not already install your ACK service controller using Helm charts, you can directly edit the Helm chart YAML files on your local file system. 
-
-Update the [`values.yaml` file][s3-helm-values] and set the value for `aws.region` and `serviceAccount.annotations`.
-
-```bash
-# Update variables as needed for your ACK service controller
-ACK_CONTROLLER_HELM_CHARTS_DIR=<directory containing Helm chart for ACK service controller>
-AWS_SERVICE_NAME="s3"
-ACK_K8S_NAMESPACE=ack-system
-ACK_K8S_RELEASE_NAME=ack-$AWS_SERVICE_NAME-controller
-
-cd "$ACK_CONTROLLER_HELM_CHARTS_DIR"
-
-# Dry run and verify the output
-helm install --debug --dry-run --namespace "$ACK_K8S_NAMESPACE" "$ACK_K8S_RELEASE_NAME" .
-
-# Install the ACK service controller on your cluster
-helm install --create-namespace --namespace "$ACK_K8S_NAMESPACE" "$ACK_K8S_RELEASE_NAME" .
-```
-
-Verify that the service account has been created on your cluster and that its annotations include the IAM role for your ACK service controller.
-```bash
-kubectl describe serviceaccount/$ACK_K8S_SERVICE_ACCOUNT_NAME -n $ACK_K8S_NAMESPACE
-```
-
-For detailed instructions, refer to Amazon EKS documentation on how to [associate an IAM role to a service account ][iam-service-account].
 
 ## Step 4: Verify successful setup
 
-When AWS clients or SDKs connect to an AWS API, they detect an [AssumeRoleWithWebIdentity][security-token] security token to assume the IAM role. 
+When AWS clients or SDKs connect to an AWS API, they detect an [AssumeRoleWithWebIdentity][security-token] security token to assume the IAM role.
 
 Verify that the `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables exist for your Kubernetes pod using the following commands:
 ```bash
-kubectl get pods -A
-kubectl exec -n $ACK_K8S_NAMESPACE <NAME> env | grep ack
+kubectl get pods -n $ACK_K8S_NAMESPACE
+kubectl describe pod -n $ACK_K8S_NAMESPACE <NAME> | grep "^\s*AWS_"
 ```
-The output should look similar to the following:
+The output should contain following two lines:
 ```bash
 AWS_ROLE_ARN=arn:aws:iam::<AWS_ACCOUNT_ID>:role/<IAM_ROLE_NAME>
 AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
 ```
+
+## Next Steps
+
+Now that ACK service controller is setup successfully with AWS permissions, let's
+validate by [creating a S3 bucket](../resource-crud)
 
 [irsa-docs]: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
 [security-token]: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html

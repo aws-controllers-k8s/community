@@ -1,12 +1,12 @@
 ---
-title: "Multi-Region Resource Management"
+title: "Manage Resources In Multiple Regions"
 description: "Managing resources in multiple AWS regions"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
-    parent: "installing"
-weight: 50
+    parent: "getting-started"
+weight: 40
 toc: true
 ---
 
@@ -23,7 +23,7 @@ For example, the `--aws-region` ACK service controller flag is `us-west-2`. If y
 
 Add the `services.k8s.aws/region` annotation while creating the resource. For example:
 
-```yaml 
+```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
@@ -43,7 +43,7 @@ To bind a region to a specific namespace, you will have to annotate the namespac
 Use this solution for multi-region resource management on cluster-scoped deployments.
 {{% /hint %}}
 
-```yaml 
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -70,3 +70,7 @@ spec:
   name: my-bucket
   ...
 ```
+
+## Next Steps
+
+Checkout ACK functionality for [creating resources in multiple AWS accounts from single controller installation.](../cross-account-resource-management)
