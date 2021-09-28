@@ -3,14 +3,14 @@ title: "Configure Permissions"
 description: "Configuring RBAC and IAM for ACK"
 lead: "Set up RBAC and IAM for authorization and access"
 draft: false
-menu: 
+menu:
   docs:
     parent: "installing"
 weight: 20
 toc: true
 ---
 
-There are two different Role-Based Access Control (RBAC) systems needed for ACK service controller authorization: Kubernetes RBAC and AWS IAM. 
+There are two different Role-Based Access Control (RBAC) systems needed for ACK service controller authorization: Kubernetes RBAC and AWS IAM.
 
 [Kubernetes RBAC][k8s-rbac] governs a Kubernetes user's ability to read or write Kubernetes resources, while [AWS Identity and Access Management][aws-iam] (IAM) policies govern the ability of an AWS IAM role to read or write AWS resources.
 
@@ -18,7 +18,10 @@ There are two different Role-Based Access Control (RBAC) systems needed for ACK 
 [aws-iam]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access.html
 
 {{% hint type="info" title="These two RBAC systems to not overlap" %}}
-The Kubernetes user that makes a Kubernetes API call with `kubectl` has no association with an IAM role. Instead, the IAM role is associated with the [service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) that runs the ACK service controller's pod.
+The Kubernetes user that makes a Kubernetes API call with `kubectl` has no
+association with an IAM role. Instead, the IAM role is associated with the
+[service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+that runs the ACK service controller's pod.
 {{% /hint %}}
 
 Refer to the following diagram for more details on running a Kubernetes API server with RBAC authorization mode enabled.
@@ -26,6 +29,12 @@ Refer to the following diagram for more details on running a Kubernetes API serv
 ![Authorization in ACK](../images/authorization.png)
 
 You will need to configure Kubernetes RBAC and AWS IAM permissions before using ACK service controllers.
+
+{{% hint type="success" title="Note" %}}
+If you performed [controller installation](../install) using Helm or static manifests
+from the [previous guide](../install), then Kubernetes RBAC (`Step 1`) was already configured
+for you. Continue executing the commands from `Step 2` below to setup AWS permissions.
+{{% /hint %}}
 
 ## Step 1: Configure Kubernetes RBAC
 
@@ -44,7 +53,7 @@ For example, installing the ACK service controller for AWS S3 creates the `ack-s
 
 ### Bind a Kubernetes user to a Kubernetes role
 
-Once the Kubernetes `Role` resources have been created, you can assign a specific Kubernetes `User` to a particular `Role` with the `kubectl create rolebinding` command. 
+Once the Kubernetes `Role` resources have been created, you can assign a specific Kubernetes `User` to a particular `Role` with the `kubectl create rolebinding` command.
 
 ```bash
 kubectl create rolebinding alice-ack-s3-writer --role ack-s3-writer --namespace testing --user alice
@@ -58,7 +67,7 @@ kubectl auth can-i create buckets --namespace default
 
 ## Step 2: Configure AWS IAM
 
-After configuring Kubernetes RBAC permissions, you need to create the necessary AWS IAM roles and policies. 
+After configuring Kubernetes RBAC permissions, you need to create the necessary AWS IAM roles and policies.
 
 The IAM role needs the correct [IAM policies][aws-iam] for a given ACK service controller. For example, the ACK service controller for AWS S3 needs read and write permission for S3 Buckets. It is recommended that the IAM policy gives only enough access to properly manage the resources needed for a specific AWS service.
 
@@ -66,7 +75,7 @@ To use the recommended IAM policy for a given ACK service controller, refer to t
 
 [s3-recommended-arn]: https://github.com/aws-controllers-k8s/s3-controller/tree/main/config/iam
 
-Apply the IAM policy to the IAM role with the `aws iam attach-role-policy` command: 
+Apply the IAM policy to the IAM role with the `aws iam attach-role-policy` command:
 
 ```bash
 SERVICE=s3
@@ -78,7 +87,7 @@ aws iam attach-role-policy \
     --policy-arn $POLICY_ARN
 ```
 
-Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `additional-policy` file within the `config/iam` folder of a given ACK service controller's public repository. You can apply this policy to an IAM role by replacing the `POLICY_URL` variable in the script above. 
+Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `additional-policy` file within the `config/iam` folder of a given ACK service controller's public repository. You can apply this policy to an IAM role by replacing the `POLICY_URL` variable in the script above.
 
 If you have not yet created an IAM role, see the user documentation on how to [create an IAM role for your ACK service controller][irsa-docs].
 

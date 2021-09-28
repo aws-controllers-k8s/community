@@ -3,7 +3,7 @@ title: "Installation"
 description: "Installing an ACK controller"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
     parent: "installing"
 weight: 10
@@ -12,7 +12,7 @@ toc: true
 
 The following guide will walk you through the installation of an [ACK service controller][ack-services].
 
-Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository. 
+Individual ACK service controllers may be in different maintenance phases and follow separate release cadences. Please check the [project stages][proj-stages] and [maintenance phases][maint-phases] of the ACK service controllers you wish to install, including how controllers are [released and versioned][rel-ver]. Controllers in a preview maintenance phase have at least one container image and Helm chart released to a public repository.
 
 {{% hint title="Be mindful of maintenance phases" %}}
 Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
@@ -47,7 +47,7 @@ Before installing a Helm chart, you must first make the Helm chart available on 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
-export RELEASE_VERSION=v0.0.1
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/s3-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
@@ -59,19 +59,32 @@ helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
 tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
 
+{{% hint type="info" title="s3-controller version" %}}
+Above commands will download the latest version of `s3-controller`. To select a
+different version, change `RELEASE_VERSION` variable and execute the commands again.
+{{% /hint %}}
+
 Once the Helm chart is downloaded and exported, you can install a particular ACK service controller using the `helm install` command:
 
 ```bash
 export ACK_K8S_NAMESPACE=ack-system
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_REGION=us-west-2
 
 helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+    --set aws.account_id="$AWS_ACCOUNT_ID" \
+    --set aws.region="$AWS_REGION" \
     $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
 The `helm install` command should return relevant installation information:
 
 ```bash
-helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller $CHART_EXPORT_PATH/$SERVICE-chart
+helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+    --set aws.account_id="$AWS_ACCOUNT_ID" \
+    --set aws.region="$AWS_REGION" \
+    $CHART_EXPORT_PATH/$SERVICE-chart
+
 NAME: s3-chart
 LAST DEPLOYED: Thu Dec 17 13:09:17 2020
 NAMESPACE: ack-system
@@ -79,6 +92,12 @@ STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 ```
+
+{{% hint type="info" title="AWS Region" %}}
+Above commands will setup `s3-controller` to use `us-west-2` as AWS region. To
+select a different AWS region, change `AWS_REGION` variable and execute the
+commands again.
+{{% /hint %}}
 
 To verify that the Helm chart was installed, use the `helm list` command:
 
@@ -90,7 +109,7 @@ The `helm list` command should return your newly-deployed Helm chart release inf
 
 ```bash
 helm list --namespace $ACK_K8S_NAMESPACE -o yaml
-- app_version: v0.0.1
+- app_version: v0.0.5
   chart: s3-controller
   name: ack-s3-controller
   namespace: ack-system
@@ -99,9 +118,15 @@ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
   updated: 2020-12-17 13:09:17.309002201 -0500 EST
 ```
 
+{{% hint type="important" title="NOTE" %}}
+The `s3-controller` should be installed successfully now, but it is NOT yet fully
+functional. ACK controller needs access to AWS IAM credentials to manage AWS resources.
+See [Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
+{{% /hint %}}
+
 ## Install an ACK service controller with static Kubernetes manifests
 
-If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository. 
+If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository.
 
 Static Kubernetes manifests install an individual service controller as a Kubernetes `Deployment`, including the relevant Kubernetes RBAC resources. Static Kubernetes manifests are available in the `config/` directory of the associated ACK service controller's source repository.
 
