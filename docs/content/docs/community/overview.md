@@ -1,9 +1,9 @@
 ---
-title : "Getting Started"
+title : "Overview"
 description: "AWS Controllers for Kubernetes (ACK) lets you define and use AWS service resources directly from Kubernetes"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
     parent: "introduction"
 weight: 10
@@ -12,11 +12,8 @@ toc: true
 
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS-managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
-* [Install ACK service controllers][install]
-* [Configure permissions for authorization and access][authorization]
-* [IAM Roles for Service Accounts (IRSA)][irsa]
-* [Cross-Account Resource Management (CARM)][carm]
-* [Cleanup][cleanup]
+Quicklink
+* [Install an ACK service controller][install]
 
 ## Docker images
 
@@ -40,9 +37,9 @@ In accordance with [best practices][no-latest-tag], we do not include `:latest` 
 
 ## Next steps
 
-This guide assumes that you have access to a Kubernetes cluster. You do not need to use the Amazon Elastic Kubernetes Service (Amazon EKS) to get started with ACK service controllers. If you do not yet have a Kubernetes cluster and would like to use Amazon EKS, you can visit the [Amazon EKS Setup][eks-setup] guide. 
+This guide assumes that you have access to a Kubernetes cluster. You do not need to use the Amazon Elastic Kubernetes Service (Amazon EKS) to get started with ACK service controllers. If you do not yet have a Kubernetes cluster and would like to use Amazon EKS, you can visit the [Amazon EKS Setup][eks-setup] guide.
 
-Once you have access to a Kubernetes cluster, you can [install the ACK service controller of your choice][install]. 
+Once you have access to a Kubernetes cluster, you can [install the ACK service controller of your choice][install].
 
 [ack-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s
 [s3-ecr-controller]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller

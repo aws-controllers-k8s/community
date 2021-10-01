@@ -1,12 +1,12 @@
 ---
-title: "Cross-Account Resource Management (CARM)"
+title: "Manage Resources In Multiple AWS Accounts (CARM)"
 description: "Managing resources in different AWS accounts"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
-    parent: "installing"
-weight: 40
+    parent: "getting-started"
+weight: 50
 toc: true
 ---
 
@@ -82,3 +82,7 @@ spec:
   name: my-bucket
 EOF
 ```
+
+## Next Steps
+Checkout the [RBAC and IAM permissions overview](../authorization) to understand how ACK manages
+authorization

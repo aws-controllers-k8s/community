@@ -1,11 +1,11 @@
 ---
-title: "Installation"
-description: "Installing an ACK controller"
+title: "Install an ACK Controller"
+description: "Install an ACK Controller"
 lead: ""
 draft: false
 menu:
   docs:
-    parent: "installing"
+    parent: "getting-started"
 weight: 10
 toc: true
 ---
@@ -110,7 +110,7 @@ The `helm list` command should return your newly-deployed Helm chart release inf
 ```bash
 helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 - app_version: v0.0.5
-  chart: s3-controller
+  chart: s3-chart-v0.0.5
   name: ack-s3-controller
   namespace: ack-system
   revision: "1"
@@ -137,6 +137,7 @@ For example, the static manifests needed to install the S3 service controller fo
 
 ## Next steps
 
-Once you have installed your ACK service controllers, you can [configure Kubernetes and AWS permissions][authorization].
+Once you have installed your ACK service controllers, you can
+[create an IAM role to provide AWS access][irsa].
 
-[authorization]: ../authorization/
+[irsa]: ../irsa/
