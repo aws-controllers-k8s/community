@@ -12,9 +12,6 @@ toc: true
 
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS-managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
-Quicklink
-* [Install an ACK service controller][install]
-
 ## Docker images
 
 Each ACK service controller is packaged into a separate container image that is published in a public repository corresponding to an individual ACK service controller.
@@ -45,8 +42,4 @@ Once you have access to a Kubernetes cluster, you can [install the ACK service c
 [s3-ecr-controller]: https://gallery.ecr.aws/aws-controllers-k8s/s3-controller
 [no-latest-tag]: https://vsupalov.com/docker-latest-tag/
 [install]: ../../user-docs/install/
-[authorization]: ../../user-docs/authorization/
-[irsa]: ../../user-docs/irsa/
-[carm]: ../../user-docs/cross-account-resource-management/
-[cleanup]: ../../user-docs/cleanup/
 [eks-setup]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html
