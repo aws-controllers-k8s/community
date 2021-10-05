@@ -42,7 +42,7 @@ release ACK service controllers.
 | Amazon [EFS](#amazon-efs) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/328) | |
 | Amazon [EKS](#amazon-eks) | `IN PROGRESS` | |
 | Amazon [ElastiCache](#amazon-elasticache) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/9
-| Amazon [Elasticsearch Service](#amazon-elasticsearch) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/503) | |
+| Amazon [Elasticsearch Service](#amazon-elasticsearch) | `RELEASED` | `PREVIEW` |
 | Amazon [EC2 VPC](#amazon-ec2-vpc) | `IN PROGRESS` | |
 | AWS [IAM](#aws-iam) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/222) | |
 | AWS [Lambda](#aws-lambda) | `IN PROGRESS` | | 
