@@ -28,10 +28,10 @@ This guide assumes that you have:
     - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
-    - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 {{% hint type="warning" title="Use the correct Helm version" %}}
-Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than or equal to 3.7.
+Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than 3.0 and less than 3.7.
 {{% /hint %}}
 
 ### Configure IAM permissions
@@ -116,15 +116,15 @@ export SERVICE=sagemaker
 export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/sagemaker-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
 export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.0.4}
 export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REF=$SERVICE-chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
-export CHART_PACKAGE=$CHART_REF-$RELEASE_VERSION.tgz
+export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
+export CHART_REF=$CHART_REPO:$RELEASE_VERSION
 export ACK_K8S_NAMESPACE=ack-system
 
 mkdir -p $CHART_EXPORT_PATH
 
-helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
-tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
+helm chart pull $CHART_REF
+helm chart list
+helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
 ```
 
 Update the Helm chart values for a cluster-scoped installation. 
