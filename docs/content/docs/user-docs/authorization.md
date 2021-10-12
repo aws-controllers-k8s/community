@@ -77,7 +77,7 @@ To use the recommended IAM policy for a given ACK service controller, refer to t
 
 [s3-recommended-arn]: https://github.com/aws-controllers-k8s/s3-controller/tree/main/config/iam
 
-Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `additional-policy` file within the `config/iam` folder of a given ACK service controller's public repository. You can apply this policy to an IAM role by replacing the `POLICY_URL` variable in the script [here](../irsa/#attach-iam-policy-to-the-iam-role)
+Some services may need an additional inline policy. For example, the service controller may require `iam:PassRole` permission in order to pass an execution role that will be assumed by the AWS service. If applicable, resources for additional recommended policies will be located in the `recommended-inline-policy` file within the `config/iam` folder of a given ACK service controller's public repository. This inline policy is applied along with the managed policies when creating the role.
 
 If you have not yet created an IAM role, see the user documentation on how to [create an IAM role for your ACK service controller][irsa-docs].
 
