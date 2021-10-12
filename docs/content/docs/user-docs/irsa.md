@@ -112,14 +112,31 @@ wish to use any other permissions, change `IAM_POLICY_ARN` variable
 {{% /hint %}}
 
 ```bash
-# This example uses a pre-existing policy for Amazon S3
-# Create an IAM policy and use its ARN and update IAM_POLICY_ARN variable as needed
-BASE_URL=https://raw.githubusercontent.com/aws-controllers-k8s/$SERVICE-controller/main
-IAM_POLICY_URL=$BASE_URL/config/iam/recommended-policy-arn
-IAM_POLICY_ARN="`wget -qO- $IAM_POLICY_URL`"
-aws iam attach-role-policy \
-    --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
-    --policy-arn "$IAM_POLICY_ARN"
+# Download the recommended managed and inline policies and apply them to the
+# newly created IRSA role
+BASE_URL=https://raw.githubusercontent.com/aws-controllers-k8s/${SERVICE}-controller/main
+POLICY_ARN_URL=${BASE_URL}/config/iam/recommended-policy-arn
+POLICY_ARN_STRINGS="$(wget -qO- ${POLICY_ARN_URL})"
+
+INLINE_POLICY_URL=${BASE_URL}/config/iam/recommended-inline-policy
+INLINE_POLICY="$(wget -qO- ${INLINE_POLICY_URL})"
+
+while IFS= read -r POLICY_ARN; do
+    echo -n "Attaching $POLICY_ARN ... "
+    aws iam attach-role-policy \
+        --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
+        --policy-arn "${POLICY_ARN}"
+    echo "ok."
+done <<< "$POLICY_ARN_STRINGS"
+
+if [ ! -z "$INLINE_POLICY" ]; then
+    echo -n "Putting inline policy ... "
+    aws iam put-role-policy \
+        --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
+        --policy-name "ack-recommended-policy" \
+        --policy-document "$INLINE_POLICY"
+    echo "ok."
+fi
 ```
 
 For detailed instructions, refer to Amazon EKS documentation on [creating an IAM role and policy for your service account][iam-policy].
