@@ -68,11 +68,9 @@ Once the Helm chart is downloaded and exported, you can install a particular ACK
 
 ```bash
 export ACK_K8S_NAMESPACE=ack-system
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export AWS_REGION=us-west-2
 
 helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
-    --set aws.account_id="$AWS_ACCOUNT_ID" \
     --set aws.region="$AWS_REGION" \
     $CHART_EXPORT_PATH/$SERVICE-chart
 ```
@@ -81,7 +79,6 @@ The `helm install` command should return relevant installation information:
 
 ```bash
 helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
-    --set aws.account_id="$AWS_ACCOUNT_ID" \
     --set aws.region="$AWS_REGION" \
     $CHART_EXPORT_PATH/$SERVICE-chart
 
@@ -109,8 +106,8 @@ The `helm list` command should return your newly-deployed Helm chart release inf
 
 ```bash
 helm list --namespace $ACK_K8S_NAMESPACE -o yaml
-- app_version: v0.0.5
-  chart: s3-chart-v0.0.5
+- app_version: v0.0.6
+  chart: s3-chart-v0.0.6
   name: ack-s3-controller
   namespace: ack-system
   revision: "1"
@@ -119,8 +116,8 @@ helm list --namespace $ACK_K8S_NAMESPACE -o yaml
 ```
 
 {{% hint type="important" title="NOTE" %}}
-The `s3-controller` should be installed successfully now, but it is NOT yet fully
-functional. ACK controller needs access to AWS IAM credentials to manage AWS resources.
+The `s3-controller` should be installed now, but it is NOT yet fully functional.
+ACK controller needs access to AWS IAM credentials to manage AWS resources.
 See [Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
 {{% /hint %}}
 
