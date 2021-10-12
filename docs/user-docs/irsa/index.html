@@ -62,14 +62,31 @@ ACK_CONTROLLER_IAM_ROLE_DESCRIPTION='IRSA role for ACK $SERVICE controller deplo
 aws iam create-role --role-name &quot;${ACK_CONTROLLER_IAM_ROLE}&quot; --assume-role-policy-document file://trust.json --description &quot;${ACK_CONTROLLER_IAM_ROLE_DESCRIPTION}&quot;
 ACK_CONTROLLER_IAM_ROLE_ARN=$(aws iam get-role --role-name=$ACK_CONTROLLER_IAM_ROLE --query Role.Arn --output text)
 </code></pre><h3 id=attach-iam-policy-to-the-iam-role>Attach IAM policy to the IAM role<a href=#attach-iam-policy-to-the-iam-role class=anchor aria-hidden=true>#</a></h3><div class="hint d-flex flex-column border-start my-4 border-4 hint-info"><div class="hint-title p-2 flex flex-row flex-items-center">Note</div><div class="hint-body p-2 small">The command below will attach the ACK recommended policy to the IAM role. If you
-wish to use any other permissions, change <code>IAM_POLICY_ARN</code> variable</div></div><pre><code class=language-bash># This example uses a pre-existing policy for Amazon S3
-# Create an IAM policy and use its ARN and update IAM_POLICY_ARN variable as needed
-BASE_URL=https://raw.githubusercontent.com/aws-controllers-k8s/$SERVICE-controller/main
-IAM_POLICY_URL=$BASE_URL/config/iam/recommended-policy-arn
-IAM_POLICY_ARN=&quot;`wget -qO- $IAM_POLICY_URL`&quot;
-aws iam attach-role-policy \
-    --role-name &quot;${ACK_CONTROLLER_IAM_ROLE}&quot; \
-    --policy-arn &quot;$IAM_POLICY_ARN&quot;
+wish to use any other permissions, change <code>IAM_POLICY_ARN</code> variable</div></div><pre><code class=language-bash># Download the recommended managed and inline policies and apply them to the
+# newly created IRSA role
+BASE_URL=https://raw.githubusercontent.com/aws-controllers-k8s/${SERVICE}-controller/main
+POLICY_ARN_URL=${BASE_URL}/config/iam/recommended-policy-arn
+POLICY_ARN_STRINGS=&quot;$(wget -qO- ${POLICY_ARN_URL})&quot;
+
+INLINE_POLICY_URL=${BASE_URL}/config/iam/recommended-inline-policy
+INLINE_POLICY=&quot;$(wget -qO- ${INLINE_POLICY_URL})&quot;
+
+while IFS= read -r POLICY_ARN; do
+    echo -n &quot;Attaching $POLICY_ARN ... &quot;
+    aws iam attach-role-policy \
+        --role-name &quot;${ACK_CONTROLLER_IAM_ROLE}&quot; \
+        --policy-arn &quot;${POLICY_ARN}&quot;
+    echo &quot;ok.&quot;
+done &lt;&lt;&lt; &quot;$POLICY_ARN_STRINGS&quot;
+
+if [ ! -z &quot;$INLINE_POLICY&quot; ]; then
+    echo -n &quot;Putting inline policy ... &quot;
+    aws iam put-role-policy \
+        --role-name &quot;${ACK_CONTROLLER_IAM_ROLE}&quot; \
+        --policy-name &quot;ack-recommended-policy&quot; \
+        --policy-document &quot;$INLINE_POLICY&quot;
+    echo &quot;ok.&quot;
+fi
 </code></pre><p>For detailed instructions, refer to Amazon EKS documentation on <a href=https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html>creating an IAM role and policy for your service account</a>.</p><h2 id=step-3-associate-an-iam-role-to-a-service-account-and-restart-deployment>Step 3. Associate an IAM role to a service account and restart deployment<a href=#step-3-associate-an-iam-role-to-a-service-account-and-restart-deployment class=anchor aria-hidden=true>#</a></h2><p>If you <a href=../install/>installed your ACK service controller using a Helm chart</a>, then a service account already exists on your cluster. However, it is still neccessary to associate an IAM role with the service account.</p><p>Verify that your service account exists using <code>kubectl describe</code>:</p><pre><code class=language-bash>kubectl describe serviceaccount/$ACK_K8S_SERVICE_ACCOUNT_NAME -n $ACK_K8S_NAMESPACE
 </code></pre><p>Note that the Amazon Resource Name (ARN) of the IAM role that you created is not yet set as an annotation for the service account.</p><p>Use the following commands to associate an IAM role to a service account:</p><pre><code class=language-bash># Annotate the service account with the ARN
 export IRSA_ROLE_ARN=eks.amazonaws.com/role-arn=$ACK_CONTROLLER_IAM_ROLE_ARN
@@ -86,4 +103,4 @@ AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/to
 validate by <a href=../resource-crud>creating a S3 bucket</a></p><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/irsa.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/main.min.9c6d482447eb496eee3c5e1780774eb90b6fe59f101089e8e9842339dc25fc244038c31f89bb5352fa6d43b7916b0e8edcfebd60ead52c87834493c8c06a53b3.js integrity="sha512-nG1IJEfrSW7uPF4XgHdOuQtv5Z8QEIno6YQjOdwl/CRAOMMfibtTUvptQ7eRaw6O3P69YOrVLIeDRJPIwGpTsw==" crossorigin=anonymous defer></script>
-<script src=https://aws-controllers-k8s.github.io/community/index.min.a3c54ed438c7de90bf28e28a2044ff2e368452cb8e59c8f52d458e35d4a9450d141cd3e64d91009419f1f63e46825e6b675b07d773c6fbf6a2cf968b1824ddb6.js integrity="sha512-o8VO1DjH3pC/KOKKIET/LjaEUsuOWcj1LUWONdSpRQ0UHNPmTZEAlBnx9j5Ggl5rZ1sH13PG+/aiz5aLGCTdtg==" crossorigin=anonymous defer></script></body></html>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.63444668548c7610a9021988523c608446bd942b5054f20d3024efdd1c09c342b349c3b66e7fa67d6099c223cd221d3200be10d66c68ee0dc358f47e6c585894.js integrity="sha512-Y0RGaFSMdhCpAhmIUjxghEa9lCtQVPINMCTv3RwJw0KzScO2bn+mfWCZwiPNIh0yAL4Q1mxo7g3DWPR+bFhYlA==" crossorigin=anonymous defer></script></body></html>
