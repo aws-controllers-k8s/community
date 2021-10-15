@@ -1,28 +1,31 @@
 ---
-title: "Machine Learning with the ACK SageMaker Controller"
-description: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
-lead: "Train a machine learning model with the ACK service controller for Amazon SageMaker using Amazon Elastic Kubernetes Service"
+title: "Dynamic scaling with ACK Application Auto Scaling"
+description: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller and Amazon Elastic Kubernetes Service"
+lead: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller and Amazon Elastic Kubernetes Service"
 draft: false
 menu: 
   docs:
     parent: "tutorials"
-weight: 40
+weight: 41
 toc: true
 ---
 
-The SageMaker ACK service controller makes it easier for machine learning developers and data scientists who use Kubernetes as their control plane to train, tune, and deploy machine learning models in Amazon SageMaker without logging into the SageMaker console. 
+The Application Auto Scaling ACK service controller makes it easier for developers to automatically scale resources for individual AWS services. Application Auto Scaling allows you to configure automatic scaling for resources such as Amazon SageMaker endpoint variants. 
 
-The following steps will guide you through the setup and use of the Amazon SageMaker ACK service controller for training a machine learning model.
+In this tutorial, we will use the Application Auto Scaling ACK service controller in conjunction with the SageMaker ACK service controller to automatically scale a deployed machine learning model on Amazon EKS. 
 
 ## Setup
 
 Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes.
+
+This guide also assumes that you have a trained machine learning model that you are ready to dynamically scale with the Application Auto Scaling ACK service controller. To train a machine learning model using the SageMaker ACK service controller, see [Machine Learning with the ACK Service Controller](https://aws-controllers-k8s.github.io/community/docs/tutorials/sagemaker-example/) and return to this guide when you have successfully completed a SageMaker training job. 
 
 ### Prerequisites
 
 This guide assumes that you have:
   - Created an EKS cluster with Kubernetes version 1.16 or higher. 
   - AWS IAM permissions to create roles and attach policies to roles.
+  - A trained machine learning model that you want to scale dynamically. 
   - Installed the following tools on the client machine used to access your Kubernetes cluster:
     - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services. 
     - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
@@ -325,8 +328,6 @@ If your training job completed successfully, you can find the model location und
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
-To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Dynamic scaling with ACK Application Auto Scaling][sm-example].
-
 ### Cleanup
 
 You can delete your SageMaker training job with the `kubectl delete` command.
@@ -356,6 +357,5 @@ To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 
 [configure-permissions]: ../../user-docs/authorization/
 [sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
-[sm-example]: /sagemaker-example/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
