@@ -215,7 +215,6 @@ You can verify that the `ScalableTarget` was created with the `kubectl describe`
 ```bash
 kubectl describe scalabletarget.applicationautoscaling | yq e .Status -
 ```
-https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalabletarget/
 
 ### Create a scaling policy
 
@@ -256,8 +255,6 @@ You can verify that the `ScalingPolicy` was created with the `kubectl describe` 
 ```bash
 kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
 ```
-
-https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalingpolicy/
 
 ## Next steps 
 
