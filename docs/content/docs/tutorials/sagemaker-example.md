@@ -325,7 +325,7 @@ If your training job completed successfully, you can find the model location und
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
-To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Dynamic scaling with ACK Application Auto Scaling][sm-example].
+To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Dynamic scaling with ACK Application Auto Scaling][autoscaling-example].
 
 ### Cleanup
 
@@ -356,6 +356,6 @@ To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 
 [configure-permissions]: ../../user-docs/authorization/
 [sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
-[sm-example]: /sagemaker-example/
+[autoscaling-example]: /autoscaling-example/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html

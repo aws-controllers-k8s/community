@@ -18,7 +18,7 @@ In this tutorial, we will use the Application Auto Scaling ACK service controlle
 
 Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes.
 
-This guide also assumes that you have a trained machine learning model that you are ready to dynamically scale with the Application Auto Scaling ACK service controller. To train a machine learning model using the SageMaker ACK service controller, see [Machine Learning with the ACK Service Controller](https://aws-controllers-k8s.github.io/community/docs/tutorials/sagemaker-example/) and return to this guide when you have successfully completed a SageMaker training job. 
+This guide also assumes that you have a trained machine learning model that you are ready to dynamically scale with the Application Auto Scaling ACK service controller. To train a machine learning model using the SageMaker ACK service controller, see [Machine Learning with the ACK Service Controller](/sagemaker-example/) and return to this guide when you have successfully completed a SageMaker training job. 
 
 ### Prerequisites
 
@@ -39,85 +39,29 @@ Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm
 
 ### Configure IAM permissions
 
-Create an IAM role and attach an IAM policy to that role to ensure that your SageMaker service controller has access to the appropriate AWS resources. First, check to make sure that you are connected to an Amazon EKS cluster. 
+Create an IAM role and attach an IAM policy to that role to ensure that your Application Auto Scaling service controller has access to the appropriate AWS resources. First, check to make sure that you are connected to an Amazon EKS cluster. 
 
 ```bash
 export CLUSTER_NAME=<CLUSTER_NAME>
 export SERVICE_REGION=<CLUSTER_REGION>
 aws eks update-kubeconfig --name $CLUSTER_NAME --region $SERVICE_REGION
 kubectl config get-contexts
-# Ensure cluster has compute
 kubectl get nodes
 ```
 
-Before you can deploy your SageMaker service controller using an IAM role, associate an OpenID Connect (OIDC) provider with your IAM role to authenticate your cluster with the IAM service.
-
-```bash
-eksctl utils associate-iam-oidc-provider --cluster ${CLUSTER_NAME} \
---region ${SERVICE_REGION} --approve
-```
-
-Get the following OIDC information for future reference:
-
-```bash
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $SERVICE_REGION \
---query "cluster.identity.oidc.issuer" --output text | cut -c9-)
-```
-
-In your working directory, create a file named `trust.json` using the following trust relationship code block:
-
-```bash
-printf '{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::'$AWS_ACCOUNT_ID':oidc-provider/'$OIDC_PROVIDER_URL'"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "'$OIDC_PROVIDER_URL':aud": "sts.amazonaws.com",
-          "'$OIDC_PROVIDER_URL':sub": [
-            "system:serviceaccount:ack-system:ack-sagemaker-controller",
-            "system:serviceaccount:ack-system:ack-applicationautoscaling-controller"
-          ]
-        }
-      }
-    }
-  ]
-}
-' > ./trust.json
-```
-
-Run the `iam create-role` command to create an IAM role with the trust relationship you just defined in `trust.json`. This IAM role enables the Amazon EKS cluster to get and refresh credentials from IAM.
-
-```bash
-export OIDC_ROLE_NAME=ack-controller-role-$CLUSTER_NAME
-aws --region $SERVICE_REGION iam create-role --role-name $OIDC_ROLE_NAME --assume-role-policy-document file://trust.json
-```
-
-Attach the AmazonSageMakerFullAccess Policy to the IAM Role to ensure that your SageMaker service controller has access to the appropriate resources. 
-
-```bash
-aws --region $SERVICE_REGION iam attach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
-export IAM_ROLE_ARN_FOR_IRSA=$(aws --region $SERVICE_REGION iam get-role --role-name $OIDC_ROLE_NAME --output text --query 'Role.Arn')
-echo $IAM_ROLE_ARN_FOR_IRSA
-```
+Create an IAM role and authenticate your Amazon EKS cluster with IAM by associating an an OpenID Connect (OIDC) provider with your IAM role. For step-by-step instructions, see [Configure IAM permissions](sagemaker-example/#configure-iam-permissions).
 
 For more information on authorization and access for ACK service controllers, including details regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
 
-### Install the SageMaker ACK service controller
+### Install the Application Auto Scaling ACK service controller
 
-Get the SageMaker Helm chart and make it available on the client machine with the following commands:
+Get the Application Auto Scaling Helm chart and make it available on the client machine with the following commands:
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
-export SERVICE=sagemaker
-export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/sagemaker-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
-export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.0.4}
+export SERVICE=applicationautoscaling
+export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/applicationautoscaling-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.1.0}
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
 export CHART_REF=$CHART_REPO:$RELEASE_VERSION
@@ -141,13 +85,13 @@ yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_AR
 cd -
 ```
 
-Install the relevant custom resource definitions (CRDs) for the SageMaker ACK service controller. 
+Install the relevant custom resource definitions (CRDs) for the Application Auto Scaling ACK service controller. 
 
 ```bash
 kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 ```
 
-Create a namespace and install the SageMaker ACK service controller with the Helm chart. 
+Create a namespace and install the Application Auto Scaling ACK service controller with the Helm chart. 
 
 ```bash
 helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \ $CHART_EXPORT_PATH/$SERVICE-chart
@@ -155,187 +99,189 @@ helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-c
 
 Verify that the CRDs and Helm charts were deployed with the following commands:
 ```bash
-kubectl get crds | grep "services.k8s.aws"
-kubectl get pods -n $ACK_K8S_NAMESPACE
+kubectl get pods -A | grep applicationautoscaling
+kubectl get crd | grep applicationautoscaling
 ```
 
-## Train an XGBoost model
+To scale a SageMaker endpoint variant with the Application Auto Scaling ACK service controller, you will also need the SageMaker ACK service controller. For step-by-step installation instructions see [Install the SageMaker ACK Service Controller](/sagemaker-example/#install-the-sagemaker-ack-service-controller).
 
-### Prepare your data
+## Deploy a SageMaker endpoint
 
-For training a model with SageMaker, we will need an S3 bucket to store the dataset and model training artifacts. For this example, we will use [MNIST](http://yann.lecun.com/exdb/mnist/) data stored in [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) format.
-
-First, create a variable for the S3 bucket:
+You can apply an autoscaling policy to an existing SageMaker endpoint or you can create one using the Sagemaker ACK service controller. For this tutorial, we will create an endpoint and deploy a model based on the SageMaker training job created in the [ACK SageMaker Controller tutorial](/sagemaker-example/). For more information on this model, see [Train an XGBoost Model](/sagemaker-example/#train-an-xgboost-model). 
 
 ```bash
-export ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-export SAGEMAKER_BUCKET=ack-sagemaker-bucket-$ACCOUNT_ID
+export RANDOM_VAR=$RANDOM
+export MODEL_NAME=ack-xgboost-model-$RANDOM_VAR
+export ENDPOINT_CONFIG_NAME=ack-xgboost-endpoint-config-$RANDOM_VAR
+export ENDPOINT_NAME=ack-xgboost-endpoint-$RANDOM_VAR
 ```
 
-Then, create a file named `create-bucket.sh` with the following code block:
-
+Deploy the model on an `ml.c5.large` instance using the following `deploy.yaml` file. This file uses the SageMaker ACK service controller to create a model, an endpoint configuration, and an endpoint. To use your own model, change the `modelDataURL` and `executionRoleARN` values. 
 ```bash
-printf '
-#!/usr/bin/env bash
-# Create the S3 bucket
-if [[ $SERVICE_REGION != "us-east-1" ]]; then
-  aws s3api create-bucket --bucket "$SAGEMAKER_BUCKET" --region "$SERVICE_REGION" --create-bucket-configuration LocationConstraint="$SERVICE_REGION"
-else
-  aws s3api create-bucket --bucket "$SAGEMAKER_BUCKET" --region "$SERVICE_REGION"
-fi' > ./create-bucket.sh
-```
-
-Run the `create-bucket.sh` script to create an S3 bucket.
-
-```bash
-chmod +x create-bucket.sh
-./create-bucket.sh
-```
-
-Copy the MNIST data into your S3 bucket.
-```bash
-wget https://raw.githubusercontent.com/aws-controllers-k8s/sagemaker-controller/main/samples/training/s3_sample_data.py
-python3 s3_sample_data.py $SAGEMAKER_BUCKET
-```
-
-### Configure permissions for your training job
-
-The SageMaker training job that we execute will need an IAM role to access Amazon S3 and Amazon SageMaker. Run the following commands to create a SageMaker execution IAM role that will be used by SageMaker to access the appropriate AWS resources:
-
-```bash
-export SAGEMAKER_EXECUTION_ROLE_NAME=ack-sagemaker-execution-role-$ACCOUNT_ID
-
-TRUST="{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"Service\": \"sagemaker.amazonaws.com\" }, \"Action\": \"sts:AssumeRole\" } ] }"
-aws iam create-role --role-name ${SAGEMAKER_EXECUTION_ROLE_NAME} --assume-role-policy-document "$TRUST"
-aws iam attach-role-policy --role-name ${SAGEMAKER_EXECUTION_ROLE_NAME} --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
-aws iam attach-role-policy --role-name ${SAGEMAKER_EXECUTION_ROLE_NAME} --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
-
-SAGEMAKER_EXECUTION_ROLE_ARN=$(aws iam get-role --role-name ${SAGEMAKER_EXECUTION_ROLE_NAME} --output text --query 'Role.Arn')
-
-echo $SAGEMAKER_EXECUTION_ROLE_ARN
-```
-
-### Create a SageMaker training job 
-
-Give your SageMaker training job a unique name: 
-
-```bash
-export JOB_NAME=ack-xgboost-training-job-$ACCOUNT_ID
-```
-
-Specify your region-specific XGBoost image URI: 
-
-```bash
-export XGBOOST_IMAGE=683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.2-1
-```
-{{% hint type="info" title="Change XGBoost image URI based on region" %}}
-**IMPORTANT**: If your `SERVICE_REGION` is not `us-east-1`, you must change the `XGBOOST_IMAGE` URI. To find your region-specific XGBoost image URI, choose your region in the [SageMaker Docker Registry Paths page](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html), and then select **XGBoost (algorithm)**. For this example, use version 1.2-1.
-{{% /hint %}}
-
-Next, create a `training.yaml` file to specify the parameters for your SageMaker training job. This file specifies your SageMaker training job name, any relevant hyperparameters, and the location of your training and validation data. You can also use this document to specify which Amazon Elastic Container Registry (ECR) image to use for training. 
-
-```yaml
 printf '
 apiVersion: sagemaker.services.k8s.aws/v1alpha1
-kind: TrainingJob
+kind: Model
 metadata:
-  name: '$JOB_NAME'
+  name: '$MODEL_NAME'
 spec:
-  # Name that will appear in the SageMaker console
-  trainingJobName: '$JOB_NAME'
-  hyperParameters: 
-    max_depth: "5"
-    gamma: "4"
-    eta: "0.2"
-    min_child_weight: "6"
-    objective: "multi:softmax"
-    num_class: "10"
-    num_round: "10"
-  algorithmSpecification:
-    # The URL and tag of your ECR container
-    trainingImage: '$XGBOOST_IMAGE'
-    trainingInputMode: File
-  # A role with SageMaker and S3 access
-  roleARN: '$SAGEMAKER_EXECUTION_ROLE_ARN' 
-  outputDataConfig:
-    # The output path of your model
-    s3OutputPath: s3://'$SAGEMAKER_BUCKET' 
-  resourceConfig:
-    instanceCount: 1
-    instanceType: ml.m4.xlarge
-    volumeSizeInGB: 5
-  stoppingCondition:
-    maxRuntimeInSeconds: 86400
-  inputDataConfig:
-    - channelName: train
-      dataSource:
-        s3DataSource:
-          s3DataType: S3Prefix
-          # The input path of your train data 
-          s3URI: s3://'$SAGEMAKER_BUCKET'/sagemaker/xgboost/train
-          s3DataDistributionType: FullyReplicated
-      contentType: text/libsvm
-      compressionType: None
-    - channelName: validation
-      dataSource:
-        s3DataSource:
-          s3DataType: S3Prefix
-          # The input path of your validation data 
-          s3URI: s3://'$SAGEMAKER_BUCKET'/sagemaker/xgboost/validation
-          s3DataDistributionType: FullyReplicated
-      contentType: text/libsvm
-      compressionType: None
-' > ./training.yaml
+  modelName: '$MODEL_NAME'
+  primaryContainer:
+    containerHostname: xgboost
+    # The source of the model data
+    modelDataURL: s3://'$SAGEMAKER_BUCKET'/'$JOB_NAME'/output/model.tar.gz
+    image: '$XGBOOST_IMAGE'
+  executionRoleARN: '$SAGEMAKER_EXECUTION_ROLE_ARN'
+---
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: EndpointConfig
+metadata:
+  name: '$ENDPOINT_CONFIG_NAME'
+spec:
+  endpointConfigName: '$ENDPOINT_CONFIG_NAME'
+  productionVariants:
+  - modelName: '$MODEL_NAME'
+    variantName: AllTraffic
+    instanceType: ml.c5.large
+    initialInstanceCount: 1
+---
+apiVersion: sagemaker.services.k8s.aws/v1alpha1
+kind: Endpoint
+metadata:
+  name: '$ENDPOINT_NAME'
+spec:
+  endpointName: '$ENDPOINT_NAME'
+  endpointConfigName: '$ENDPOINT_CONFIG_NAME'
+' > ./deploy.yaml
 ```
 
-Use your `training.yaml` file to create a SageMaker training job:
+Deploy the endpoint by applying the `deploy.yaml` file. 
+```bash
+kubectl apply -f deploy.yaml
+```
+
+After applying the `deploy.yaml` file, you should see that the model, endpoint configuration, and endpoint were successfully created.
+```bash
+model.sagemaker.services.k8s.aws/ack-xgboost-model-7420 created
+endpointconfig.sagemaker.services.k8s.aws/ack-xgboost-endpoint-config-7420 created
+endpoint.sagemaker.services.k8s.aws/ack-xgboost-endpoint-7420 created
+```
+
+Watch the process with the `kubectl get` command. Deploying the endpoint may take some time. 
+```bash
+kubectl get endpoints.sagemaker --watch
+```
+
+The endpoint status will be `InService` when the endpoint is successfully deployed and ready for use.
+```bash
+NAME                        ENDPOINTSTATUS
+ack-xgboost-endpoint-7420   Creating         
+ack-xgboost-endpoint-7420   InService    
+```
+
+## Automatically scale your SageMaker endpoint
+
+Scale your SageMaker endpoint with the Application Auto Scaling ACK service controller using the [`ScalableTarget`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalabletarget/) and [`ScalingPolicy`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalingpolicy/) resources.
+
+### Create a scalable target
+
+Create a scalable target with the `scalable-target.yaml` file. The following file designates that a specified SageMaker endpoint variant can automatically scale to up to 20 instances. 
 
 ```bash
-kubectl apply -f training.yaml
+printf '
+apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
+kind: ScalableTarget
+metadata:
+  name: ack-scalable-target-predfined
+spec:
+  maxCapacity: 20
+  minCapacity: 1
+  resourceID: endpoint/'$ENDPOINT_NAME'/variant/AllTraffic
+  scalableDimension: "sagemaker:variant:DesiredInstanceCount"
+  serviceNamespace: sagemaker
+ ' > ./scalable-target.yaml
+ ```
+
+ Apply your `scalable-target.yaml` file:
+```bash
+kubectl apply -f scalable-target.yaml
 ```
 
-After applying your `training.yaml` file, you should see that your training job was successfully created:
+After applying your scalable target, you should see the following output:
+```bash
+scalabletarget.applicationautoscaling.services.k8s.aws/ack-scalable-target-predfined created
+```
+
+You can verify that the `ScalableTarget` was created with the `kubectl describe` command.
+```bash
+kubectl describe scalabletarget.applicationautoscaling | yq e .Status -
+```
+https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalabletarget/
+
+### Create a scaling policy
+
+Create a scaling policy with the `scaling-policy.yaml` file. The following file creates a target tracking scaling policy that scales a specified SageMaker endpoint based on the number of variant invocations per instance. The scaling policy adds or removes capacity as required to keep this number close to the target value of 60. 
 
 ```bash
-trainingjob.sagemaker.services.k8s.aws/ack-xgboost-training-job-7420 created
-```
+printf '
+apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
+kind: ScalingPolicy
+metadata:
+  name: ack-scaling-policy-predefined
+spec:
+  policyName: ack-scaling-policy-predefined
+  policyType: TargetTrackingScaling
+  resourceID: endpoint/'$ENDPOINT_NAME'/variant/AllTraffic
+  scalableDimension: "sagemaker:variant:DesiredInstanceCount"
+  serviceNamespace: sagemaker
+  targetTrackingScalingPolicyConfiguration:
+    targetValue: 60
+    scaleInCooldown: 700
+    scaleOutCooldown: 300
+    predefinedMetricSpecification:
+        predefinedMetricType: SageMakerVariantInvocationsPerInstance
+ ' > ./scaling-policy.yaml
+ ```
 
-You can watch the status of the training job with the following command:
-
+ Apply your `scaling-policy.yaml` file:
 ```bash
-kubectl get trainingjob.sagemaker --watch
+kubectl apply -f scaling-policy.yaml
 ```
 
-It will a take a few minutes for `TRAININGJOBSTATUS` to be `Completed`.
-
+After applying your scaling policy, you should see the following output:
 ```bash
-NAME                            SECONDARYSTATUS   TRAININGJOBSTATUS
-ack-xgboost-training-job-7420   Starting          InProgress
-ack-xgboost-training-job-7420   Downloading       InProgress
-ack-xgboost-training-job-7420   Training          InProgress
-ack-xgboost-training-job-7420   Completed         Completed
+scalingpolicy.applicationautoscaling.services.k8s.aws/ack-scaling-policy-predefined created
 ```
 
-To see details about your training job, run the following command:
-
+You can verify that the `ScalingPolicy` was created with the `kubectl describe` command.
 ```bash
-kubectl describe trainingjobs $JOB_NAME
+kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
 ```
 
-If your training job completed successfully, you can find the model location under `status.modelArtifacts.s3ModelArtifacts`. If your training job failed, look to the `status.failureReason` for more information.
+https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalingpolicy/
 
 ## Next steps 
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
-### Cleanup
+### Updates
 
-You can delete your SageMaker training job with the `kubectl delete` command.
+To update the `ScalableTarget` and `ScalingPolicy` parameters after the resources are created, make any changes to the `scalable-target.yaml` or `scaling-policy.yaml` files and reapply them with `kubectil apply`. 
 ```bash
-kubectl delete trainingjob $JOB_NAME
+kubectl apply -f scalable-target.yaml
+kubectl apply -f scaling-policy.yaml.yaml
 ```
 
-To remove the SageMaker ACK service controller, related CRDs, and namespaces see [ACK Cleanup][cleanup].
+### Cleanup
+
+You can delete your training jobs, endpoints, scalable targets, and scaling policies with the `kubectl delete` command.
+```bash
+kubectl delete -f training.yaml
+kubectl delete -f deploy.yaml
+kubectl delete -f scalable-target.yaml
+kubectl delete -f scaling-policy.yaml
+```
+
+To remove the SageMaker and Application Auto Scaling ACK service controllers, related CRDs, and namespaces see [ACK Cleanup][cleanup].
 
 It is recommended to delete any additional resources such as S3 buckets, IAM roles, and IAM policies when you no longer need them. You can delete these resources with the following commands or directly in the AWS console.
 
