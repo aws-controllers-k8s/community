@@ -42,7 +42,6 @@ release ACK service controllers.
 | Amazon [EFS](#amazon-efs) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/328) | |
 | Amazon [EKS](#amazon-eks) | `IN PROGRESS` | |
 | Amazon [ElastiCache](#amazon-elasticache) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/9
-| Amazon [Elasticsearch Service](#amazon-elasticsearch) | `RELEASED` | `PREVIEW` |
 | Amazon [EC2 VPC](#amazon-ec2-vpc) | `IN PROGRESS` | |
 | AWS [IAM](#aws-iam) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/222) | |
 | AWS [Lambda](#aws-lambda) | `IN PROGRESS` | | 
@@ -50,6 +49,7 @@ release ACK service controllers.
 | Amazon [KMS](#amazon-kms) | `IN PROGRESS` | |
 | Amazon [MQ](#amazon-mq) | `RELEASED` | |
 | Amazon [MSK](#amazon-msk) | [`PLANNED`](https://github.com/aws-controllers-k8s/community/issues/348) | |
+| Amazon [OpenSearch Service](#amazon-opensearch-service) | `RELEASED` | `PREVIEW` |
 | Amazon [RDS](#amazon-rds) | `RELEASED` | `PREVIEW` |
 | Amazon [Route53](#amazon-route53) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/480) | |
 | Amazon [SageMaker](#amazon-sagemaker) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/11
@@ -128,14 +128,6 @@ If you don't see a particular AWS service listed, feel free to
 * AWS service documentation: https://aws.amazon.com/elasticache/
 * ACK service controller: https://github.com/aws-controllers-k8s/elasticache-controller
 
-## Amazon Elasticsearch Service
-
-* Proposed: https://github.com/aws-controllers-k8s/community/issues/503
-* Current project stage: `RELEASED`
-* Current maintenance phase: `PREVIEW`
-* AWS service documentation: https://aws.amazon.com/elasticsearch-service/
-* ACK service controller: https://github.com/aws-controllers-k8s/elasticsearchservice-controller
-
 ## Amazon EC2 VPC
 
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/489
@@ -181,6 +173,14 @@ If you don't see a particular AWS service listed, feel free to
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/348
 * Current project stage: `PLANNED`
 * AWS service documentation: https://aws.amazon.com/msk/
+
+## Amazon OpenSearch Service
+
+* Proposed: https://github.com/aws-controllers-k8s/community/issues/503
+* Current project stage: `RELEASED`
+* Current maintenance phase: `PREVIEW`
+* AWS service documentation: https://aws.amazon.com/opensearch-service/
+* ACK service controller: https://github.com/aws-controllers-k8s/opensearch-controller
 
 ## Amazon RDS
 
