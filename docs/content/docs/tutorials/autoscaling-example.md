@@ -18,7 +18,7 @@ In this tutorial, we will use the Application Auto Scaling ACK service controlle
 
 Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes.
 
-This guide also assumes that you have a trained machine learning model that you are ready to dynamically scale with the Application Auto Scaling ACK service controller. To train a machine learning model using the SageMaker ACK service controller, see [Machine Learning with the ACK Service Controller](/sagemaker-example/) and return to this guide when you have successfully completed a SageMaker training job. 
+This guide also assumes that you have a trained machine learning model that you are ready to dynamically scale with the Application Auto Scaling ACK service controller. To train a machine learning model using the SageMaker ACK service controller, see [Machine Learning with the ACK Service Controller](../sagemaker-example/) and return to this guide when you have successfully completed a SageMaker training job. 
 
 ### Prerequisites
 
@@ -49,7 +49,7 @@ kubectl config get-contexts
 kubectl get nodes
 ```
 
-Create an IAM role and authenticate your Amazon EKS cluster with IAM by associating an an OpenID Connect (OIDC) provider with your IAM role. For step-by-step instructions, see [Configure IAM permissions](sagemaker-example/#configure-iam-permissions).
+Create an IAM role and authenticate your Amazon EKS cluster with IAM by associating an an OpenID Connect (OIDC) provider with your IAM role. For step-by-step instructions, see [Configure IAM permissions](..sagemaker-example/#configure-iam-permissions).
 
 For more information on authorization and access for ACK service controllers, including details regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
 
@@ -103,11 +103,11 @@ kubectl get pods -A | grep applicationautoscaling
 kubectl get crd | grep applicationautoscaling
 ```
 
-To scale a SageMaker endpoint variant with the Application Auto Scaling ACK service controller, you will also need the SageMaker ACK service controller. For step-by-step installation instructions see [Install the SageMaker ACK Service Controller](/sagemaker-example/#install-the-sagemaker-ack-service-controller).
+To scale a SageMaker endpoint variant with the Application Auto Scaling ACK service controller, you will also need the SageMaker ACK service controller. For step-by-step installation instructions see [Install the SageMaker ACK Service Controller](../sagemaker-example/#install-the-sagemaker-ack-service-controller).
 
 ## Deploy a SageMaker endpoint
 
-You can apply an autoscaling policy to an existing SageMaker endpoint or you can create one using the Sagemaker ACK service controller. For this tutorial, we will create an endpoint and deploy a model based on the SageMaker training job created in the [ACK SageMaker Controller tutorial](/sagemaker-example/). For more information on this model, see [Train an XGBoost Model](/sagemaker-example/#train-an-xgboost-model). 
+You can apply an autoscaling policy to an existing SageMaker endpoint or you can create one using the Sagemaker ACK service controller. For this tutorial, we will create an endpoint and deploy a model based on the SageMaker training job created in the [ACK SageMaker Controller tutorial](../sagemaker-example/). For more information on this model, see [Train an XGBoost Model](../sagemaker-example/#train-an-xgboost-model). 
 
 ```bash
 export RANDOM_VAR=$RANDOM
@@ -258,8 +258,7 @@ kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
 
 ## Next steps 
 
-For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
-
+To learn more about Application Auto Scaling on a SageMaker endpoint, see the [Application Auto Scaling controller samples](https://github.com/aws-controllers-k8s/applicationautoscaling-controller/tree/main/samples/hosting-autoscaling-on-sagemaker) repository.
 ### Updates
 
 To update the `ScalableTarget` and `ScalingPolicy` parameters after the resources are created, make any changes to the `scalable-target.yaml` or `scaling-policy.yaml` files and reapply them with `kubectil apply`. 
@@ -299,6 +298,5 @@ aws iam delete-role --role-name $OIDC_ROLE_NAME
 To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].  
 
 [configure-permissions]: ../../user-docs/authorization/
-[sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
