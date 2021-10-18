@@ -1,7 +1,7 @@
 ---
-title: "Dynamic scaling with ACK Application Auto Scaling"
-description: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller and Amazon Elastic Kubernetes Service"
-lead: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller and Amazon Elastic Kubernetes Service"
+title: "Scale SageMaker Workloads with Application Auto Scaling"
+description: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller"
+lead: "Scale a SageMaker endpoint with the ACK Application Auto Scaling service controller"
 draft: false
 menu: 
   docs:
@@ -261,7 +261,7 @@ kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
 To learn more about Application Auto Scaling on a SageMaker endpoint, see the [Application Auto Scaling controller samples](https://github.com/aws-controllers-k8s/applicationautoscaling-controller/tree/main/samples/hosting-autoscaling-on-sagemaker) repository.
 ### Updates
 
-To update the `ScalableTarget` and `ScalingPolicy` parameters after the resources are created, make any changes to the `scalable-target.yaml` or `scaling-policy.yaml` files and reapply them with `kubectil apply`. 
+To update the `ScalableTarget` and `ScalingPolicy` parameters after the resources are created, make any changes to the `scalable-target.yaml` or `scaling-policy.yaml` files and reapply them with `kubectl apply`. 
 ```bash
 kubectl apply -f scalable-target.yaml
 kubectl apply -f scaling-policy.yaml.yaml

@@ -325,7 +325,7 @@ If your training job completed successfully, you can find the model location und
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
-To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Dynamic scaling with ACK Application Auto Scaling][autoscaling-example].
+To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Scale SageMaker Workloads with Application Auto Scaling][autoscaling-example].
 
 ### Cleanup
 
