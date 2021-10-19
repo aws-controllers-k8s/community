@@ -180,7 +180,7 @@ ack-xgboost-endpoint-7420   InService
 
 ## Automatically scale your SageMaker endpoint
 
-Scale your SageMaker endpoint with the Application Auto Scaling ACK service controller using the [`ScalableTarget`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalabletarget/) and [`ScalingPolicy`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalingpolicy/) resources.
+Scale your SageMaker endpoint using the Application Auto Scaling [`ScalableTarget`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalabletarget/) and [`ScalingPolicy`](https://aws-controllers-k8s.github.io/community/reference/applicationautoscaling/v1alpha1/scalingpolicy/) resources.
 
 ### Create a scalable target
 
