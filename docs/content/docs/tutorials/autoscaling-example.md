@@ -12,7 +12,7 @@ toc: true
 
 The Application Auto Scaling ACK service controller makes it easier for developers to automatically scale resources for individual AWS services. Application Auto Scaling allows you to configure automatic scaling for resources such as Amazon SageMaker endpoint variants. 
 
-In this tutorial, we will use the Application Auto Scaling ACK service controller in conjunction with the SageMaker ACK service controller to automatically scale a deployed machine learning model on Amazon EKS. 
+In this tutorial, we will use the Application Auto Scaling ACK service controller in conjunction with the SageMaker ACK service controller to automatically scale a deployed machine learning model. 
 
 ## Setup
 
@@ -45,7 +45,7 @@ Create an IAM role and attach an IAM policy to that role to ensure that your App
 export CLUSTER_NAME=<CLUSTER_NAME>
 export SERVICE_REGION=<CLUSTER_REGION>
 aws eks update-kubeconfig --name $CLUSTER_NAME --region $SERVICE_REGION
-kubectl config get-contexts
+kubectl config current-context
 kubectl get nodes
 ```
 
@@ -116,7 +116,7 @@ export ENDPOINT_CONFIG_NAME=ack-xgboost-endpoint-config-$RANDOM_VAR
 export ENDPOINT_NAME=ack-xgboost-endpoint-$RANDOM_VAR
 ```
 
-Deploy the model on an `ml.c5.large` instance using the following `deploy.yaml` file. This file uses the SageMaker ACK service controller to create a model, an endpoint configuration, and an endpoint. To use your own model, change the `modelDataURL` and `executionRoleARN` values. 
+Deploy the model on an `ml.t2.medium` instance using the following `deploy.yaml` file. This file uses the SageMaker ACK service controller to create a model, an endpoint configuration, and an endpoint. To use your own model, change the `modelDataURL` and `executionRoleARN` values. 
 ```bash
 printf '
 apiVersion: sagemaker.services.k8s.aws/v1alpha1
@@ -141,7 +141,7 @@ spec:
   productionVariants:
   - modelName: '$MODEL_NAME'
     variantName: AllTraffic
-    instanceType: ml.c5.large
+    instanceType: ml.t2.medium
     initialInstanceCount: 1
 ---
 apiVersion: sagemaker.services.k8s.aws/v1alpha1
@@ -184,16 +184,16 @@ Scale your SageMaker endpoint using the Application Auto Scaling [`ScalableTarge
 
 ### Create a scalable target
 
-Create a scalable target with the `scalable-target.yaml` file. The following file designates that a specified SageMaker endpoint variant can automatically scale to up to 20 instances. 
+Create a scalable target with the `scalable-target.yaml` file. The following file designates that a specified SageMaker endpoint variant can automatically scale to up to three instances. 
 
 ```bash
 printf '
 apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
 kind: ScalableTarget
 metadata:
-  name: ack-scalable-target-predfined
+  name: ack-tutorial-endpoint-scalable-target
 spec:
-  maxCapacity: 20
+  maxCapacity: 3
   minCapacity: 1
   resourceID: endpoint/'$ENDPOINT_NAME'/variant/AllTraffic
   scalableDimension: "sagemaker:variant:DesiredInstanceCount"
@@ -208,7 +208,7 @@ kubectl apply -f scalable-target.yaml
 
 After applying your scalable target, you should see the following output:
 ```bash
-scalabletarget.applicationautoscaling.services.k8s.aws/ack-scalable-target-predfined created
+scalabletarget.applicationautoscaling.services.k8s.aws/ack-tutorial-endpoint-scalable-target created
 ```
 
 You can verify that the `ScalableTarget` was created with the `kubectl describe` command.
@@ -225,9 +225,9 @@ printf '
 apiVersion: applicationautoscaling.services.k8s.aws/v1alpha1
 kind: ScalingPolicy
 metadata:
-  name: ack-scaling-policy-predefined
+  name: ack-tutorial-endpoint-scaling-policy
 spec:
-  policyName: ack-scaling-policy-predefined
+  policyName: ack-tutorial-endpoint-scaling-policy
   policyType: TargetTrackingScaling
   resourceID: endpoint/'$ENDPOINT_NAME'/variant/AllTraffic
   scalableDimension: "sagemaker:variant:DesiredInstanceCount"
@@ -248,7 +248,7 @@ kubectl apply -f scaling-policy.yaml
 
 After applying your scaling policy, you should see the following output:
 ```bash
-scalingpolicy.applicationautoscaling.services.k8s.aws/ack-scaling-policy-predefined created
+scalingpolicy.applicationautoscaling.services.k8s.aws/ack-tutorial-endpoint-scaling-policy created
 ```
 
 You can verify that the `ScalingPolicy` was created with the `kubectl describe` command.
@@ -259,6 +259,7 @@ kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
 ## Next steps 
 
 To learn more about Application Auto Scaling on a SageMaker endpoint, see the [Application Auto Scaling controller samples](https://github.com/aws-controllers-k8s/applicationautoscaling-controller/tree/main/samples/hosting-autoscaling-on-sagemaker) repository.
+
 ### Updates
 
 To update the `ScalableTarget` and `ScalingPolicy` parameters after the resources are created, make any changes to the `scalable-target.yaml` or `scaling-policy.yaml` files and reapply them with `kubectl apply`. 
