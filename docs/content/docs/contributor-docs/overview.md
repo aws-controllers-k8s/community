@@ -10,7 +10,40 @@ weight: 10
 toc: true
 ---
 
-This section of the docs is for ACK contributors.
+This section of the docs is for contributors to the AWS Controllers for
+Kubernetes (ACK) project.
+
+If you're interested in enhancing our platform, developing on a specific
+service controller or just curious how ACK is architected, you've come to the
+right place.
+
+## Project Tenets (unless you know better ones)
+
+We follow a set of tenets in building AWS Controllers for Kubernetes.
+
+1. **Collaborate in the Open**: Our source code is open. Our development
+   methodology is open. Our testing, release and documentation processes are
+   open. We are a community-driven project that strives to meet our users where
+   they are.
+
+2. **Generate Everything**: We choose to generate as much of our code as
+   possible. Generated code is easier to maintain and encourages consistency.
+
+3. **Focus on Kubernetes**: We seek ways to make the Kubernetes user experience
+   as simple and consistent as possible for managing AWS resources.
+
+4. **Run Anywhere**: ACK service controllers can be installed on any Kubernetes
+   cluster, regardless of whether a user chooses to use Amazon Elastic
+   Kubernetes Service (EKS).
+
+5. **Minimize Service Dependencies**: The only AWS services that ACK service
+   controllers depend on should be IAM/STS and the specific AWS service that
+   the controller integrates with. We do not take a dependency on any stateful
+   resource-tracking service.
+
+Read more about our [project tenets and design principles][tenets].
+
+[tenets]: ../tenets/
 
 ## Code Organization
 
@@ -18,59 +51,16 @@ ACK is a collection of source repositories containing a common runtime and type
 system, a code generator and individual service controllers that manage
 resources in a specific AWS API.
 
-* `github.com/aws-controllers-k8s/community`: docs and project management (this repo)
-* `github.com/aws-controllers-k8s/runtime`: common ACK runtime and types
-* `github.com/aws-controllers-k8s/code-generator`: the code generator and
-  templates
-* `github.com/aws-controllers-k8s/test-infra`: common test code and infrastructure
-* `github.com/aws-controllers-k8s/$SERVICE-controller`: individual ACK
-  controllers for AWS services.
+Learn more about how our [source code repositories are organized][code-org].
 
-### `github.com/aws-controllers-k8s/community` (this repo)
-
-The `github.com/aws-controllers-k8s/community` source code repository (this
-repo) contains the documentation that gets published to
-https://aws-controllers-k8s.github.io/community/.
-
-### `github.com/aws-controllers-k8s/runtime`
-
-The `github.com/aws-controllers-k8s/runtime` source code repository contains
-the common ACK controller runtime (`/pkg/runtime`, `/pkg/types`) and core
-public Kubernetes API types (`/apis/core`).
-
-### `github.com/aws-controllers-k8s/code-generator`
-
-The `github.com/aws-controllers-k8s/code-generator` source code repository
-contains the `ack-generate` CLI tool (`/cmd/ack-generate`), the Go packages
-that are used in API inference and code generation (`/pkg/generate`,
-`/pkg/model`) and Bash scripts to build an ACK service controller
-(`/scripts/build-controller.sh`).
-
-### `github.com/aws-controllers-k8s/test-infra`
-
-The `github.com/aws-controllers-k8s/test-infra` source code repository
-contains the `acktest` Python package for common ACK e2e test code, the CDK to
-deploy our Prow CI/CD system and the scripts for running tests locally.
-
-### `github.com/aws-controllers-k8s/$SERVICE-controller`
-
-Each AWS API that has had a Kubernetes controller built to manage resources in
-that API has its own source code repository in the
-`github.com/aws-controllers-k8s` Github Organization. The source repos will be
-called `$SERVICE-controller`.
-
-These service controller repositories contain Go code for the main controller
-binary (`/cmd/controller/`), the public API types for the controllers
-(`/apis`), the Go code for the resource managers used by the controller
-(`/pkg/resource/*/`), static configuration manifests (`/config`) and Helm
-charts for the controller installation (`/helm`).
+[code-org]: ../code-organization/
 
 ## API Inference
 
 Read about [how the code generator infers][api-inference] information about a
 Kubernetes Custom Resource Definitions (CRDs) from an AWS API model file.
 
-[api-inference]: ../../contributor-docs/api-inference/
+[api-inference]: ../api-inference/
 
 ## Code Generation
 
