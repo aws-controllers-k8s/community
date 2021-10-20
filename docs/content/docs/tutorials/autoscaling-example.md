@@ -107,7 +107,7 @@ To scale a SageMaker endpoint variant with the Application Auto Scaling ACK serv
 
 ## Deploy a SageMaker endpoint
 
-You can apply an autoscaling policy to an existing SageMaker endpoint or you can create one using the Sagemaker ACK service controller. For this tutorial, we will create an endpoint and deploy a model based on the SageMaker training job created in the [ACK SageMaker Controller tutorial](../sagemaker-example/). For more information on this model, see [Train an XGBoost Model](../sagemaker-example/#train-an-xgboost-model). 
+You can apply an autoscaling policy to an existing SageMaker endpoint or you can create one using the SageMaker ACK service controller. For this tutorial, we will create an endpoint and deploy a model based on the SageMaker training job created in the [ACK SageMaker Controller tutorial](../sagemaker-example/). For more information on this model, see [Train an XGBoost Model](../sagemaker-example/#train-an-xgboost-model). 
 
 ```bash
 export RANDOM_VAR=$RANDOM
