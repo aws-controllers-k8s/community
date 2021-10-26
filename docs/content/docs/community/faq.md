@@ -81,5 +81,5 @@ Where and how can I help?
 
 {{% hint type="answer" title="Answer" %}}
 Excellent question and we're super excited that you're interested in ACK.
-For now, if you're a developer, you can check out the [contributor docs](../../dev-docs/overview/).
+For now, if you're a developer, you can check out the [contributor docs](../../contributor-docs/overview/).
 {{% /hint %}}
