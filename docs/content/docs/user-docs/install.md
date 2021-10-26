@@ -137,4 +137,8 @@ For example, the static manifests needed to install the S3 service controller fo
 Once you have installed your ACK service controllers, you can
 [create an IAM role to provide AWS access][irsa].
 
+And learn the different ways that
+[AWS credentials can be supplied][authentication] to the ACK controller.
+
 [irsa]: ../irsa/
+[authentication]: ../authentication/
