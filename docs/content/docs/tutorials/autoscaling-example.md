@@ -31,11 +31,7 @@ This guide assumes that you have:
     - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
-    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
-
-{{% hint type="warning" title="Use the correct Helm version" %}}
-Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than 3.0 and less than 3.7.
-{{% /hint %}}
+    - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 ### Configure IAM permissions
 
@@ -49,7 +45,87 @@ kubectl config current-context
 kubectl get nodes
 ```
 
-Create an IAM role and authenticate your Amazon EKS cluster with IAM by associating an an OpenID Connect (OIDC) provider with your IAM role. For step-by-step instructions, see [Configure IAM permissions](..sagemaker-example/#configure-iam-permissions).
+Before you can deploy your ACK service controllers using an IAM role, associate an OpenID Connect (OIDC) provider with your IAM role to authenticate your cluster with the IAM service.
+
+```bash
+eksctl utils associate-iam-oidc-provider --cluster ${CLUSTER_NAME} \
+--region ${SERVICE_REGION} --approve
+```
+
+Get the following OIDC information for future reference:
+
+```bash
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+export OIDC_PROVIDER_URL=$(aws eks describe-cluster --name $CLUSTER_NAME --region $SERVICE_REGION \
+--query "cluster.identity.oidc.issuer" --output text | cut -c9-)
+```
+
+In your working directory, create a file named `trust.json` using the following trust relationship code block:
+
+```bash
+printf '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::'$AWS_ACCOUNT_ID':oidc-provider/'$OIDC_PROVIDER_URL'"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "'$OIDC_PROVIDER_URL':aud": "sts.amazonaws.com",
+          "'$OIDC_PROVIDER_URL':sub": [
+            "system:serviceaccount:ack-system:ack-sagemaker-controller",
+            "system:serviceaccount:ack-system:ack-applicationautoscaling-controller"
+          ]
+        }
+      }
+    }
+  ]
+}
+' > ./trust.json
+```
+
+Updating an Application Auto Scaling Scalable Target requires additional permissions. Create a file named `pass_role_policy.json` to create the policy required for the IAM role.
+
+```bash
+printf '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "*"
+    }
+  ]
+}
+' > ./pass_role_policy.json
+```
+
+Run the `iam create-role` command to create an IAM role with the trust relationship you just defined in `trust.json`. This IAM role enables the Amazon EKS cluster to get and refresh credentials from IAM.
+
+```bash
+export OIDC_ROLE_NAME=ack-controller-role-$CLUSTER_NAME
+aws --region $SERVICE_REGION iam create-role --role-name $OIDC_ROLE_NAME --assume-role-policy-document file://trust.json
+```
+
+Attach the AmazonSageMakerFullAccess Policy to the IAM Role to ensure that your SageMaker service controller has access to the appropriate resources. 
+
+```bash
+aws --region $SERVICE_REGION iam attach-role-policy --role-name $OIDC_ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+```
+
+Attach the `iam:PassRole` policy required for updating an Application Auto Scaling Scalable Target. 
+```bash
+aws iam put-role-policy --role-name $OIDC_ROLE_NAME --policy-name "iam-pass-role-policy" --policy-document file://pass_role_policy.json
+```
+
+Get the following IAM role information for future reference:
+```bash
+export IAM_ROLE_ARN_FOR_IRSA=$(aws --region $SERVICE_REGION iam get-role --role-name $OIDC_ROLE_NAME --output text --query 'Role.Arn')
+echo $IAM_ROLE_ARN_FOR_IRSA
+```
 
 For more information on authorization and access for ACK service controllers, including details regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
 
@@ -60,18 +136,16 @@ Get the Application Auto Scaling Helm chart and make it available on the client 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=applicationautoscaling
-export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/applicationautoscaling-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
-export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.1.0}
+export RELEASE_VERSION=v0.2.0
 export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
-export CHART_REF=$CHART_REPO:$RELEASE_VERSION
-export ACK_K8S_NAMESPACE=ack-system
+export CHART_REF=$SERVICE-chart
+export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
+export CHART_PACKAGE=$CHART_REF-$RELEASE_VERSION.tgz
 
 mkdir -p $CHART_EXPORT_PATH
 
-helm chart pull $CHART_REF
-helm chart list
-helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
+helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
+tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
 
 Update the Helm chart values for a cluster-scoped installation. 
@@ -80,7 +154,6 @@ Update the Helm chart values for a cluster-scoped installation.
 # Update the following values in the Helm chart
 cd $CHART_EXPORT_PATH/$SERVICE-chart
 yq e '.aws.region = env(SERVICE_REGION)' -i values.yaml
-yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
 yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
 cd -
 ```
@@ -94,8 +167,10 @@ kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 Create a namespace and install the Application Auto Scaling ACK service controller with the Helm chart. 
 
 ```bash
-helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \ $CHART_EXPORT_PATH/$SERVICE-chart
-```
+export ACK_K8S_NAMESPACE=ack-system
+helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \
+ $CHART_EXPORT_PATH/$SERVICE-chart
+ ```
 
 Verify that the CRDs and Helm charts were deployed with the following commands:
 ```bash
