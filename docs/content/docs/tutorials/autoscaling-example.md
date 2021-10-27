@@ -250,7 +250,7 @@ export XGBOOST_IMAGE=683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgbo
 **IMPORTANT**: If your `SERVICE_REGION` is not `us-east-1`, you must change the `XGBOOST_IMAGE` URI. To find your region-specific XGBoost image URI, choose your region in the [SageMaker Docker Registry Paths page](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html), and then select **XGBoost (algorithm)**. For this example, use version 1.2-1.
 {{% /hint %}}
 
-Use the following `deploy.yaml` file to deploy the model on an `ml.t3.medium` instance. To use your own model, change the `modelDataURL` value. 
+Use the following `deploy.yaml` file to deploy the model on an `ml.t2.medium` instance. To use your own model, change the `modelDataURL` value. 
 
 ```bash
 printf '
@@ -276,7 +276,7 @@ spec:
   productionVariants:
   - modelName: '$MODEL_NAME'
     variantName: AllTraffic
-    instanceType: ml.t3.medium
+    instanceType: ml.t2.medium
     initialInstanceCount: 1
 ---
 apiVersion: sagemaker.services.k8s.aws/v1alpha1
@@ -348,7 +348,7 @@ scalabletarget.applicationautoscaling.services.k8s.aws/ack-tutorial-endpoint-sca
 
 You can verify that the `ScalableTarget` was created with the `kubectl describe` command.
 ```bash
-kubectl describe scalabletarget.applicationautoscaling | yq e .Status -
+kubectl describe scalabletarget.applicationautoscaling
 ```
 
 ### Create a scaling policy
@@ -388,7 +388,7 @@ scalingpolicy.applicationautoscaling.services.k8s.aws/ack-tutorial-endpoint-scal
 
 You can verify that the `ScalingPolicy` was created with the `kubectl describe` command.
 ```bash
-kubectl describe scalingpolicy.applicationautoscaling | yq e .Status -
+kubectl describe scalingpolicy.applicationautoscaling
 ```
 
 ## Next steps 
