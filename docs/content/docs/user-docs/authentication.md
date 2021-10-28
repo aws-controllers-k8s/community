@@ -68,10 +68,9 @@ use a particular set of AWS credentials:
 * Access key and secret access key environment variables (not recommended)
 
 {{% hint type="info" title="Understand the AWS credentials file format" %}}
-It is important to understand the [AWS credentials file format][creds-file],
+It is important to understand the [AWS credentials file format](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html),
 especially if you choose not to use the web identity token file method of
 credential configuration.
-[creds-file]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
 {{% /hint %}}
 
 ### Use a web identity token file (recommended)
@@ -94,9 +93,8 @@ Learn [how to configure IRSA][conf-irsa].
 {{% hint type="info" title="Understand the AWS credentials file format" %}}
 IRSA is enabled and installed on EKS clusters by default, however must be
 manually configured if you are using a non-EKS cluster. See the IRSA
-[self-hosted documentation][self-hosted] for information about installing the
+[self-hosted documentation](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md) for information about installing the
 pod identity webhook in non-EKS clusters.
-[self-hosted]: https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md
 {{% /hint %}}
 
 ### Use a shared credentials file
