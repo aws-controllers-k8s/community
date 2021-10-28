@@ -212,9 +212,10 @@ chmod +x create-bucket.sh
 ```
 
 Get the pretrained model and copy it into your S3 bucket.
+
 ```bash
-wget https://raw.githubusercontent.com/aws-controllers-k8s/sagemaker-controller/main/samples/model/s3_sample_model.py
-python3 s3_sample_model.py $SAGEMAKER_BUCKET
+wget https://github.com/aws/amazon-sagemaker-examples/raw/af6667bd0be3c9cdec23fecda7f0be6d0e3fa3ea/sagemaker_model_monitor/introduction/model/xgb-churn-prediction-model.tar.gz
+aws s3 cp xgb-churn-prediction-model.tar.gz s3://$SAGEMAKER_BUCKET
 ```
 
 ### Configure permissions for your SageMaker endpoint
@@ -263,7 +264,7 @@ spec:
   primaryContainer:
     containerHostname: xgboost
     # The source of the model data
-    modelDataURL: s3://'$SAGEMAKER_BUCKET'/sagemaker/xgboost/model/xgb-churn-prediction-model.tar.gz
+    modelDataURL: s3://'$SAGEMAKER_BUCKET'/xgb-churn-prediction-model.tar.gz
     image: '$XGBOOST_IMAGE'
   executionRoleARN: '$SAGEMAKER_EXECUTION_ROLE_ARN'
 ---
