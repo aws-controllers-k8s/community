@@ -28,11 +28,7 @@ This guide assumes that you have:
     - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters. 
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
-    - [Helm](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
-
-{{% hint type="warning" title="Use the correct Helm version" %}}
-Helm 3.7 introduced breaking changes to this tutorial. Be sure to install a Helm version that is greater than 3.0 and less than 3.7.
-{{% /hint %}}
+    - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 ### Configure IAM permissions
 
@@ -113,18 +109,16 @@ Get the SageMaker Helm chart and make it available on the client machine with th
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=sagemaker
-export LATEST_RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/sagemaker-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
-export RELEASE_VERSION=${LATEST_RELEASE_VERSION:-v0.0.4}
+export RELEASE_VERSION=v0.2.0
 export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
-export CHART_REF=$CHART_REPO:$RELEASE_VERSION
-export ACK_K8S_NAMESPACE=ack-system
+export CHART_REF=$SERVICE-chart
+export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
+export CHART_PACKAGE=$CHART_REF-$RELEASE_VERSION.tgz
 
 mkdir -p $CHART_EXPORT_PATH
 
-helm chart pull $CHART_REF
-helm chart list
-helm chart export $CHART_REF --destination $CHART_EXPORT_PATH
+helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
+tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
 ```
 
 Update the Helm chart values for a cluster-scoped installation. 
@@ -133,7 +127,6 @@ Update the Helm chart values for a cluster-scoped installation.
 # Update the following values in the Helm chart
 cd $CHART_EXPORT_PATH/$SERVICE-chart
 yq e '.aws.region = env(SERVICE_REGION)' -i values.yaml
-yq e '.aws.account_id = env(AWS_ACCOUNT_ID)' -i values.yaml
 yq e '.serviceAccount.annotations."eks.amazonaws.com/role-arn" = env(IAM_ROLE_ARN_FOR_IRSA)' -i values.yaml
 cd -
 ```
@@ -147,7 +140,9 @@ kubectl apply -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 Create a namespace and install the SageMaker ACK service controller with the Helm chart. 
 
 ```bash
-helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \ $CHART_EXPORT_PATH/$SERVICE-chart
+export ACK_K8S_NAMESPACE=ack-system
+helm install -n $ACK_K8S_NAMESPACE --create-namespace --skip-crds ack-$SERVICE-controller \
+ $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
 Verify that the CRDs and Helm charts were deployed with the following commands:
@@ -325,6 +320,8 @@ If your training job completed successfully, you can find the model location und
 
 For more examples on how to use the SageMaker ACK service controller, see the [SageMaker controller samples repository][sagemaker-samples]. 
 
+To deploy your trained SageMaker model and scale it with the Application Auto Scaling ACK service controller, see [Scale SageMaker Workloads with Application Auto Scaling][autoscaling-example].
+
 ### Cleanup
 
 You can delete your SageMaker training job with the `kubectl delete` command.
@@ -354,5 +351,6 @@ To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 
 [configure-permissions]: ../../user-docs/authorization/
 [sagemaker-samples]: https://github.com/aws-controllers-k8s/sagemaker-controller/tree/main/samples
+[autoscaling-example]: ../autoscaling-example/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
