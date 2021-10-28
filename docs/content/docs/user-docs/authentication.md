@@ -68,10 +68,9 @@ use a particular set of AWS credentials:
 * Access key and secret access key environment variables (not recommended)
 
 {{% hint type="info" title="Understand the AWS credentials file format" %}}
-It is important to understand the [AWS credentials file format][creds-file],
+It is important to understand the [AWS credentials file format](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html),
 especially if you choose not to use the web identity token file method of
 credential configuration.
-[creds-file]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
 {{% /hint %}}
 
 ### Use a web identity token file (recommended)
