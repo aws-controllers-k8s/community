@@ -84,5 +84,4 @@ EOF
 ```
 
 ## Next Steps
-Checkout the [RBAC and IAM permissions overview](../authorization) to understand how ACK manages
-authorization
+Checkout the [RBAC and IAM permissions overview](../authorization) to understand how ACK manages authorization
