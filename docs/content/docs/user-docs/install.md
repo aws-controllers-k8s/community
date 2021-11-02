@@ -18,6 +18,11 @@ Individual ACK service controllers may be in different maintenance phases and fo
 Check the [project stage](../../community/releases/#project-stages) and [maintenance phase](../../community/releases/#maintenance-phases) of the ACK service controller you wish to install. Be aware that controllers in a preview maintenance phase may have significant and breaking changes introduced in a future release.
 {{% /hint %}}
 
+
+{{% hint type="warning" title="Note for OpenShift users" %}}
+If you are using the OpenShift distribution of Kubernetes, please skip to the OpenShift-specific instructions [here](#install-an-ack-service-controller-with-operatorhub-in-red-hat-openshift).
+{{% /hint %}}
+
 [proj-stages]: ../../community/releases/#project-stages
 [maint-phases]: ../../community/releases/#maintenance-phases
 [ack-services]: ../../community/services/
@@ -120,6 +125,22 @@ For example, the static manifests needed to install the S3 service controller fo
 
 [s3-config-dir]: https://github.com/aws-controllers-k8s/s3-controller/tree/main/config
 [s3-repo]: https://github.com/aws-controllers-k8s/s3-controller
+
+
+## Install an ACK service controller with OperatorHub in Red Hat OpenShift
+
+If you are using [OpenShift](https://docs.openshift.com/), you can install ACK service controllers using the built-in OperatorHub in the OpenShift dashboard. However, your cluster administrator must first perform a few necessary pre-installation steps, which differ depending on the type of installation:
+
+* [Single AWS account pre-installation instructions](../irsa#openshift-single-aws-account-pre-installation)
+* [Multiple AWS account pre-installation instructions](../cross-account-resource-management#openshift-multiple-aws-account-pre-installation)
+
+After following the pre-installation configuration above, navigate to the __Catalog -> OperatorHub__ page in the OpenShift web console and then search for the ACK service controller operator you wish to install. Click __Install__ and ensure you use the __All Namespaces__ install mode, if prompted.
+
+For more information, see the official documentation for [installing Operators into an OpenShift cluster](https://docs.openshift.com/container-platform/4.9/operators/user/olm-installing-operators-in-namespace.html).
+
+{{% hint type="info" title="Note" %}}
+Since authentication setup is required before installing an ACK operator into OpenShift as explained in the OpenShift pre-installation steps, you do not need to set up authentication after installation as suggested below in "Next steps."
+{{% /hint %}}
 
 ## Next steps
 

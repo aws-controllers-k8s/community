@@ -181,6 +181,111 @@ AWS_ROLE_ARN=arn:aws:iam::<AWS_ACCOUNT_ID>:role/<IAM_ROLE_NAME>
 AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
 ```
 
+
+## OpenShift single AWS account pre-installation 
+### Summary
+When ACK service controllers are installed via OperatorHub, a cluster administrator will need to perform the following pre-installation steps to provide the controller any credentials and authentication context it needs to interact with the AWS API.
+
+Rather than setting up a `ServiceAccount` like in the EKS instructions above, you need to use IAM users and policies. You will then set the required authentication credentials inside a `ConfigMap` and a `Secret`.
+
+The following directions will use the Elasticache controller as an example, but the instructions should apply to any ACK controller. Just make sure to appropriately name any values that include `elasticache` in them.
+
+### Step 1: Create a user and enable programmatic access
+
+Create a user with the `aws` CLI (named `ack-elasticache-service-controller` in our example):
+```bash
+aws iam create-user --user-name ack-elasticache-service-controller
+```
+
+Enable programmatic access for the user you just created:
+```bash
+aws iam create-access-key --user-name ack-elasticache-service-controller
+```
+
+You should see output with important credentials:
+```json
+{
+    "AccessKey": {
+        "UserName": "ack-elasticache-service-controller",
+        "AccessKeyId": "00000000000000000000",
+        "Status": "Active",
+        "SecretAccessKey": "abcdefghIJKLMNOPQRSTUVWXYZabcefghijklMNO",
+        "CreateDate": "2021-09-30T19:54:38+00:00"
+    }
+}
+```
+
+This is the user that will end up representing our ACK service controller, which means these are the credentials we’ll eventually pass to our controller. Save or note `AccessKeyId` and `SecretAccessKey` for use in a later step.
+
+### Step 2: Give the user permissions by applying an access policy
+
+{{% hint type="info" title="Note on permissions" %}}
+AWS best practice is to provision permissions to groups and then bind specific users to those groups. In this example, we are directly applying permissions to a user.
+{{% /hint %}}
+
+Each service controller repository provides a recommended policy ARN for use with the controller. For an example, see the recommended policy for [Elasticache here](https://github.com/aws-controllers-k8s/elasticache-controller/blob/main/config/iam/recommended-policy-arn).
+
+Attach the recommended policy to the user we created in the previous step:
+```bash
+aws iam attach-user-policy \
+    --user-name ack-elasticache-service-controller \
+    --policy-arn 'arn:aws:iam::aws:policy/AmazonElastiCacheFullAccess'
+```
+
+Since the previous command has no output, you can verify that the policy applied properly:
+```bash
+aws iam list-attached-user-policies --user-name ack-elasticache-service-controller
+```
+
+### Step 3: Create the default ACK namespace
+
+Create the namespace for any ACK controllers you might install. The controllers as they are packaged in OperatorHub and OLM expect the namespace to be `ack-system`.
+```bash
+oc new-project ack-system
+```
+
+### Step 4: Create required `ConfigMap` and `Secret` in OpenShift
+
+Enter the `ack-system` namespace. Create a file, `config.txt`, with the following variables, leaving `ACK_WATCH_NAMESPACE` blank so the controller can properly watch all namespaces, and change any other values to suit your needs:
+
+```bash
+ACK_ENABLE_DEVELOPMENT_LOGGING=true
+ACK_LOG_LEVEL=debug
+ACK_WATCH_NAMESPACE=
+AWS_REGION=us-west-2
+ACK_RESOURCE_TAGS=hellofromocp
+```
+
+Now use `config.txt` to create a `ConfigMap` in your OpenShift cluster:
+```bash
+oc create configmap \
+--namespace ack-system \
+--from-env-file=config.txt ack-user-config
+```
+
+Save another file, `secrets.txt`, with the following authentication values, which you should have saved from earlier when you created your user's access keys:
+```bash
+AWS_ACCESS_KEY_ID=00000000000000000000
+AWS_SECRET_ACCESS_KEY=abcdefghIJKLMNOPQRSTUVWXYZabcefghijklMNO
+```
+
+Use `secrets.txt` to create a `Secret` in your OpenShift cluster:
+```bash
+oc create secret generic \
+--namespace ack-system \
+--from-env-file=secrets.txt ack-user-secrets
+```
+
+{{% hint type="warning" title="Warning" %}}
+If you change the name of either the `ConfigMap` or the `Secret` from the values given above, i.e. `ack-user-config` and `ack-user-secrets`, then installations from OperatorHub will not function properly. The Deployment for the controller is preconfigured for these key values.
+{{% /hint %}}
+
+### Step 5: Install the controller
+
+Now you can follow the instructions for [installing the controller using OperatorHub](../install/#install-an-ack-service-controller-with-operatorhub-in-red-hat-openshift).
+
+
+
 ## Next Steps
 
 Now that ACK service controller is setup successfully with AWS permissions, let's
