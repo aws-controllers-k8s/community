@@ -87,7 +87,13 @@ printf '{
 ' > ./trust.json
 ```
 
-Updating an Application Auto Scaling Scalable Target requires additional permissions. Create a file named `pass_role_policy.json` to create the policy required for the IAM role.
+Updating an Application Auto Scaling Scalable Target requires additional permissions. First, create a service-linked role for Application Auto Scaling.
+
+```sh
+ aws iam create-service-linked-role --aws-service-name sagemaker.application-autoscaling.amazonaws.com
+```
+
+Create a file named `pass_role_policy.json` to create the policy required for the IAM role.
 
 ```bash
 printf '{
@@ -96,7 +102,7 @@ printf '{
     {
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "*"
+      "Resource": "arn:aws:iam::'$AWS_ACCOUNT_ID':role/aws-service-role/sagemaker.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_SageMakerEndpoint"
     }
   ]
 }
