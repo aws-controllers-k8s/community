@@ -248,13 +248,13 @@ func NewReferenceField(
 
 type AWSResourceManager interface {
         ...
-+       // DereferenceResource finds if there are any AWSResourceReference fields
++       // ResolveReferences finds if there are any AWSResourceReference fields
 +       // present in the AWSResource passed in the parameters and attempts to resolve
 +       // those reference fields into target field.
 +       // It returns an AWSResource with resolved references, boolean representing
 +       // whether any reference fields were present and an error if the passed
 +       // AWSResource's reference fields cannot be resolved
-+       DereferenceResource(context.Context, client.Reader, AWSResource) (AWSResource, bool, error)
++       ResolveReferences(context.Context, client.Reader, AWSResource) (AWSResource, bool, error)
 }
 ```
 
@@ -273,7 +273,7 @@ res acktypes.AWSResource,
     if res.IsBeingDeleted() {
 +       // Resolve references before deleting the resource.
 +       // Ignore any errors while resolving the references
-+    	  res, _, _ = rm.DereferenceResource(ctx, r.apiReader, res)
++    	  res, _, _ = rm.ResolveReferences(ctx, r.apiReader, res)
         return r.deleteResource(ctx, rm, res)
     }
     return r.Sync(ctx, rm, res)
@@ -297,9 +297,9 @@ func (r *resourceReconciler) Sync(
 
 	isAdopted := IsAdopted(desired)
 	rlog.WithValues("is_adopted", isAdopted)
-+	rlog.Enter("rm.DereferenceResource")
-+	dereferencedDesired, containsResourceRef, err := rm.DereferenceResource(ctx, r.apiReader, desired)
-+	rlog.Exit("rm.DereferenceResource", err)
++	rlog.Enter("rm.ResolveReferences")
++	resolvedRefDesired, containsResourceRef, err := rm.ResolveReferences(ctx, r.apiReader, desired)
++	rlog.Exit("rm.ResolveReferences", err)
 +	if err != nil {
 +		// Set the condition in copy of desired resources so that it can be
 +		//patched back in etcd
@@ -315,13 +315,13 @@ func (r *resourceReconciler) Sync(
 +	// If the desired resource had references, set the ReferenceResolved
 +	//condition to true
 +	if containsResourceRef {
-+		condition.SetReferenceResolved(dereferencedDesired, corev1.ConditionTrue,
++		condition.SetReferenceResolved(resolvedRefDesired, corev1.ConditionTrue,
 +			&condition.ReferenceResolvedMessage,
 +			&condition.ReferenceResolvedReason)
 +	} else {
-+		condition.RemoveReferenceResolved(dereferencedDesired)
++		condition.RemoveReferenceResolved(resolvedRefDesired)
 +	}
-+	desired = dereferencedDesired
++	desired = resolvedRefDesired
 
 	rlog.Enter("rm.ReadOne")
 	latest, err = rm.ReadOne(ctx, desired)
@@ -410,13 +410,13 @@ var lateInitializeFieldNames = []string{}
 
 ...
 
-// DereferenceResource finds if there are any AWSResourceReference fields present
+// ResolveReferences finds if there are any AWSResourceReference fields present
 // in the AWSResource passed in parameter and attempts to resolve those reference
 // fields into target field.
 // It returns a resolved AWSResource, boolean representing whether any reference
 // fields were present and an error if the passed AWSResource's reference fields
 // cannot be resolved
-func (rm *resourceManager) DereferenceResource(
+func (rm *resourceManager) ResolveReferences(
 	ctx context.Context,
 	apiReader client.Reader,
 	res acktypes.AWSResource,
@@ -487,13 +487,13 @@ var lateInitializeFieldNames = []string{}
 
 ...
 
-// DereferenceResource finds if there are any AWSResourceReference fields present
+// ResolveReferences finds if there are any AWSResourceReference fields present
 // in the AWSResource passed in parameter and attempts to resolve those reference
 // fields into target field.
 // It returns a resolved AWSResource, boolean representing whether any reference
 // fields were present and an error if the passed AWSResource's reference fields
 // cannot be resolved
-func (rm *resourceManager) DereferenceResource(
+func (rm *resourceManager) ResolveReferences(
 	ctx context.Context,
 	apiReader client.Reader,
 	res acktypes.AWSResource,
