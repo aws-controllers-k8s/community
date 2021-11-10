@@ -74,37 +74,24 @@ kubectl delete -n ack-system configmap ack-role-account-map
 
 ## Additional OpenShift cleanup
 
+The following steps are required for cleanup on OpenShift in addition to the steps above (except for the steps above relating to Helm).
+
+When performing any of the cleanup steps above, you can use `oc` instead of `kubectl`.
+
 ### Uninstall the ACK Controller
 
 Navigate in the OpenShift dashboard to the OperatorHub page and search for the controller name. Select __Uninstall__ to remove the controller.
 
 ### Delete ConfigMap
 
-Delete the `ConfigMap` you created in pre-installation:
+Delete the following `ConfigMap` you created in pre-installation:
 ```bash
 oc delete configmap ack-user-config
 ```
 
-If you followed the [multi-account pre-installation instructions](../cross-account-resource-management#openshift-multiple-aws-account-pre-installation), then you will also need to delete the `ack-role-account-map`:
-```bash
-oc delete configmap ack-role-account-map
-```
-
 ### Delete user Secret
 
-Delete the `Secret` you created in pre-installation:
+Delete the folllowing `Secret` you created in pre-installation:
 ```bash
 oc delete secret ack-user-secrets
-```
-
-### Delete namespaces
-
-If you are no longer using any ACK controllers, delete the ACK namespace:
-```bash
-oc delete namespace ack-system
-```
-
-If you created other namespaces in the [multi-account pre-installation instructions](../cross-account-resource-management#openshift-multiple-aws-account-pre-installation) that you no longer need, delete those as well:
-```bash
-oc delete namespace $MULTI_ACCOUNT_NAMESPACE
 ```
