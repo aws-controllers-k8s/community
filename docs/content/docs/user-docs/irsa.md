@@ -183,7 +183,7 @@ AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/to
 
 
 ## OpenShift single AWS account pre-installation 
-### Summary
+
 When ACK service controllers are installed via OperatorHub, a cluster administrator will need to perform the following pre-installation steps to provide the controller any credentials and authentication context it needs to interact with the AWS API.
 
 Rather than setting up a `ServiceAccount` like in the EKS instructions above, you need to use IAM users and policies. You will then set the required authentication credentials inside a `ConfigMap` and a `Secret`.
