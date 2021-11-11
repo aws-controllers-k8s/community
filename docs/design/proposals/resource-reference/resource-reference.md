@@ -35,6 +35,7 @@ from other resources
 ### Future Improvements
 * Add support for custom hooks while dereferencing resources
 * Add support for `selector` for referencing the objects
+* Add support for references in custom fields that are not present in
 * Add support for referencing resource from different api-groups
 * Add support for not deleting a resource if it is referenced in another resource
 * Add support for finite retries and terminal conditions when resolving references
@@ -44,8 +45,8 @@ from other resources
 ### High Level Overview
 
 * Introduce new construct in generator.yaml which will indicate to code-generator
-if a new spec field with type `AWSResourceReference` should be added to the custom
-resource definition.
+if a new spec field with type `AWSResourceReferenceWrapper` or
+`AWSResourcesReferenceWrapper` should be added to the custom resource definition.
 
 * This new spec field will work as additional input for an existing spec field.
 Addition of the extra spec field keeps the backward compatibility with existing
@@ -57,8 +58,8 @@ field is present in custom resource, not both.
 * If the existing spec field was marked as required, validation will be added that
 at least one of existing spec field or new reference field is present.
 
-* If `AWSResourceReference` type field is present in the desired state, first ACK
-controller will query for the referenced resource. If the referenced resource
+* If `AWSResourceReferenceWrapper` type field is present in the desired state,
+first ACK controller will query for the referenced resource. If the referenced resource
 has `ACK.ResourceSynced` condition status `True` & specified field is found
 in the referenced resource, the reconciliation loop will progress. Otherwise
 the request will get requeued for future processing.
@@ -80,19 +81,19 @@ of a field but also check if the Status is available etc...
 ```go
 type FieldConfig struct {
     ...
-    Reference *ReferenceConfig `json:"reference,omitempty"`
+    References *ReferencesConfig `json:"references,omitempty"`
     ...
 }
 
-// ReferenceConfig contains the instructions for how to add the referenced resource
+// ReferencesConfig contains the instructions for how to add the referenced resource
 // configuration for a field.
-type ReferenceConfig struct {
-	// TargetResource mentions the K8s resource which is read to resolve the
+type ReferencesConfig struct {
+	// Resource mentions the K8s resource which is read to resolve the
 	// reference
-	TargetResource string `json:"target_resource"`
-	// SourcePath refers to the the path of field which should be copied
+	Resource string `json:"resource"`
+	// Path refers to the the path of field which should be copied
 	// to resolve the reference
-	SourcePath string `json:"source_path"`
+	Path string `json:"path"`
 }
 ```
 
@@ -102,14 +103,38 @@ resources:
   Integration:
     fields:
       ApiId:
-        reference:
-          target_resource: API
-          source_path: Status.APIID
+        references:
+          resource: API
+          path: Status.APIID
 ```
 
-#### New AWSResourceReference Type
+#### New AWSResourceReference Types
 
 ```go
+// AWSResourceReferenceWrapper provides a wrapper around *AWSResourceReference
+// type to provide more user friendly syntax for references using 'from' field
+// Ex:
+// APIIDRef:
+//   from:
+//     name: my-api
+type AWSResourceReferenceWrapper struct {
+	From *AWSResourceReference `json:"from,omitempty"`
+}
+
+// AWSResourcesReferenceWrapper provides a wrapper around slice of *AWSResourceReference
+// type to provide more user friendly syntax for references using 'from' field
+// Ex:
+// SecurityGroupIDs:
+//   from:
+//     - name: my-sg-1
+//     - name: my-sg-2
+type AWSResourcesReferenceWrapper struct {
+	From []*AWSResourceReference `json:"from,omitempty"`
+}
+
+// AWSResourceReference provides ways to either provide an AWSResource identifier
+// (Id/ARN/Name) by string value or refer to another k8s resource for finding
+// the identifier
 type AWSResourceReference struct {
 	Name *string `json:"name,omitempty"`
 }
@@ -140,7 +165,8 @@ metadata:
   name: my-integration
 spec:
   apiIDRef:
-    name: my-api
+    from:
+      name: my-api
   integrationType: HTTP_PROXY
   integrationURI: https://example.org
   integrationMethod: GET
@@ -210,13 +236,13 @@ func NewReferenceField(
 	fieldNames names.Names,
 	shapeRef *awssdkmodel.ShapeRef,
 ) *Field {
-	gt := "*ackv1alpha1.AWSResourceReference"
-	gtp := "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourceReference"
+	gt := "*ackv1alpha1.AWSResourceReferenceWrapper"
+	gtp := "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourceReferenceWrapper"
 	gte := ""
 	if shapeRef.Shape.Type == "list" {
-		gt = "[]" + gt
-		gtp = "[]" + gtp
-		gte = "*ackv1alpha1.AWSResourceReference"
+		gt = "*ackv1alpha1.AWSResourcesReferenceWrapper"
+		gtp = "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourcesReferenceWrapper"
+		gte = "*ackv1alpha1.AWSResourcesReferenceWrapper"
 	}
 	return &Field{
 		CRD:               crd,
@@ -352,15 +378,15 @@ resources:
   Integration:
     fields:
       ApiId:
-        reference:
-          target_resource: API
-          source_path: Status.APIID
+        references:
+          resource: API
+          path: Status.APIID
   VpcLink:
     fields:
       SecurityGroupIds:
-        reference:
-          target_resource: API
-          source_path: Status.APIID
+        references:
+          resource: API
+          path: Status.APIID
 ```
 
 **integration/manager.go**
@@ -408,13 +434,13 @@ func (rm *resourceManager) ResolveReferences(
 	if ko.Spec.APIIDRef != nil && ko.Spec.APIID != nil {
 		return &resource{ko}, true, fmt.Errorf("'APIID' field should not be present when using reference field 'APIIDRef'")
 	}
-	if ko.Spec.APIID == nil && ko.Spec.APIIDRef == nil {
+	if ko.Spec.APIIDRef == nil && ko.Spec.APIID == nil {
 		return &resource{ko}, referencePresent, fmt.Errorf("At least one of 'APIID' or 'APIIDRef' field should be present")
 	}
 	// Checking Referenced Field APIIDRef
-	if ko.Spec.APIIDRef != nil {
+	if ko.Spec.APIIDRef != nil && ko.Spec.APIIDRef.From != nil {
 		referencePresent = true
-		arr := ko.Spec.APIIDRef
+		arr := ko.Spec.APIIDRef.From
 		namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
 		obj := acksvcv1alpha1.API{}
 		err := apiReader.Get(ctx, namespacedName, &obj)
@@ -438,7 +464,6 @@ func (rm *resourceManager) ResolveReferences(
 	}
 	return &resource{ko}, referencePresent, nil
 }
-
 ```
 
 **vpc_link/manager.go**
@@ -487,10 +512,10 @@ func (rm *resourceManager) ResolveReferences(
 		return &resource{ko}, true, fmt.Errorf("'SecurityGroupIDs' field should not be present when using reference field 'SecurityGroupIDsRef'")
 	}
 	// Checking Referenced Field SecurityGroupIDsRef
-	if ko.Spec.SecurityGroupIDsRef != nil && len(ko.Spec.SecurityGroupIDsRef) > 0 {
+	if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDsRef.From != nil && len(ko.Spec.SecurityGroupIDsRef.From) > 0 {
 		referencePresent = true
 		resolvedReferences := []*string{}
-		for _, arr := range ko.Spec.SecurityGroupIDsRef {
+		for _, arr := range ko.Spec.SecurityGroupIDsRef.From {
 			namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
 			obj := acksvcv1alpha1.API{}
 			err := apiReader.Get(ctx, namespacedName, &obj)
@@ -516,6 +541,7 @@ func (rm *resourceManager) ResolveReferences(
 	}
 	return &resource{ko}, referencePresent, nil
 }
+
 ```
 
 ## Alternate Approach
