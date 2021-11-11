@@ -5,7 +5,7 @@ in another custom resource. The reconciler will wait for the referenced custom
 resource to be created, and in a stable state, before proceeding to create the
 resource which references it.
 
-For example, currently if ACK customer needs to create an APIGatewayv2 integration,
+For example, currently if ACK customer needs to create an APIGatewayv2 `Integration`,
 they first need to
 1. create an `API` custom resource
 2. wait for `API` resource creation to finish
@@ -80,27 +80,19 @@ of a field but also check if the Status is available etc...
 ```go
 type FieldConfig struct {
     ...
-    Reference *ReferenceConfig `json:"references,omitempty"`
+    Reference *ReferenceConfig `json:"reference,omitempty"`
     ...
 }
 
 // ReferenceConfig contains the instructions for how to add the referenced resource
 // configuration for a field.
 type ReferenceConfig struct {
-	// Kind mentions the K8s Kind of referenced resource
-	Kind string `json:"kind"`
-	// FieldPath refers to the the path of field which should be copied
-	// from referenced resource into TargetFieldName
-	FieldPath string `json:"field_path"`
-	// TargetFieldName is spec field name which gets value from
-	// referenced resource's FieldPath
-	TargetFieldName string `json:"target_field"`
-	// IsList mentions whether the new field should be AWSResourceReference or
-	// List of AWSResourceReference
-	IsList          bool   `json:"is_list"`
-	// Required mentions whether either of AWSResourceReference or
-	// TargetFieldName must be present in custom resource
-	Required        bool   `json:"required"`
+	// TargetResource mentions the K8s resource which is read to resolve the
+	// reference
+	TargetResource string `json:"target_resource"`
+	// SourcePath refers to the the path of field which should be copied
+	// to resolve the reference
+	SourcePath string `json:"source_path"`
 }
 ```
 
@@ -109,18 +101,11 @@ type ReferenceConfig struct {
 resources:
   Integration:
     fields:
-      Api:
-        references:
-          kind: API
-          field_path: Status.APIID
-          target_field: APIID
-          is_list: false
-          required: true
       ApiId:
-        is_required: false
+        reference:
+          target_resource: API
+          source_path: Status.APIID
 ```
-NOTE: `ApiId` field is marked as not required because the new reference field
-`Api` can also provide APIId.
 
 #### New AWSResourceReference Type
 
@@ -154,7 +139,7 @@ kind: Integration
 metadata:
   name: my-integration
 spec:
-  api:
+  apiIDRef:
     name: my-api
   integrationType: HTTP_PROXY
   integrationURI: https://example.org
@@ -193,6 +178,17 @@ func (m *Model) GetCRDs() ([]*CRD, error) {
 		}
 		crdNames := names.New(crdName)
 ...
+			crd.AddSpecField(memberNames, memberShapeRef)
+
++			fConfig := m.cfg.ResourceFields(crdName)[fieldName]
++			if fConfig != nil && fConfig.Reference != nil {
++				referenceFieldNames := names.New(fieldName + "Ref")
++				rf := NewReferenceField(crd, referenceFieldNames, memberShapeRef)
++				crd.SpecFields[referenceFieldNames.Original] = rf
++				crd.Fields[referenceFieldNames.Camel] = rf
++			}
+		}
+
 		// Now any additional Spec fields that are required from other API
 		// operations.
 		for targetFieldName, fieldConfig := range m.cfg.ResourceFields(crdName) {
@@ -200,14 +196,6 @@ func (m *Model) GetCRDs() ([]*CRD, error) {
 				// It's a Status field...
 				continue
 			}
-
-+			if fieldConfig.Reference != nil {
-+				// Add the spec field here
-+				referenceFieldNames := names.New(targetFieldName)
-+				rf := NewReferenceField(crd, referenceFieldNames, fieldConfig)
-+				crd.SpecFields[referenceFieldNames.Original] = rf
-+				crd.Fields[referenceFieldNames.Camel] = rf
-+			}
 
 ...
 	m.crds = crds
@@ -220,13 +208,15 @@ func (m *Model) GetCRDs() ([]*CRD, error) {
 func NewReferenceField(
 	crd *CRD,
 	fieldNames names.Names,
-	cfg *ackgenconfig.FieldConfig,
+	shapeRef *awssdkmodel.ShapeRef,
 ) *Field {
 	gt := "*ackv1alpha1.AWSResourceReference"
-	gtp := "*ackv1alpha1.AWSResourceReference"
-	if cfg.Reference.IsList {
+	gtp := "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourceReference"
+	gte := ""
+	if shapeRef.Shape.Type == "list" {
 		gt = "[]" + gt
 		gtp = "[]" + gtp
+		gte = "*ackv1alpha1.AWSResourceReference"
 	}
 	return &Field{
 		CRD:               crd,
@@ -234,9 +224,9 @@ func NewReferenceField(
 		Path:              fieldNames.Original,
 		ShapeRef:          nil,
 		GoType:            gt,
-		GoTypeElem:        "AWSResourceReference",
+		GoTypeElem:        gte,
 		GoTypeWithPkgName: gtp,
-		FieldConfig:       cfg,
+		FieldConfig:       nil,
 	}
 }
 ```
@@ -361,24 +351,16 @@ referencing the resource from same api-group.
 resources:
   Integration:
     fields:
-      Api:
-        references:
-          kind: API
-          field_path: Status.APIID
-          target_field: APIID
-          is_list: false
-          required: true
       ApiId:
-        is_required: false
+        reference:
+          target_resource: API
+          source_path: Status.APIID
   VpcLink:
     fields:
-      SecurityGroups:
-        references:
-          kind: API
-          field_path: Status.APIID
-          target_field: SecurityGroupIDs
-          is_list: true
-          required: false
+      SecurityGroupIds:
+        reference:
+          target_resource: API
+          source_path: Status.APIID
 ```
 
 **integration/manager.go**
@@ -423,16 +405,16 @@ func (rm *resourceManager) ResolveReferences(
 ) (acktypes.AWSResource, bool, error) {
 	ko := rm.concreteResource(res).ko.DeepCopy()
 	referencePresent := false
-	if ko.Spec.API != nil && ko.Spec.APIID != nil {
-		return &resource{ko}, true, fmt.Errorf("'APIID' field should not be present when using reference field 'API'")
+	if ko.Spec.APIIDRef != nil && ko.Spec.APIID != nil {
+		return &resource{ko}, true, fmt.Errorf("'APIID' field should not be present when using reference field 'APIIDRef'")
 	}
-	if ko.Spec.API == nil && ko.Spec.APIID == nil {
-		return &resource{ko}, referencePresent, fmt.Errorf("At least one of 'APIID' or 'API' field should be present")
+	if ko.Spec.APIID == nil && ko.Spec.APIIDRef == nil {
+		return &resource{ko}, referencePresent, fmt.Errorf("At least one of 'APIID' or 'APIIDRef' field should be present")
 	}
-	// Checking Referenced Field API
-	if ko.Spec.API != nil {
+	// Checking Referenced Field APIIDRef
+	if ko.Spec.APIIDRef != nil {
 		referencePresent = true
-		arr := ko.Spec.API
+		arr := ko.Spec.APIIDRef
 		namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
 		obj := acksvcv1alpha1.API{}
 		err := apiReader.Get(ctx, namespacedName, &obj)
@@ -456,6 +438,7 @@ func (rm *resourceManager) ResolveReferences(
 	}
 	return &resource{ko}, referencePresent, nil
 }
+
 ```
 
 **vpc_link/manager.go**
@@ -500,14 +483,14 @@ func (rm *resourceManager) ResolveReferences(
 ) (acktypes.AWSResource, bool, error) {
 	ko := rm.concreteResource(res).ko.DeepCopy()
 	referencePresent := false
-	if ko.Spec.SecurityGroups != nil && ko.Spec.SecurityGroupIDs != nil {
-		return &resource{ko}, true, fmt.Errorf("'SecurityGroupIDs' field should not be present when using reference field 'SecurityGroups'")
+	if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDs != nil {
+		return &resource{ko}, true, fmt.Errorf("'SecurityGroupIDs' field should not be present when using reference field 'SecurityGroupIDsRef'")
 	}
-	// Checking Referenced Field SecurityGroups
-	if ko.Spec.SecurityGroups != nil && len(ko.Spec.SecurityGroups) > 0 {
+	// Checking Referenced Field SecurityGroupIDsRef
+	if ko.Spec.SecurityGroupIDsRef != nil && len(ko.Spec.SecurityGroupIDsRef) > 0 {
 		referencePresent = true
 		resolvedReferences := []*string{}
-		for _, arr := range ko.Spec.SecurityGroups {
+		for _, arr := range ko.Spec.SecurityGroupIDsRef {
 			namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
 			obj := acksvcv1alpha1.API{}
 			err := apiReader.Get(ctx, namespacedName, &obj)
