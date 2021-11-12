@@ -121,6 +121,21 @@ For example, the static manifests needed to install the S3 service controller fo
 [s3-config-dir]: https://github.com/aws-controllers-k8s/s3-controller/tree/main/config
 [s3-repo]: https://github.com/aws-controllers-k8s/s3-controller
 
+
+## Install an ACK service controller with OperatorHub in Red Hat OpenShift
+
+{{% hint type="important" title="Note" %}}
+Please reference the [Openshift](../openshift) page for necessary pre-installation steps before installing any ACK controllers.
+{{% /hint %}}
+
+Navigate to the __Catalog -> OperatorHub__ page in the OpenShift web console and then search for the ACK service controller operator you wish to install. Click __Install__ and ensure you use the __All Namespaces__ install mode, if prompted.
+
+For more information, see the official documentation for [installing Operators into an OpenShift cluster](https://docs.openshift.com/container-platform/4.9/operators/user/olm-installing-operators-in-namespace.html).
+
+{{% hint type="info" title="Note" %}}
+Since authentication setup is required before installing an ACK operator into OpenShift as explained in the OpenShift pre-installation steps, you do not need to set up authentication after installation as suggested below in "Next steps."
+{{% /hint %}}
+
 ## Next steps
 
 Once you have installed your ACK service controllers, you can
