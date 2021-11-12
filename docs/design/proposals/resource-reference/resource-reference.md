@@ -45,8 +45,8 @@ from other resources
 ### High Level Overview
 
 * Introduce new construct in generator.yaml which will indicate to code-generator
-if a new spec field with type `AWSResourceReferenceWrapper` or
-`AWSResourcesReferenceWrapper` should be added to the custom resource definition.
+if a new spec field with type `*AWSResourceReferenceWrapper` or
+`[]*AWSResourceReferenceWrapper` should be added to the custom resource definition.
 
 * This new spec field will work as additional input for an existing spec field.
 Addition of the extra spec field keeps the backward compatibility with existing
@@ -58,7 +58,7 @@ field is present in custom resource, not both.
 * If the existing spec field was marked as required, validation will be added that
 at least one of existing spec field or new reference field is present.
 
-* If `AWSResourceReferenceWrapper` type field is present in the desired state,
+* If `*AWSResourceReferenceWrapper` type field is present in the desired state,
 first ACK controller will query for the referenced resource. If the referenced resource
 has `ACK.ResourceSynced` condition status `True` & specified field is found
 in the referenced resource, the reconciliation loop will progress. Otherwise
@@ -119,17 +119,6 @@ resources:
 //     name: my-api
 type AWSResourceReferenceWrapper struct {
 	From *AWSResourceReference `json:"from,omitempty"`
-}
-
-// AWSResourcesReferenceWrapper provides a wrapper around slice of *AWSResourceReference
-// type to provide more user friendly syntax for references using 'from' field
-// Ex:
-// SecurityGroupIDs:
-//   from:
-//     - name: my-sg-1
-//     - name: my-sg-2
-type AWSResourcesReferenceWrapper struct {
-	From []*AWSResourceReference `json:"from,omitempty"`
 }
 
 // AWSResourceReference provides ways to either provide an AWSResource identifier
@@ -240,9 +229,9 @@ func NewReferenceField(
 	gtp := "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourceReferenceWrapper"
 	gte := ""
 	if shapeRef.Shape.Type == "list" {
-		gt = "*ackv1alpha1.AWSResourcesReferenceWrapper"
-		gtp = "*github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1.AWSResourcesReferenceWrapper"
-		gte = "*ackv1alpha1.AWSResourcesReferenceWrapper"
+		gt = "[]" + gt"
+		gtp = "[]" + gtp
+		gte = "*ackv1alpha1.AWSResourceReferenceWrapper"
 	}
 	return &Field{
 		CRD:               crd,
@@ -267,10 +256,10 @@ type AWSResourceManager interface {
 +       // ResolveReferences finds if there are any AWSResourceReference fields
 +       // present in the AWSResource passed in the parameters and attempts to resolve
 +       // those reference fields into target field.
-+       // It returns an AWSResource with resolved references, boolean representing
-+       // whether any reference fields were present and an error if the passed
-+       // AWSResource's reference fields cannot be resolved
-+       ResolveReferences(context.Context, client.Reader, AWSResource) (AWSResource, bool, error)
++       // It returns an AWSResource with resolved references & 'ACK.ReferenceResolved'
++       // condition and an error if the passed AWSResource's reference fields
++       // cannot be resolved
++       ResolveReferences(context.Context, client.Reader, AWSResource) (AWSResource, error)
 }
 ```
 
@@ -289,7 +278,7 @@ res acktypes.AWSResource,
     if res.IsBeingDeleted() {
 +       // Resolve references before deleting the resource.
 +       // Ignore any errors while resolving the references
-+    	  res, _, _ = rm.ResolveReferences(ctx, r.apiReader, res)
++    	  res, _ = rm.ResolveReferences(ctx, r.apiReader, res)
         return r.deleteResource(ctx, rm, res)
     }
     return r.Sync(ctx, rm, res)
@@ -314,28 +303,10 @@ func (r *resourceReconciler) Sync(
 	isAdopted := IsAdopted(desired)
 	rlog.WithValues("is_adopted", isAdopted)
 +	rlog.Enter("rm.ResolveReferences")
-+	resolvedRefDesired, containsResourceRef, err := rm.ResolveReferences(ctx, r.apiReader, desired)
++	resolvedRefDesired, err := rm.ResolveReferences(ctx, r.apiReader, desired)
 +	rlog.Exit("rm.ResolveReferences", err)
 +	if err != nil {
-+		// Set the condition in copy of desired resources so that it can be
-+		//patched back in etcd
-+		desiredCopy := desired.DeepCopy()
-+		if containsResourceRef {
-+			condition.SetReferenceResolved(desiredCopy, corev1.ConditionFalse,
-+				&condition.ReferenceNotResolvedMessage,
-+				&condition.ReferenceNotResolvedReason)
-+		}
-+		return desiredCopy, err
-+	}
-
-+	// If the desired resource had references, set the ReferenceResolved
-+	//condition to true
-+	if containsResourceRef {
-+		condition.SetReferenceResolved(resolvedRefDesired, corev1.ConditionTrue,
-+			&condition.ReferenceResolvedMessage,
-+			&condition.ReferenceResolvedReason)
-+	} else {
-+		condition.RemoveReferenceResolved(resolvedRefDesired)
++		return resolvedRefDesired, err
 +	}
 +	desired = resolvedRefDesired
 
@@ -425,44 +396,50 @@ var lateInitializeFieldNames = []string{}
 // fields were present and an error if the passed AWSResource's reference fields
 // cannot be resolved
 func (rm *resourceManager) ResolveReferences(
-	ctx context.Context,
-	apiReader client.Reader,
-	res acktypes.AWSResource,
-) (acktypes.AWSResource, bool, error) {
-	ko := rm.concreteResource(res).ko.DeepCopy()
-	referencePresent := false
-	if ko.Spec.APIIDRef != nil && ko.Spec.APIID != nil {
-		return &resource{ko}, true, fmt.Errorf("'APIID' field should not be present when using reference field 'APIIDRef'")
-	}
-	if ko.Spec.APIIDRef == nil && ko.Spec.APIID == nil {
-		return &resource{ko}, referencePresent, fmt.Errorf("At least one of 'APIID' or 'APIIDRef' field should be present")
-	}
-	// Checking Referenced Field APIIDRef
-	if ko.Spec.APIIDRef != nil && ko.Spec.APIIDRef.From != nil {
-		referencePresent = true
-		arr := ko.Spec.APIIDRef.From
-		namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
-		obj := acksvcv1alpha1.API{}
-		err := apiReader.Get(ctx, namespacedName, &obj)
-		if err != nil {
-			return &resource{ko}, true, err
-		}
-		var refResourceSynced bool
-		for _, cond := range obj.Status.Conditions {
-			if cond.Type == ackv1alpha1.ConditionTypeResourceSynced && cond.Status == corev1.ConditionTrue {
-				refResourceSynced = true
-				break
-			}
-		}
-		if !refResourceSynced {
-			return &resource{ko}, true, fmt.Errorf("referenced 'API' resource " + *arr.Name + " does not have 'ACK.ResourceSynced' condition status 'True'")
-		}
-		if obj.Status.APIID == nil {
-			return &resource{ko}, true, fmt.Errorf("'Status.APIID' is not yet present for referenced 'API' resource " + *arr.Name)
-		}
-		ko.Spec.APIID = obj.Status.APIID
-	}
-	return &resource{ko}, referencePresent, nil
+  ctx context.Context,
+  apiReader client.Reader,
+  res acktypes.AWSResource,
+) (acktypes.AWSResource, error) {
+  ko := rm.concreteResource(res).ko.DeepCopy()
+  referencePresent := false
+  if ko.Spec.APIIDRef != nil && ko.Spec.APIID != nil {
+    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'APIID' field should not be present when using reference field 'APIIDRef'"))
+  }
+  if ko.Spec.APIIDRef == nil && ko.Spec.APIID == nil {
+    return &resource{ko}, fmt.Errorf("At least one of 'APIID' or 'APIIDRef' field should be present")
+  }
+  // Checking Referenced Field APIIDRef
+  if ko.Spec.APIIDRef != nil && ko.Spec.APIIDRef.From != nil {
+    referencePresent = true
+    arr := ko.Spec.APIIDRef.From
+    if arr == nil || arr.Name == nil || *arr.Name == "" {
+      return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("provided resource reference is nil or empty"))
+    }
+    namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
+    obj := acksvcv1alpha1.API{}
+    err := apiReader.Get(ctx, namespacedName, &obj)
+    if err != nil {
+      return ackcondition.WithReferenceResolvedCondition(&resource{ko}, err)
+    }
+    var refResourceSynced bool
+    for _, cond := range obj.Status.Conditions {
+      if cond.Type == ackv1alpha1.ConditionTypeResourceSynced && cond.Status == corev1.ConditionTrue {
+        refResourceSynced = true
+        break
+      }
+    }
+    if !refResourceSynced {
+      return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("referenced 'API' resource "+*arr.Name+" does not have 'ACK.ResourceSynced' condition status 'True'"))
+    }
+    if obj.Status.APIID == nil {
+      return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'Status.APIID' is not yet present for referenced 'API' resource "+*arr.Name))
+    }
+    ko.Spec.APIID = obj.Status.APIID
+  }
+  if referencePresent {
+    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, nil)
+  }
+  return &resource{ko}, nil
 }
 ```
 
@@ -502,46 +479,52 @@ var lateInitializeFieldNames = []string{}
 // fields were present and an error if the passed AWSResource's reference fields
 // cannot be resolved
 func (rm *resourceManager) ResolveReferences(
-	ctx context.Context,
-	apiReader client.Reader,
-	res acktypes.AWSResource,
-) (acktypes.AWSResource, bool, error) {
-	ko := rm.concreteResource(res).ko.DeepCopy()
-	referencePresent := false
-	if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDs != nil {
-		return &resource{ko}, true, fmt.Errorf("'SecurityGroupIDs' field should not be present when using reference field 'SecurityGroupIDsRef'")
-	}
-	// Checking Referenced Field SecurityGroupIDsRef
-	if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDsRef.From != nil && len(ko.Spec.SecurityGroupIDsRef.From) > 0 {
-		referencePresent = true
-		resolvedReferences := []*string{}
-		for _, arr := range ko.Spec.SecurityGroupIDsRef.From {
-			namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
-			obj := acksvcv1alpha1.API{}
-			err := apiReader.Get(ctx, namespacedName, &obj)
-			if err != nil {
-				return &resource{ko}, true, err
-			}
-			var refResourceSynced bool
-			for _, cond := range obj.Status.Conditions {
-				if cond.Type == ackv1alpha1.ConditionTypeResourceSynced && cond.Status == corev1.ConditionTrue {
-					refResourceSynced = true
-					break
-				}
-			}
-			if !refResourceSynced {
-				return &resource{ko}, true, fmt.Errorf("referenced 'API' resource " + *arr.Name + " does not have 'ACK.ResourceSynced' condition status 'True'")
-			}
-			if obj.Status.APIID == nil {
-				return &resource{ko}, true, fmt.Errorf("'Status.APIID' is not yet present for referenced 'API' resource " + *arr.Name)
-			}
-			resolvedReferences = append(resolvedReferences, obj.Status.APIID)
-		}
-		ko.Spec.SecurityGroupIDs = resolvedReferences
-	}
-	return &resource{ko}, referencePresent, nil
+  ctx context.Context,
+  apiReader client.Reader,
+  res acktypes.AWSResource,
+) (acktypes.AWSResource, error) {
+  ko := rm.concreteResource(res).ko.DeepCopy()
+  referencePresent := false
+  if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDs != nil {
+    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'SecurityGroupIDs' field should not be present when using reference field 'SecurityGroupIDsRef'"))
+  }
+  // Checking Referenced Field SecurityGroupIDsRef
+  if ko.Spec.SecurityGroupIDsRef != nil && len(ko.Spec.SecurityGroupIDsRef) > 0 {
+    referencePresent = true
+    resolvedReferences := []*string{}
+    for _, arrw := range ko.Spec.SecurityGroupIDsRef {
+      arr := arrw.From
+      if arr == nil || arr.Name == nil || *arr.Name == "" {
+        return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("provided resource reference is nil or empty"))
+      }
+      namespacedName := types.NamespacedName{Namespace: res.MetaObject().GetNamespace(), Name: *arr.Name}
+      obj := acksvcv1alpha1.API{}
+      err := apiReader.Get(ctx, namespacedName, &obj)
+      if err != nil {
+        return ackcondition.WithReferenceResolvedCondition(&resource{ko}, err)
+      }
+      var refResourceSynced bool
+      for _, cond := range obj.Status.Conditions {
+        if cond.Type == ackv1alpha1.ConditionTypeResourceSynced && cond.Status == corev1.ConditionTrue {
+          refResourceSynced = true
+          break
+        }
+      }
+      if !refResourceSynced {
+        return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("referenced 'API' resource "+*arr.Name+" does not have 'ACK.ResourceSynced' condition status 'True'"))
+      }
+      if obj.Status.APIID == nil {
+        return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'Status.APIID' is not yet present for referenced 'API' resource "+*arr.Name))
+      }
+      resolvedReferences = append(resolvedReferences, obj.Status.APIID)
+    }
+    ko.Spec.SecurityGroupIDs = resolvedReferences
+  }
+  if referencePresent {
+    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, nil)
+  }
+  return &resource{ko}, nil
 }
-
 ```
 
 ## Alternate Approach
