@@ -100,7 +100,39 @@ export IAM_ROLE_ARN_FOR_IRSA=$(aws --region $SERVICE_REGION iam get-role --role-
 echo $IAM_ROLE_ARN_FOR_IRSA
 ```
 
+`AmazonSageMakerFullAccess` policy does not include permissions required to manage Domain, UserProfile or App resource. Create and attach the following Policy to the IAM Role to ensure that your SageMaker service controller has access to these resources.
+
+```bash
+printf '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SagemakerStudioAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sagemaker:*"
+      ],
+      "Resource": [
+        "arn:aws:sagemaker:*:*:domain/*",
+        "arn:aws:sagemaker:*:*:user-profile/*",
+        "arn:aws:sagemaker:*:*:app/*"
+      ]
+    }
+  ]
+}
+' > ./sagemaker_studio_access.json
+```
+
+```bash
+aws --region $SERVICE_REGION iam put-role-policy --role-name $OIDC_ROLE_NAME --policy-name SagemakerStudioAccess --policy-document file://sagemaker_studio_access.json
+```
+
 For more information on authorization and access for ACK service controllers, including details regarding recommended IAM policies, see [Configure Permissions][configure-permissions].
+
+{{% hint type="info" title="IAM role permissions for SageMaker resources" %}}
+If you want to give more granular permissions, the full list of permissions required for each SageMaker resource can be found here : [SageMaker API permissions](https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html)
+{{% /hint %}}
+
 
 ### Install the SageMaker ACK service controller
 
@@ -109,7 +141,7 @@ Get the SageMaker Helm chart and make it available on the client machine with th
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=sagemaker
-export RELEASE_VERSION=v0.2.0
+export RELEASE_VERSION=v0.3.0
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
