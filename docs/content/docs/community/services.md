@@ -40,7 +40,7 @@ release ACK service controllers.
 | Amazon [DynamoDB](#amazon-dynamodb) | `RELEASED` | `PREVIEW` |
 | Amazon [ECR](#amazon-ecr) | `RELEASED` | `PREVIEW` |
 | Amazon [EFS](#amazon-efs) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/328) | |
-| Amazon [EKS](#amazon-eks) | `IN PROGRESS` | |
+| Amazon [EKS](#amazon-eks) | `RELEASED` | `PREVIEW` |
 | Amazon [ElastiCache](#amazon-elasticache) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/9
 | Amazon [EC2 VPC](#amazon-ec2-vpc) | `IN PROGRESS` | |
 | AWS [IAM](#aws-iam) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/222) | |
@@ -116,8 +116,10 @@ If you don't see a particular AWS service listed, feel free to
 ## Amazon EKS
 
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/16
-* Current project stage: `IN PROGRESS`
+* Current project stage: `RELEASED`
+* Current maintenance phase: `PREVIEW`
 * AWS service documentation: https://aws.amazon.com/eks/
+* ACK service controller: https://github.com/aws-controllers-k8s/eks-controller
 
 ## Amazon ElastiCache
 
