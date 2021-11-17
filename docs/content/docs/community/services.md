@@ -52,7 +52,7 @@ release ACK service controllers.
 | Amazon [OpenSearch Service](#amazon-opensearch-service) | `RELEASED` | `PREVIEW` |
 | Amazon [RDS](#amazon-rds) | `RELEASED` | `PREVIEW` |
 | Amazon [Route53](#amazon-route53) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/480) | |
-| Amazon [SageMaker](#amazon-sagemaker) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/11
+| Amazon [SageMaker](#amazon-sagemaker) | `RELEASED` | `GA` |
 | Amazon [SNS](#amazon-sns) | `RELEASED` | `PREVIEW` |
 | Amazon [SQS](#amazon-sqs) | `IN PROGRESS` | |
 | AWS [Step Functions](#aws-step-functions) | `RELEASED` | `PREVIEW` |
@@ -199,8 +199,7 @@ If you don't see a particular AWS service listed, feel free to
 
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/385
 * Current project stage: `RELEASED`
-* Current maintenance phase: `PREVIEW`
-* Next milestone: https://github.com/aws-controllers-k8s/community/milestone/11
+* Current maintenance phase: `GA`
 * AWS service documentation: https://aws.amazon.com/sagemaker/
 * ACK service controller: https://github.com/aws-controllers-k8s/sagemaker-controller
 
