@@ -61,15 +61,18 @@ Kubernetes Deployment; the Deployment's Pod image will refer to the exact
 Docker image tag matching the release tag.
 
 ## Release steps
-<// mkdocs does not support numbered lists with code blocks. So use 1) instead of 1. in numbered list. >
-1) First check out a git branch for your release:
+
+0) Rebase $SERVICE and Code-Generator repos with latest code
+
+1) Navigate to $SERVICE repo and check out a git branch for your release:
 ```bash
 export RELEASE_VERSION=v0.0.1
 git checkout -b release-$RELEASE_VERSION
+git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
 ```
 
-2) Build the release artifacts for the controllers you wish to include in the
-   release
+2) Navigate to Code-Generator repo and build the release artifacts for the controllers you wish to include in the
+   release. *Note, if executing in a terminal separate from $SERVICE repo, `$RELEASE_VERSION` will need to be set again*
 
    Run `make build-controller` for each service from code-generator repository.
     For instance, to build release artifacts for the SNS and S3 controllers I
@@ -83,10 +86,12 @@ for SERVICE in sns s3; do
 done
 ```
 
-3) You can review the release artifacts that were built for each service by looking in the `services/$SERVICE/helm`
+
+
+3) Navigate to $SERVICE repo to review the release artifacts that were built for each service by looking in the `$SERVICE/helm`
 directory:
 
-`tree services/$SERVICE/helm`
+`tree $SERVICE/helm`
 
 or by doing:
 
@@ -94,7 +99,7 @@ or by doing:
 
 {{% hint %}}
 When you run `make build-controller` for a service, it will overwrite any
-Helm chart files that had previously been generated in the `services/$SERVICE/helm`
+Helm chart files that had previously been generated in the `$SERVICE/helm`
 directory with files that refer to the Docker image with an image tag
 referring to the release you've just built artifacts for.
 
@@ -103,11 +108,12 @@ referring to the release you've just built artifacts for.
 4) Commit your code and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
+git push origin HEAD
 ```
 
-5) Get your pull request reviewed and merged.
+5) Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed **unless v0.0.1 release**
 
-6) Upon merging the pull request
+6) Upon merging the pull request (**for v0.0.1 only**)
 ```bash
 git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
 git push upstream main --tags
