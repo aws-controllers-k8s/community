@@ -62,23 +62,34 @@ Docker image tag matching the release tag.
 
 ## Release steps
 
-0) Rebase $SERVICE and Code-Generator repos with latest code
-
-1) Navigate to $SERVICE repo and check out a git branch for your release:
+0) Rebase $SERVICE-controller repo with latest code
 ```bash
+# ACK_SOURCE_ROOT is typically $GOSRC/github.com/aws-controllers-k8s
+cd $ACK_SOURCE_ROOT
+cd $SERVICE-controller
+git fetch --all --tags
+# Optionally fetch and rebase the latest code generator
+cd ../code-generator
+git checkout main && git fetch --all --tags && git rebase upstream/main
+```
+
+1) Navigate to $SERVICE-controller repo and check out a git branch for your release:
+```bash
+cd ../$SERVICE-controller
 export RELEASE_VERSION=v0.0.1
 git checkout -b release-$RELEASE_VERSION
 git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
 ```
 
-2) Navigate to Code-Generator repo and build the release artifacts for the controllers you wish to include in the
-   release. *Note, if executing in a terminal separate from $SERVICE repo, `$RELEASE_VERSION` will need to be set again*
+2) Navigate to code-generator repo and build the release artifacts for the controllers you wish to include in the
+   release. *Note, if executing in a terminal separate from $SERVICE-controller repo, `$RELEASE_VERSION` will need to be set again*
 
    Run `make build-controller` for each service from code-generator repository.
     For instance, to build release artifacts for the SNS and S3 controllers I
     would do:
 
 ```bash
+cd ../code-generator
 for SERVICE in sns s3; do
     export SERVICE;
     echo "building ACK controller for $SERVICE, Version: $RELEASE_VERSION"
@@ -88,18 +99,18 @@ done
 
 
 
-3) Navigate to $SERVICE repo to review the release artifacts that were built for each service by looking in the `$SERVICE/helm`
+3) Navigate to $SERVICE-controller repo to review the release artifacts that were built for each service by looking in the `helm`
 directory:
-
-`tree $SERVICE/helm`
-
-or by doing:
-
-`git diff`
+```bash
+cd ../$SERVICE-controller
+tree helm
+# OR
+git diff
+```
 
 {{% hint %}}
 When you run `make build-controller` for a service, it will overwrite any
-Helm chart files that had previously been generated in the `$SERVICE/helm`
+Helm chart files that had previously been generated in the `$SERVICE-controller/helm`
 directory with files that refer to the Docker image with an image tag
 referring to the release you've just built artifacts for.
 
@@ -108,18 +119,12 @@ referring to the release you've just built artifacts for.
 4) Commit your code and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
-git push origin HEAD
+git push origin release-$RELEASE_VERSION
 ```
 
-5) Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed **unless v0.0.1 release**
+5) Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed.
 
-6) Upon merging the pull request (**for v0.0.1 only**)
-```bash
-git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
-git push upstream main --tags
-```
-
-7) `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
+6) `git tag` operation (applied automatically in last step) triggers a postsubmit prowjob which builds binary docker image and then publishes
 both docker image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
