@@ -81,22 +81,12 @@ git checkout -b release-$RELEASE_VERSION
 git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
 ```
 
-2) Navigate to code-generator repo and build the release artifacts for the controllers you wish to include in the
-   release. *Note, if executing in a terminal separate from $SERVICE-controller repo, `$RELEASE_VERSION` will need to be set again*
-
-   Run `make build-controller` for each service from code-generator repository.
-    For instance, to build release artifacts for the SNS and S3 controllers I
-    would do:
-
+2) Navigate to code-generator repo and build the release artifacts for the $SERVICE-controller. *Note, if executing in a terminal separate from $SERVICE-controller repo, `$RELEASE_VERSION` will need to be set again*
 ```bash
 cd ../code-generator
-for SERVICE in sns s3; do
-    export SERVICE;
-    echo "building ACK controller for $SERVICE, Version: $RELEASE_VERSION"
-    make build-controller;
-done
+export SERVICE=s3
+make build-controller
 ```
-
 
 
 3) Navigate to $SERVICE-controller repo to review the release artifacts that were built for each service by looking in the `helm`
@@ -116,7 +106,7 @@ referring to the release you've just built artifacts for.
 
 {{% /hint %}}
    
-4) Commit your code and create a pull request:
+4) Commit the generated release artifacts and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
 git push origin release-$RELEASE_VERSION
