@@ -42,7 +42,7 @@ release ACK service controllers.
 | Amazon [EFS](#amazon-efs) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/328) | |
 | Amazon [EKS](#amazon-eks) | `RELEASED` | `PREVIEW` |
 | Amazon [ElastiCache](#amazon-elasticache) | `RELEASED` | `PREVIEW` | https://github.com/aws-controllers-k8s/community/milestone/9
-| Amazon [EC2 VPC](#amazon-ec2-vpc) | `IN PROGRESS` | |
+| Amazon [EC2](#amazon-ec2) | `RELEASED` | `PREVIEW` | `TBD`
 | AWS [IAM](#aws-iam) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/222) | |
 | AWS [Lambda](#aws-lambda) | `IN PROGRESS` | | 
 | AWS [Kinesis](#aws-kinesis) | [`PROPOSED`](https://github.com/aws-controllers-k8s/community/issues/235) | |
@@ -130,11 +130,13 @@ If you don't see a particular AWS service listed, feel free to
 * AWS service documentation: https://aws.amazon.com/elasticache/
 * ACK service controller: https://github.com/aws-controllers-k8s/elasticache-controller
 
-## Amazon EC2 VPC
+## Amazon EC2
 
 * Proposed: https://github.com/aws-controllers-k8s/community/issues/489
-* Current project stage: `IN PROGRESS`
-* AWS service documentation: https://docs.aws.amazon.com/vpc/
+* Current project stage: `RELEASED`
+* Current maintenance phase: `PREVIEW`
+* Next milestone: `TBD`
+* AWS service documentation: https://docs.aws.amazon.com/ec2/
 * ACK service controller: https://github.com/aws-controllers-k8s/ec2-controller
 
 ## AWS IAM
