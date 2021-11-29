@@ -10,9 +10,9 @@ binaries.
 
 ACK depends on a number of Open Source Go packages. Direct dependencies are
 listed in the
-[`go.mod`](https://github.com/aws/aws-controllers-k8s/tree/main/go.mod) file.
-Those direct package dependencies have some dependencies of their own (known as
-"transitive dependencies")
+[`go.mod`](https://github.com/aws-controllers-k8s/runtime/blob/main/go.mod)
+file. Those direct package dependencies have some dependencies of their own
+(known as "transitive dependencies").
 
 In this part of the Attribution document, we list our dependent packages and
 include an indication of the Open Source License under which that package is

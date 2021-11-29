@@ -21,7 +21,7 @@ investigated a number of options:
 
 - home-grown custom code generator
 - [kudo](https://kudo.dev)
-- [kubebuilder](github.com/kubernetes-sigs/kubebuilder)
+- [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 - a hybrid custom code generator + `sigs.kubernetes.io/controller-tools` (CR)
 
 The original AWS Service Operator used a [custom-built generator][1] that
@@ -70,9 +70,9 @@ those objects. These "type files" should be annotated with the marker and
 comments that will allow the core code generators and controller-gen to do its
 work. We will use the [model
 files](https://github.com/aws/aws-sdk-go/tree/master/models/apis) from the
-[`aws-sdk-go`](github.com/aws/aws-sdk-go) source repository as our source of
-truth and use the `aws-sdk-go/private/model/api` Go package to navigate that
-model.
+[`aws-sdk-go`](https://github.com/aws/aws-sdk-go) source repository as our
+source of truth and use the `aws-sdk-go/private/model/api` Go package to
+navigate that model.
 
 {{% hint %}}
 This step is the `ack-generate apis` command.
