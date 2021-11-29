@@ -252,7 +252,7 @@ Let's take a look at a tiny bit of the [AWS S3 API model file][s3-api-file] and
 you can start to see how we identify the things that go into the `Spec` and
 `Status` fields.
 
-[s3-api-file]: https://github.com/aws/aws-controllers-k8s/blob/main/pkg/generate/testdata/models/apis/s3/0000-00-00/api-2.json
+[s3-api-file]: https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/testdata/models/apis/s3/0000-00-00/api-2.json
 
 ```json
 {

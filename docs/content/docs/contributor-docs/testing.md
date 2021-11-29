@@ -229,7 +229,7 @@ is for the warmed caches case.
 #### Repeat for other services
 
 We have end-to-end tests for all services listed in the `DEVELOPER-PREVIEW`,
-`BETA` and `GA` release statuses in our [service listing](../services)
+`BETA` and `GA` release statuses in our [service listing](../../community/services)
 document. Simply replace your `SERVICE` environment variable with the name of a
 supported service and re-run the IAM and test steps outlined above.
 
