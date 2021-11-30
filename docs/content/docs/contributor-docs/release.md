@@ -62,10 +62,10 @@ Docker image tag matching the release tag.
 
 ## Release steps
 
-0) Rebase $SERVICE-controller repo with latest code
+0) Rebase $SERVICE-controller repo with latest code:
 ```bash
-# ACK_SOURCE_ROOT is typically $GOSRC/github.com/aws-controllers-k8s
-cd $ACK_SOURCE_ROOT
+cd $GOSRC/github.com/aws-controllers-k8s
+export SERVICE=s3
 cd $SERVICE-controller
 git fetch --all --tags
 # Optionally fetch and rebase the latest code generator
@@ -81,10 +81,9 @@ git checkout -b release-$RELEASE_VERSION
 git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
 ```
 
-2) Navigate to code-generator repo and build the release artifacts for the $SERVICE-controller. *Note, if executing in a terminal separate from $SERVICE-controller repo, `$RELEASE_VERSION` will need to be set again*
+2) Navigate to code-generator repo and build the release artifacts for the $SERVICE-controller:
 ```bash
 cd ../code-generator
-export SERVICE=s3
 make build-controller
 ```
 
@@ -93,8 +92,6 @@ make build-controller
 directory:
 ```bash
 cd ../$SERVICE-controller
-tree helm
-# OR
 git diff
 ```
 
