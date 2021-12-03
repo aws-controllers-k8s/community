@@ -29,28 +29,32 @@ have the following image tags: <code>s3-v0.1.0</code> and <code>sns-v0.1.0</code
 that the full image name would be
 <code>public.ecr.aws/aws-controllers-k8s/controller:s3-v0.1.0</code></p><p>The Helm chart artifact can be used to install the ACK service controller as a
 Kubernetes Deployment; the Deployment&rsquo;s Pod image will refer to the exact
-Docker image tag matching the release tag.</p><h2 id=release-steps>Release steps<a href=#release-steps class=anchor aria-hidden=true>#</a></h2><p>&lt;// mkdocs does not support numbered lists with code blocks. So use 1) instead of 1. in numbered list. ></p><ol><li>First check out a git branch for your release:</li></ol><pre><code class=language-bash>export RELEASE_VERSION=v0.0.1
+Docker image tag matching the release tag.</p><h2 id=release-steps>Release steps<a href=#release-steps class=anchor aria-hidden=true>#</a></h2><ol start=0><li>Rebase $SERVICE-controller repo with latest code:</li></ol><pre><code class=language-bash>cd $GOSRC/github.com/aws-controllers-k8s
+export SERVICE=s3
+cd $SERVICE-controller
+git fetch --all --tags
+# Optionally fetch and rebase the latest code generator
+cd ../code-generator
+git checkout main &amp;&amp; git fetch --all --tags &amp;&amp; git rebase upstream/main
+</code></pre><ol><li>Navigate to $SERVICE-controller repo and check out a git branch for your release:</li></ol><pre><code class=language-bash>cd ../$SERVICE-controller
+export RELEASE_VERSION=v0.0.1
 git checkout -b release-$RELEASE_VERSION
-</code></pre><ol start=2><li><p>Build the release artifacts for the controllers you wish to include in the
-release</p><p>Run <code>make build-controller</code> for each service from code-generator repository.
-For instance, to build release artifacts for the SNS and S3 controllers I
-would do:</p></li></ol><pre><code class=language-bash>for SERVICE in sns s3; do
-    export SERVICE;
-    echo &quot;building ACK controller for $SERVICE, Version: $RELEASE_VERSION&quot;
-    make build-controller;
-done
-</code></pre><ol start=3><li>You can review the release artifacts that were built for each service by looking in the <code>services/$SERVICE/helm</code>
-directory:</li></ol><p><code>tree services/$SERVICE/helm</code></p><p>or by doing:</p><p><code>git diff</code></p><div class="hint d-flex flex-column border-start my-4 border-4"><div class="hint-title p-2 flex flex-row flex-items-center">Note</div><div class="hint-body p-2 small">When you run <code>make build-controller</code> for a service, it will overwrite any
-Helm chart files that had previously been generated in the <code>services/$SERVICE/helm</code>
+git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
+</code></pre><ol start=2><li>Navigate to code-generator repo and build the release artifacts for the $SERVICE-controller:</li></ol><pre><code class=language-bash>cd ../code-generator
+make build-controller
+</code></pre><ol start=3><li>Navigate to $SERVICE-controller repo to review the release artifacts that were built for each service by looking in the <code>helm</code>
+directory:</li></ol><pre><code class=language-bash>cd ../$SERVICE-controller
+git diff
+</code></pre><div class="hint d-flex flex-column border-start my-4 border-4"><div class="hint-title p-2 flex flex-row flex-items-center">Note</div><div class="hint-body p-2 small">When you run <code>make build-controller</code> for a service, it will overwrite any
+Helm chart files that had previously been generated in the <code>$SERVICE-controller/helm</code>
 directory with files that refer to the Docker image with an image tag
-referring to the release you&rsquo;ve just built artifacts for.</div></div><ol start=4><li>Commit your code and create a pull request:</li></ol><pre><code class=language-bash>git commit -a -m &quot;release artifacts for release $RELEASE_VERSION&quot;
-</code></pre><ol start=5><li><p>Get your pull request reviewed and merged.</p></li><li><p>Upon merging the pull request</p></li></ol><pre><code class=language-bash>git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
-git push upstream main --tags
-</code></pre><ol start=7><li><code>git tag</code> operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
+referring to the release you&rsquo;ve just built artifacts for.</div></div><ol start=4><li>Commit the generated release artifacts and create a pull request:</li></ol><pre><code class=language-bash>git commit -a -m &quot;release artifacts for release $RELEASE_VERSION&quot;
+git push origin release-$RELEASE_VERSION
+</code></pre><ol start=5><li><p>Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed.</p></li><li><p><code>git tag</code> operation (applied automatically in last step) triggers a postsubmit prowjob which builds binary docker image and then publishes
 both docker image and Helm chart to public ECR repository.
-Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/</li></ol><div class="hint d-flex flex-column border-start my-4 border-4 hint-info"><div class="hint-title p-2 flex flex-row flex-items-center">Stable Helm Chart</div><div class="hint-body p-2 small"><ul><li>This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on <code>stable</code> git
+Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/</p></li></ol><div class="hint d-flex flex-column border-start my-4 border-4 hint-info"><div class="hint-title p-2 flex flex-row flex-items-center">Stable Helm Chart</div><div class="hint-body p-2 small"><ul><li>This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on <code>stable</code> git
 branch.</li><li>To learn more about how to push changes to stable branch please read our <a href=../../community/releases/>release phase guide</a></li><li>When this prowjob is triggered from <code>stable</code> branch, it does not build a docker image and only publishes the helm
 artifacts with stable tag. Ex: <code>elasticache-v1-stable</code></li></ul></div></div><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/contributor-docs/release.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/main.min.9c6d482447eb496eee3c5e1780774eb90b6fe59f101089e8e9842339dc25fc244038c31f89bb5352fa6d43b7916b0e8edcfebd60ead52c87834493c8c06a53b3.js integrity="sha512-nG1IJEfrSW7uPF4XgHdOuQtv5Z8QEIno6YQjOdwl/CRAOMMfibtTUvptQ7eRaw6O3P69YOrVLIeDRJPIwGpTsw==" crossorigin=anonymous defer></script>
-<script src=https://aws-controllers-k8s.github.io/community/index.min.7ec64b58e6cced5a835884968d126426efee27a874243026ee0a32b5f57a0890ab58eb0177ddf54c3a36b62327a5257301d508b3cfed56ce05e521291da8b7ff.js integrity="sha512-fsZLWObM7VqDWISWjRJkJu/uJ6h0JDAm7goytfV6CJCrWOsBd931TDo2tiMnpSVzAdUIs8/tVs4F5SEpHai3/w==" crossorigin=anonymous defer></script></body></html>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.d96cfa04123ec5f662d8e8b445c93cec4f966b0a9f485987602ad798cff3219737cfa2f6a1f745e1aeff59a716534108b5f10499a7cd4396c03b7b8641922c6a.js integrity="sha512-2Wz6BBI+xfZi2Oi0Rck87E+WawqfSFmHYCrXmM/zIZc3z6L2ofdF4a7/WacWU0EItfEEmafNQ5bAO3uGQZIsag==" crossorigin=anonymous defer></script></body></html>
