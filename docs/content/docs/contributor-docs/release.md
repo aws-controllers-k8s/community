@@ -61,59 +61,57 @@ Kubernetes Deployment; the Deployment's Pod image will refer to the exact
 Docker image tag matching the release tag.
 
 ## Release steps
-<// mkdocs does not support numbered lists with code blocks. So use 1) instead of 1. in numbered list. >
-1) First check out a git branch for your release:
+
+0) Rebase $SERVICE-controller repo with latest code:
 ```bash
+cd $GOSRC/github.com/aws-controllers-k8s
+export SERVICE=s3
+cd $SERVICE-controller
+git fetch --all --tags
+# Optionally fetch and rebase the latest code generator
+cd ../code-generator
+git checkout main && git fetch --all --tags && git rebase upstream/main
+```
+
+1) Navigate to $SERVICE-controller repo and check out a git branch for your release:
+```bash
+cd ../$SERVICE-controller
 export RELEASE_VERSION=v0.0.1
 git checkout -b release-$RELEASE_VERSION
+git branch --set-upstream-to=origin/main release-$RELEASE_VERSION
 ```
 
-2) Build the release artifacts for the controllers you wish to include in the
-   release
-
-   Run `make build-controller` for each service from code-generator repository.
-    For instance, to build release artifacts for the SNS and S3 controllers I
-    would do:
-
+2) Navigate to code-generator repo and build the release artifacts for the $SERVICE-controller:
 ```bash
-for SERVICE in sns s3; do
-    export SERVICE;
-    echo "building ACK controller for $SERVICE, Version: $RELEASE_VERSION"
-    make build-controller;
-done
+cd ../code-generator
+make build-controller
 ```
 
-3) You can review the release artifacts that were built for each service by looking in the `services/$SERVICE/helm`
+
+3) Navigate to $SERVICE-controller repo to review the release artifacts that were built for each service by looking in the `helm`
 directory:
-
-`tree services/$SERVICE/helm`
-
-or by doing:
-
-`git diff`
+```bash
+cd ../$SERVICE-controller
+git diff
+```
 
 {{% hint %}}
 When you run `make build-controller` for a service, it will overwrite any
-Helm chart files that had previously been generated in the `services/$SERVICE/helm`
+Helm chart files that had previously been generated in the `$SERVICE-controller/helm`
 directory with files that refer to the Docker image with an image tag
 referring to the release you've just built artifacts for.
 
 {{% /hint %}}
    
-4) Commit your code and create a pull request:
+4) Commit the generated release artifacts and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
+git push origin release-$RELEASE_VERSION
 ```
 
-5) Get your pull request reviewed and merged.
+5) Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed.
 
-6) Upon merging the pull request
-```bash
-git tag -a $RELEASE_VERSION $( git rev-parse HEAD )
-git push upstream main --tags
-```
-
-7) `git tag` operation from last step triggers a postsubmit prowjob which builds binary docker image and then publishes
+6) `git tag` operation (applied automatically in last step) triggers a postsubmit prowjob which builds binary docker image and then publishes
 both docker image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
