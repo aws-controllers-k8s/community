@@ -8,39 +8,52 @@
 * `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `reconciliation`
 
 ## Problem
-`api` and `controller` commands in the code generation `pipeline` require *generator.yaml* and `aws-sdk` to generate the `ackmodel`. Duplicate work being peformed because `ackmodel` is not cached, and this also clutters the logic in both commands with details that shouldn't be relevant to that layer. For example in `controller`, [SetResource](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L74) is responsible for generating Go code; however, it is also checking config for renames, seeing if shapes have changed, etc. making it overloaded with responsibility and more overhead for developers to keep track of.
+There are issues that are starting to degrade the code generation `pipeline` experience and will compound as *code-generator* continues to grow:
+* Duplicate work between `api` and `controller` commands; both generate `ackmodel`
+* Overloaded functions such as [SetResource](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L74); responsible for a lot more than generating Go code
+* Confusing CX. There's a not-so-clear dependency on a folder in the $SERVICE-controller via [getLatestAPIVersion](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/cmd/ack-generate/command/common.go#L271). This goes against the flow of the `pipeline` and creates confusion as there is a `--version` flag for the `apis` command (the above function takes precedence).
+* Long dev loop; after making changes to either *generator.yaml* or logic in *code-generator* users need to either manually verify files or run e2e tests-- both of which are time consuming today
+* How *code-generator* reconciles `ackgenconfig` with `aws-sdk` to create `ackmodel` is inconsistent (and some duplicated work). For example, overrides such as `custom_shapes` [edit aws-sdk directly](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/sdk/custom_shapes.go#L62) while others such as `ignored_operations` [set operation values to nil](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/model.go#L295) in memory leaving the actual operations in `aws-sdk` untouched.
 
-Additionally, the existing `api` and `controller` commands have a not-so-clear dependency on a folder in the $SERVICE-controller via [getLatestAPIVersion](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/cmd/ack-generate/command/common.go#L271), which goes against the flow of the `pipeline` and only introduces confusion.
+Current Pipeline
+---
 
 ![current-pipeline](./images/current_pipeline.png)
+* Displayed are the important and mostly duplicated calls between the `apis` and `controller` commands
+* The cache is only used to store the `aws-sdk` repo
+* The red line denotes a dependency on $SERVICE-controller (output directory) repo that should be removed
+* Only `GetCRDs` is duplicated between the commands when creating the model
 
 
-Furthermore, today's `pipeline` makes for a long, opaque feedback loop for platform contributors and $SERVICE-controller maintainers:
-  * make changes to *code-generator* (**contributor only**)
-  * update *generator.yaml* 
-  * `make build-controller`
-  * manually check $SERVICE-controller files 
-    * As a contributor, it's possible you're familiar enough to know what to look for that was generated
-    * As a maintainer, it may look good to go because no syntax errors, but it's not clear if anything is missing
-    * and who wants to manually verify `.go` files?
+Current Dev Loop
+---
 
 ![current-dev-loop](./images/current_dev_loop.png)
-
-
-Lastly, the way *generator.yaml* is applied to `aws-sdk` when creating `ackmodel` is inconsistent (and semi-duplicate work). Some overrides such as `custom_shapes` [edit aws-sdk directly](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/sdk/custom_shapes.go#L62) while others such as `ignored_operations` [set operation values to nil](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/model.go#L295) in memory.
+* Validating the result of a change in *code-generator* and/or *generator.yaml* can be a lengthy process
+* In the current feedback loop, users and contributors need to manually verify files or run lengthy e2e tests even for minor changes to `ackgenconfig`
 
 
 ## Solution
-Add a new command, `model`, which takes in `aws-sdk` and *generator.yaml* as inputs to create and cache `ackmodel`. Existing commands, `api` and `controller`, will remove parameters for `aws-sdk` and *generator.yaml* [TODO: Real param names]() and replace them with `ackmodel` input and/or let it default to `--cache-dir`. The updated `pipeline:`
+Add a new command, `model`, which takes in `aws-sdk` and *generator.yaml* as inputs to create and cache `ackmodel`. Existing commands, `api` and `controller`, will remove parameters for `aws-sdk` and *generator.yaml* and replace them with `ackmodel` input and/or let it default to `--cache-dir`.
 
+Updated Pipeline
+---
 ![updated-pipeline](./images/proposed_pipeline.png)
+* This is not an exhaustive diagram of the calls, but shows the clear responsibility of `generateModel` and how downstream commands like `api` and `controller` become significantly lighter and easier to follow.
+* `ackmodel` will be cached in the same folder as `aws-sdk` and downstream commands will check for `ackmodel` instead of `aws-sdk`
+* users can override with a path to their own `ackmodel` (for even quicker testing!), but by default will check `--cach-dir`
+* No more dependency on $SERVICE-controller repo. The `ackmodel` will be generated with a specific version which can be extracted after commands `GetACKModel()`
 
-and updated dev loop:
-
+Updated Dev Loop:
+---
 ![updated-dev-loop](./images/proposed_dev_loop.png)
+* Diffing the `ackmodel` between *code-generator* runs will be quicker than manually checking files or running e2e tests
+* Users can directly edit `ackmodel` or underlying `aws-sdk` / `ackgenconfig` then generate $SERVICE-controller for even quicker iteration loops
 
 
-To address the inconsistent `ackmodel` building, I propose to edit `aws-sdk` directly as much as we can, then introduce more fields to represent other relations that can't be applied by editing `aws-sdk`. Therefore, if we want to rename a field/resource, it would be instead completely removed from model. Conceptually:
+Updated `ackmodel` creation:
+---
+To address the inconsistent `ackmodel` creation, I propose we edit `aws-sdk` directly as much as we can, then introduce more fields to represent other relations that can't be applied by editing `aws-sdk`. Therefore, if we want to rename a field/resource, it would be instead completely removed from model. Conceptually:
 
 ```
 func (m *Model) RenameShapes() error {
@@ -66,6 +79,8 @@ for memberIndex, memberName := range updatedShape.MemberNames() {
 
 ```
 
+After implementing the `model` command, not only can we create more commands to use `ackmodel` as a data source (i.e. a `generate-tests` command) but when it comes time to refactor *generator.yaml* interface we only need to touch `model` command and its underlying logic.
+
 ### Requirements
 * Code generation `pipeline` flows in a single direction
 * Optimize `pipeline` by removing repeated work
@@ -75,16 +90,15 @@ for memberIndex, memberName := range updatedShape.MemberNames() {
 
 ### Prerequisites
 * Analyze and fill any test gaps
-* Is the helper/loader exposed by AWS powerful enough to make these edits without being too convoluted? Can push complexity down
+* Is the helper/loader exposed by AWS powerful enough to make these edits without being too convoluted? Can push complexity down.
+  * What kind of relations **cannot** be captured by editing `aws-sdk`? These will need to be mapped as attributes in `ackmodel`
 * Any issues with marshalling `ackmodel` with updated structs?
-
-### Implementation
 
 #### Create new `model` command
 * Add `cmd/ack-generate/model.go`
 * Move [loadModelWithLatestAPIVersion](https://github.com/aws-controllers-k8s/code-generator/blob/main/cmd/ack-generate/command/common.go#L219) and deps to use as `generateModel()`
   * remove checking the output directory and instead rely on `--version` to be passed in or default to `v1alpha1`
-* Marhsall & cache it
+* Marhsall & cache `ackgenmodel` in `--cache-dir`
 
 
 #### Update `api` and `controller` commands
@@ -111,6 +125,7 @@ for memberIndex, memberName := range updatedShape.MemberNames() {
 #### Out of Scope
 * reconciling 3 different `op` and `op` types being passed around
 * field-centric approach
+* changes to *generator.yaml* interface
 
 
 ### Test plan

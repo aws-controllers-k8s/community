@@ -9,14 +9,14 @@
 
 ## Problem
 It is becoming increasingly difficult to contribute to and maintain *code-generator* due to unclear encapsulations and dispersed logic throughout the codebase. For example, `ackgenconfig` is passed throughout code and accessed in a variety of ways, and logic involving `reconciliation` is inconsistent, both in implementation and interface. Some specific examples include:
-  * [broken encapsulations](#broken-encapsulations)
+  * [overextended encapsulations](#overextended-encapsulations)
   * [long function parameter lists](#long-parameters)
   * [inconsistent use of `ackgenconfig`](#ackgenconfig-use)
   * [increased cognitive load for contributors](#more-work-for-contributors)
 
 
 ## Solution
-The solution is to repair and realign encapsulations in various areas of `code-generator/pkg/`:
+The solution is to repair and realign encapsulations in `code-generator/pkg/`:
   * enforce `ackgenconfig` is **only** accessible via *Getters* exposed in [config package](https://github.com/aws-controllers-k8s/code-generator/tree/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/config).  
   * centralize `reconciliation` by extending `ackmodel` in [model.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/model.go#L36) 
   * update accessibility of *Setters* so only the relevant interfaces are public
@@ -38,6 +38,8 @@ Agree on terms for consistent code. Terms such as Get vs. Find, CRDS/Resource, e
 ### Implementation
 
 #### Consolidate `ackgenconfig` access and expose Getters
+The purpose is to realign responsibilities of `CRD` and `Config` making code more consistent and intuitive.
+
 1. Remove `ackgenconfig` as an attribute in `type CRD struct` in [crd.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/crd.go#L65) and fix breakage
   * move the associated methods to `config` package and update callers, ex: [GetOutputWrapperFieldPath](https://github.com/aws-controllers-k8s/code-generator/blob/59c6892e4b61b5e2076e5e5504daba8278b82980/pkg/model/crd.go#L420):
 
@@ -76,6 +78,8 @@ func (c *Config) GetLateInitFieldsAndConfig(cfg *ackgenconfig.Config, r *model.C
 ```
 
 #### Centralize `reconciliation`
+Similar to the above, move `reconcialiation`-related functions from `code` package to `ackmodel` to realign responsibilities.
+
 1. Refactor `type CRD struct` in [crd.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/crd.go#L64) to remove `sdkapi`  as attribute and fix breakage
   * move methods associated with attributes to `ackmodel`
 
@@ -101,12 +105,12 @@ func (m *Model) GetIdentifiersInShape(r *model.CRD, shape *awssdkmodel.Shape, op
 
 ```
 
-  * for scenarios that do both `reconcile` and output Go code (ex: [late_initialize::FindLateInitializedFieldNames](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/late_initialize.go#L31), these will need to be refactored into separate pieces prior to migration
-
-
+* Note, for scenarios that do both `reconcile` and output Go code (ex: [late_initialize::FindLateInitializedFieldNames](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/late_initialize.go#L31), these will need to be refactored into separate pieces prior to migration
 
 
 #### Align access/interface for `__ForStruct` funcs
+The goal is to make it easier for clients to use `SetResource` and `SetSDK` by removing the need to know the target type.
+
 1. Refactor access (public vs. private) for `SetResourceFor___`, and `SetSDKFor___`
   * `setResourceForContainer` and `setSDKForContainer` are private while `SetResourceForStruct` and `SetSDKForStruct` are public despite the former pair being more general than the latter. Access should be swapped so users calling this in [controller.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/ack/controller.go#L102) don't need to worry about Struct or what type.. just pass container. Leaves it open-ended for override types too.
   * `GoCodeCompare` vs `GoCodeCompareStruct` .. can [these](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/ack/controller.go#L119-L122) be consolidated?
@@ -140,13 +144,13 @@ setResourceForScalar()
 * Expose Getters in `config` and replace previous helpers/wrappers
 * Update public/private interfaces so users need only focus on the General case and not be bogged down with config details
 * Align naming and return types for affected code
-* Migrate `SetterConfig` access/logic to `ackgenconfig` and/or `ackmodel`
+* Consolidate `SetterConfig` access/logic to `ackgenconfig` and/or `ackmodel`
 
 
 #### Out of Scope
-* changing algorithms
-  * we want as minimal impact for now; once everything is in its proper place we can address inefficiencies separately
-* consistent styling/naming throughout codebase
+* Changing logic/algorithms
+  * the goal is minimal impact to functionality; once everything is in its proper place we can address inefficiencies separately
+* Consistent styling/naming throughout codebase
 
 ### Test plan
 * add "sufficient" testing beforehand for quick feedback
@@ -170,7 +174,7 @@ The majority of functions in `code` package take both `ackgenconfig` and `ackres
   * [generating Go code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L190)
     * Note the lines invoking `cfg.ResourceFieldRename` and `r.HasMember`. The former is direct access while the latter is indirect access as it calls [r.Config().ResourceFieldRename()](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/crd.go#L747) under the hood. There are many instances of this happening throughout code because [CRD struct](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/crd.go#L63) has `ackgenconfig` as an attribute.
 
-### Broken encapsulations
+### Overextended encapsulations
 * The [code package](https://github.com/aws-controllers-k8s/code-generator/tree/main/pkg/generate/code) is responsible for generating a controller's *Go* code, but it overextends itself in multiple areas by also trying to reconcile resource/aws-shape logic:
   * [common::FindPluralizedIdentifiersInShape()](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/common.go#L97)
   * [set_resource::setResourceReadMany()](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L466-L479)
