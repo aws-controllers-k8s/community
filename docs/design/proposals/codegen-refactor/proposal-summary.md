@@ -7,7 +7,7 @@
 
 
 ## Problem
-*code-generator's* accelerated growth is resulting in tech debt that degrades the experience for platform maintainers and contributors. The codebase is becoming difficult to read and extend given the quick addition of features to onboard more services. As a consequence, velocity for new features and fixes have slown down and eventually contributors will become discouraged from participating altogether, if left unchecked. This doc summarizes and introduces the proposals to eliminate significant tech debt so that development on ACK Platform is as pleasant and clear as it is open.
+*code-generator's* accelerated growth is resulting in tech debt that degrades the experience for platform maintainers and contributors. The codebase is becoming difficult to read and extend given the quick addition of features to onboard more services. This doc summarizes and introduces the proposals to eliminate significant tech debt so that development on ACK Platform is as pleasant and clear as it is open.
 
 
 ## Solution
@@ -24,20 +24,34 @@ To improve the implementation, I propose consolidating `ackconfig` access and an
 ## Approach
 
 ### Centralize config access and reconciliation
-By centralizing and consolidating config access and `reconciliation` logic, calls becomes significantly clearer:
+By centralizing and consolidating config access and `reconciliation` logic, calls becomes significantly clearer. The diagrams compare the current and proposed function call paths:
 
 ![current-config-access](./images/current_config_access.png)
+* `r` represents a `resource` or `crd`
+* `SetResource` calls `r.GetOutputShape(op)` to retrieve the shape for a given operation
+* Then, `r.GetOutputWrapperFieldPath(op)` is invoked; it's basically a wrapper for accessing `ackgenconfig`
+* Finally, `r.getWrapperOutputShape()` is called recursively and finally reconciles which shape to return
+* `r` is doing a lot of work and it isn't clear what is being resolved
+
+
+---
 
 ![proposed-config-access](./images/proposed_config_access.png)
+* `m` represents `ackmodel`
+* `SetResource` calls `m.GetOutputShape(op)` now instead of `crd`
+* Under the hood, `ackmodel` will access its `ackgenconfig` to get config values
+* Then use helpers to reconcile between `sdk-shape` and `ackgenconfig`
+* With `m` being the source of truth and reconciliation logic, it is safe to assume the output shape you get back takes all configs into account
+* Also, `resource` is no longer bogged down with helpers unrelated to a `resource`
 
 
 ### New command `./ack-generate model`
-With a new `model` command, the code generation pipeline will flow in a single direction and create opportunitities for future extension:
+With a new `model` command, the code generation can flow from a common data source which also creates opportunity for future commands:
 
 ![proposed-gen](./images/proposed_gen.png)
 
 
 ## Design Proposals
-The solution consists of *2 phases*; the detailed design proposals are linked below:
+The solution consists of 2 pieces. They don't necessarily depend on one another, but I recommend reviewing and implementing in the order below:
    * [Centralize config/model logic](./centralize_1.md)
    * [Introduce new command `model`](./model_cmd_2.md)
