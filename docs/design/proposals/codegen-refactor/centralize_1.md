@@ -1,14 +1,14 @@
-# Centralize config access and reconciliation
+# Centralize config access and API inference
 
 ### Key Terms
-* `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
-* `resource` | `k8s-resource` | `ackcrd`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/model/crd.go#L63) reprensenting a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
-* `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/main/models/apis/s3/2006-03-01/api-2.json#L1)
-* `reconciliation`: logic involving access to or relations between `resource`, `shape`, `ackgenconfig`, and `aws-sdk`
-* `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `reconciliation`
+* `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
+* `resource` | `k8s-resource` | `ackcrd`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L63) reprensenting a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
+* `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/4fd4b72d1a40237285232f1b16c1d13de4f1220d/models/apis/s3/2006-03-01/api-2.json#L1)
+* `API inference`: logic involving relations between `resource`, `shape`, `ackgenconfig`, and `aws-sdk`. Details [here](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/)
+* `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `API inference`
 
 ## Problem
-It is becoming increasingly difficult to contribute to and maintain *code-generator* due to unclear encapsulations and dispersed logic throughout the codebase. For example, `ackgenconfig` is passed throughout code and accessed in a variety of ways, and logic involving `reconciliation` is inconsistent, both in implementation and interface. Some specific examples include:
+It is becoming increasingly difficult to contribute to and maintain *code-generator* due to unclear encapsulations and dispersed logic throughout the codebase. For example, `ackgenconfig` is passed throughout code and accessed in a variety of ways, and logic involving `API inference` is inconsistent, both in implementation and interface. Some specific examples include:
   * [overextended encapsulations](#overextended-encapsulations)
   * [long function parameter lists](#long-parameters)
   * [inconsistent use of `ackgenconfig`](#ackgenconfig-use)
@@ -18,7 +18,7 @@ It is becoming increasingly difficult to contribute to and maintain *code-genera
 ## Solution
 The solution is to repair and realign encapsulations in `code-generator/pkg/`:
   * enforce `ackgenconfig` is **only** accessible via *Getters* exposed in [config package](https://github.com/aws-controllers-k8s/code-generator/tree/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/config).  
-  * centralize `reconciliation` by extending `ackmodel` in [model.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/model.go#L36) 
+  * centralize `API inference` by extending `ackmodel` in [model.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/model.go#L36) 
   * update accessibility of *Setters* so only the relevant interfaces are public
     * ex: [SetResourceForStruct](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/set_resource.go#L1217) vs. [setResourceForContainer](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/set_resource.go#L1154)
 
@@ -77,8 +77,8 @@ func (c *Config) GetLateInitFieldsAndConfig(cfg *ackgenconfig.Config, r *model.C
 
 ```
 
-#### Centralize `reconciliation`
-Similar to the above, move `reconcialiation`-related functions from `code` package to `ackmodel` to realign responsibilities.
+#### Centralize `API inference`
+Similar to the above, move `API inference`-related functions from `code` package to `ackmodel` to realign responsibilities.
 
 1. Refactor `type CRD struct` in [crd.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/crd.go#L64) to remove `sdkapi`  as attribute and fix breakage
   * move methods associated with attributes to `ackmodel`
@@ -92,7 +92,7 @@ func (m *Model) GetTypeRenames() (map[string]string, error)
 
 ```
 
-2. Move code in `pkg/code/` related to `reconciliation` to `pkg/model/`
+2. Move code in `pkg/code/` related to `API inference` to `pkg/model/`
   * previous dependencies on invalid helpers (ex: `r.GetAllRenames`) should be resolved
   * ex: most/all of [common.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/common.go) has nothing to do with generating code; it retrieves information related to `aws-sdk` and `ackgenconfig` regarding `shapes`, `ops`
 
@@ -105,7 +105,7 @@ func (m *Model) GetIdentifiersInShape(r *model.CRD, shape *awssdkmodel.Shape, op
 
 ```
 
-* Note, for scenarios that do both `reconcile` and output Go code (ex: [late_initialize::FindLateInitializedFieldNames](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/late_initialize.go#L31), these will need to be refactored into separate pieces prior to migration
+* Note, for scenarios that do both `API inference` and output Go code (ex: [late_initialize::FindLateInitializedFieldNames](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/late_initialize.go#L31), these will need to be refactored into separate pieces prior to migration
 
 
 #### Align access/interface for `__ForStruct` funcs
@@ -140,7 +140,7 @@ setResourceForScalar()
 
 
 #### In Scope
-* Centralize code related to `reconciliation` to `model` package
+* Centralize code related to `API inference` to `model` package
 * Expose Getters in `config` and replace previous helpers/wrappers
 * Update public/private interfaces so users need only focus on the General case and not be bogged down with config details
 * Align naming and return types for affected code
@@ -159,10 +159,10 @@ setResourceForScalar()
 
 ## Appendix
 
-### Long paramaters
-The majority of functions in `code` package take both `ackgenconfig` and `ackresource` as parameters, but this is unnecessary because [`ackresource` has `ackgenconfig` as an attribute](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/model/crd.go#L65):
-  * [CheckExceptionMessage](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/check.go#L36)
-  * [CompareResource](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/compare.go#L77)
+### Long parameters
+The majority of functions in `code` package take both `ackgenconfig` and `ackresource` as parameters, but this is unnecessary because [`ackresource` has `ackgenconfig` as an attribute](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L65):
+  * [CheckExceptionMessage](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/check.go#L36)
+  * [CompareResource](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/compare.go#L77)
   * [SetResource](https://github.com/aws-controllers-k8s/code-generator/blob/f37b8ea9fcc401d66018d7849e8c809da5b4c99c/pkg/generate/code/set_resource.go#L74)
   * [SetSDK](https://github.com/aws-controllers-k8s/code-generator/blob/f37b8ea9fcc401d66018d7849e8c809da5b4c99c/pkg/generate/code/set_sdk.go#L75)
 
@@ -170,15 +170,15 @@ The majority of functions in `code` package take both `ackgenconfig` and `ackres
 ### ackgenconfig use
 `ackgenconfig` is acessed in various layers & ways:
   * [creating `ackmodel`](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/cmd/ack-generate/command/common.go#L231)
-  * [reconciling resource/shape logic](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/common.go#L54)
-  * [generating Go code](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L190)
+  * [API inference](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/common.go#L54)
+  * [generating Go code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/set_resource.go#L190)
     * Note the lines invoking `cfg.ResourceFieldRename` and `r.HasMember`. The former is direct access while the latter is indirect access as it calls [r.Config().ResourceFieldRename()](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/crd.go#L747) under the hood. There are many instances of this happening throughout code because [CRD struct](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/crd.go#L63) has `ackgenconfig` as an attribute.
 
 ### Overextended encapsulations
-* The [code package](https://github.com/aws-controllers-k8s/code-generator/tree/main/pkg/generate/code) is responsible for generating a controller's *Go* code, but it overextends itself in multiple areas by also trying to reconcile resource/aws-shape logic:
-  * [common::FindPluralizedIdentifiersInShape()](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/common.go#L97)
-  * [set_resource::setResourceReadMany()](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L466-L479)
-  * [late_initialize::getSortedLateInitFieldsAndConfig()](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/late_initialize.go#L55)
+* The [code package](https://github.com/aws-controllers-k8s/code-generator/tree/main/pkg/generate/code) is responsible for generating a controller's *Go* code, but it overextends itself in multiple areas by also implementing API inference logic:
+  * [common::FindPluralizedIdentifiersInShape()](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/common.go#L97)
+  * [set_resource::setResourceReadMany()](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/set_resource.go#L466-L479)
+  * [late_initialize::getSortedLateInitFieldsAndConfig()](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/late_initialize.go#L55)
 
 * `CRD struct` should have neither `sdkAPI` nor `cfg` as attributes because it represents a [single top-level resource](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/model/crd.go#L62) -- there's no need for it to have all knowledge of the ACK universe. As a result, `ackresource` has multiple helpers unrelated to the resource itself:
   * [GetOutputShape](https://github.com/aws-controllers-k8s/code-generator/blob/59c6892e4b61b5e2076e5e5504daba8278b82980/pkg/model/crd.go#L442)
@@ -189,9 +189,9 @@ The majority of functions in `code` package take both `ackgenconfig` and `ackres
 
 
 ### More work for contributors
-Developers needs to keep a mental model of which configs have been applied or need to be consulted:
-  * [//TODO: should these fields be renamed before looking them up in spec?](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go#L143)
+Developers need to keep a mental model of which configs have been applied or need to be consulted:
+  * [//TODO: should these fields be renamed before looking them up in spec?](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/set_resource.go#L143)
   * [//TODO: check generator config for exceptions?](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/set_sdk.go#L231)
 
-And because adding new features requires consulting config throughout code, some "lower priority" areaas get put on the back burner:
+And because adding new features requires consulting config throughout code, some "lower priority" areas get put on the back burner:
   * [//TODO: should we support overriding these fields?](https://github.com/aws-controllers-k8s/code-generator/blob/59c6892e4b61b5e2076e5e5504daba8278b82980/pkg/model/model.go#L219)
