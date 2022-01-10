@@ -31,6 +31,7 @@ Current Dev Loop
 ![current-dev-loop](./images/current_dev_loop.png)
 * Validating the result of a change in *code-generator* and/or *generator.yaml* can be a lengthy process
 * In the current feedback loop, users and contributors need to manually verify files or run lengthy e2e tests even for minor changes to `ackgenconfig`
+  * *Note, can add unit tests to $SERVICE-controller such as [elasticache-controller](https://github.com/aws-controllers-k8s/elasticache-controller/blob/main/pkg/resource/replication_group/manager_test_suite_test.go) to speed up validation.*
 
 
 ## Solution

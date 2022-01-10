@@ -24,14 +24,13 @@ The solution is to repair and realign encapsulations in `code-generator/pkg/`:
 
 
 ### Requirements
-* No impact to existing functionality
 * Code is easy to read, intuitive, and extendable
 * Naming in code is consistent (ex: Find vs. Get)
 * Navigating code is easier because pkg responsibility is clear
 
 
 ### Prerequisites
-*code-generator* contains unit tests and also runs a subset of $SERVICE-controller e2e tests against PRs. Are these comprehensive enough to detect breakage in the code that we'll be touching/refactoring? If there are gaps between tests and code being refactored, then **tests will need to be created or updated** prior to implementing the solution.
+*code-generator* contains unit tests and also runs a subset of $SERVICE-controller e2e tests against PRs. We need to identify the affected code paths and determine whether these are being covered in existing tests. If there are gaps, then **tests will need to be created or updated** prior to implementing the solution.
 
 Agree on terms for consistent code. Terms such as Get vs. Find, CRDS/Resource, etc.
 
@@ -73,7 +72,7 @@ func getSortedLateInitFieldsAndConfig(cfg *ackgenconfig.Config, r *model.CRD) ([
 // Proposed
 func (c *Config) GetLateInitFieldsAndConfig(cfg *ackgenconfig.Config, r *model.CRD) (map[string]*ackgenconfig.LateInitializeConfig, error)
 
-// Note, this simply gets the config; sorting and any processing AFTER getting config is done by the client
+Note, `Getters` will contain some "helper" logic such as sanitizing user-input and sorting, when applicable. This is safe because user-input (via `generator.yaml`) should never need to preserve order.
 
 ```
 

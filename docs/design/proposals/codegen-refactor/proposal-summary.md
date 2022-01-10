@@ -17,7 +17,6 @@ To improve the implementation, I propose consolidating `ackconfig` access and an
 
 
 ### Requirements
-* Refactor does **not change** existing functionality
 * Code is easy to read, intuitive, and extendable
 * Code generation processes remain clear and transparent
 
@@ -46,7 +45,7 @@ By centralizing and consolidating config access and `API inference` logic, calls
 
 
 ### New command `./ack-generate model`
-With a new `model` command, the code generation can flow from a common data source which also creates opportunity for future commands:
+`model` takes `aws-sdk` and *generator.yaml* as **input**, creates and stores `ackmodel` in cache as serialized JSON, then **outputs** the cached `ackmodel` location (default: `~./cache/aws-controllers-k8s/ack-model.json`). With a new `model` command, the code generation can flow from a common data source which also creates opportunity for future commands:
 
 ![proposed-gen](./images/proposed_gen.png)
 
