@@ -1,10 +1,10 @@
-# Centralize config access and API inference
+# Inference: Centralize config access and API inference
 
 ### Key Terms
 * `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
 * `resource` | `k8s-resource` | `ackcrd`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L63) reprensenting a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
 * `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/4fd4b72d1a40237285232f1b16c1d13de4f1220d/models/apis/s3/2006-03-01/api-2.json#L1)
-* `API inference`: logic involving relations between `resource`, `shape`, `ackgenconfig`, and `aws-sdk`. Details [here](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/)
+* `API inference` | `inference`: logic involving relations between `resource`, `shape`, `ackgenconfig`, and `aws-sdk`. Details [here](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/)
 * `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `API inference`
 
 ## Problem
@@ -18,15 +18,16 @@ It is becoming increasingly difficult to contribute to and maintain *code-genera
 ## Solution
 The solution is to repair and realign encapsulations in `code-generator/pkg/`:
   * enforce `ackgenconfig` is **only** accessible via *Getters* exposed in [config package](https://github.com/aws-controllers-k8s/code-generator/tree/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/config).  
-  * centralize `API inference` by extending `ackmodel` in [model.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/model.go#L36) 
-  * update accessibility of *Setters* so only the relevant interfaces are public
-    * ex: [SetResourceForStruct](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/set_resource.go#L1217) vs. [setResourceForContainer](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/set_resource.go#L1154)
+  * centralize `API inference` by extending `ackmodel` in [model.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/model/model.go#L36)
+  * move from an *operation-centric* approach (i.e. [ackgenconfig](https://github.com/aws-controllers-k8s/code-generator/blob/c7b19a3ec651b287477e7330d0ea1c725a904310/pkg/generate/config/resource.go#L240) and [API inference](https://github.com/aws-controllers-k8s/code-generator/blob/59c6892e4b61b5e2076e5e5504daba8278b82980/pkg/generate/code/common.go#L55)) to a **field-focused** model
+
 
 
 ### Requirements
 * Code is easy to read, intuitive, and extendable
 * Naming in code is consistent (ex: Find vs. Get)
 * Navigating code is easier because pkg responsibility is clear
+* `ackgenconfig` uses a **field-focused** model
 
 
 ### Prerequisites
@@ -107,49 +108,42 @@ func (m *Model) GetIdentifiersInShape(r *model.CRD, shape *awssdkmodel.Shape, op
 * Note, for scenarios that do both `API inference` and output Go code (ex: [late_initialize::FindLateInitializedFieldNames](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/code/late_initialize.go#L31), these will need to be refactored into separate pieces prior to migration
 
 
-#### Align access/interface for `__ForStruct` funcs
-The goal is to make it easier for clients to use `SetResource` and `SetSDK` by removing the need to know the target type.
+#### Field-focused `ackgenconfig`
+Exposing `ackgenconfigs` in operation config (i.e. [renames](https://github.com/aws-controllers-k8s/code-generator/blob/c7b19a3ec651b287477e7330d0ea1c725a904310/pkg/generate/config/resource.go#L237-L240)) is an unclear experience for both users of the [interface](https://github.com/aws-controllers-k8s/s3-controller/blob/d8b7ab6c4d9a162f9736a3221a680f63028ba757/generator.yaml#L103-L110) and maintainers of the [implementation](https://github.com/aws-controllers-k8s/code-generator/blob/79311e52117a2df3f99eb921d1aa19c373bd6c7e/pkg/model/crd.go#L644). Moving to a **field-focused** approach results in a more intuitive experience:
+  * **Updated interface** no longer requires user to know which operations use this field
+  ```
+  resources:
+    Bucket:
+      fields:
+        Name:
+          <RENAME_CONFIG> #sources value from Bucket
 
-1. Refactor access (public vs. private) for `SetResourceFor___`, and `SetSDKFor___`
-  * `setResourceForContainer` and `setSDKForContainer` are private while `SetResourceForStruct` and `SetSDKForStruct` are public despite the former pair being more general than the latter. Access should be swapped so users calling this in [controller.go](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/ack/controller.go#L102) don't need to worry about Struct or what type.. just pass container. Leaves it open-ended for override types too.
-  * `GoCodeCompare` vs `GoCodeCompareStruct` .. can [these](https://github.com/aws-controllers-k8s/code-generator/blob/25c43e827527b43c652b6e1995265c8d6027567f/pkg/generate/ack/controller.go#L119-L122) be consolidated?
+  ```
+  * **Updated implementation** has clearer encapsulation compared to `r.GetAllRenames(op)`, a `CRD` requiring an `op` to find `Field` renames.
 
-```
-// Current
-SetResourceForStruct()
-setResourceForContainer()
-setResourceForSlice()
-setResourceForMap()
-setResourceForScalar()
-
-// access in controller.go
-"GoCodeSetResourceForStruct" : ... return code.SetResourceForStruct()
-
-// Proposed
-SetResourceForContainer()
-setResourceForStruct()
-setResourceForSlice()
-setResourceForMap()
-setResourceForScalar()
-
-// access in controller.go
-"GoCodeSetResourceForContainer" : ... return code.SetResourceForContainer()
-
-```
+  ```
+  // GetRenames returns all renames for the provided field defined in the generator config
+  func (m *Model) GetRenames(field *Field) []string {
+    ...
+    return field.Renames()
+  }
+  ```
 
 
 #### In Scope
 * Centralize code related to `API inference` to `model` package
 * Expose Getters in `config` and replace previous helpers/wrappers
 * Update public/private interfaces so users need only focus on the General case and not be bogged down with config details
-* Align naming and return types for affected code
-* Consolidate `SetterConfig` access/logic to `ackgenconfig` and/or `ackmodel`
+* Align naming and return types
+* Resolve 3 different `op` and `op` types used throughout code
+* Migrate from operation-centric to field-centric approach for inference
+* Change code structure by adding/moving packages for clearer encapsulations, ex: moving `pkg/generate/config` to `pkg/config`
+* Changes to `generator.yaml` interface
 
 
 #### Out of Scope
-* Changing logic/algorithms
-  * the goal is minimal impact to functionality; once everything is in its proper place we can address inefficiencies separately
-* Consistent styling/naming throughout codebase
+* *operation-centric* approaches outside of `ackgenconfig` such as [resource-identifier heuristic](https://github.com/aws-controllers-k8s/code-generator/blob/c7b19a3ec651b287477e7330d0ea1c725a904310/pkg/model/op.go#L48)
+
 
 ### Test plan
 * add "sufficient" testing beforehand for quick feedback
@@ -167,7 +161,7 @@ The majority of functions in `code` package take both `ackgenconfig` and `ackres
 
 
 ### ackgenconfig use
-`ackgenconfig` is acessed in various layers & ways:
+`ackgenconfig` accessed in various layers & ways:
   * [creating `ackmodel`](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/cmd/ack-generate/command/common.go#L231)
   * [API inference](https://github.com/aws-controllers-k8s/code-generator/blob/26e5da2e7656bb836ee438c05df14f2adc50197d/pkg/generate/code/common.go#L54)
   * [generating Go code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/code/set_resource.go#L190)
