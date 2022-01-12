@@ -51,6 +51,7 @@ By centralizing and consolidating config access and `API inference` logic, calls
 
 
 ## Design Proposals
-The solution consists of 2 pieces. They don't necessarily depend on one another, but I recommend reviewing and implementing in the order below:
+The solution consists of multiple pieces. They don't necessarily depend on one another, but I recommend reviewing and implementing in the order below:
    * [Centralize config access & inference logic](./inference.md)
    * [Introduce new command `model`](./model_cmd_2.md)
+   * [Generator enhancements](./generator.md)
