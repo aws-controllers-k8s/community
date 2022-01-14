@@ -72,4 +72,4 @@ The `code` package is responsible for generating Go code, but has become overloa
 The efforts described above do not necessarily depend on one another, but I recommend reviewing and implementing in the order below:
    * [`ackgenconfig` Categories](./inference.md)
    * [Generator Enhancements](./generator.md)
-   * [`infer-model` Command](./model_cmd_2.md)
+   * [`infer-model` Command](./infer_model_cmd.md)
