@@ -1,0 +1,12 @@
+title Current Dev Loop
+
+actor User
+participant $SERVICE-controller
+participant code-generator
+
+User->$SERVICE-controller: edit generator.yaml
+User->code-generator: ./ack-generate apis && ./ack-generate controller
+code-generator->code-generator: generate API and Controller code
+code-generator-->$SERVICE-controller: writes to apis/ and pkg/
+code-generator->User: Success!
+User->$SERVICE-controller: git diff

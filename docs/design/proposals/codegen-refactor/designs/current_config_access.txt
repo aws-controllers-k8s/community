@@ -1,0 +1,15 @@
+title Current Config/API Inference Access
+
+participant SetResource
+participant CRD
+participant Config
+
+SetResource->CRD: r.GetOutputShape(op)
+CRD->SetResource: return shape, nil
+CRD-->SetResource:
+SetResource->CRD: r.GetOutputWrapperFieldPath(op)
+CRD->Config: r.cfg.Operations[op.Name]
+Config-->CRD:
+CRD->CRD: r.getWrapperOutputShape(shape, path)
+note over CRD, Config: uses `ackgenconfig` and `sdk-shape` to resolve
+CRD->SetResource: return outputWrapperFieldPath
