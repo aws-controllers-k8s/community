@@ -30,7 +30,6 @@ Add a new command, `infer-model`, which takes `aws-sdk` and *generator.yaml* as 
 
 Updated Pipeline
 ---
-TODO: UPDATE DIAGRAM
 ![updated-pipeline](./images/proposed_pipeline.png)
 * This is not an exhaustive diagram of the calls, but shows the clear responsibility of `generateModel` and how downstream commands like `api` and `controller` become significantly lighter and easier to follow.
 * `inferred-model` will be cached in the same folder as `aws-sdk` and downstream commands will check for `inferred-model` in the cache when hydrating `ackmodel`

@@ -1,5 +1,5 @@
 ### Key Terms
-* `pipeline`: the collection of multiple phases involved in code generation; depicted in this [diagram](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/#our-approach)
+* `pipeline`: the collection of all phases involved in code generation; depicted in this [diagram](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/#our-approach)
 * `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
 * `resource` | `k8s-resource` | `ackcrd`: represented as CRD in [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L63) is a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
 * `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/4fd4b72d1a40237285232f1b16c1d13de4f1220d/models/apis/s3/2006-03-01/api-2.json#L1)
@@ -33,19 +33,17 @@ Move configs to its own pkg, `pkg/config`, then split `ackgenconfig` into 2 cate
 ![current-config-access](./images/current_config_access.png)
 * `r` represents a `resource` or `crd`
 * `SetResource` calls `r.GetOutputShape(op)` to retrieve the shape for a given operation
-* Then, `r.GetOutputWrapperFieldPath(op)` is invoked; it's basically a wrapper for accessing `ackgenconfig`
+* After, `SetResource` calls `r.GetOutputWrapperFieldPath(op)`; it's basically a wrapper for accessing `ackgenconfig`
 * Finally, `r.getWrapperOutputShape()` is called recursively and resolves which shape to return
 * `r` is doing a lot of work and it isn't clear what is being resolved
 
 
 ---
 
-# TODO!!
 ![proposed-config-access](./images/proposed_config_access.png)
 * `m` represents `ackmodel`
-* `SetResource` calls `m.GetOutputShape(op)` now instead of `crd`
-* Under the hood, `ackmodel` will access its `ackgenconfig` to get config values
-* Then use helpers to resolve between `sdk-shape` and `ackgenconfig`
+* `SetResource` calls `ackmodel` helpers now instead of `crd`
+* Under the hood, `ackmodel` will access `ackgenconfig` category to fetch requested config values
 * With `m` being the source of truth and `API inference` logic, it is safe to assume the output shape you get back takes all configs into account
 * Also, `resource` is no longer bogged down with helpers unrelated to a `resource`
 
@@ -56,9 +54,6 @@ The `code` package is responsible for generating Go code, but has become overloa
 * reducing scope of overloaded methods
 * removing duplicate code
 * generalizing areas with hard-coded use cases.
-
-# TODO: cleaner/better code diagram? Before/After
-
 
 ### New command `./ack-generate infer-model`
 `infer-model` takes `aws-sdk` and *generator.yaml* as **input**, resolves relations/conflicts between the 2, persists and caches the data as serialized JSON, then **outputs** the `inferred-model` (default location: `~./cache/aws-controllers-k8s/ack-inferred-model.json`). Existing commands, `apis` and `controller`, will be downstream and take `inferred-model` as an input. This will immediately improve the `pipeline` by removing duplicated `inference` work being done in both commands and clean up generator implementations.

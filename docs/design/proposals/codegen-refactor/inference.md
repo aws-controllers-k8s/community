@@ -9,7 +9,7 @@
 * `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `API inference`
 
 ## Problem
-It is becoming increasingly difficult to contribute to and maintain *code-generator* due to unclear encapsulations and dispersed logic throughout the codebase. For example, `ackgenconfig` is passed throughout being accessed in a variety of ways, and logic involving `API inference` is inconsistent, both in implementation and interface. Specific examples include:
+It's becoming increasingly difficult to contribute to and maintain *code-generator* due to unclear encapsulations and dispersed logic throughout the codebase. For example, `ackgenconfig` is passed throughout being accessed in a variety of ways, and logic involving `API inference` is inconsistent, both in implementation and interface. Specific examples include:
   * [overextended encapsulations](#overextended-encapsulations)
   * [long function parameter lists](#long-parameters)
   * [inconsistent use of `ackgenconfig`](#ackgenconfig-use)
@@ -23,7 +23,7 @@ The proposal is to delineate `ackgenconfig` into 2 categories, **inference** and
 
 Encapsulation will be improved because functions consuming `ackgenconfig` will grab configurations *relevant to its responsibility only*. For example, functions responsible for generating Go code, ex: `SetResource`, need only **code-generating** configs; therefore, one can eliminate any calls/logic relating to **inference** or other `ackgenconfig` parsing.
 
-TODO: This new classification makes navigating the code more intuitive and consistent as well. Instead of using helpers in `model/crd.go` or `generate/common.go` to read config/resolve an inference, clients will know to use and extend `config` package. It will also be easier to enfore consistent style and interfaces after consolidating into the same location, `config` package.
+This new classification makes navigating the code more intuitive and consistent as well. Instead of using helpers in `model/crd.go` or `generate/common.go` to read config/resolve an inference, clients will know to use and extend `config` package. It will also be easier to enfore consistent style and interfaces after consolidating into the same location, `config` package.
 
 ### Requirements
 * Code is easy to read, intuitive, and extendable
@@ -81,21 +81,20 @@ Note, `Getters` will contain some "helper" logic such as sanitizing user-input a
 
 ```
 #### Define `ackgenconfig` Categories
-After centralizing all config data and functions to `config` pkg, break `ackgenconfig` into **inference** and **code-generating** categories where each will encapsulate data and methods (Getters, Setters, helpers) in their respective files:
+After centralizing all config data and functions to `config` pkg, break `ackgenconfig` into **inference** and **code-generating** categories where each will encapsulate data and methods (Getters, Setters, helpers) in their respective files and update `ackgenconfig` accessors/callers:
 * `pkg/generate/config/inference.go`
 * `pkg/generate/config/generate.go`
 
 ```
-TODO: Config struct after these new fields are added
-note don't want to expose this detail in interface so need to convert/hydrate internally
+type Config struct {
+    ...
+	ModelName string `json:"model_name,omitempty"`
+    InferenceConfig *InferenceConfig
+    GenerateConfig *GenereateConfig
+}
 ```
+*Note, Inference/Generate config is NOT exposed in `generator.yaml` as this is an implementation detail*
 
-Next, update `ackgenconfig` accessors throughout code:
-
-```
-TODO: Show SetResource using config category config.GenerateConfig.UnwrapOrDefault()
-still resolving inference on its own
-```
 
 #### Centralize `API Inference` helpers to `ackmodel`
 Similar to the above, move `API inference`-related functions to `ackmodel` to realign responsibilities.
@@ -160,13 +159,10 @@ Exposing `ackgenconfigs` in operation config (i.e. [renames](https://github.com/
 
   ```
   SetResource() --> for _, _ range := CRD.Fields instead of op.shape.members
-  - remove "Is this field in Spec/Status"?
+  // updatedShape already has its fields renamed, removed, or added to based
+  - can remove "Is this field in Spec/Status" logic?
   - For each field do a Model.GetShape(fieldName) 
     - //checks for "fieldName" in aws-sdk, if none found, check Fields.Renames[fieldName] or similar. returns corresponding shape in aws-sdk 
-
-  how to replace targetAdaptedVarName += cfg.PrefixConfig.SpecField
-?
-
   ```
 
 
@@ -179,7 +175,6 @@ Exposing `ackgenconfigs` in operation config (i.e. [renames](https://github.com/
 * Migrate from operation-centric to field-centric approach for inference
 * Change code structure by adding/moving packages for clearer encapsulations, ex: moving `pkg/generate/config` to `pkg/config`
 * Changes to `generator.yaml` interface
-
 
 #### Out of Scope
 * *operation-centric* approaches outside of `ackgenconfig` such as [resource-identifier heuristic](https://github.com/aws-controllers-k8s/code-generator/blob/c7b19a3ec651b287477e7330d0ea1c725a904310/pkg/model/op.go#L48)
