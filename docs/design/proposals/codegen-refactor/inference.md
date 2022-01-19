@@ -9,9 +9,9 @@ It's becoming increasingly difficult to contribute to and maintain *code-generat
 
 
 ## Solution
-The proposal is to delineate `ackgenconfig` into 2 categories, **inference** and **code-generating**. The structures, `Getters/Setters`, and helpers will be defined in the `config` package (migrate from `pkg/generate/config` to `pkg/config`) and encapsulated in files by category:
-  * **inference**: configs used to *infer* a relation between `resource` and `aws-sdk` such as `renames`
-  * **code-generating**: configs used to instruct the code-generator on how to *generate* Go code for a resource such as `output_wrapper_field`
+The proposal is to delineate `ackgenconfig` into 2 categories each encapsulated to its own file:
+  * `pkg/config/model.go`: configuration to handle `API inference`
+  * `pkg/config/generate.go`: configuration to handle and direct code generation functions
 
 Encapsulation will be improved because functions consuming `ackgenconfig` will grab configurations *relevant to its responsibility only*. For example, functions responsible for generating Go code, ex: `SetResource`, need only **code-generating** configs; therefore, one can eliminate any calls/logic relating to **inference** or other `ackgenconfig` parsing.
 
