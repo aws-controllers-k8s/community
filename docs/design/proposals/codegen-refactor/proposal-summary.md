@@ -56,10 +56,10 @@ The `code` package is responsible for generating Go code, but has become overloa
 * removing duplicate code
 * generalizing areas with hard-coded use cases.
 
-### New command `./ack-generate infer-model`
-`infer-model` takes `aws-sdk` and *generator.yaml* as **input**, resolves relations/conflicts between the 2, persists and caches the data as serialized JSON, then **outputs** the `inferred-model` (default location: `~./cache/aws-controllers-k8s/ack-inferred-model.json`). Existing commands, `apis` and `controller`, will be downstream and take `inferred-model` as an input. This will immediately improve the `pipeline` by removing duplicated `inference` work being done in both commands and clean up generator implementations.
+### New command `./ack-generate model`
+`model` takes `aws-sdk` and *generator.yaml* as **input**, discovers between the 2, persists and caches the data as serialized JSON, then **outputs** `ackmodel` (default location: `~./cache/aws-controllers-k8s/ack-model.json`). Existing commands, `apis` and `controller`, will be downstream and take `ackmodel` as an input. This will immediately improve the `pipeline` by removing duplicated `inference` work being done in both commands and clean up generator implementations.
 
- With a new `infer-model` command, the code generation can flow from a common `inference` source which also creates opportunity for future commands:
+ With a new `model` command, the code generation can flow from a common `inference` source which also creates opportunity for future commands:
 
 ![proposed-gen](./images/proposed_gen.png)
 
@@ -68,4 +68,4 @@ The `code` package is responsible for generating Go code, but has become overloa
 The efforts described above do not necessarily depend on one another, but I recommend reviewing and implementing in the order below:
    * [`ackgenconfig` Categories](./inference.md)
    * [Generator Enhancements](./generator.md)
-   * [`infer-model` Command](./infer_model_cmd.md)
+   * [`model` Command](./model_cmd.md)

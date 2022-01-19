@@ -2,28 +2,28 @@ title Proposed Code Generator Pipeline
 
 actor User
 participant generateAPIs()
-participant generateInferredModel()
+participant generateModel()
 participant ackgenerate
 participant Common
 participant Model
 participant Github
 participant $SERVICE-controller
 
-User->generateInferredModel(): ./ack-generate infer-model $SERVICE
-note over User, generateInferredModel():infer-model args:\n- service\n- template-dirs\n- cache-dir\n- version\n- generator-config-path\n- metadata-config-path\n- aws-sdk-go-version
-generateInferredModel()->Common: ensureSDKRepo()
+User->generateModel(): ./ack-generate model $SERVICE
+note over User, generateModel():model args:\n- service\n- template-dirs\n- cache-dir\n- version\n- generator-config-path\n- metadata-config-path\n- aws-sdk-go-version
+generateModel()->Common: ensureSDKRepo()
 Common-->Github:
 note over Common, Github: Clones and caches aws-sdk-go repo, if not available locally
 Github-->Common:
-Common->generateInferredModel(): return repo
-generateInferredModel()->Model: loadModelWithAPIVersion(svcAlias, version)
-note over generateInferredModel(), Model: uses ackgenconfig and aws-sdk to load and cache model
-Model-->generateInferredModel(): return model
-generateInferredModel()->User: inferred-model created and cached at ./cache/aws-controllers-k8s/ack-inferred-model.json
+Common->generateModel(): return repo
+generateModel()->Model: loadModelWithAPIVersion(svcAlias, version)
+note over generateModel(), Model: uses ackgenconfig and aws-sdk to load and cache model
+Model-->generateModel(): return model
+generateModel()->User: ackmodel created and cached at ./cache/aws-controllers-k8s/ack-model.json
 User->generateAPIs(): ./ack-generate apis $SERVICE
-note over User, generateAPIs():api args:\n- service\n- cache-dir (for sdk and inferred-model)\n- template-dirs
-generateAPIs()->Common: GetInferredModel()
-Common-->generateAPIs(): return inferredModel, nil (fetches from cache or exits)
+note over User, generateAPIs():api args:\n- service\n- cache-dir (for sdk and model)\n- template-dirs
+generateAPIs()->Common: GetModel()
+Common-->generateAPIs(): return model, nil (fetches from cache or exits)
 generateAPIs()->ackgenerate: ackgenerate.APIs(model, templateDir)
 ackgenerate->generateAPIs(): return templateSet, nil
 generateAPIs()->$SERVICE-controller: execute templates & write API files to output repo
