@@ -1,5 +1,5 @@
 ### Key Terms
-* `ACK platforn` | `platform`: the set of code generators, test frameworks, and model inference utilities that comprise the AWS Controllers for Kubernetes project.
+* `ACK platform` | `platform`: the set of code generators, test frameworks, and model inference utilities that comprise the AWS Controllers for Kubernetes project.
 * `pipeline`: the collection of all phases involved in code generation; depicted in this [diagram](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/#our-approach).
 * `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
 * `resource` | `k8s-resource` | `ackcrd`: represented as CRD in [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L63) is a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
@@ -29,25 +29,16 @@ Move configs to its own pkg, `pkg/config`, then split `ackgenconfig` into 2 cate
   * `pkg/config/model.go`: configuration to handle `API inference`
   * `pkg/config/generate.go`: configuration to handle and direct code generation functions
 
+The [Config struct](https://github.com/aws-controllers-k8s/code-generator/blob/02795c2056e23e1bb11dcc928ad0f0ba29790a8c/pkg/generate/config/config.go#L24) will retain all existing fields and add 2 new fields to represent the categories:
 
-
-![current-config-access](./images/current_config_access.png)
-* `r` represents a `resource` or `crd`
-* `SetResource` calls `r.GetOutputShape(op)` to retrieve the shape for a given operation
-* After, `SetResource` calls `r.GetOutputWrapperFieldPath(op)`; it's basically a wrapper for accessing `ackgenconfig`
-* Finally, `r.getWrapperOutputShape()` is called recursively and resolves which shape to return
-* `r` is doing a lot of work and it isn't clear what is being resolved
-
-
----
-
-![proposed-config-access](./images/proposed_config_access.png)
-* `m` represents `ackmodel`
-* `SetResource` calls `ackmodel` helpers now instead of `crd`
-* Under the hood, `ackmodel` will access `ackgenconfig` category to fetch requested config values
-* With `m` being the source of truth and `API inference` logic, it is safe to assume the output shape you get back takes all configs into account
-* Also, `resource` is no longer bogged down with helpers unrelated to a `resource`
-
+```
+type Config struct {
+  <existing fields>
+  InferenceConfig *InferenceConfig
+  GenerateConfig *GenerateConfig
+}
+```
+This refactoring is meant to cleanup the codebase and implementations and therefore, will not be exposed in *generator.yaml*. After separating out these new fields (and helpers), it becomes easier to identify and improve code doing too much (i.e. dealing with both sets of configs) AND any duplicate work being done relating to these configs (such as with `API inference`) can be isolated and made more efficient. As such, this is a prerequisite for `model` command work.
 
 ### Generator enhancements
 The `code` package is responsible for generating Go code, but has become overloaded with other functionality resulting in the accumulation of tech debt. This tech debt will be addressed in a number of ways:
@@ -57,9 +48,15 @@ The `code` package is responsible for generating Go code, but has become overloa
 * generalizing areas with hard-coded use cases.
 
 ### New command `./ack-generate model`
-`model` takes `aws-sdk` and *generator.yaml* as **input**, discovers between the 2, persists and caches the data as serialized JSON, then **outputs** `ackmodel` (default location: `~./cache/aws-controllers-k8s/ack-model.json`). Existing commands, `apis` and `controller`, will be downstream and take `ackmodel` as an input. This will immediately improve the `pipeline` by removing duplicated `inference` work being done in both commands and clean up generator implementations.
+`model` takes `aws-sdk` and *generator.yaml* as **input**, discovers relations between the 2, persists and caches the data as serialized JSON, then **outputs** `ackmodel` (default location: `~./cache/aws-controllers-k8s/ack-model.json`). Existing commands, `apis` and `controller`, will be downstream and take `ackmodel` as an input. This will immediately improve the `pipeline` by removing duplicated `inference` work being done in both commands, thus cleaning up generator implementations like [SetResource](https://github.com/aws-controllers-k8s/code-generator/blob/02795c2056e23e1bb11dcc928ad0f0ba29790a8c/pkg/generate/code/set_resource.go#L142):
 
- With a new `model` command, the code generation can flow from a common `inference` source which also creates opportunity for future commands:
+![proposed-cleanup](./images/proposed_cleanup.png)
+* Today, fetching renames and finding the corresponding field is `API inference` work being done by a *code-generating* function, `SetResource`
+* After implementing `model` command, `inference` data will be **persisted** in `ackmodel` (containing `crds` and its fields). Then `SetResource` can iterate over this persisted data where `inferences` such as renames are either automatically applied or easily resolved by querying `ackmodel`.
+
+
+
+Lastly, with a new `model` command, the code generation can flow from a common `inference` source which also creates opportunity for future commands:
 
 ![proposed-gen](./images/proposed_gen.png)
 
