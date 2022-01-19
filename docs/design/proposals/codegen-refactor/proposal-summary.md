@@ -26,8 +26,8 @@ The tech debt will be reduced after stratifying `ackgenconfig` into catgories an
 
 ### Split `ackgenconfig` into 2 categories
 Move configs to its own pkg, `pkg/config`, then split `ackgenconfig` into 2 categories:
-  * **inference**: configs used to *infer* a relation between `resource` and `aws-sdk` such as `renames` located in `pkg/generate/config/inference.go`
-  * **code-generating**: configs used to instruct the code-generator on how to *generate* Go code for a resource such as `output_wrapper_field` located in `pkg/generate/config/generate.go`
+  * `pkg/config/model.go`: configuration to handle `API inference`
+  * `pkg/config/generate.go`: configuration to handle and direct code generation functions
 
 
 

@@ -74,13 +74,13 @@ Note, `Getters` will contain some "helper" logic such as sanitizing user-input a
 ```
 #### Define `ackgenconfig` Categories
 After centralizing all config data and functions to `config` pkg, break `ackgenconfig` into **inference** and **code-generating** categories where each will encapsulate data and methods (Getters, Setters, helpers) in their respective files and update `ackgenconfig` accessors/callers:
-* `pkg/generate/config/inference.go`
-* `pkg/generate/config/generate.go`
+  * `pkg/config/model.go`: configuration to handle `API inference`
+  * `pkg/config/generate.go`: configuration to handle and direct code generation functions
 
 ```
 type Config struct {
     ...
-	ModelName string `json:"model_name,omitempty"`
+	  ModelName string `json:"model_name,omitempty"`
     InferenceConfig *InferenceConfig
     GenerateConfig *GenereateConfig
 }
