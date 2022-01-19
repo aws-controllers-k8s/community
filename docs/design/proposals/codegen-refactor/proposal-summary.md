@@ -1,14 +1,15 @@
 ### Key Terms
-* `pipeline`: the collection of all phases involved in code generation; depicted in this [diagram](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/#our-approach)
+* `ACK platforn` | `platform`: the set of code generators, test frameworks, and model inference utilities that comprise the AWS Controllers for Kubernetes project.
+* `pipeline`: the collection of all phases involved in code generation; depicted in this [diagram](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/#our-approach).
 * `ackgenconfig`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/generate/config/config.go#L24) representation of *generator.yaml*. an **input** to *code-generator*.
 * `resource` | `k8s-resource` | `ackcrd`: represented as CRD in [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/crd.go#L63) is a single top-level resource in an AWS Service. *code-generator* generates these resources using heuristics and `ackgenconfig`.
-* `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/4fd4b72d1a40237285232f1b16c1d13de4f1220d/models/apis/s3/2006-03-01/api-2.json#L1)
-* `API inference` | `inference` : logic involving relations between `resource`, `shape`, `ackgenconfig`, and `aws-sdk`. Details [here](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/)
-* `ackmodel`: the [code](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/model.go#L36) representation of ACK's view of the world; the source of truth for `aws-sdk`, `ackgenconfig`, and `API inference`
+* `shape` | `aws-sdk` | `sdk-shape` | `sdk`: the original operations, models, errors, structs for a given AWS service. sourced from *aws-sdk*, ex: [aws-sdk-go s3](https://github.com/aws/aws-sdk-go/blob/4fd4b72d1a40237285232f1b16c1d13de4f1220d/models/apis/s3/2006-03-01/api-2.json#L1).
+* `API inference` | `inference` : the discovery or determination of the structure of API resources, including the fields of said resources and the relationship between resources in an API; details [here](https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/).
+* `ackmodel`: the *output* of the API inferece stage of the `pipeline`; represented in code as [Model](https://github.com/aws-controllers-k8s/code-generator/blob/82c294c2e8fc6ba23baa0034520e84351bb7a32f/pkg/model/model.go#L36).
 
 
 ## Problem
-*code-generator's* accelerated growth is resulting in tech debt that degrades the experience for platform maintainers and contributors. The codebase is becoming difficult to read and extend given the quick addition of features to onboard more services. This doc summarizes and introduces proposals to eliminate significant tech debt and bring clarity to the `pipeline` so that development on ACK Platform is as pleasant and clear as it is open.
+*code-generator's* accelerated growth is resulting in tech debt that degrades the experience for `platform` maintainers and contributors. The codebase is becoming difficult to read and extend given the quick addition of features to onboard more services. This doc summarizes and introduces proposals to eliminate significant tech debt and bring clarity to the `pipeline` so that development on `ACK platform` is as pleasant and clear as it is open.
 
 
 ## Solution
@@ -19,7 +20,7 @@ The tech debt will be reduced after stratifying `ackgenconfig` into catgories an
 ### Requirements
 * Code is easy to read, intuitive, and extendable
 * Code generation processes remain clear and transparent
-* Code generation features and templates are useable for all use cases
+* Code generation features and templates are usable for all use cases
 
 ## Approach
 
