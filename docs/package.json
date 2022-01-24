@@ -51,10 +51,12 @@
     "markdownlint-cli": "^0.28",
     "markdown-it": ">=12.3.2",
     "mermaid": "^8.13",
+    "nanoid": ">=3.1.31",
     "postcss": "^8.3",
     "postcss-cli": "^8.3",
     "purgecss-whitelister": "^2.4",
     "set-value": ">=4.0.1",
+    "shelljs": ">=0.8.5",
     "shx": "^0.3.3",
     "stylelint": "^13.13",
     "stylelint-config-standard": "^22.0"
