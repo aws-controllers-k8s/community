@@ -1,0 +1,2 @@
+- Navigate to https://sequencediagram.org/
+- Load from 'source text' > select diagram.txt file
