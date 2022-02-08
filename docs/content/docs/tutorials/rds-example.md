@@ -76,10 +76,14 @@ The examples below use the `db.t3.micro` instance type. Please review the [RDS i
 To create a [AWS RDS for PostgreSQL](https://aws.amazon.com/rds/postgresql/) instance, you must first set up a master password. You can do this by [creating a Kubernetes Secret](https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret), e.g.:
 
 ```bash
-kubectl create secret generic rds-postgresql-user-creds --from-literal=password="<your password>"
+RDS_DB_USERNAME="<your username>"
+
+kubectl create secret generic rds-postgresql-user-creds \
+  --from-literal=username="${RDS_DB_USERNAME}" \
+  --from-literal=password="<your password>"
 ```
 
-Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for PostgreSQL instance running PostgreSQL 14.1 with the credentials created in the previous step:
+Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for PostgreSQL 14 instance with the credentials created in the previous step:
 
 ```bash
 RDS_INSTANCE_NAME="<your instance name>"
@@ -88,15 +92,14 @@ cat <<EOF > rds-postgresql.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: ${RDS_INSTANCE_NAME}
+  name: "${RDS_INSTANCE_NAME}"
 spec:
   allocatedStorage: 20
-  copyTagsToSnapshot: false
   dbInstanceClass: db.t3.micro
-  dbInstanceIdentifier: ${RDS_INSTANCE_NAME}
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: postgres
-  engineVersion: "14.1"
-  masterUsername: postgres
+  engineVersion: "14"
+  masterUsername: "${RDS_DB_USERNAME}"
   masterUserPassword:
     namespace: default
     name: rds-postgresql-user-creds
@@ -119,10 +122,14 @@ When the `DB Instance Status` says `Available`, you can connect to the database 
 To create a [AWS RDS for MariaDB](https://aws.amazon.com/rds/mariadb/) instance, you must first set up a master password. You can do this by [creating a Kubernetes Secret](https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret), e.g.:
 
 ```bash
-kubectl create secret generic rds-mariadb-user-creds --from-literal=password="<your password>"
+RDS_DB_USERNAME="<your username>"
+
+kubectl create secret generic rds-mariadb-user-creds \
+  --from-literal=username="${RDS_DB_USERNAME}" \
+  --from-literal=password="<your password>"
 ```
 
-Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for MariaDB instance running MariaDB 10.5.13 with the credentials created in the previous step:
+Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for MariaDB 10.6 instance with the credentials created in the previous step:
 
 ```bash
 RDS_INSTANCE_NAME="<your instance name>"
@@ -131,15 +138,14 @@ cat <<EOF > rds-mariadb.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: ${RDS_INSTANCE_NAME}
+  name: "${RDS_INSTANCE_NAME}"
 spec:
   allocatedStorage: 20
-  copyTagsToSnapshot: false
   dbInstanceClass: db.t3.micro
-  dbInstanceIdentifier: ${RDS_INSTANCE_NAME}
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: mariadb
-  engineVersion: "10.5.13"
-  masterUsername: admin
+  engineVersion: "10.6"
+  masterUsername: "${RDS_DB_USERNAME}"
   masterUserPassword:
     namespace: default
     name: rds-mariadb-user-creds
@@ -166,7 +172,7 @@ kubectl get dbinstance "${RDS_INSTANCE_NAME}" -o jsonpath='{.status.endpoint.add
 kubectl get dbinstance "${RDS_INSTANCE_NAME}" -o jsonpath='{.status.endpoint.port}'
 ```
 
-You can find the username in the `DBInstance` spec (`spec.masterUsername`) and the password in the Secret that is reference in the `DBInstance` spec (`spec.masterPassword.name`).
+The database username and password is in the Secret that is referenced in the `DBInstance` spec (`spec.masterPassword.name`).
 
 ## Next steps
 
