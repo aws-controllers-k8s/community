@@ -4,39 +4,38 @@ This proposal builds on top of initial [resource-reference proposal](resource-re
 This document proposes the approach to reference resource(s) from another ACK service controller
 i.e. different api-group.
 
-For Example, in the [initial proposal](resource-reference.md) referencing an `API`
-resource inside `Integration` resource is possible because both resources are part
-of `apigatewayv2-controller`(same apigroup `apigatewayv2.services.k8s.aws`) But
-referencing `EC2's SecurityGroup and Subnet` resources was not possible inside
-`apigatewayv2's VPCLink` resource.
+For Example, in the [initial proposal](resource-reference.md) referencing an *API*
+resource inside *Integration* resource is possible because both resources are part
+of apigatewayv2-controller(same apigroup `apigatewayv2.services.k8s.aws`) But
+referencing EC2's *SecurityGroup* and *Subnet* resources was **not** possible inside
+apigatewayv2's *VPCLink* resource.
 
-This proposal aims to remove this blocker.
+This proposal aims to allow referencing resources across ACK service controllers.
 
 ## Scope
 * Referring a resource across namespace will **NOT** be supported.
-* Only resources from other ACK service controller will be supported as
-references. Referencing K8s native resources like `configMap` will **NOT** be supported
+* Only resources from other ACK service controllers will be supported as
+references. Referencing K8s native resources like *ConfigMap* will **NOT** be supported
 in this implementation.
-* Only referencing fields of type `string`(main usecase being `identifiers`) will be
-supported. Referencing structs from another resource will **NOT** be supported in this
+* Only referencing fields of type `string`(main usecase being Identifiers) will be
+supported. Referencing go `structs` from another resource will **NOT** be supported in this
 implementation.
 * `go.mod` changes will **NOT** be auto-generated, service teams will need to add another ACK
 service controller's dependency in `go.mod` file manually for now.
-* code-generator will generate new `CRDs` including the reference fields
-* code-generator will update the `helm` and `kustomize` artifacts to include `Read and List
-RBAC permissions` for resource referenced from another service controller
+* code-generator will update the `helm` and `kustomize` artifacts to include `Read` and `List
+` RBAC permissions for resource referenced from another service controller
 * code-generator will generate the source code for resolving the references for
 resources from another service controller and set `Status.Condition` correctly
 in case there are failure during reference resolution.
 * It will be customer's responsibility to install controller/crd for the resource
-being referenced. For example, even if apigatewayv2's `VPCLink` resource can reference
-`SecurityGroup` resource from `ec2-controller`, `apigatewayv2-controller` installation will
-**NOT** install `ec2-controller` or `SecurityGroup` CRD.
+being referenced. For example, even if apigatewayv2's *VPCLink* resource can reference
+*SecurityGroup* resource from ec2-controller, apigatewayv2-controller installation will
+**NOT** install ec2-controller or *SecurityGroup* CRD.
 * Documentation changes will be made to help customers on steps to reference resources from
 another service controller
 
 ## High Level Overview
-### Declaring The References (AWS Service Team)
+### 1. Declaring The References (AWS Service Team)
 * For generating a corresponding reference field, service teams will add a `references`
 entry inside `generator.yaml`.
 If the `references` field refers to a resource from another ACK service
@@ -44,33 +43,33 @@ controller, service teams will provide name of that service in `references` fiel
 If no service name is provided, it defaults to AWS service name of the controller
 where `generator.yaml` exists. See [how to add resource reference](#generatoryaml-example)
 
-### Generating Service Controller (AWS Service Team)
+### 2. Generating Service Controller (AWS Service Team)
 * Apart from updating `generator.yaml` file as mentioned [here](#generatoryaml-example),
 service teams will also need to update `go.mod` file to include ACK service controller
-repository whose resource will be referenced.
-For example: To able to resolve `SecurityGroup` resource from `ec2-controller`, `go.mod`
-file in `apigatewayv2-controller` will need to add `github.com/aws-controllers-k8s/ec2-controller`
-as dependency
-* Apart from updating `go.mod` file, there are no changes in code-generation steps. Service teams can
-execute `make build-controller` from `code-generator` repo to generate service controller source
-code.
+repository whose resource(s) will be referenced.
+For example: To resolve *SecurityGroup* resource from ec2-controller, `go.mod`
+file in apigatewayv2-controller will need to add `github.com/aws-controllers-k8s/ec2-controller`
+as dependency.
+* Apart from updating `go.mod` file, there are no new changes in code-generation steps. Service
+teams can execute `make build-controller` from *code-generator* repo to generate service controller
+source code.
 
-### Running Service Controller (ACK Customer)
+### 3. Running Service Controller (ACK Customer)
 * There will be no changes in installation steps if customers do not use the Reference
 fields which refer to resource from another service controller.
-* If customer wants to refer resource from another service controller, it will be
+* If customer wants to refer resource(s) from another service controller, it will be
 customer's responsibility to install that controller in same namespace.
-* Another section will be added in ACK documentation on `how to refer resources across
-service controllers` to guide the customers.
+* Another section will be added in ACK documentation on `How To Refer Resources Across
+Service Controllers` to guide the customers.
 
 ## Low Level Implementation
 
-### Reference Config
-* A new field `ServiceName` will be introduced to find the AWS service name of controller
-where the resource will be referred from.
-* This will be an optional field. When missing, the ServiceName will default to AWS service
-name of controller where `generator.yaml` exists.
-* This field is used to generate the `APIGroup` for reading the referred resource.
+### 1. Reference Config
+* A new optional field `ServiceName` will be introduced to find the AWS service name of controller
+where the resource will be referred from. `ServiceName` is preferred over `APIGroup` because
+it is less cognitive load for service teams when updating `generator.yaml` file.
+* When `ServiceName` field is missing, it will default to AWS service name of controller where
+`generator.yaml` exists.
 ```go
 type ReferencesConfig struct {
 + // ServiceName mentions the AWS service name where referenced 'Resource' exists.
@@ -88,13 +87,13 @@ type ReferencesConfig struct {
 }
 ```
 
-### Code Generator
-* During template execution, if a `CRD` has references from another AWS service,
-`code-generator` will import api-types from those service.
-* `code-generator` will also add `get` and `list` rbac permissions for
-`apigroup/resource` from another AWS service in `references.go` file. For
+### 2. Code Generator
+* During template execution, if a *CRD* has reference(s) from other AWS service(s),
+code-generator will import api-types from those service(s).
+* code-generator will also add `READ` and `LIST` RBAC permissions for
+APIGroup/Resources from another AWS service inside `references.go` file. For
 example, following permissions are added to `vpc_link/reference.go` since
-`VPCLink` references `Subnet` and `SecurityGroup` resources from `ec2-controller`
+`VPCLink` references `Subnet` and `SecurityGroup` resources from ec2-controller.
 ```
 // +kubebuilder:rbac:groups=ec2.services.k8s.aws,resources=securitygroups,verbs=get;list
 // +kubebuilder:rbac:groups=ec2.services.k8s.aws,resources=securitygroups/status,verbs=get;list
@@ -109,9 +108,9 @@ example, following permissions are added to `vpc_link/reference.go` since
 * See the sample generated code for apigatewayv2-controller's `vpc_link/references.go` file
 [here](#generated-code-for-apigatewayv2-controller)
 
-### Controller Installation
-* ACK Documentation will be updated to guide customers on how to install multiple controller to
-use cross controller resource reference functionality
+### 3. Controller Installation
+* ACK Documentation will be updated to guide customers on how to reference resources across
+ACk service controllers
 * If customers do not install CRDs/controller of the referenced resource, `Status.Condition` property
 on the resource will indicate the error message guiding them towards mitigating the issue.
 
@@ -367,13 +366,13 @@ func (rm *resourceManager) ResolveReferences(
 // validateReferenceFields validates the reference field and corresponding
 // identifier field.
 func validateReferenceFields(ko *svcapitypes.VPCLink) error {
-	if ko.Spec.SecurityGroupIDsRef != nil && ko.Spec.SecurityGroupIDs != nil {
+	if ko.Spec.SecurityGroupRefs != nil && ko.Spec.SecurityGroupIDs != nil {
 		return ackerr.ResourceReferenceAndIDNotSupportedFor("SecurityGroupIDs", "SecurityGroupIDsRef")
 	}
-	if ko.Spec.SubnetIDsRef != nil && ko.Spec.SubnetIDs != nil {
+	if ko.Spec.SubnetRefs != nil && ko.Spec.SubnetIDs != nil {
 		return ackerr.ResourceReferenceAndIDNotSupportedFor("SubnetIDs", "SubnetIDsRef")
 	}
-	if ko.Spec.SubnetIDsRef == nil && ko.Spec.SubnetIDs == nil {
+	if ko.Spec.SubnetRefs == nil && ko.Spec.SubnetIDs == nil {
 		return ackerr.ResourceReferenceOrIDRequiredFor("SubnetIDs", "SubnetIDsRef")
 	}
 	return nil
@@ -382,11 +381,11 @@ func validateReferenceFields(ko *svcapitypes.VPCLink) error {
 // hasNonNilReferences returns true if resource contains a reference to another
 // resource
 func hasNonNilReferences(ko *svcapitypes.VPCLink) bool {
-	return false || ko.Spec.SecurityGroupIDsRef != nil || ko.Spec.SubnetIDsRef != nil
+	return false || ko.Spec.SecurityGroupRefs != nil || ko.Spec.SubnetRefs != nil
 }
 
 // resolveReferenceForSecurityGroupIDs reads the resource referenced
-// from SecurityGroupIDsRef field and sets the SecurityGroupIDs
+// from SecurityGroupRefs field and sets the SecurityGroupIDs
 // from referenced resource
 func resolveReferenceForSecurityGroupIDs(
 	ctx context.Context,
@@ -394,10 +393,10 @@ func resolveReferenceForSecurityGroupIDs(
 	namespace string,
 	ko *svcapitypes.VPCLink,
 ) error {
-	if ko.Spec.SecurityGroupIDsRef != nil &&
-		len(ko.Spec.SecurityGroupIDsRef) > 0 {
+	if ko.Spec.SecurityGroupRefs != nil &&
+		len(ko.Spec.SecurityGroupRefs) > 0 {
 		resolvedReferences := []*string{}
-		for _, arrw := range ko.Spec.SecurityGroupIDsRef {
+		for _, arrw := range ko.Spec.SecurityGroupRefs {
 			arr := arrw.From
 			if arr == nil || arr.Name == nil || *arr.Name == "" {
 				return fmt.Errorf("provided resource reference is nil or empty")
@@ -428,11 +427,9 @@ func resolveReferenceForSecurityGroupIDs(
 					namespace, *arr.Name)
 			}
 			if !refResourceSynced {
-				//TODO(vijtrip2) Uncomment below return statment once
-				// ConditionTypeResourceSynced(True/False) is set for all resources
-				//return ackerr.ResourceReferenceNotSyncedFor(
-				//	"SecurityGroup",
-				//	namespace, *arr.Name)
+				return ackerr.ResourceReferenceNotSyncedFor(
+					"SecurityGroup",
+					namespace, *arr.Name)
 			}
 			if obj.Status.ID == nil {
 				return ackerr.ResourceReferenceMissingTargetFieldFor(
@@ -449,7 +446,7 @@ func resolveReferenceForSecurityGroupIDs(
 }
 
 // resolveReferenceForSubnetIDs reads the resource referenced
-// from SubnetIDsRef field and sets the SubnetIDs
+// from SubnetRefs field and sets the SubnetIDs
 // from referenced resource
 func resolveReferenceForSubnetIDs(
 	ctx context.Context,
@@ -457,10 +454,10 @@ func resolveReferenceForSubnetIDs(
 	namespace string,
 	ko *svcapitypes.VPCLink,
 ) error {
-	if ko.Spec.SubnetIDsRef != nil &&
-		len(ko.Spec.SubnetIDsRef) > 0 {
+	if ko.Spec.SubnetRefs != nil &&
+		len(ko.Spec.SubnetRefs) > 0 {
 		resolvedReferences := []*string{}
-		for _, arrw := range ko.Spec.SubnetIDsRef {
+		for _, arrw := range ko.Spec.SubnetRefs {
 			arr := arrw.From
 			if arr == nil || arr.Name == nil || *arr.Name == "" {
 				return fmt.Errorf("provided resource reference is nil or empty")
@@ -491,11 +488,9 @@ func resolveReferenceForSubnetIDs(
 					namespace, *arr.Name)
 			}
 			if !refResourceSynced {
-				//TODO(vijtrip2) Uncomment below return statment once
-				// ConditionTypeResourceSynced(True/False) is set for all resources
-				//return ackerr.ResourceReferenceNotSyncedFor(
-				//	"Subnet",
-				//	namespace, *arr.Name)
+				return ackerr.ResourceReferenceNotSyncedFor(
+					"Subnet",
+					namespace, *arr.Name)
 			}
 			if obj.Status.SubnetID == nil {
 				return ackerr.ResourceReferenceMissingTargetFieldFor(
