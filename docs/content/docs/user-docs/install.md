@@ -38,7 +38,7 @@ Helm charts for individual ACK service controllers are tagged with their release
 [ack-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s
 [s3-ecr-chart]: https://gallery.ecr.aws/aws-controllers-k8s/s3-chart
 
-Before installing a Helm chart, you must first make the Helm chart available on the `Deployment` host. To do so, use the `helm pull` command and then extract the chart:
+Before installing a Helm chart, you must first make the Helm chart available on the deployment host. To do so, use the `helm pull` command and then extract the chart:
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
@@ -63,16 +63,16 @@ different version, change the `RELEASE_VERSION` variable and execute the command
 Once the Helm chart is downloaded and exported, you can install a particular ACK service controller using the `helm install` command:
 
 ```bash
-export ACK_K8S_NAMESPACE=ack-system
+export ACK_SYSTEM_NAMESPACE=ack-system
 export AWS_REGION=us-west-2
 
-helm install --create-namespace --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+helm install --create-namespace --namespace $ACK_SYSTEM_NAMESPACE ack-$SERVICE-controller \
     --set aws.region="$AWS_REGION" \
     $CHART_EXPORT_PATH/$SERVICE-chart
 ```
 
-{{% hint type="info" title="Specify your region" %}}
-The commands above set the service region of the S3 controller to `us-west-2`. Be sure to specify your region in the `AWS_REGION` variable.
+{{% hint type="info" title="Specify your target service region" %}}
+The commands above set the target service region of the S3 controller to `us-west-2`. Be sure to specify your target service region in the `AWS_REGION` variable. This will be the *default* AWS region in which resources will be created by the ACK service controller. Note that a single ACK service controller can manage the lifecycle of resources in multiple AWS regions: simply add the `services.k8s.aws/region=$REGION` annotation to your resource. Alternately, you can add the `services.k8s.aws/region=$REGION` annotation to a Kubernetes `Namespace` and any resource launched in that `Namespace` will be created in that region by default.
 {{% /hint %}}
 
 The `helm install` command should return relevant installation information:
@@ -89,7 +89,7 @@ TEST SUITE: None
 To verify that the Helm chart was installed, use the `helm list` command:
 
 ```bash
-helm list --namespace $ACK_K8S_NAMESPACE -o yaml
+helm list --namespace $ACK_SYSTEM_NAMESPACE -o yaml
 ```
 
 The `helm list` command should return your newly-deployed Helm chart release information:
