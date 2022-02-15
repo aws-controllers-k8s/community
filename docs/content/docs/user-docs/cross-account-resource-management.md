@@ -1,5 +1,5 @@
 ---
-title: "Manage Resources In Multiple AWS Accounts (CARM)"
+title: "Manage Resources In Multiple AWS Accounts"
 description: "Managing resources in different AWS accounts"
 lead: ""
 draft: false
@@ -17,6 +17,10 @@ ACK service controllers can manage resources in different AWS accounts. To enabl
   3. Annotate namespaces with AWS Account IDs
 
 For detailed information about how ACK service controllers manage resources in multiple AWS accounts, please refer to the Cross-Account Resource Management (CARM) [design document](https://github.com/aws-controllers-k8s/community/blob/main/docs/design/proposals/carm/cross-account-resource-management.md).
+
+{{% hint type="note" title="To use CARM, `--watch-namespace` must be empty" %}}
+ACK service controllers may be started in either Cluster Mode or Namespace Mode. When a service controller is started in Namespace Mode, the `--watch-namespace` flag is supplied and the controller will *only* watch for custom resources (CRs) in that Kubernetes Namespace. Because the cross-account resource management feature requires the controller to watch for custom resources on many Kubernetes Namespaces, this feature is incompatible with the Namespace Mode of running a controller and thus the `--watch-namespace` flag must not be set (or be set to an empty string).
+{{% /hint %}}
 
 ## Step 1: Configure your AWS accounts
 
@@ -41,7 +45,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ack-role-account-map
-  namespace: ack-system
+  namespace: $ACK_SYSTEM_NAMESPACE
 data:
   "111111111111": arn:aws:iam::111111111111:role/s3FullAccess
 EOF
