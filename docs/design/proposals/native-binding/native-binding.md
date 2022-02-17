@@ -105,13 +105,13 @@ Requiring annotations also directly ties bindings of output from a custom resour
 
 ### ConfigMap/Secret Annotations
 
-Similarly to [CR Annotations](https://quip-amazon.com/dJcSArSu9liR#temp:C:QZS1aad095c381f0046595f32aba), ConfigMap annotations would introduce a set of “export specifier annotations” that could be applied onto the ConfigMap and Secret resources. The ACK controller would have an informer for all ConfigMap and Secrets within the cluster and recognise when these annotations have been attached.
+Similarly to [CR Annotations](#cr-annotations), ConfigMap annotations would introduce a set of “export specifier annotations” that could be applied onto the ConfigMap and Secret resources. The ACK controller would have an informer for all ConfigMap and Secrets within the cluster and recognise when these annotations have been attached.
 
-This approach introduces the same set of challenges as the [CR Annotations](https://quip-amazon.com/dJcSArSu9liR#temp:C:QZS1aad095c381f0046595f32aba) examples - mainly that it would not scale for multiple fields. However, this approach would decouple the binding from the ACK resource, as the binding now lives on a resource type that application developers could have uncontrolled access to. 
+This approach introduces the same set of challenges as the [CR Annotations](#cr-annotations) examples - mainly that it would not scale for multiple fields. However, this approach would decouple the binding from the ACK resource, as the binding now lives on a resource type that application developers could have uncontrolled access to. 
 
 ### CR MapToSecret Fields
 
-Crossplane has decided to tackle this problem by introducing a new field (`[writeConnectionSecretToRef](https://doc.crds.dev/github.com/crossplane/provider-aws/eks.aws.crossplane.io/Cluster/v1beta1@v0.23.0)`) into the spec of each of their custom resources. After the user specifies a namespaced name of a secret, the controller knows to write the “connection secret” of the resource once it has been created. This field only exists on resources that have a “connection secret”, which may be a connection string or URL, such as on a database or a cluster. 
+Crossplane has decided to tackle this problem by introducing a new field ([`writeConnectionSecretToRef`](https://doc.crds.dev/github.com/crossplane/provider-aws/eks.aws.crossplane.io/Cluster/v1beta1@v0.23.0)) into the spec of each of their custom resources. After the user specifies a namespaced name of a secret, the controller knows to write the “connection secret” of the resource once it has been created. This field only exists on resources that have a “connection secret”, which may be a connection string or URL, such as on a database or a cluster. 
 
 As per the requirements for this design, ACK needs to support exporting of any spec or status field. Therefore, we would need to add to the spec of every CRD either:
 
@@ -120,7 +120,7 @@ As per the requirements for this design, ACK needs to support exporting of any s
 
 Option 1 would double the number of spec fields and add another field for every status field. This would be far too many optional fields on the resource and definitely lead to customer confusion. Therefore it should absolutely be ruled out.
 
-Option 2 would only add a single new spec field for every CRD. This spec field would essentially encapsulate the information offered in the [CR Annotations](https://quip-amazon.com/dJcSArSu9liR#temp:C:QZS1aad095c381f0046595f32aba) example, however placing it into a strongly-typed struct in the spec rather than in the weakly-typed annotation. Just like that solution, though, it would also tie the binding of output from a custom resource directly to the custom resource.
+Option 2 would only add a single new spec field for every CRD. This spec field would essentially encapsulate the information offered in the [CR Annotations](#cr-annotations) example, however placing it into a strongly-typed struct in the spec rather than in the weakly-typed annotation. Just like that solution, though, it would also tie the binding of output from a custom resource directly to the custom resource.
 
 As an example of option 2:
 
