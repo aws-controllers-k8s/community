@@ -130,14 +130,13 @@ kind: VPC
 metadata:
   name: my-exported-vpc
 spec:
-  `cidrBlock: 10.0.0.0/16
+  cidrBlock: 10.0.0.0/16
   exportedFields:
   - path: ".status.vpcID"
     destinations:
     - type: "ConfigMap"
       namespace: "my-other-namespace"
       name: "my-exported-configmap"
-`
 ```
 
 ## FAQ
