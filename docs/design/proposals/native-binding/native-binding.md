@@ -29,8 +29,8 @@ This design aims to address two separate use cases:
 
 ## Requirements
 
-1. Export any number of Spec and/or Status values to application consumable
-   formats (ConfigMap and Secrets)
+1. Allow the cluster operator to configure an ACK controller to write the value
+  of a custom resource Spec or Status field to either a ConfigMap or a Secret
 2. Export to any namespace (for cluster-scoped controllers only)
 3. The exported value should stay in sync as the resource changes
 4. Resources should not need to be updated to add/remove bindings
@@ -46,11 +46,11 @@ This design aims to address two separate use cases:
 
 The [Redhat Service Binding
 Operator](https://github.com/redhat-developer/service-binding-operator) (herein
-called the SBO) uses annotations present on CRs and resources to import field
-values from other resources. The main purpose of SBO is to standardise the
-system for injecting secret information from database services into application
-deployment environment variables. The SBO can automatically detect and bind to
-services only from a limited number of [supported
+called the SBO) uses annotations on resources to import field values from other
+resources. The main purpose of SBO is to standardise the system for injecting
+secret information from database services into application deployment
+environment variables. The SBO can automatically detect and bind to services
+only from a limited number of [supported
 operators](https://github.com/redhat-developer/service-binding-operator#known-bindable-operators). 
 
 SBO is not suitable for this design as it can only support a limited number of
@@ -100,7 +100,7 @@ metadata:
   name: export-vpc-id
 spec:
   to:
-    type: ConfigMap
+    kind: ConfigMap
     namespace: my-other-namespace
     name: my-exported-configmap
   from:
