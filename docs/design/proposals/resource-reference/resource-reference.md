@@ -114,7 +114,7 @@ resources:
 // AWSResourceReferenceWrapper provides a wrapper around *AWSResourceReference
 // type to provide more user friendly syntax for references using 'from' field
 // Ex:
-// APIIDRef:
+// APIRef:
 //   from:
 //     name: my-api
 type AWSResourceReferenceWrapper struct {
@@ -153,7 +153,7 @@ kind: Integration
 metadata:
   name: my-integration
 spec:
-  apiIDRef:
+  apiRef:
     from:
       name: my-api
   integrationType: HTTP_PROXY
@@ -402,16 +402,16 @@ func (rm *resourceManager) ResolveReferences(
 ) (acktypes.AWSResource, error) {
   ko := rm.concreteResource(res).ko.DeepCopy()
   referencePresent := false
-  if ko.Spec.APIIDRef != nil && ko.Spec.APIID != nil {
-    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'APIID' field should not be present when using reference field 'APIIDRef'"))
+  if ko.Spec.APIRef != nil && ko.Spec.APIID != nil {
+    return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("'APIID' field should not be present when using reference field 'APIRef'"))
   }
-  if ko.Spec.APIIDRef == nil && ko.Spec.APIID == nil {
-    return &resource{ko}, fmt.Errorf("At least one of 'APIID' or 'APIIDRef' field should be present")
+  if ko.Spec.APIRef == nil && ko.Spec.APIID == nil {
+    return &resource{ko}, fmt.Errorf("At least one of 'APIID' or 'APIRef' field should be present")
   }
-  // Checking Referenced Field APIIDRef
-  if ko.Spec.APIIDRef != nil && ko.Spec.APIIDRef.From != nil {
+  // Checking Referenced Field APIRef
+  if ko.Spec.APIRef != nil && ko.Spec.APIRef.From != nil {
     referencePresent = true
-    arr := ko.Spec.APIIDRef.From
+    arr := ko.Spec.APIRef.From
     if arr == nil || arr.Name == nil || *arr.Name == "" {
       return ackcondition.WithReferenceResolvedCondition(&resource{ko}, fmt.Errorf("provided resource reference is nil or empty"))
     }
