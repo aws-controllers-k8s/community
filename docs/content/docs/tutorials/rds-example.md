@@ -42,13 +42,13 @@ This guide assumes that you have:
 You can deploy the ACK service controller for Amazon RDS using the [rds-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/rds-chart). You can download it to your workspace using the following command:
 
 ```bash
-helm pull oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.15
+helm pull oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.17
 ````
 
 You will need to decompress and extract the Helm chart. You can do so with the following command:
 
 ```bash
-tar xzvf rds-chart-v0.0.15.tgz
+tar xzvf rds-chart-v0.0.17.tgz
 ```
 
 You can now use the Helm chart to deploy the ACK service controller for Amazon RDS to your EKS cluster. At a minimum, you need to specify the AWS Region to execute the RDS API calls.
