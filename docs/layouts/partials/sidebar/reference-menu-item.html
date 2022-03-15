@@ -1,0 +1,27 @@
+{{ $root := . }}
+<li class="mb-1">
+  {{ $serviceActive := eq $root.currentService $root.service.name }}
+  <button class="btn btn-toggle align-items-center rounded {{ if not $serviceActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ .service.name }}" aria-expanded="{{ if not $root.serviceActive }} false{{ else }}true{{ end }}">
+    {{ $root.service.service_metadata.service.short_name }}
+  </button>
+  <div class="collapse position-relative{{ if $serviceActive }} show{{ end }}" id="section-{{ $root.service.name }}">
+    {{ range $api_version := sort $root.service.service_metadata.api_versions }}
+      {{ $versionActive := and $serviceActive (eq $root.currentVersion ($api_version.api_version | lower)) }}
+      <button class="btn btn-toggle align-items-center rounded ms-2 small{{ if not $versionActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ $root.service.name }}-{{ $api_version.api_version }}" aria-expanded="{{ if not $versionActive }} false{{ else }}true{{ end }}">
+        {{ $api_version.api_version }}
+      </button>
+      {{ $versionAvailable := $api_version.status }}
+      <span class="badge bg-{{ if (eq $versionAvailable "available") }}success{{ else }}light{{ end }} position-absolute end-0">{{ if (eq $versionAvailable "available") }}Active{{ else }}Inactive{{ end }}</span>
+      <div class="collapse ms-2{{ if $versionActive }} show{{ end }}" id="section-{{ $root.service.name }}-{{ $api_version.api_version }}">
+        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        {{ range $resource := sort $root.service.resources "name" "asc" -}}
+          {{ if eq $resource.api_version $api_version.api_version -}}
+            {{ $resourceActive := and $versionActive (eq $root.currentResource (.name | lower)) }}
+            <li><a class="docs-link rounded{{ if $resourceActive }} active{{ end }}" href="{{ printf "reference/%s/%s/%s/" $root.service.name .api_version .name | lower | relURL }}">{{ .name }}</a></li>
+          {{ end -}}
+        {{ end -}}
+        </ul>
+      </div>
+    {{ end -}}
+  </div>
+</li>
