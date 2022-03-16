@@ -17,12 +17,12 @@ Kubernetes data plane. The ACK `FieldExport` custom resource was designed to
 bridge the gap between managing the control plane of your ACK resources and
 using the properties of those in your application.
 
-The `FieldExport` resource configures any of the ACK
+The `FieldExport` resource configures an ACK
 controllers to bind and export any spec or status field from an ACK resource
 into a Kubernetes config map or secret. These fields are automatically updated
-as the field value changes over time. You are then able to mount the config map
-or secret onto your Kubernetes pods as environment variables to ingest those
-values. 
+when any field value changes You are then able to mount the `ConfigMap`
+or `Secret` onto your Kubernetes Pods as environment variables that can ingest
+those values.
 
 `FieldExport` is included by default in every ACK controller installation and
 can be used to reference any field within the `Spec` or `Status` of any ACK
