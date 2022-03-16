@@ -1,7 +1,7 @@
 ---
-title: "Export a Field"
+title: "Copy a resource field into a ConfigMap or Secret"
 description: "Using the FieldExport custom resource"
-lead: "Exporting a spec or status field using the FieldExport resource"
+lead: "Exporting a Spec or Status field using the FieldExport resource"
 draft: false
 menu:
   docs:
@@ -15,14 +15,13 @@ custom resources. Their responsibilities end after managing the lifecycle of
 your AWS resource and do not extend into binding to applications running in the
 Kubernetes data plane. The ACK `FieldExport` custom resource was designed to
 bridge the gap between managing the control plane of your ACK resources and
-using the properties of those in your application.
+using the properties of those resources in your application.
 
-The `FieldExport` resource configures an ACK
-controllers to bind and export any spec or status field from an ACK resource
-into a Kubernetes config map or secret. These fields are automatically updated
-when any field value changes You are then able to mount the `ConfigMap`
-or `Secret` onto your Kubernetes Pods as environment variables that can ingest
-those values.
+The `FieldExport` resource configures an ACK controller to export any spec or
+status field from an ACK resource into a Kubernetes `ConfigMap` or `Secret`.
+These fields are automatically updated when any field value changes. You are
+then able to mount the `ConfigMap` or `Secret` onto your Kubernetes Pods as
+environment variables that can ingest those values. 
 
 `FieldExport` is included by default in every ACK controller installation and
 can be used to reference any field within the `Spec` or `Status` of any ACK
@@ -69,7 +68,7 @@ Applying this manifest to the cluster will:
 1. Create a new S3 bucket called `doc-example-bucket`
 1. Create a `ConfigMap` called `application-user-data-cm`
 1. Create a `FieldExport` called `export-user-data-bucket` that will export the
-   `.status.location` path from the bucket into the config map
+   `.status.location` path from the bucket into the ConfigMap
 
 After the reconciler has created the bucket, the `application-user-data-cm`
 `ConfigMap` looks like the following:
@@ -102,7 +101,7 @@ spec:
     - name: USER_DATA_BUCKET_LOCATION
       valueFrom:
         configMapKeyRef:
-          name: application-user-data-cm # The config map that we created earlier
+          name: application-user-data-cm # The ConfigMap that we created earlier
           key: "default.export-user-data-bucket"
 ```
 
