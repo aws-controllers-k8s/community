@@ -34,7 +34,7 @@ class Field:
 class Resource:
     name: str
     service: str
-    service_package: str
+    crd_package_path: str
     group: str
     api_version: str
     description: str
@@ -118,7 +118,11 @@ def convert_field(name: str, property: Dict, required=False) -> Field:
         contains_description=contains_description
     )
 
-def convert_crd_to_resource(crd: Dict, service: str, service_package: str = "") -> Resource:
+def convert_crd_to_resource(crd: Dict, service: str, crd_package_path: str = "") -> Resource:
+    # Default the CRD package path
+    if crd_package_path == "":
+        crd_package_path = f"{service}-controller/apis"
+
     ver = crd['spec']['versions'][0]
     schema = ver['schema']['openAPIV3Schema']
     res_spec = []
@@ -146,7 +150,7 @@ def convert_crd_to_resource(crd: Dict, service: str, service_package: str = "") 
     return Resource(
         name=crd['spec']['names']['kind'],
         service=service,
-        service_package=f"{service}-controller/apis" if service_package == "" else service_package,
+        crd_package_path=crd_package_path,
         group=crd['spec']['group'],
         api_version=ver['name'],
         description=spec.get('description', ''),
@@ -160,14 +164,14 @@ def write_service_pages(
     service: str,
     service_path: Path,
     page_output_path: Path,
-    service_package: str = "",
+    crd_package_path: str = "",
 ) -> List[ResourceOverview]:
     resources = []
 
     for crd_path in Path(service_path).rglob('*.yaml'):
         crd = load_yaml(crd_path)
 
-        resource = convert_crd_to_resource(crd, service, service_package)
+        resource = convert_crd_to_resource(crd, service, crd_package_path)
 
         resources.append(ResourceOverview(name=resource.name,
             api_version=resource.api_version))
