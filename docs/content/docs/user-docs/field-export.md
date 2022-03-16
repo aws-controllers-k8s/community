@@ -111,6 +111,10 @@ environment is set with the value from the `ConfigMap`:
 USER_DATA_BUCKET_LOCATION=http://doc-example-bucket.s3.amazonaws.com/
 ```
 
+For a more comprehensive example of using `FieldExport` with multiple fields,
+check out the [Deploy PostgreSQL + MariaDB Instances Using the ACK RDS
+Controller tutorial][rds-tutorial]
+
 {{% hint type="warning" title="`FieldExport` RBAC permissions" %}}
 The ACK controller will fetch the source path from the ACK resource assuming
 its service account has the RBAC permissions to read that type of resource. If a
@@ -125,3 +129,4 @@ requesting it. {{% /hint %}}
 
 [spec-reference]: ../../../reference/common/v1alpha1/fieldexport/
 [bucket-spec]: ../../../reference/s3/v1alpha1/fieldexport/bucket/#spec
+[rds-tutorial]: ../../tutorials/rds-example/
