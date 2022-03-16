@@ -100,7 +100,7 @@ body.dark .alert-warning {
 }
 
 body.dark .page-links a {
-  color: $body-color-dark;
+  color: darken($body-color-dark, 20%);
 }
 
 body.dark .btn-toggle-nav a {
@@ -127,8 +127,7 @@ body.dark .showcase-meta a:focus {
 }
 
 body.dark .docs-link:hover,
-body.dark .docs-link.active,
-body.dark .page-links a:hover {
+body.dark .docs-link.active {
   text-decoration: none;
 }
 
