@@ -111,6 +111,13 @@ For controllers started in Cluster Mode, the `ClusterRole` must have
 permissions to read `Secret` resources in *any Kubernetes `Namespace` within
 which ACK custom resources may be launched*.
 
+In order to support the `FieldExport` custom resource, all controllers will
+install with permissions to read and patch `ConfigMap` and `Secret` resources in
+any namespace. Read the [documentation on `FieldExport`][field-export] for more
+information about the RBAC scope.
+
+[field-export]: ../field-export/
+
 ### Roles for reading and writing ACK custom resources
 
 As part of installation, Kubernetes `Role` resources are automatically created. These roles contain permissions to modify the Kubernetes custom resources (CRs) that the ACK service controller is responsible for.
