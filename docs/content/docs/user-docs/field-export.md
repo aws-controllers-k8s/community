@@ -106,8 +106,8 @@ spec:
           key: "default.export-user-data-bucket"
 ```
 
-Looking at the container logs, you can see the environment variable has been
-properly included:
+Looking at the container logs, you can see the `USER_DATA_BUCKET_LOCATION`
+environment is set with the value from the `ConfigMap`:
 ```bash
 USER_DATA_BUCKET_LOCATION=http://doc-example-bucket.s3.amazonaws.com/
 ```
