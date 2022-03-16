@@ -118,7 +118,7 @@ its service account has the RBAC permissions to read that type of resource. If a
 user has the privileges to create a `FieldExport` resource, it is possible that
 they can create one which fetches fields from a resource they do not have RBAC
 permissions to read directly. This could potentially expose that resource's
-properties to the user.
+properties to the unprivileged user.
 
 To mitigate this problem, the ACK controller will only export fields from
 resources that exist in the same namespace as the `FieldExport` resource
