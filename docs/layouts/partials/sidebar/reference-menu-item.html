@@ -11,7 +11,7 @@
         {{ $api_version.api_version }}
       </button>
       {{ $versionAvailable := $api_version.status }}
-      <span class="badge bg-{{ if (eq $versionAvailable "available") }}success{{ else }}light{{ end }} position-absolute end-0">{{ if (eq $versionAvailable "available") }}Active{{ else }}Inactive{{ end }}</span>
+      <span class="badge bg-{{ if (eq $versionAvailable "available") }}success{{ else }}light{{ end }} fw-normal text-uppercase position-absolute end-0">{{ if (eq $versionAvailable "available") }}Active{{ else }}Inactive{{ end }}</span>
       <div class="collapse ms-2{{ if $versionActive }} show{{ end }}" id="section-{{ $root.service.name }}-{{ $api_version.api_version }}">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         {{ range $resource := sort $root.service.resources "name" "asc" -}}
