@@ -104,6 +104,16 @@ body.dark .page-links a {
 }
 
 body.dark .btn-toggle-nav a {
+  color: darken($body-color-dark, 20%);
+}
+
+body.dark .btn-toggle-nav a:hover,
+body.dark .btn-toggle-nav a:focus {
+  background-color: rgba($link-color-dark, 0.1);
+  color: darken($body-color-dark, 10%);
+}
+
+body.dark .btn-toggle-nav a.active {
   color: $body-color-dark;
 }
 
@@ -120,18 +130,22 @@ body.dark .docs-link:hover,
 body.dark .docs-link.active,
 body.dark .page-links a:hover {
   text-decoration: none;
-  color: $link-color-dark;
 }
 
 body.dark .btn-toggle {
   color: $body-color-dark;
   background-color: transparent;
-  border: 0;
 }
 
 body.dark .btn-toggle:hover,
 body.dark .btn-toggle:focus {
   color: $body-color-dark;
+  background-color: rgba($link-color-dark, 0.3);
+  border-color: rgba($link-color-dark, 0.3);
+}
+
+body.dark .btn-toggle:focus {
+  border-color: $link-color-dark;
 }
 
 body.dark .btn-toggle::before {
@@ -149,15 +163,6 @@ body.dark .btn-toggle[aria-expanded="true"] {
 
 body.dark .btn-toggle[aria-expanded="true"]::before {
   transform: rotate(90deg);
-}
-
-body.dark .btn-toggle-nav a:hover,
-body.dark .btn-toggle-nav a:focus {
-  color: $link-color-dark;
-}
-
-body.dark .btn-toggle-nav a.active {
-  color: $link-color-dark;
 }
 
 body.dark .navbar-light .navbar-text a {
@@ -299,10 +304,6 @@ body.dark .docs-toc::-webkit-scrollbar-thumb:hover {
 
 body.dark .docs-links h3:not(:first-child) {
   border-top: 1px solid $border-dark;
-}
-
-body.dark a.docs-link {
-  color: $body-color-dark;
 }
 
 body.dark .page-links li:not(:first-child) {

@@ -55,13 +55,6 @@
   border-top: 1px solid $gray-200;
 }
 
-a.docs-link {
-  color: $body-color;
-  display: block;
-  padding: 0.125rem 0;
-  font-size: $font-size-base;
-}
-
 .page-links li {
   margin-top: 0.375rem;
   padding-top: 0.375rem;
@@ -76,34 +69,4 @@ a.docs-link {
 
 .page-links li:not(:first-child) {
   border-top: 1px dashed $gray-200;
-}
-
-.page-links a {
-  color: $body-color;
-  display: block;
-  font-size: $font-size-base * 0.95;
-}
-
-.docs-link:hover,
-.docs-link.active,
-.page-links a:hover {
-  text-decoration: none;
-  color: $link-color;
-}
-
-.docs-links h3.sidebar-link,
-.page-links h3.sidebar-link {
-  text-transform: none;
-  font-size: $font-size-md;
-  font-weight: normal;
-}
-
-.docs-links h3.sidebar-link a,
-.page-links h3.sidebar-link a {
-  color: $body-color;
-}
-
-.docs-links h3.sidebar-link a:hover,
-.page-links h3.sidebar-link a:hover {
-  text-decoration: underline;
 }
