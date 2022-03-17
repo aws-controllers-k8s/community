@@ -132,21 +132,27 @@ pre {
 .btn-toggle {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem 0.25rem 0;
-  font-weight: $headings-font-weight;
-  font-size: $font-size-base;
-  text-transform: uppercase;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
   color: $body-color;
   background-color: transparent;
-  border: 0;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: $font-size-md;
+  -moz-osx-font-smoothing: grayscale;
+  margin-bottom: 0.125rem;
 }
 
 .btn-toggle:hover,
 .btn-toggle:focus {
   color: $body-color;
-  background-color: transparent;
+  background-color: rgba($link-color, 0.1);
+  border: 1px solid rgba($link-color, 0.1);
   outline: 0;
   box-shadow: none;
+}
+
+.btn-toggle:focus {
+  border: 1px solid $link-color;
 }
 
 .btn-toggle::before {
@@ -172,14 +178,16 @@ pre {
   margin-top: 0.125rem;
   margin-left: 1.25rem;
   text-decoration: none;
+  color: lighten($body-color, 20%);
 }
 
 .btn-toggle-nav a:hover,
 .btn-toggle-nav a:focus {
-  background-color: transparent;
-  color: $link-color;
+  background-color: rgba($link-color, 0.1);
+  color: lighten($body-color, 10%);
 }
 
 .btn-toggle-nav a.active {
-  color: $link-color;
+  font-weight: 600;
+  color: $body-color;
 }
