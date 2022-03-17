@@ -61,7 +61,7 @@ aws iam attach-user-policy \
     --policy-arn 'arn:aws:iam::aws:policy/AmazonElastiCacheFullAccess'
 ```
 
-### Step 3: Create `ack-user-config` and `ack-user-secrets` for authentication
+### Step 3: Create `ack-$SERVICE-user-config` and `ack-$SERVICE-user-secrets` for authentication
 
 Enter the `ack-system` namespace. Create a file, `config.txt`, with the following variables, leaving `ACK_WATCH_NAMESPACE` blank so the controller can properly watch all namespaces, and change any other values to suit your needs:
 
@@ -75,9 +75,11 @@ ACK_RESOURCE_TAGS=hellofromocp
 
 Now use `config.txt` to create a `ConfigMap` in your OpenShift cluster:
 ```bash
+export SERVICE=elasticache
+
 oc create configmap \
 --namespace ack-system \
---from-env-file=config.txt ack-user-config
+--from-env-file=config.txt ack-$SERVICE-user-config
 ```
 
 Save another file, `secrets.txt`, with the following authentication values, which you should have saved from earlier when you created your user's access keys:
@@ -90,13 +92,13 @@ Use `secrets.txt` to create a `Secret` in your OpenShift cluster:
 ```bash
 oc create secret generic \
 --namespace ack-system \
---from-env-file=secrets.txt ack-user-secrets
+--from-env-file=secrets.txt ack-$SERVICE-user-secrets
 ```
 
 Delete `config.txt` and `secrets.txt`.
 
 {{% hint type="warning" title="Warning" %}}
-If you change the name of either the `ConfigMap` or the `Secret` from the values given above, i.e. `ack-user-config` and `ack-user-secrets`, then installations from OperatorHub will not function properly. The Deployment for the controller is preconfigured for these key values.
+If you change the name of either the `ConfigMap` or the `Secret` from the values given above, i.e. `ack-$SERVICE-user-config` and `ack-$SERVICE-user-secrets`, then installations from OperatorHub will not function properly. The Deployment for the controller is preconfigured for these key values.
 {{% /hint %}}
 
 ### Step 4: Install the controller
@@ -116,14 +118,14 @@ Navigate in the OpenShift dashboard to the OperatorHub page and search for the c
 
 Delete the following `ConfigMap` you created in pre-installation:
 ```bash
-oc delete configmap ack-user-config
+oc delete configmap ack-$SERVICE-user-config
 ```
 
 ### Delete user Secret
 
 Delete the folllowing `Secret` you created in pre-installation:
 ```bash
-oc delete secret ack-user-secrets
+oc delete secret ack-$SERVICE-user-secrets
 ```
 
 ## Next Steps
