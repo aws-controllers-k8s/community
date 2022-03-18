@@ -1,28 +1,24 @@
 {{ define "main" }}
 <div class="row justify-content-center">
-    <div class="col-lg-5 col-xl-4 docs-sidebar">
-        <nav class="docs-links" aria-label="Main navigation">
-            {{ partial "sidebar/reference-menu.html" . }}
-        </nav>
-    </div>
+    {{ partial "sidebar/reference-menu.html" .}}
     <div class="col-lg-11 col-xl-9 mx-xl-auto">
         <article>
             <h1 class="text">{{ .Title }}</h1>
             <div class="text">{{ .Content }}</div>
             <div class="card-list">
+                <!-- Find common and place it first -->
                 {{ range sort .Site.Data.overview.services "name" "asc" }}
-                    <h2>{{ .service_metadata.service.short_name }}</h2>
-                    <div class="card my-3">
-                        <ul class="list-group list-group-flush">
-                            {{ $service := . }}
-                            {{ range sort .resources "name" "asc" }}
-                            <div class="list-group-item d-flex flex-row align-items-center">
-                                <a class="stretched-link flex-fill" href="{{ printf "reference/%s/%s/%s/" $service.name .api_version .name | lower | relURL }}">{{ .name }}</a>
-                                <small>{{ .api_version }}</small>
-                            </div>
-                            {{ end }}
-                        </ul>
-                    </div>
+                    {{ if eq (lower .service_metadata.service.short_name) "common" }}
+                        {{ partial "sidebar/list-card" . }}
+                    {{ end -}}
+                {{ end }}
+
+                <hr />
+
+                {{ range sort .Site.Data.overview.services "name" "asc" }}
+                    {{ if not (eq (lower .service_metadata.service.short_name) "common" ) }}
+                        {{ partial "sidebar/list-card" . }}
+                    {{ end -}}
                 {{ end }}
             </div>
             

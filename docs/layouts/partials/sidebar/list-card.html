@@ -1,0 +1,12 @@
+<h2>{{ .service_metadata.service.short_name }}</h2>
+<div class="card my-3">
+    <ul class="list-group list-group-flush">
+        {{ $service := . }}
+        {{ range sort .resources "name" "asc" }}
+        <div class="list-group-item d-flex flex-row align-items-center">
+            <a class="stretched-link flex-fill" href="{{ printf "reference/%s/%s/%s/" $service.name .api_version .name | lower | relURL }}">{{ .name }}</a>
+            <small>{{ .api_version }}</small>
+        </div>
+        {{ end }}
+    </ul>
+</div>

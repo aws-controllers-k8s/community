@@ -1,35 +1,28 @@
-{{ if .Site.Params.options.collapsibleSidebar -}}
-  <ul class="list-unstyled collapsible-sidebar">
-  {{ $currentPage := . -}}
-  {{- $pageSplit := split .RelPermalink "/" -}}
-  {{ $currentService := cond (ge (len $pageSplit) 2) (index $pageSplit 2) "" }}
-  {{ $currentVersion := cond (ge (len $pageSplit) 3) (index $pageSplit 3) "" }}
-  {{ $currentResource := cond (ge (len $pageSplit) 4) (index $pageSplit 4) "" }}
-  {{ range $service := sort .Site.Data.overview.services "name" "asc" }}
-    <li class="mb-1">
-      {{ $serviceActive := eq $currentService $service.name }}
-      <button class="btn btn-toggle align-items-center rounded {{ if not $serviceActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ $service.name }}" aria-expanded="{{ if not $serviceActive }} false{{ else }}true{{ end }}">
-        {{ $service.service_metadata.service.short_name }}
-      </button>
-      <div class="collapse{{ if $serviceActive }} show{{ end }}" id="section-{{ $service.name }}">
-        {{ range $api_version := sort $service.service_metadata.api_versions }}
-          {{ $versionActive := and $serviceActive (eq $currentVersion ($api_version.api_version | lower)) }}
-          <button class="btn btn-toggle align-items-center rounded ms-2 small{{ if not $versionActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ $service.name }}-{{ $api_version.api_version }}" aria-expanded="{{ if not $versionActive }} false{{ else }}true{{ end }}">
-            {{ $api_version.api_version }}
-          </button>
-          <div class="collapse ms-2{{ if $versionActive }} show{{ end }}" id="section-{{ $service.name }}-{{ $api_version.api_version }}">
-            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-            {{ range $resource := sort $service.resources "name" "asc" -}}
-              {{ if eq $resource.api_version $api_version.api_version -}}
-                {{ $resourceActive := and $versionActive (eq $currentResource (.name | lower)) }}
-                <li><a class="docs-link rounded{{ if $resourceActive }} active{{ end }}" href="{{ printf "reference/%s/%s/%s/" $service.name .api_version .name | lower | relURL }}">{{ .name }}</a></li>
-              {{ end -}}
+<div class="col-lg-5 col-xl-4 docs-sidebar">
+    <nav class="docs-links" aria-label="Main navigation">
+        {{ if .Site.Params.options.collapsibleSidebar -}}
+            <ul class="list-unstyled collapsible-sidebar">
+            {{ $currentPage := . -}}
+            {{- $pageSplit := split .RelPermalink "/" -}}
+            {{ $currentService := cond (ge (len $pageSplit) 2) (index $pageSplit 2) "" }}
+            {{ $currentVersion := cond (ge (len $pageSplit) 3) (index $pageSplit 3) "" }}
+            {{ $currentResource := cond (ge (len $pageSplit) 4) (index $pageSplit 4) "" }}
+            
+            <!-- Find common and place it first -->
+            {{ range $service := sort .Site.Data.overview.services "name" "asc" }}
+                {{ if eq (lower $service.service_metadata.service.short_name) "common" }}
+                    {{ partial "sidebar/reference-menu-item.html" (dict "currentService" $currentService "currentVersion" $currentVersion "currentResource" $currentResource "service" $service) }}
+                {{ end -}}
+            {{ end -}}    
+
+            <hr />
+
+            {{ range $service := sort .Site.Data.overview.services "name" "asc" }}
+                {{ if not (eq (lower $service.service_metadata.service.short_name) "common" ) }}
+                    {{ partial "sidebar/reference-menu-item.html" (dict "currentService" $currentService "currentVersion" $currentVersion "currentResource" $currentResource "service" $service) }}
+                {{ end -}}
             {{ end -}}
             </ul>
-          </div>
         {{ end -}}
-      </div>
-    </li>
-  {{ end -}}
-  </ul>
-{{ end -}}
+    </nav>
+</div>

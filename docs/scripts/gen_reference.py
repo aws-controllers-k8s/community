@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import os
+import sys
 
 import yaml
 import argparse
@@ -33,6 +34,7 @@ class Field:
 class Resource:
     name: str
     service: str
+    crd_package_path: str
     group: str
     api_version: str
     description: str
@@ -116,7 +118,11 @@ def convert_field(name: str, property: Dict, required=False) -> Field:
         contains_description=contains_description
     )
 
-def convert_crd_to_resource(crd: Dict, service) -> Resource:
+def convert_crd_to_resource(crd: Dict, service: str, crd_package_path: str = "") -> Resource:
+    # Default the CRD package path
+    if crd_package_path == "":
+        crd_package_path = f"{service}-controller/apis"
+
     ver = crd['spec']['versions'][0]
     schema = ver['schema']['openAPIV3Schema']
     res_spec = []
@@ -144,6 +150,7 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
     return Resource(
         name=crd['spec']['names']['kind'],
         service=service,
+        crd_package_path=crd_package_path,
         group=crd['spec']['group'],
         api_version=ver['name'],
         description=spec.get('description', ''),
@@ -155,16 +162,17 @@ def convert_crd_to_resource(crd: Dict, service) -> Resource:
 
 def write_service_pages(
     service: str,
-    metadata: ServiceMetadata,
     service_path: Path,
     page_output_path: Path,
+    crd_package_path: str = "",
 ) -> List[ResourceOverview]:
     resources = []
 
     for crd_path in Path(service_path).rglob('*.yaml'):
         crd = load_yaml(crd_path)
 
-        resource = convert_crd_to_resource(crd, service)
+        resource = convert_crd_to_resource(crd, service, crd_package_path)
+
         resources.append(ResourceOverview(name=resource.name,
             api_version=resource.api_version))
 
@@ -193,6 +201,27 @@ def load_metadata_config(metadata_config_path: Path) -> ServiceMetadata:
         api_versions.append(MetadataAPIVersion(**version))
     return ServiceMetadata(description, api_versions)
 
+def generate_runtime_resources(
+    src_parent: Path,
+) -> ServiceOverview:
+    runtime_repo = src_parent / "runtime"
+    if not runtime_repo.is_dir():
+        logging.error(f"Could not find the runtime repository")
+        return 1
+
+    runtime_bases_path = runtime_repo / bases_path
+    if not runtime_bases_path.is_dir():
+        logging.error(f"Runtime base path {runtime_bases_path} does not exist")
+        return 1
+
+    runtime_resources = write_service_pages("Common", runtime_bases_path, page_output_path, "runtime/apis/core")
+    runtime_metadata = ServiceMetadata(
+        MetadataServiceDescription("ACK Common", "Common", "", ""),
+        [MetadataAPIVersion("v1alpha1", "available")]
+    )
+    runtime_overview = ServiceOverview("common", runtime_resources, runtime_metadata)
+    return runtime_overview
+
 def main(
     gopath: Path,
     metadata_config_path: Path,
@@ -201,9 +230,11 @@ def main(
     page_output_path: Path,
     data_output_path: Path
 ):
-    overviews = []
+    overviews: List[ServiceOverview] = []
 
     src_parent = gopath / go_src_parent
+
+    overviews.append(generate_runtime_resources(src_parent))
 
     for controller_repo in src_parent.glob("*-controller"):
         if not controller_repo.is_dir() or \
@@ -226,12 +257,13 @@ def main(
 
         metadata = load_metadata_config(metadata_config)
 
-        resources = write_service_pages(service, metadata, service_bases_path, page_output_path)
+        resources = write_service_pages(service, service_bases_path, page_output_path)
         overview = ServiceOverview(service, resources, metadata)
 
         overviews.append(overview)
 
     write_overview_page(overviews, data_output_path)
+    return 0
 
 
 if __name__ == "__main__":
@@ -258,4 +290,5 @@ if __name__ == "__main__":
     page_output_path = Path(args.page_output_path)
     data_output_path = Path(args.data_output_path)
 
-    main(gopath, metadata_config_path, go_src_parent, bases_path, page_output_path, data_output_path)
+    ret = main(gopath, metadata_config_path, go_src_parent, bases_path, page_output_path, data_output_path)
+    sys.exit(ret)
