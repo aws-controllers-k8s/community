@@ -76,18 +76,15 @@ The examples below use the `db.t3.micro` instance type. Please review the [RDS i
 To create a [AWS RDS for PostgreSQL](https://aws.amazon.com/rds/postgresql/) instance, you must first set up a master password. You can do this by [creating a Kubernetes Secret](https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret), e.g.:
 
 ```bash
-RDS_DB_USERNAME="<your username>"
+RDS_INSTANCE_NAME="<your instance name>"
 
-kubectl create secret generic rds-postgresql-user-creds \
-  --from-literal=username="${RDS_DB_USERNAME}" \
+kubectl create secret generic "${RDS_INSTANCE_NAME}-password" \
   --from-literal=password="<your password>"
 ```
 
 Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for PostgreSQL 14 instance with the credentials created in the previous step:
 
 ```bash
-RDS_INSTANCE_NAME="<your instance name>"
-
 cat <<EOF > rds-postgresql.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
@@ -99,10 +96,10 @@ spec:
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: postgres
   engineVersion: "14"
-  masterUsername: "${RDS_DB_USERNAME}"
+  masterUsername: "postgres"
   masterUserPassword:
     namespace: default
-    name: rds-postgresql-user-creds
+    name: "${RDS_INSTANCE_NAME}-password"
     key: password
 EOF
 
@@ -122,10 +119,9 @@ When the `DB Instance Status` says `Available`, you can connect to the database 
 To create a [AWS RDS for MariaDB](https://aws.amazon.com/rds/mariadb/) instance, you must first set up a master password. You can do this by [creating a Kubernetes Secret](https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret), e.g.:
 
 ```bash
-RDS_DB_USERNAME="<your username>"
+RDS_INSTANCE_NAME="<your instance name>"
 
-kubectl create secret generic rds-mariadb-user-creds \
-  --from-literal=username="${RDS_DB_USERNAME}" \
+kubectl create secret generic "${RDS_INSTANCE_NAME}-password" \
   --from-literal=password="<your password>"
 ```
 
@@ -145,10 +141,10 @@ spec:
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: mariadb
   engineVersion: "10.6"
-  masterUsername: "${RDS_DB_USERNAME}"
+  masterUsername: "admin"
   masterUserPassword:
     namespace: default
-    name: rds-mariadb-user-creds
+    name: "${RDS_INSTANCE_NAME}-password"
     key: password
 EOF
 
@@ -165,14 +161,105 @@ When the `DB Instance Status` says `Available`, you can connect to the database 
 
 ## Connect to Database Instances
 
-The `DBInstance` status contains the information for connecting to a RDS database instance. The host information can be found in `status.endpoint.address` and the port information can be found in `status.endpoint.port`. For example, you can get the connection information for a `DBInstance` created in one of the previous examples using the following commands:
+The `DBInstance` status contains the information for connecting to a RDS database instance. The host information can be found in `status.endpoint.address` and the port information can be found in `status.endpoint.port`. The master user name can be found in `spec.masterUsername`.
+
+The database password is in the Secret that is referenced in the `DBInstance` spec (`spec.masterPassword.name`).
+
+You can extract this information and make it available to your Pods using a [`FieldExport`][field-export] resource. For example, to get the connection information from either RDS database instance created the above example, you can use the following example:
 
 ```bash
-kubectl get dbinstance "${RDS_INSTANCE_NAME}" -o jsonpath='{.status.endpoint.address}'
-kubectl get dbinstance "${RDS_INSTANCE_NAME}" -o jsonpath='{.status.endpoint.port}'
+RDS_INSTANCE_CONN_CM="${RDS_INSTANCE_NAME}-conn-cm"
+
+cat <<EOF > rds-field-exports.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${RDS_INSTANCE_CONN_CM}
+data: {}
+---
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: ${RDS_INSTANCE_NAME}-host
+spec:
+  to:
+    name: ${RDS_INSTANCE_CONN_CM}
+    kind: configmap
+  from:
+    path: "status.endpoint.address"
+    resource:
+      group: rds.services.k8s.aws
+      kind: DBInstance
+      name: ${RDS_INSTANCE_NAME}
+---
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: ${RDS_INSTANCE_NAME}-port
+spec:
+  to:
+    name: ${RDS_INSTANCE_CONN_CM}
+    kind: configmap
+  from:
+    path: "status.endpoint.port"
+    resource:
+      group: rds.services.k8s.aws
+      kind: DBInstance
+      name: ${RDS_INSTANCE_NAME}
+---
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: ${RDS_INSTANCE_NAME}-user
+spec:
+  to:
+    name: ${RDS_INSTANCE_CONN_CM}
+    kind: configmap
+  from:
+    path: "spec.masterUsername"
+    resource:
+      group: rds.services.k8s.aws
+      kind: DBInstance
+      name: ${RDS_INSTANCE_NAME}
+EOF
+
+kubectl apply -f rds-field-exports.yaml
 ```
 
-The database username and password is in the Secret that is referenced in the `DBInstance` spec (`spec.masterPassword.name`).
+You can inject these values into a container either as environmental variables or files. For example, here is a snippet of a Pod definition that will add the RDS instance connection info into the Pod:
+
+```bash
+cat <<EOF > rds-pods.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+spec:
+  containers:
+  - env:
+    - name: PGHOST
+      valueFrom:
+        configMapKeyRef:
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "default.${RDS_INSTANCE_NAME}-host"
+    - name: PGPORT
+      valueFrom:
+        configMapKeyRef:
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "default.${RDS_INSTANCE_NAME}-port"
+    - name: PGUSER
+      valueFrom:
+        configMapKeyRef:
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "default.${RDS_INSTANCE_NAME}-user"
+    - name: PGPASSWORD
+      valueFrom:
+        secretRef:
+          name: "${RDS_INSTANCE_NAME}-password"
+          key: password
+EOF
+```
 
 ## Next steps
 
@@ -200,8 +287,9 @@ kubectl delete dbinstance "${RDS_INSTANCE_NAME}"
 
 To remove the RDS ACK service controller, related CRDs, and namespaces, see [ACK Cleanup][cleanup].
 
-To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].  
+To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 
 [irsa-permissions]: ../../user-docs/irsa/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
+[field-export]: ../../user-docs/field-export
