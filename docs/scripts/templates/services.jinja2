@@ -1,0 +1,61 @@
+---
+title : "Services"
+description: "Project status of each supported service"
+lead: ""
+draft: false
+menu: 
+  docs:
+    parent: "introduction"
+weight: 40
+toc: true
+---
+
+The following AWS service APIs have service controllers included in ACK or have
+controllers in one of our [several project stages][project-stages].
+
+[project-stages]: ../releases#project-stages
+
+ACK controllers that have reached the `RELEASED` project stage will also be in
+one of our [maintenance phases][maint-phases].
+
+[maint-phases]: ../releases#maintenance-phases
+
+For details, including a list of planned AWS service APIs, see the [Service
+Controller Release Roadmap](https://github.com/aws-controllers-k8s/community/projects/1):
+
+{% raw %}
+{{% hint type="danger" title="IMPORTANT" %}}
+There is no single release of the ACK project. The ACK project contains a
+series of service controllers, one for each AWS service API. Each
+individual ACK service controller is released separately. Please see the
+[release documentation](../releases) for information on how we version and
+release ACK service controllers.
+{{% /hint %}}
+{% endraw %}
+
+{{ services_table }}
+
+{% raw %}
+{{% hint type="info" title="Don't see a service listed?" %}}
+If you don't see a particular AWS service listed, feel free to
+[propose it](https://github.com/aws-controllers-k8s/community/issues/new?labels=Service+Controller&template=propose_new_controller.md&title=%5Bname%5D+service+controller)!
+{{% /hint %}}
+{% endraw %}
+
+{% for service_pkg, controller in controllers.items() %}
+## {{ service_display_names[service_pkg] }}
+
+* ACK service controller: {{ controller.source_repo_url | urlize }}
+* Current project stage: `{{ controller.project_stage }}`
+* Current maintenance phase: `{{ controller.maintenance_phase }}`
+{% if controller.gh_issue_url is string %}
+* Controller proposal: {{ controller.gh_issue_url | urlize }}
+{% endif %}
+{% if controller.image_repo.uri is string %}
+* Container URI: `{{ controller.image_repo.uri }}`
+{% endif %}
+{% if controller.chart_repo.uri is string %}
+* Helm Chart URI: `{{ controller.chart_repo.uri }}`
+{% endif %}
+
+{% endfor %}
