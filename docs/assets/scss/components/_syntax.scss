@@ -2,6 +2,6 @@
   background: lighten(#22272e, 15%);
 }
 
-body.dark .hljs {
+[data-dark-mode] body .hljs {
   background: $body-overlay-dark;
 }

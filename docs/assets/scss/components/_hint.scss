@@ -12,7 +12,7 @@
     }
 }
 
-body.dark {
+[data-dark-mode] body {
     .hint {
         border-color: $link-color-dark !important;
         border-radius: $border-radius;
