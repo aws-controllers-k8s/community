@@ -19,373 +19,381 @@ $navbar-dark-active-color:          $link-color-dark;
 /** Theme styles */
 
 
-body.dark {
+[data-dark-mode] body {
   background: $body-bg-dark;
   color: $body-color-dark;
-}
 
-body.dark a {
-  color: $link-color-dark;
-}
-
-body.dark a.text-body {
-  color: $body-color-dark !important;
-}
-
-body.dark .btn-primary {
-  @include button-variant($button-color-dark, $button-color-dark);
-
-  color: $body-bg-dark !important;
-}
-
-body.dark .btn-outline-primary {
-  @include button-outline-variant($button-color-dark, $button-color-dark);
-
-  color: $link-color-dark;
-}
-
-body.dark .btn-outline-primary:hover {
-  color: $body-bg-dark;
-}
-
-body.dark .header-bar {
-  border-image-source: linear-gradient(90deg, $link-color-dark, lighten($link-color-dark, 20%) 50%, adjust-hue(lighten($link-color-dark, 20%), 35deg));
-}
-
-body.dark .navbar {
-  background: $body-bg-dark;
-  opacity: 0.975;
-  border-bottom: 1px solid $border-dark;
-}
-
-body.dark.home .navbar {
-  border-bottom: 0;
-}
-
-body.dark .navbar-light .navbar-brand {
-  color: $navbar-dark-color !important;
-}
-
-body.dark .navbar-light .navbar-nav .nav-link {
-  color: $navbar-dark-color;
-}
-
-body.dark .navbar-light .navbar-nav .nav-link:hover,
-body.dark .navbar-light .navbar-nav .nav-link:focus {
-  color: $navbar-dark-hover-color;
-}
-
-body.dark .navbar-light .navbar-nav .nav-link.disabled {
-  color: $navbar-dark-disabled-color;
-}
-
-body.dark .navbar-light .navbar-nav .show > .nav-link,
-body.dark .navbar-light .navbar-nav .active > .nav-link,
-body.dark .navbar-light .navbar-nav .nav-link.show,
-body.dark .navbar-light .navbar-nav .nav-link.active {
-  color: $navbar-dark-active-color;
-}
-
-body.dark .navbar-light .navbar-text {
-  color: $navbar-dark-color;
-}
-
-body.dark .alert-primary a {
-  color: $body-bg-dark;
-}
-
-body.dark .alert-warning {
-  background: $body-overlay-dark;
-  color: $body-color-dark;
-}
-
-body.dark .page-links a {
-  color: darken($body-color-dark, 20%);
-}
-
-body.dark .btn-toggle-nav a {
-  color: darken($body-color-dark, 20%);
-}
-
-body.dark .btn-toggle-nav a:hover,
-body.dark .btn-toggle-nav a:focus {
-  background-color: rgba($link-color-dark, 0.1);
-  color: darken($body-color-dark, 10%);
-}
-
-body.dark .btn-toggle-nav a.active {
-  color: $body-color-dark;
-}
-
-body.dark .showcase-meta a {
-  color: $body-color-dark;
-}
-
-body.dark .showcase-meta a:hover,
-body.dark .showcase-meta a:focus {
-  color: $link-color-dark;
-}
-
-body.dark .docs-link:hover,
-body.dark .docs-link.active {
-  text-decoration: none;
-}
-
-body.dark .btn-toggle {
-  color: $body-color-dark;
-  background-color: transparent;
-}
-
-body.dark .btn-toggle:hover,
-body.dark .btn-toggle:focus {
-  color: $body-color-dark;
-  background-color: rgba($link-color-dark, 0.3);
-  border-color: rgba($link-color-dark, 0.3);
-}
-
-body.dark .btn-toggle:focus {
-  border-color: $link-color-dark;
-}
-
-body.dark .btn-toggle::before {
-  width: 1.25em;
-  line-height: 0;
-  content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28222, 226, 230, 0.75%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
-  transition: transform 0.35s ease;
-  transform-origin: 0.5em 50%;
-  margin-bottom: 0.125rem;
-}
-
-body.dark .btn-toggle[aria-expanded="true"] {
-  color: $body-color-dark;
-}
-
-body.dark .btn-toggle[aria-expanded="true"]::before {
-  transform: rotate(90deg);
-}
-
-body.dark .navbar-light .navbar-text a {
-  color: $navbar-dark-active-color;
-}
-
-body.dark .docs-links h3.sidebar-link a,
-body.dark .page-links h3.sidebar-link a {
-  color: $body-color-dark;
-}
-
-body.dark .navbar-light .navbar-text a:hover,
-body.dark .navbar-light .navbar-text a:focus {
-  color: $navbar-dark-active-color;
-}
-
-body.dark .navbar .btn-link {
-  color: $navbar-dark-color;
-}
-
-body.dark .content .btn-link {
-  color: $link-color-dark;
-}
-
-body.dark .content .btn-link:hover {
-  color: $link-color-dark;
-}
-
-body.dark .navbar .btn-link:hover {
-  color: $navbar-dark-hover-color;
-}
-
-body.dark .navbar .btn-link:active {
-  color: $navbar-dark-active-color;
-}
-
-body.dark .form-control.is-search {
-  background: $body-overlay-dark;
-
-  /*
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-search'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right calc(0.375em + 0.1875rem) center;
-  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-  */
-}
-
-body.dark .navbar-form::after {
-  color: $gray-600;
-  border: 1px solid $gray-800;
-}
-
-body.dark .form-control {
-  color: $gray-500;
-}
-
-body.dark .form-control:focus {
-  box-shadow: 0 0 0 0.2rem $focus-color-dark;
-}
-
-body.dark .border-top {
-  border-top: 1px solid $border-dark !important;
-}
-
-@include media-breakpoint-up(lg) {
-  body.dark .docs-sidebar {
-    order: 0;
-    border-right: 1px solid $body-bg-dark;
+  a {
+    color: $link-color-dark;
+  }
+  
+  a.text-body {
+    color: $body-color-dark !important;
+  }
+  
+  .btn-primary {
+    @include button-variant($button-color-dark, $button-color-dark);
+  
+    color: $body-bg-dark !important;
+  }
+  
+  .btn-outline-primary {
+    @include button-outline-variant($button-color-dark, $button-color-dark);
+  
+    color: $link-color-dark;
+  }
+  
+  .btn-outline-primary:hover {
+    color: $body-bg-dark;
+  }
+  
+  .header-bar {
+    border-image-source: linear-gradient(90deg, $link-color-dark, lighten($link-color-dark, 20%) 50%, adjust-hue(lighten($link-color-dark, 20%), 35deg));
+  }
+  
+  .navbar {
+    background: $body-bg-dark;
+    opacity: 0.975;
+    border-bottom: 1px solid $border-dark;
+  }
+  
+  .navbar-light .navbar-brand {
+    color: $navbar-dark-color !important;
+  }
+  
+  .navbar-light .navbar-nav .nav-link {
+    color: $navbar-dark-color;
+  }
+  
+  .navbar-light .navbar-nav .nav-link:hover,
+  .navbar-light .navbar-nav .nav-link:focus {
+    color: $navbar-dark-hover-color;
+  }
+  
+  .navbar-light .navbar-nav .nav-link.disabled {
+    color: $navbar-dark-disabled-color;
+  }
+  
+  .navbar-light .navbar-nav .show > .nav-link,
+  .navbar-light .navbar-nav .active > .nav-link,
+  .navbar-light .navbar-nav .nav-link.show,
+  .navbar-light .navbar-nav .nav-link.active {
+    color: $navbar-dark-active-color;
+  }
+  
+  .navbar-light .navbar-text {
+    color: $navbar-dark-color;
+  }
+  
+  .alert-primary a {
+    color: $body-bg-dark;
+  }
+  
+  .alert-warning {
+    background: $body-overlay-dark;
+    color: $body-color-dark;
+  }
+  
+  .page-links a {
+    color: darken($body-color-dark, 20%);
+  }
+  
+  .btn-toggle-nav a {
+    color: darken($body-color-dark, 20%);
+  }
+  
+  .btn-toggle-nav a:hover,
+  .btn-toggle-nav a:focus {
+    background-color: rgba($link-color-dark, 0.1);
+    color: darken($body-color-dark, 10%);
+  }
+  
+  .btn-toggle-nav a.active {
+    color: $body-color-dark;
+  }
+  
+  .showcase-meta a {
+    color: $body-color-dark;
+  }
+  
+  .showcase-meta a:hover,
+  .showcase-meta a:focus {
+    color: $link-color-dark;
+  }
+  
+  .docs-link:hover,
+  .docs-link.active {
+    text-decoration: none;
+  }
+  
+  .btn-toggle {
+    color: $body-color-dark;
+    background-color: transparent;
+  }
+  
+  .btn-toggle:hover,
+  .btn-toggle:focus {
+    color: $body-color-dark;
+    background-color: rgba($link-color-dark, 0.3);
+    border-color: rgba($link-color-dark, 0.3);
+  }
+  
+  .btn-toggle:focus {
+    border-color: $link-color-dark;
+  }
+  
+  .btn-toggle::before {
+    width: 1.25em;
+    line-height: 0;
+    content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28222, 226, 230, 0.75%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+    transition: transform 0.35s ease;
+    transform-origin: 0.5em 50%;
+    margin-bottom: 0.125rem;
+  }
+  
+  .btn-toggle[aria-expanded="true"] {
+    color: $body-color-dark;
+  }
+  
+  .btn-toggle[aria-expanded="true"]::before {
+    transform: rotate(90deg);
+  }
+  
+  .navbar-light .navbar-text a {
+    color: $navbar-dark-active-color;
+  }
+  
+  .docs-links h3.sidebar-link a,
+  .page-links h3.sidebar-link a {
+    color: $body-color-dark;
+  }
+  
+  .navbar-light .navbar-text a:hover,
+  .navbar-light .navbar-text a:focus {
+    color: $navbar-dark-active-color;
+  }
+  
+  .navbar .btn-link {
+    color: $navbar-dark-color;
+  }
+  
+  .content .btn-link {
+    color: $link-color-dark;
+  }
+  
+  .content .btn-link:hover {
+    color: $link-color-dark;
+  }
+  
+  .navbar .btn-link:hover {
+    color: $navbar-dark-hover-color;
+  }
+  
+  .navbar .btn-link:active {
+    color: $navbar-dark-active-color;
+  }
+  
+  .form-control.is-search {
+    background: $body-overlay-dark;
+  
+    /*
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-search'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    */
+  }
+  
+  .navbar-form::after {
+    color: $gray-600;
+    border: 1px solid $gray-800;
+  }
+  
+  .form-control {
+    color: $gray-500;
+  }
+  
+  .form-control:focus {
+    box-shadow: 0 0 0 0.2rem $focus-color-dark;
+  }
+  
+  .border-top {
+    border-top: 1px solid $border-dark !important;
+  }
+  
+  @include media-breakpoint-up(lg) {
+    .docs-sidebar {
+      order: 0;
+      border-right: 1px solid $body-bg-dark;
+    }
+  }
+  
+  .docs-navigation {
+    border-top: 1px solid $border-dark;
+  }
+  
+  pre code::-webkit-scrollbar-thumb {
+    background: $gray-400;
+  }
+  
+  pre code:hover {
+    scrollbar-width: thin;
+    scrollbar-color: $body-bg-dark transparent;
+  }
+  
+  pre code::-webkit-scrollbar-thumb:hover {
+    background: $gray-500;
+  }
+  
+  code:not(.hljs):not(.language-mermaid) {
+    background: $body-overlay-dark;
+    color: $body-color-dark;
+  }
+  
+  .mermaid,
+  pre code.language-mermaid {
+    background: $white;
+  }
+  
+  blockquote {
+    border-left: 3px solid $border-dark;
+  }
+  
+  .docs-links,
+  .docs-toc {
+    scrollbar-width: thin;
+    scrollbar-color: $body-bg-dark transparent;
+  }
+  
+  .docs-links::-webkit-scrollbar,
+  .docs-toc::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .docs-links::-webkit-scrollbar-track,
+  .docs-toc::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .docs-links::-webkit-scrollbar-thumb,
+  .docs-toc::-webkit-scrollbar-thumb {
+    background: $body-bg-dark;
+  }
+  
+  .docs-links:hover,
+  .docs-toc:hover {
+    scrollbar-width: thin;
+    scrollbar-color: $border-dark transparent;
+  }
+  
+  .docs-links:hover::-webkit-scrollbar-thumb,
+  .docs-toc:hover::-webkit-scrollbar-thumb {
+    background: $border-dark;
+  }
+  
+  .docs-links::-webkit-scrollbar-thumb:hover,
+  .docs-toc::-webkit-scrollbar-thumb:hover {
+    background: $border-dark;
+  }
+  
+  .docs-links h3:not(:first-child) {
+    border-top: 1px solid $border-dark;
+  }
+  
+  .page-links li:not(:first-child) {
+    border-top: 1px dashed $border-dark;
+  }
+  
+  .card {
+    background: $body-bg-dark;
+    border: 1px solid $border-dark;
+  }
+  
+  .card.bg-light {
+    background: $body-overlay-dark !important;
+  }
+  
+  .navbar .menu-icon .navicon {
+    background: $navbar-dark-color;
+  }
+  
+  .navbar .menu-icon .navicon::before,
+  .navbar .menu-icon .navicon::after {
+    background: $navbar-dark-color;
+  }
+  
+  .logo-light {
+    display: none !important;
+  }
+  
+  .logo-dark {
+    display: flex !important;
+  }
+  
+  .bg-light {
+    background: darken($body-bg-dark, 1.5%) !important;
+  }
+  
+  .bg-dots {
+    background-image: radial-gradient($dots-dark 15%, transparent 15%);
+  }
+  
+  .text-muted {
+    color: darken($body-color-dark, 7.5%) !important;
+  }
+  
+  .alert-primary {
+    background: $link-color-dark;
+    color: $body-bg-dark;
+  }
+  
+  .figure-caption {
+    color: $body-color-dark;
+  }
+  
+  table {
+    @extend .table-dark;
+  }
+  
+  .copy-status::after {
+    content: "Copy";
+    display: block;
+    color: $body-color-dark;
+  }
+  
+  .copy-status:hover::after {
+    content: "Copy";
+    display: block;
+    color: $link-color-dark;
+  }
+  
+  .copy-status:focus::after,
+  .copy-status:active::after {
+    content: "Copied";
+    display: block;
+    color: $link-color-dark;
+  }
+  
+  .list-group-item {
+    background-color: $gray-800;
+    color: $body-color-dark;
+  }
+  
+  .docs-content img {
+    background-color: $amazon-stone;
+    border-radius: $border-radius;
+    max-width: 100%;
   }
 }
 
-body.dark .docs-navigation {
-  border-top: 1px solid $border-dark;
-}
+[data-dark-mode] .home {
+  background: linear-gradient(to bottom, transparentize($body-bg-dark, .75) 0%, transparentize($body-bg-dark, .75) 5%, transparentize($body-bg-dark, 0.2) 490px, transparentize($body-bg-dark, 0) 550px), url(images/bg-dark-large.png), $body-bg-dark !important;
+  background-repeat: repeat-x;
+  background-clip: border-box;
 
-body.dark pre code::-webkit-scrollbar-thumb {
-  background: $gray-400;
-}
-
-body.dark pre code:hover {
-  scrollbar-width: thin;
-  scrollbar-color: $body-bg-dark transparent;
-}
-
-body.dark pre code::-webkit-scrollbar-thumb:hover {
-  background: $gray-500;
-}
-
-body.dark code:not(.hljs):not(.language-mermaid) {
-  background: $body-overlay-dark;
-  color: $body-color-dark;
-}
-
-body.dark .mermaid,
-body.dark pre code.language-mermaid {
-  background: $white;
-}
-
-body.dark blockquote {
-  border-left: 3px solid $border-dark;
-}
-
-body.dark .docs-links,
-body.dark .docs-toc {
-  scrollbar-width: thin;
-  scrollbar-color: $body-bg-dark transparent;
-}
-
-body.dark .docs-links::-webkit-scrollbar,
-body.dark .docs-toc::-webkit-scrollbar {
-  width: 5px;
-}
-
-body.dark .docs-links::-webkit-scrollbar-track,
-body.dark .docs-toc::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body.dark .docs-links::-webkit-scrollbar-thumb,
-body.dark .docs-toc::-webkit-scrollbar-thumb {
-  background: $body-bg-dark;
-}
-
-body.dark .docs-links:hover,
-body.dark .docs-toc:hover {
-  scrollbar-width: thin;
-  scrollbar-color: $border-dark transparent;
-}
-
-body.dark .docs-links:hover::-webkit-scrollbar-thumb,
-body.dark .docs-toc:hover::-webkit-scrollbar-thumb {
-  background: $border-dark;
-}
-
-body.dark .docs-links::-webkit-scrollbar-thumb:hover,
-body.dark .docs-toc::-webkit-scrollbar-thumb:hover {
-  background: $border-dark;
-}
-
-body.dark .docs-links h3:not(:first-child) {
-  border-top: 1px solid $border-dark;
-}
-
-body.dark .page-links li:not(:first-child) {
-  border-top: 1px dashed $border-dark;
-}
-
-body.dark .card {
-  background: $body-bg-dark;
-  border: 1px solid $border-dark;
-}
-
-body.dark .card.bg-light {
-  background: $body-overlay-dark !important;
-}
-
-body.dark .navbar .menu-icon .navicon {
-  background: $navbar-dark-color;
-}
-
-body.dark .navbar .menu-icon .navicon::before,
-body.dark .navbar .menu-icon .navicon::after {
-  background: $navbar-dark-color;
-}
-
-body.dark .logo-light {
-  display: none !important;
-}
-
-body.dark .logo-dark {
-  display: flex !important;
-}
-
-body.dark .bg-light {
-  background: darken($body-bg-dark, 1.5%) !important;
-}
-
-body.dark .bg-dots {
-  background-image: radial-gradient($dots-dark 15%, transparent 15%);
-}
-
-body.dark .text-muted {
-  color: darken($body-color-dark, 7.5%) !important;
-}
-
-body.dark .alert-primary {
-  background: $link-color-dark;
-  color: $body-bg-dark;
-}
-
-body.dark .figure-caption {
-  color: $body-color-dark;
-}
-
-body.dark table {
-  @extend .table-dark;
-}
-
-body.dark .copy-status::after {
-  content: "Copy";
-  display: block;
-  color: $body-color-dark;
-}
-
-body.dark .copy-status:hover::after {
-  content: "Copy";
-  display: block;
-  color: $link-color-dark;
-}
-
-body.dark .copy-status:focus::after,
-body.dark .copy-status:active::after {
-  content: "Copied";
-  display: block;
-  color: $link-color-dark;
-}
-
-body.dark .list-group-item {
-  background-color: $gray-800;
-  color: $body-color-dark;
-}
-
-body.dark .docs-content img {
-  background-color: $amazon-stone;
-  border-radius: $border-radius;
-  max-width: 100%;
+  .navbar {
+    border-bottom: 0;
+    background: transparentize($body-bg-dark, $amount: 0.75);
+    opacity: 1;
+  }
 }

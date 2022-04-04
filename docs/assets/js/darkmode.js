@@ -1,12 +1,24 @@
-window.addEventListener('DOMContentLoaded', (event) => {
-  document.getElementById('mode').addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+const mode = document.getElementById('mode');
+if (mode !== null) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+
+    if (event.matches) {
+      localStorage.setItem('theme', 'dark');
+      document.documentElement.setAttribute('data-dark-mode', '');
+    } else {
+      localStorage.setItem('theme', 'light');
+      document.documentElement.removeAttribute('data-dark-mode');
+    }
+  })
+
+  mode.addEventListener('click', () => {
+    document.documentElement.toggleAttribute('data-dark-mode');
+    localStorage.setItem('theme', document.documentElement.hasAttribute('data-dark-mode') ? 'dark' : 'light');
   });
 
-  let systemPreferenceDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  let savedPreference = localStorage.getItem('theme');
-  if (savedPreference === 'light' || (savedPreference === null && !systemPreferenceDark)) {
-    document.body.classList.remove('dark');
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.setAttribute('data-dark-mode', '');
+  } else {
+    document.documentElement.removeAttribute('data-dark-mode');
   }
-});
+}

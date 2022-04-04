@@ -42,11 +42,11 @@ body .toggle-light {
   display: none;
 }
 
-body.dark .toggle-light {
+[data-dark-mode] body .toggle-light {
   display: block;
 }
 
-body.dark .toggle-dark {
+[data-dark-mode] body .toggle-dark {
   display: none;
 }
 

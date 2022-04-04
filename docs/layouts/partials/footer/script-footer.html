@@ -28,6 +28,12 @@
   {{ $slice = $slice | append $clipBoard -}}
 {{ end -}}
 
+{{ if .Site.Params.options.darkMode -}}
+  {{ $darkMode := resources.Get "js/darkmode.js" -}}
+  {{ $darkMode := $darkMode | js.Build -}}
+  {{ $slice = $slice | append $darkMode -}}
+{{ end -}}
+
 {{ if .Site.Params.options.instantPage -}}
   {{ $instantPage := resources.Get "js/instant.page.js" -}}
   {{ $instantPage := $instantPage | js.Build -}}
