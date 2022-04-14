@@ -3,7 +3,7 @@ title: "Release"
 description: "The release process for ACK service controller"
 lead: "The release process for ACK service controller"
 draft: false
-menu: 
+menu:
   docs:
     parent: "contributor"
 weight: 70
@@ -19,14 +19,14 @@ a ACK service controller's release artifacts.
 
 Once ACK service controller changes are tested by the service team and they wish to
 release latest artifacts, service team only needs to create a new release for service-controller
-github repository with a semver tag (Ex: v0.0.1). 
+github repository with a semver tag (Ex: v0.0.1).
 Steps below show how to create a new release with semver tag.
 
 {{% hint type="info" title="Semver" %}}
-For more details on semantic versioning(semver), please read our [release phase guide](../../community/releases/) 
+For more details on semantic versioning(semver), please read our [release phase guide](../../community/releases/)
 {{% /hint %}}
 
-Once the git repository is tagged with semver, a postsubmit prowjob builds binary 
+Once the git repository is tagged with semver, a postsubmit prowjob builds binary
 docker image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
 Same prowjob also publishes the Helm charts for the ACK service controller to
 public ecr repository `public.ecr.aws/aws-controllers-k8s/chart`.
@@ -102,7 +102,7 @@ directory with files that refer to the Docker image with an image tag
 referring to the release you've just built artifacts for.
 
 {{% /hint %}}
-   
+
 4) Commit the generated release artifacts and create a pull request:
 ```bash
 git commit -a -m "release artifacts for release $RELEASE_VERSION"
@@ -115,10 +115,59 @@ git push origin release-$RELEASE_VERSION
 both docker image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
-{{% hint type="info" title="Stable Helm Chart" %}}
-* This same postsubmit prowjob also publishes the stable Helm charts, whenever there is a code push on `stable` git 
-branch.
-* To learn more about how to push changes to stable branch please read our [release phase guide](../../community/releases/)
-* When this prowjob is triggered from `stable` branch, it does not build a docker image and only publishes the helm 
-artifacts with stable tag. Ex: `elasticache-v1-stable`
-{{% /hint %}}
+## Stable Release
+The postsubmit prowjob mentioned above also publishes the stable Helm charts,
+whenever there is a code push on `stable` git branch. Follow the steps below
+to cut a stable release for an ACK controller.
+
+1) Checkout the ACK controller release which will be marked as stable.
+Example below uses s3-controller v0.0.19 release.
+```bash
+cd $GOSRC/github.com/aws-controllers-k8s
+export SERVICE=s3
+export STABLE_RELEASE=<v0.0.19-do-not-copy> #Update this tag for the specific controller
+cd $SERVICE-controller
+git fetch --all --tags
+git checkout -b stable-$STABLE_RELEASE $STABLE_RELEASE
+```
+
+2) Update the helm chart version to the stable version. To learn more about
+nomenclature of stable branch and helm chart version please read our
+[release phase guide](../../community/releases/).
+
+For the above example, replace `version: v0.0.19` inside `helm/Chart.yaml`
+with `version: v0-stable`. Without this update the postsubmit prowjob will
+fail because validation error due to chart version mismatch.
+
+3) Commit your changes from step2
+```bash
+git add helm/Chart.yaml
+git commit -m "Updating the helm chart version for stable release"
+```
+
+4) Determine the remote which points to `aws-controllers-k8s/$SERVICE-controller`
+and not your personal fork. Execute `git remote --verbose` command to find out the
+remote name. Example: In the command below, `origin` points to the
+`aws-controllers-k8s/s3-controller` repository.
+
+```bash
+git remote --verbose
+
+origin  https://github.com/aws-controllers-k8s/s3-controller.git (fetch)
+origin  https://github.com/aws-controllers-k8s/s3-controller.git (push)
+vj      https://github.com/vijtrip2/s3-controller.git (fetch)
+vj      https://github.com/vijtrip2/s3-controller.git (push)
+```
+
+5) Push the changes to the `stable` branch for remote pointing to
+`aws-controllers-k8s/$SERVICE-controller`
+```bash
+git push -u origin stable-$STABLE_RELEASE:stable
+```
+The above command will create a new `stable` branch if it does not exist
+and trigger the ACK postsubmit prowjob for stable release. This prowjob will
+not build a docker image and only publishes the helm artifacts with stable tag.
+
+If the git push command fails, use `--force` option to update the upstream
+`stable` branch with your local changes.
+
