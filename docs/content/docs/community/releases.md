@@ -15,7 +15,7 @@ will find a description of the [Project Stages](#project-stages) that a service
 controller repository goes through on its way to being released.
 
 A controller that has reached the `RELEASED` project stage will have a set of
-release artifacts, including binary Docker images for the controller and a Helm
+release artifacts, including binary container images for the controller and a Helm
 Chart that installs the controller into a target Kubernetes cluster. Read more
 below about our [Releases and Versioning policy](#releases-and-versioning). 
 
@@ -69,7 +69,7 @@ may be created.
 ### RELEASED
 
 The `RELEASED` project stage indicates that the ACK service controller source
-repository has had a Semantic Versioning Git tag applied and that both a Docker
+repository has had a Semantic Versioning Git tag applied and that both a container
 image and Helm Chart have been built and published to the ECR Public
 repositories for ACK.
 
@@ -100,7 +100,7 @@ features or bug fixes and whether or not features break backwards compatibility
 for public APIs and interfaces.
 
 There are two release artifacts produced when an ACK service controller is
-released: a binary **Docker image** with the controller and a **Helm Chart**
+released: a binary **container image** with the controller and a **Helm Chart**
 that installs the controller into a target Kubernetes cluster. Both these
 artifacts will have tags that correspond to the Semantic Version Git tag
 applied against the source code repository for the controller.
@@ -145,13 +145,13 @@ This is by design, and [per the Semantic Versioning specification][semver-zero]:
 
 [semver-zero]: https://semver.org/#spec-item-4
 
-For ACK components that have a binary distributable -- i.e. a Docker image --
+For ACK components that have a binary distributable -- i.e. a container image --
 the creation of a new SemVer Git tag on the source code repository triggers the
-automatic building and publishing of a Docker image with an image tag including
+automatic building and publishing of a container image with an image tag including
 the SemVer version.
 
 For example, if a Git tag of `v1.2.6` was created on the
-[github.com/aws-controllers-k8s/s3-controller][s3-ctrl] repository, a Docker
+[github.com/aws-controllers-k8s/s3-controller][s3-ctrl] repository, a container
 image with a tag `v1.2.6` would be published to the
 [public.ecr.aws/aws-controllers-k8s/s3-controller][ecr-ack-ctrl] ECR Public
 repository.
@@ -217,7 +217,7 @@ version series would be
 `public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable`.
 
 This `stable` artifact tag points to a Helm chart that has configuration values
-that have been tested with a specific SemVer Docker image.
+that have been tested with a specific SemVer container image.
 
 Typically these tests are "soak" tests and allow the team maintaining that ACK
 controller's source code to have a high degree of confidence in the
@@ -233,7 +233,7 @@ with a `stable` artifact tag. Furthermore, there will only ever be a single
 This `stable` Helm Chart tag (an OCI Artifact tag) will point to different
 Helm Chart packages over time. From time to time, the maintainer team for a
 service controller may update the configuration values and associated SemVer
-Docker image tag for the controller binary to point to a newer image.
+container image tag for the controller binary to point to a newer image.
 
 For example, consider the ElastiCache ACK service controller maintainer team
 has executed a series of long-running tests of the

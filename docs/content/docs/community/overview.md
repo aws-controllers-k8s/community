@@ -12,17 +12,17 @@ toc: true
 
 **AWS Controllers for Kubernetes (ACK)** lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS-managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 
-## Docker images
+## Container images
 
 Each ACK service controller is packaged into a separate container image that is published in a public repository corresponding to an individual ACK service controller.
 
-{{% hint title="Choose the ACK Docker image that is right for you" %}}
-Note that there is no single ACK Docker image. Instead, there are Docker
+{{% hint title="Choose the ACK container image that is right for you" %}}
+Note that there is no single ACK container image. Instead, there are container
 images for each individual ACK service controller that manages resources
 for a particular AWS API.
 {{% /hint %}}
 
-Docker images for ACK service controllers can be found in the [ACK registry within the Amazon ECR Public Gallery][ack-ecr-gallery]. To find a Docker image for a specific service, you can go to `gallery.ecr.aws/aws-controllers-k8s/$SERVICENAME-controller`. For example, the link to the ACK service controller Docker image for Amazon Simple Storage Service (Amazon S3) is [`gallery.ecr.aws/aws-controllers-k8s/s3-controller`][s3-ecr-controller].
+Container images for ACK service controllers can be found in the [ACK registry within the Amazon ECR Public Gallery][ack-ecr-gallery]. To find a container image for a specific service, you can go to `gallery.ecr.aws/aws-controllers-k8s/$SERVICENAME-controller`. For example, the link to the ACK service controller container image for Amazon Simple Storage Service (Amazon S3) is [`gallery.ecr.aws/aws-controllers-k8s/s3-controller`][s3-ecr-controller].
 
 Individual ACK service controllers are tagged with their release version. You can find image URIs for different releases under the `Image tags` section in the image repository on the ECR Public Gallery.
 
