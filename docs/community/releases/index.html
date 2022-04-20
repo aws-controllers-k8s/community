@@ -9,7 +9,7 @@ Contributor Docs</button><div class="collapse show" id=section-contributor><ul c
 Discussion</button><div class="collapse show" id=section-discussion><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/background/>Background</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/faq/>FAQ</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/discussions/>Discussions</a></li></ul></div></li></ul></nav></div><nav class="docs-toc d-none d-xl-block col-xl-3" aria-label="Secondary navigation"><div class=page-links><h3>On this page</h3><hr><span class=small><nav id=TableOfContents><ul><li><a href=#project-stages>Project Stages</a><ul><li><a href=#proposed>PROPOSED</a></li><li><a href=#planned>PLANNED</a></li><li><a href=#in-progress>IN PROGRESS</a></li><li><a href=#released>RELEASED</a></li></ul></li><li><a href=#releases-and-versioning>Releases and Versioning</a><ul><li><a href=#semantic-versioning>Semantic Versioning</a></li><li><a href=#stable-helm-charts>Stable Helm Charts</a></li></ul></li><li><a href=#maintenance-phases>Maintenance Phases</a><ul><li><a href=#preview>Preview</a></li><li><a href=#general-availability>General Availability</a></li><li><a href=#deprecated>Deprecated</a></li><li><a href=#not-supported>Not Supported</a></li></ul></li></ul></nav></span></div></nav><main class="docs-content col-lg-11 col-xl-9"><h1>Release Phases</h1><p class=lead>Releases, Versioning and Maintenance Phases</p><p>Service controllers are built in separate source code repositories. Below, you
 will find a description of the <a href=#project-stages>Project Stages</a> that a service
 controller repository goes through on its way to being released.</p><p>A controller that has reached the <code>RELEASED</code> project stage will have a set of
-release artifacts, including binary Docker images for the controller and a Helm
+release artifacts, including binary container images for the controller and a Helm
 Chart that installs the controller into a target Kubernetes cluster. Read more
 below about our <a href=#releases-and-versioning>Releases and Versioning policy</a>.</p><p>Finally, we have a set of documented <a href=#maintenance-phases>Maintenance Phases</a>
 that clearly outline our support stance for service controllers that have been
@@ -27,7 +27,7 @@ a particular AWS service API. For example, an SNS Topic or an S3 Bucket.
 Some service APIs have multiple top-level resources; SNS, for instance, has
 Topic, PlatformApplication and PlatformEndpoint top-level resources that
 may be created.</div></div><h3 id=released>RELEASED<a href=#released class=anchor aria-hidden=true>#</a></h3><p>The <code>RELEASED</code> project stage indicates that the ACK service controller source
-repository has had a Semantic Versioning Git tag applied and that both a Docker
+repository has had a Semantic Versioning Git tag applied and that both a container
 image and Helm Chart have been built and published to the ECR Public
 repositories for ACK.</p><p>Once a service controller reaches the <code>RELEASED</code> project stage, that <strong>does not
 mean</strong> that there can never be any changes or additions to the Custom Resource
@@ -44,7 +44,7 @@ any ACK component.</div></div><p>Service controllers in ACK use <a href=#semanti
 indicate whether changes included in a particular binary release introduce
 features or bug fixes and whether or not features break backwards compatibility
 for public APIs and interfaces.</p><p>There are two release artifacts produced when an ACK service controller is
-released: a binary <strong>Docker image</strong> with the controller and a <strong>Helm Chart</strong>
+released: a binary <strong>container image</strong> with the controller and a <strong>Helm Chart</strong>
 that installs the controller into a target Kubernetes cluster. Both these
 artifacts will have tags that correspond to the Semantic Version Git tag
 applied against the source code repository for the controller.</p><p>Service controllers may have a <a href=#stable-helm-charts>Stable Helm Chart</a> that
@@ -64,11 +64,11 @@ will be incremented. If the commits simply fix bugs and do not introduce any
 features or interface changes, the patch version (&ldquo;Z&rdquo;) will be incremented.</p><p>Releases of any ACK component that have a zero major release number (e.g.
 <code>v0.0.2</code>) may have breaking changes to the public API or interfaces exposed by
 that component.</p><p>This is by design, and <a href=https://semver.org/#spec-item-4>per the Semantic Versioning specification</a>:</p><blockquote><p>Major version zero (0.y.z) is for initial development. Anything MAY change at
-any time. The public API SHOULD NOT be considered stable.</p></blockquote><p>For ACK components that have a binary distributable &ndash; i.e. a Docker image &ndash;
+any time. The public API SHOULD NOT be considered stable.</p></blockquote><p>For ACK components that have a binary distributable &ndash; i.e. a container image &ndash;
 the creation of a new SemVer Git tag on the source code repository triggers the
-automatic building and publishing of a Docker image with an image tag including
+automatic building and publishing of a container image with an image tag including
 the SemVer version.</p><p>For example, if a Git tag of <code>v1.2.6</code> was created on the
-<a href=https://github.com/aws-controllers-k8s/s3-controller>github.com/aws-controllers-k8s/s3-controller</a> repository, a Docker
+<a href=https://github.com/aws-controllers-k8s/s3-controller>github.com/aws-controllers-k8s/s3-controller</a> repository, a container
 image with a tag <code>v1.2.6</code> would be published to the
 <a href=https://gallery.ecr.aws/aws-controllers-k8s/s3-controller>public.ecr.aws/aws-controllers-k8s/s3-controller</a> ECR Public
 repository.</p><div class="hint d-flex flex-column border-start my-4 border-4"><div class="hint-title p-2 flex flex-row flex-items-center">Note</div><div class="hint-body p-2 small">Binaries for individual ACK service controllers components are published in
@@ -100,14 +100,14 @@ service controller <strong>in a major version series</strong>. For example, the 
 <code>stable</code> artifact tag for the ElastiCache ACK service controller&rsquo;s &ldquo;v1&rdquo; major
 version series would be
 <code>public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable</code>.</p><p>This <code>stable</code> artifact tag points to a Helm chart that has configuration values
-that have been tested with a specific SemVer Docker image.</p><p>Typically these tests are &ldquo;soak&rdquo; tests and allow the team maintaining that ACK
+that have been tested with a specific SemVer container image.</p><p>Typically these tests are &ldquo;soak&rdquo; tests and allow the team maintaining that ACK
 controller&rsquo;s source code to have a high degree of confidence in the
 controller&rsquo;s long-running operation.</p><div class="hint d-flex flex-column border-start my-4 border-4"><div class="hint-title p-2 flex flex-row flex-items-center">Note</div><div class="hint-body p-2 small">Please note that not all ACK service controllers will have a Helm chart
 with a <code>stable</code> artifact tag. Furthermore, there will only ever be a single
 <code>stable</code> Helm Chart tag <strong>per major version series of a controller</strong>.</div></div><p>This <code>stable</code> Helm Chart tag (an OCI Artifact tag) will point to different
 Helm Chart packages over time. From time to time, the maintainer team for a
 service controller may update the configuration values and associated SemVer
-Docker image tag for the controller binary to point to a newer image.</p><p>For example, consider the ElastiCache ACK service controller maintainer team
+container image tag for the controller binary to point to a newer image.</p><p>For example, consider the ElastiCache ACK service controller maintainer team
 has executed a series of long-running tests of the
 <code>public.ecr.aws/aws-controllers-k8s/elasticache-controller</code> image tagged with
 the <code>v1.2.6</code> SemVer tag. The maintainer team is confident that the controller
@@ -150,4 +150,4 @@ Maintenance Phase to the <code>Not Supported</code> Maintenance Phase <em>only a
 deprecation period has elapsed</em>.</p><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/community/releases.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/main.min.491f43bd0e1cabe525a61ecfcb2738d89c578585b04b9ebbaf9d125b55595f3b76e5497375a1da0c840e16966c9a910aae60fba0790088c7869bee07c3be997c.js integrity="sha512-SR9DvQ4cq+Ulph7Pyyc42JxXhYWwS567r50SW1VZXzt25UlzdaHaDIQOFpZsmpEKrmD7oHkAiMeGm+4Hw76ZfA==" crossorigin=anonymous defer></script>
-<script src=https://aws-controllers-k8s.github.io/community/index.min.3bfcf1d9fb29f34082e4083cda744a5a6b90d7b93c9a1fc12e18308fbe72bdf0891b594a002446c6ffe9bb30bec34c7e2bf47796d6a7876efdd1c17cfd707bc6.js integrity="sha512-O/zx2fsp80CC5Ag82nRKWmuQ17k8mh/BLhgwj75yvfCJG1lKACRGxv/puzC+w0x+K/R3ltanh2790cF8/XB7xg==" crossorigin=anonymous defer></script></body></html>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.47c9de65f3694f2a177f2b1ce922f24794e1a0c33dee41e09fe497ddcfe55d4cc1abbbf9fecee8fb427b7d9b439ea43f80dd0f722746ffcc7c4f08955e8651cf.js integrity="sha512-R8neZfNpTyoXfysc6SLyR5ThoMM97kHgn+SX3c/lXUzBq7v5/s7o+0J7fZtDnqQ/gN0PcidG/8x8TwiVXoZRzw==" crossorigin=anonymous defer></script></body></html>
