@@ -26,8 +26,8 @@ Steps below show how to create a new release with semver tag.
 For more details on semantic versioning(semver), please read our [release phase guide](../../community/releases/)
 {{% /hint %}}
 
-Once the git repository is tagged with semver, a postsubmit prowjob builds binary
-docker image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
+Once the git repository is tagged with semver, a postsubmit prowjob builds 
+container image for ACK service controller and publish to public ecr repository `public.ecr.aws/aws-controllers-k8s/controller`.
 Same prowjob also publishes the Helm charts for the ACK service controller to
 public ecr repository `public.ecr.aws/aws-controllers-k8s/chart`.
 
@@ -44,21 +44,21 @@ that comprises the ACK service controllers in that "release".
 The release artifacts include the following for one or more service
 controllers:
 
-* Docker image
+* Container image
 * Helm chart
 
-The Docker image is built and pushed with an image tag that indicates the
+The container image is built and pushed with an image tag that indicates the
 release version for the controller along with the AWS service. For example,
 assume a release semver tag of `v0.1.0` that includes service controllers for
-S3 and SNS. There would be two Docker images built for this release, one each
-containing the ACK service controllers for S3 and SNS. The Docker images would
+S3 and SNS. There would be two container images built for this release, one each
+containing the ACK service controllers for S3 and SNS. The container images would
 have the following image tags: `s3-v0.1.0` and `sns-v0.1.0`. Note
 that the full image name would be
 `public.ecr.aws/aws-controllers-k8s/controller:s3-v0.1.0`
 
 The Helm chart artifact can be used to install the ACK service controller as a
 Kubernetes Deployment; the Deployment's Pod image will refer to the exact
-Docker image tag matching the release tag.
+container image tag matching the release tag.
 
 ## Release steps
 
@@ -98,7 +98,7 @@ git diff
 {{% hint %}}
 When you run `make build-controller` for a service, it will overwrite any
 Helm chart files that had previously been generated in the `$SERVICE-controller/helm`
-directory with files that refer to the Docker image with an image tag
+directory with files that refer to the container image with an image tag
 referring to the release you've just built artifacts for.
 
 {{% /hint %}}
@@ -111,8 +111,8 @@ git push origin release-$RELEASE_VERSION
 
 5) Get your pull request reviewed and merged. After merge, tag is automatically applied and pushed.
 
-6) `git tag` operation (applied automatically in last step) triggers a postsubmit prowjob which builds binary docker image and then publishes
-both docker image and Helm chart to public ECR repository.
+6) `git tag` operation (applied automatically in last step) triggers a postsubmit prowjob which builds container image and then publishes
+both container image and Helm chart to public ECR repository.
 Service team can see the release prowjobs, their status and logs at https://prow.ack.aws.dev/
 
 ## Stable Release
@@ -166,7 +166,7 @@ git push -u origin stable-$STABLE_RELEASE:stable
 ```
 The above command will create a new `stable` branch if it does not exist
 and trigger the ACK postsubmit prowjob for stable release. This prowjob will
-not build a docker image and only publishes the helm artifacts with stable tag.
+not build a container image and only publishes the helm artifacts with stable tag.
 
 If the git push command fails, use `--force` option to update the upstream
 `stable` branch with your local changes.
