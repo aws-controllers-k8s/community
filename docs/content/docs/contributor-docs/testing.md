@@ -44,7 +44,7 @@ installed and configured:
 
 To build and test an ACK controller with `kind`, execute the commands as
 described in the following from the root directory of the
-`github.com/aws-controllers-k8s/community` repository.
+`github.com/aws-controllers-k8s/test-infra` repository.
 
 You should have forked this repository and `git clone`'d it locally when
 [setting up your development environment](../setup/).
