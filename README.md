@@ -108,7 +108,7 @@ Everyone is welcome to participate.
 #### Details 
 * **Agenda/Notes**: [link][meeting-notes]
   * Notes from each meeting are captured here.
-* **When:** every Monday at 9:00-9:30AM Pacific Time
+* **When:** every Thursday at 9:00-9:30AM Pacific Time
 * **Where:** [Zoom meeting][zoom-meeting-link]
 * **Past Meeting Recordings:** TBD
   * Meetings are recorded and posted to Youtube.
