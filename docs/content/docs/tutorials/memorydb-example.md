@@ -62,9 +62,7 @@ Once the service controller is deployed, you will need to [configure the IAM per
 
 ## Create Amazon MemoryDB Cluster Instances
 
-You can create Amazon MemoryDB Clusters using the `Cluster` custom resource. The examples below show how to deploy it from your Kubernetes environment. For a full list of options available in the `Cluster` custom resource definition, you can use `kubectl explain cluster`.
-
-The examples below use the `db.t4g.small` node type. Please review the [MemoryDB node types](https://docs.aws.amazon.com/memorydb/latest/devguide/nodes.supportedtypes.html) to select the most appropriate one for your workload.
+You can create Amazon MemoryDB Clusters using the `Cluster` custom resource. The examples below show how to deploy it from your Kubernetes environment. For a full list of options available in the `Cluster` custom resource definition, you can use `kubectl explain cluster` command.
 
 ### Amazon MemoryDB Cluster
 
@@ -138,6 +136,7 @@ Then update the `subnetIDs` in the input YAML and provide the subnet Ids that ar
 
 ##### Create Amazon MemoryDB Cluster
 The following example uses the MemoryDB subnet group created above. It uses the provisioning EKS Cluster's security group. You may specify any other VPC security group by modifying the list of `securityGroupIDs` in the specification.
+It uses the `db.t4g.small` node type for the MemoryDB cluster. Please review the [MemoryDB node types](https://docs.aws.amazon.com/memorydb/latest/devguide/nodes.supportedtypes.html) to select the most appropriate one for your workload.
 
 ```shell
 EKS_CLUSTER_NAME="example-eks-cluster"
@@ -269,7 +268,6 @@ Status:
 Events:               <none>
 ```
 
-
 When the `Cluster Status` says `available`, you can connect to the database instance.
 
 ## Connect to Amazon MemoryDB Cluster
@@ -285,9 +283,7 @@ kubectl get cluster "${MEMORYDB_CLUSTER_NAME}" -o jsonpath='{.status.clusterEndp
 kubectl get cluster "${MEMORYDB_CLUSTER_NAME}" -o jsonpath='{.status.clusterEndpoint.port}'
 ```
 
-
-
-You can extract this information and make it available to your Pods using a [`FieldExport`][field-export] resource. For example, to get the connection information from Amazon MemoryDB Cluster created in the above example, you can use the following example:
+You can extract this information and make it available to your Pods using a [`FieldExport`][field-export] resource. The following example makes the MemoryDB cluster endpoint and port available as ConfigMap data:
 
 ```shell
 MEMORYDB_CLUSTER_NAME="example-memorydb-cluster"
@@ -339,7 +335,7 @@ Confirm that the Amazon MemoryDB endpoint details are available in the config ma
 kubectl get configmap/${MEMORYDB_CLUSTER_CONN_CM} -o jsonpath='{.data}'
 ```
 
-These values can be injected into a container either as environmental variables or files. For example, here is a snippet of a Deployment definition that will add the Amazon MemoryDB Cluster connection info into the Pod:
+These values can be injected into a container either as environmental variables or files. For example, here is a snippet of a deployment definition that will add the Amazon MemoryDB Cluster connection info into a Pod:
 ```shell
 cat <<EOF > game_leaderboard.yaml
 apiVersion: apps/v1
@@ -360,9 +356,9 @@ spec:
     spec:
       containers:
       - name: leaderboard
-        image: public.ecr.aws/nginx/nginx:latest
-        ports:
-          - containerPort: 80
+        image: public.ecr.aws/sam/build-python3.8:latest
+        tty: true
+        stdin: true
         env:
           - name: MEMORYDB_CLUSTER_HOST
             valueFrom:
@@ -377,6 +373,26 @@ spec:
 EOF
 
 kubectl apply -f game_leaderboard.yaml
+```
+
+Confirm that the leaderboard application container has been deployed successfully by running the following:
+```shell
+kubectl get pods –selector=app=leaderboard
+```
+
+Verify that the Pod Status is `Running`.
+
+Get a shell to the running leaderboard container.
+```shell
+LEADERBOARD_POD_NAME=$(kubectl get pods –selector=app=leaderboard -o jsonpath='{.items[*].metadata.name}')
+kubectl exec –stdin –tty ${LEADERBOARD_POD_NAME}  -- /bin/bash
+```
+
+In the running leaderboard container shell, run the following commands and confirm that the MemoryDB cluster host and port are available as environment variables.
+```shell
+# Confirm that the memorydb cluster host, port are available as environment variables
+echo $MEMORYDB_CLUSTER_HOST
+echo $MEMORYDB_CLUSTER_PORT
 ```
 
 ## Next steps
@@ -413,3 +429,4 @@ To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 [irsa-permissions]: ../../user-docs/irsa/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
+[field-export]: ../../user-docs/field-export
