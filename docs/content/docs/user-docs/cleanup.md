@@ -30,7 +30,7 @@ export SERVICE=s3
 export CHART_EXPORT_PATH=/tmp/chart
 
 # Delete an individual CRD
-kubectl delete -f $CHART_EXPORT_PATH/ack-$SERVICE-controller/crds/s3.services.k8s.aws_buckets.yaml
+kubectl delete -f $CHART_EXPORT_PATH/$SERVICE-chart/crds/s3.services.k8s.aws_buckets.yaml
 ```
 
 {{% hint type="warning" title="Check for CRDs that are common across services" %}}
@@ -45,7 +45,7 @@ export SERVICE=s3
 export CHART_EXPORT_PATH=/tmp/chart
 
 # Delete all CRDs
-kubectl delete -f $CHART_EXPORT_PATH/ack-$SERVICE-controller/crds
+kubectl delete -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 ```
 
 ## Verify Helm charts were deleted
