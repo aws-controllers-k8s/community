@@ -15,7 +15,7 @@ Use the `helm uninstall` command to uninstall an ACK service controller:
 export SERVICE=s3
 
 # Uninstall the ACK service controller with Helm
-helm uninstall -n $ACK_K8S_NAMESPACE ack-$SERVICE-controller
+helm uninstall -n $ACK_SYSTEM_NAMESPACE ack-$SERVICE-controller
 ```
 
 ## Delete CRDs
@@ -52,14 +52,14 @@ kubectl delete -f $CHART_EXPORT_PATH/$SERVICE-chart/crds
 
 Verify that the Helm chart for your ACK service controller was deleted with the following command:
 ```bash
-helm ls -n $ACK_K8S_NAMESPACE
+helm ls -n $ACK_SYSTEM_NAMESPACE
 ```
 
 ## Delete namespaces
 
 Delete a specified namespace with the `kubectl delete namespace` command:
 ```bash
-kubectl delete namespace $ACK_K8S_NAMESPACE
+kubectl delete namespace $ACK_SYSTEM_NAMESPACE
 ```
 
 ## Delete ConfigMap
