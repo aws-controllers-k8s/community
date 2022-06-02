@@ -42,13 +42,13 @@ This guide assumes that you have:
 You can deploy the ACK service controller for Amazon RDS using the [rds-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/rds-chart). You can download it to your workspace using the following command:
 
 ```bash
-helm pull oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.20
+helm pull oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.24
 ````
 
 You will need to decompress and extract the Helm chart. You can do so with the following command:
 
 ```bash
-tar xzvf rds-chart-v0.0.20.tgz
+tar xzvf rds-chart-v0.0.24.tgz
 ```
 
 You can now use the Helm chart to deploy the ACK service controller for Amazon RDS to your EKS cluster. At a minimum, you need to specify the AWS Region to execute the RDS API calls.
@@ -69,7 +69,7 @@ Once the service controller is deployed, you will need to [configure the IAM per
 
 You can deploy most RDS database instances using the `DBInstance` custom resource. The examples below show how to deploy using different database engines in RDS from your Kubernetes environment. For a full list of options available in the `DBInstance` custom resource definition, you can use `kubectl explain dbinstance`.
 
-The examples below use the `db.t3.micro` instance type. Please review the [RDS instance types](https://aws.amazon.com/rds/instance-types/) to select the most appropriate one for your workload.
+The examples below use the `db.t4g.micro` instance type. Please review the [RDS instance types](https://aws.amazon.com/rds/instance-types/) to select the most appropriate one for your workload.
 
 ### PostgreSQL
 
@@ -92,7 +92,7 @@ metadata:
   name: "${RDS_INSTANCE_NAME}"
 spec:
   allocatedStorage: 20
-  dbInstanceClass: db.t3.micro
+  dbInstanceClass: db.t4g.micro
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: postgres
   engineVersion: "14"
@@ -137,7 +137,7 @@ metadata:
   name: "${RDS_INSTANCE_NAME}"
 spec:
   allocatedStorage: 20
-  dbInstanceClass: db.t3.micro
+  dbInstanceClass: db.t4g.micro
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   engine: mariadb
   engineVersion: "10.6"
@@ -187,7 +187,7 @@ spec:
     name: ${RDS_INSTANCE_CONN_CM}
     kind: configmap
   from:
-    path: "status.endpoint.address"
+    path: ".status.endpoint.address"
     resource:
       group: rds.services.k8s.aws
       kind: DBInstance
@@ -202,7 +202,7 @@ spec:
     name: ${RDS_INSTANCE_CONN_CM}
     kind: configmap
   from:
-    path: "status.endpoint.port"
+    path: ".status.endpoint.port"
     resource:
       group: rds.services.k8s.aws
       kind: DBInstance
@@ -217,7 +217,7 @@ spec:
     name: ${RDS_INSTANCE_CONN_CM}
     kind: configmap
   from:
-    path: "spec.masterUsername"
+    path: ".spec.masterUsername"
     resource:
       group: rds.services.k8s.aws
       kind: DBInstance
