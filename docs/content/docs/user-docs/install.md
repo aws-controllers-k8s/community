@@ -43,7 +43,7 @@ Before installing a Helm chart, you must first make the Helm chart available on 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/s3-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
