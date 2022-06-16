@@ -38,28 +38,19 @@ This guide assumes that you have:
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services.
   - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters.
   - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
-  - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+  - [Helm 3.8+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 ### Install the ACK service controller for APIGatewayv2
 
-Deploy the ACK service controller for Amazon APIGatewayv2 using the [apigatewayv2-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/apigatewayv2-chart).
-Download it to your workspace using the following command:
-
+Log into the Helm registry that stores the ACK charts:
 ```bash
-helm pull oci://public.ecr.aws/aws-controllers-k8s/apigatewayv2-chart --version=v0.0.17
-````
-
-Use the following command to decompress and extract the Helm chart:
-
-```bash
-tar xzvf apigatewayv2-chart-v0.0.17.tgz
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
-Deploy the controller using Helm chart, specifying that APIGatewayv2 resources should be created by default in the
-`us-east-1` region:
+Deploy the ACK service controller for Amazon APIGatewayv2 using the [apigatewayv2-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/apigatewayv2-chart). Resources should be created in the `us-east-1` region:
 
 ```bash
-helm install apigatewayv2-chart --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/apigatewayv2-chart --version=v0.0.17 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/apigatewayv2-controller/blob/main/helm/values.yaml).
