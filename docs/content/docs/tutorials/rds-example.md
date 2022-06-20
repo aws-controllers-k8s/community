@@ -39,16 +39,11 @@ This guide assumes that you have:
 
 ### Install the ACK service controller for RDS
 
-You can deploy the ACK service controller for Amazon RDS using the [rds-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/rds-chart). You can download it to your workspace using the following command:
+You can deploy the ACK service controller for Amazon RDS using the [rds-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/rds-chart).
 
+Log into the Helm registry that stores the ACK charts:
 ```bash
-helm pull oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.24
-````
-
-You will need to decompress and extract the Helm chart. You can do so with the following command:
-
-```bash
-tar xzvf rds-chart-v0.0.24.tgz
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
 You can now use the Helm chart to deploy the ACK service controller for Amazon RDS to your EKS cluster. At a minimum, you need to specify the AWS Region to execute the RDS API calls.
@@ -56,7 +51,7 @@ You can now use the Helm chart to deploy the ACK service controller for Amazon R
 For example, to specify that the RDS API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install rds-chart --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.24 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/rds-controller/blob/main/helm/values.yaml).

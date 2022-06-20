@@ -25,7 +25,7 @@ Check the [project stage](../../community/releases/#project-stages) and [mainten
 
 ## Install an ACK service controller with Helm (Recommended)
 
-The recommended way to install an ACK service controller for Kubernetes is to use [Helm 3.7+][helm-3-install].
+The recommended way to install an ACK service controller for Kubernetes is to use [Helm 3.8+][helm-3-install].
 
 [helm-3-install]: https://helm.sh/docs/intro/install/
 
@@ -38,38 +38,23 @@ Helm charts for individual ACK service controllers are tagged with their release
 [ack-ecr-gallery]: https://gallery.ecr.aws/aws-controllers-k8s
 [s3-ecr-chart]: https://gallery.ecr.aws/aws-controllers-k8s/s3-chart
 
-Before installing a Helm chart, you must first make the Helm chart available on the deployment host. To do so, use the `helm pull` command and then extract the chart:
+Before installing a Helm chart, you can query the controller repository to find the latest release tag. This tag will correspond with a version of the Helm chart and a controller image. Then, you can use the Helm CLI to log into the ECR public Helm registry and install the chart.
 
 ```bash
-export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
-export CHART_EXPORT_PATH=/tmp/chart
-export CHART_REF=$SERVICE-chart
-export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
-export CHART_PACKAGE=$CHART_REF-$RELEASE_VERSION.tgz
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export ACK_SYSTEM_NAMESPACE=ack-system
+export AWS_REGION=us-west-2
 
-mkdir -p $CHART_EXPORT_PATH
-
-helm pull oci://$CHART_REPO --version $RELEASE_VERSION -d $CHART_EXPORT_PATH
-tar xvf $CHART_EXPORT_PATH/$CHART_PACKAGE -C $CHART_EXPORT_PATH
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+helm install --create-namespace -n $ACK_SYSTEM_NAMESPACE ack-$SERVICE-controller \
+  oci://public.ecr.aws/aws-controllers-k8s/$SERVICE-chart --version=$RELEASE_VERSION --set=aws.region=$AWS_REGION
 ```
 
 {{% hint type="info" title="Specify a release version" %}}
 The commands above download the latest version of the S3 controller. To select a
 different version, change the `RELEASE_VERSION` variable and execute the commands again.
 {{% /hint %}}
-
-Once the Helm chart is downloaded and exported, you can install a particular ACK service controller using the `helm install` command:
-
-```bash
-export ACK_SYSTEM_NAMESPACE=ack-system
-export AWS_REGION=us-west-2
-
-helm install --create-namespace --namespace $ACK_SYSTEM_NAMESPACE ack-$SERVICE-controller \
-    --set aws.region="$AWS_REGION" \
-    $CHART_EXPORT_PATH/$SERVICE-chart
-```
 
 {{% hint type="info" title="Specify your target service region" %}}
 The commands above set the target service region of the S3 controller to `us-west-2`. Be sure to specify your target service region in the `AWS_REGION` variable. This will be the *default* AWS region in which resources will be created by the ACK service controller. Note that a single ACK service controller can manage the lifecycle of resources in multiple AWS regions: simply add the `services.k8s.aws/region=$REGION` annotation to your resource. Alternately, you can add the `services.k8s.aws/region=$REGION` annotation to a Kubernetes `Namespace` and any resource launched in that `Namespace` will be created in that region by default.
@@ -78,12 +63,13 @@ The commands above set the target service region of the S3 controller to `us-wes
 The `helm install` command should return relevant installation information:
 
 ```bash
-NAME: s3-chart
-LAST DEPLOYED: Thu Dec 17 13:09:17 2020
+NAME: ack-s3-controller
+LAST DEPLOYED: Thu Jun 16 19:30:16 2022
 NAMESPACE: ack-system
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
+NOTES: ...
 ```
 
 To verify that the Helm chart was installed, use the `helm list` command:
@@ -95,13 +81,13 @@ helm list --namespace $ACK_SYSTEM_NAMESPACE -o yaml
 The `helm list` command should return your newly-deployed Helm chart release information:
 
 ```bash
-app_version: v0.0.6
-chart: s3-chart-v0.0.6
+app_version: v0.1.1
+chart: s3-chart-v0.1.1
 name: ack-s3-controller
 namespace: ack-system
 revision: "1"
 status: deployed
-updated: 2020-12-17 13:09:17.309002201 -0500 EST
+updated: 2022-06-16 19:30:16.260012435 +0000 UTC
 ```
 
 {{% hint type="important" title="NOTE" %}}

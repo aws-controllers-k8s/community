@@ -30,28 +30,23 @@ This guide assumes that you have:
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) - A command line tool for interacting with AWS services.
   - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) - A command line tool for working with Kubernetes clusters.
   - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
-  - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+  - [Helm 3.8+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
 
 ### Install the ACK service controller for Amazon MemoryDB
 
-You can deploy the ACK service controller for Amazon MemoryDB using the [memorydb-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/memorydb-chart). You can download it to your workspace using the following command:
+You can deploy the ACK service controller for Amazon MemoryDB using the [memorydb-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/memorydb-chart).
 
+Log into the Helm registry that stores the ACK charts:
 ```bash
-helm pull oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=v0.0.1
-````
-
-You will need to decompress and extract the Helm chart. You can do so with the following command:
-
-```bash
-tar xzvf memorydb-chart-v0.0.1.tgz
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
-You can now use the Helm chart to deploy the ACK service controller for Amazon MemoryDB to your EKS cluster. At a minimum, you need to specify the AWS Region to execute the Amazon MemoryDB API calls.
+You can install the Helm chart to deploy the ACK service controller for Amazon MemoryDB to your EKS cluster. At a minimum, you need to specify the AWS Region to execute the Amazon MemoryDB API calls.
 
 For example, to specify that the Amazon MemoryDB API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install memorydb-chart --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=v0.0.1 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/memorydb-controller/blob/main/helm/values.yaml).
