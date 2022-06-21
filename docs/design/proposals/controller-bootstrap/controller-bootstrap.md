@@ -1,6 +1,6 @@
 # Controller Bootstrap Design Document
-## Introduction
 
+## Introduction
 This documentation discusses the design of the ACK *controller-bootstrap* for initializing a new ACK service controller repository.
 
 To successfully generate a new ACK service controller, the service controller repository must have a few directories, such as `apis`, `olm`, `test/e2e`, and `templates`, in addition to the metadata files, `generator.yaml` and `metadata.yaml`, already present.
@@ -11,7 +11,6 @@ Even though the details of these initial directories and files can be documented
 The *controller-bootstrap* tool will solve these drawbacks by automating the repository bootstrap process, which will enhance the ACK onboarding experience for AWS service teams.
 
 ## Problem Overview
-
 ![overview-diagram](./images/controller-bootstrap-flowchart.png)
 
 When developers attempt to build an ACK service controller with an empty service controller repository, they face multiple errors sequentially, including missing file/directory and outdated `go.mod` file, etc.
@@ -47,7 +46,6 @@ There is also an additional overhead for developers to refer to `aws-sdk-go` for
 ## Scope
 
 #### Initial Implementation
-
 * Automate the service bootstrap directory creation
 * Automate the `aws-sdk-go` inference to generate the metadata files
 * Add the dry-run functionality
@@ -57,18 +55,15 @@ There is also an additional overhead for developers to refer to `aws-sdk-go` for
 * Use smart defaulting for finding service names
 
 #### Future Improvements
-
 * Implement the functionality to automate running the *controller-bootstrap* and open a PR using ack-bot
 * Support updating to a newer directory structure
 
 #### Out of Scope
-
 * Generating the Go source code for the ACK service controller (this is the purview of code-generator)
 
 ## Proposed Solution
 
 ### High Level Overview
-
 ![sequence-diagram](./images/controller-bootstrap-sequence-diagram.png)
 
 1. The *controller-bootstrap* is a CLI tool that initializes an ACK service controller repository.
@@ -88,11 +83,9 @@ If there is a discrepancy between the supplied service alias and service ID, the
 The image below describes the output of service controller directory before and after executing `make init` in *controller-bootstrap*.
 
 #### Before
-
 `eks-controller/`
 
 #### After
-
 ![eks-directory](./images/controller-bootstrap-eks-directory-screenshot.png)
 
 The following table shows the 13 manual steps with the code-generator converted into a single step with the *controller-bootstrap*.
@@ -103,7 +96,6 @@ The following table shows the 13 manual steps with the code-generator converted 
 ### Low Level implementation
 
 #### Choice of Language
-
 The *controller-bootstrap* is a command-line tool and will be built using [Cobra](https://github.com/spf13/cobra#overview), which is widely used in Go projects to develop a user-friendly CLI application.
 Cobra also has useful features of nested subcommands and flags for the bootstrap tool to provide additional functionalities and configurations for a better user experience.
 
@@ -111,7 +103,6 @@ We chose to use Golang for this tool instead of Python because other command-lin
 In addition, `ack-generate` CLI inside the code-generator also serves as a perfect example for rendering template files and inferring `aws-sdk-go`. Also, the use of Golang in the *controller-bootstrap* allows reusing code from the ACK code-generator.
 
 #### Command Line Arguments
-
 In the *controller-bootstrap*, the user can run the following CLI command with the various inputs.
 
 > `controller-bootstrap generate -s ${AWS_SERVICE} -r ${ACK_RUNTIME_VERSION} -v ${AWS_SDK_GO_VERSION} -d=${DRY_RUN} e=${EXISTING_CONTROLLER} -o ${PATH_TO_CONTROLLER_DIRECTORY} -m ${SERVICE_MODEL_NAME}`
@@ -137,7 +128,6 @@ However, most customers will use this tool with the Makefile targets present ins
 >Look at Appendix A1 for more details of the Makefile
 
 #### API Inference
-
 To generate the metadata files, the *controller-bootstrap* infers `aws-sdk-go` to fetch the accurate service metadata and the custom resource names. The proposed approach is to implement a method to read the `api-2.json` file from `aws-sdk-go/models/apis/<model-name>`, and extract the `serviceId`, `serviceFullName`, etc from the `metadata` section.
 Also, this approach allows to extract all the “Create” operations from the `operations` section, which helps to determine the custom resource names.
 
@@ -207,7 +197,6 @@ clean:
 ```
 
 ## FAQ
-
 >Why do we add ACK custom resource names in the `ignore` list of the `generator.yaml` file?
 
 ACK custom resource names will be initially added to the `ignore` list of the `generator.yaml` file. The service teams can use the inferred custom resource names and build the `generator.yaml` to ignore, modify, and add new instructions for code generation.
