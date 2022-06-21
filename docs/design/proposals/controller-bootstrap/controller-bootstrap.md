@@ -46,7 +46,7 @@ There is also an additional overhead for developers to refer to `aws-sdk-go` for
 
 ## Scope
 
-Initial Implementation
+#### Initial Implementation
 
 * Automate the service bootstrap directory creation
 * Automate the `aws-sdk-go` inference to generate the metadata files
@@ -56,12 +56,12 @@ Initial Implementation
 * Update the existing ACK service controllers with the latest templates of static files (`OWNERS`, `CONTRIBUTING.md`, `NOTICE`, etc)
 * Use smart defaulting for finding service names
 
-Future Improvements
+#### Future Improvements
 
 * Implement the functionality to automate running the *controller-bootstrap* and open a PR using ack-bot
 * Support updating to a newer directory structure
 
-Out of Scope
+#### Out of Scope
 
 * Generating the Go source code for the ACK service controller (this is the purview of code-generator)
 
