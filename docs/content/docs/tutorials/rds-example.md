@@ -51,7 +51,7 @@ You can now use the Helm chart to deploy the ACK service controller for Amazon R
 For example, to specify that the RDS API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.24 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=v0.0.27 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/rds-controller/blob/main/helm/values.yaml).
