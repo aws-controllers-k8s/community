@@ -50,7 +50,7 @@
     "lazysizes": "^5.3",
     "markdown-it": ">=12.3.2",
     "markdownlint-cli": "^0.31.1",
-    "mermaid": "^9.0.0",
+    "mermaid": "^9.1.2",
     "nanoid": ">=3.1.31",
     "postcss": "^8.3",
     "postcss-cli": "^8.3",
