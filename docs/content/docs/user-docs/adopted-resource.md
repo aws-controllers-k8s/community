@@ -1,7 +1,7 @@
 ---
 title: "Adopting Existing AWS Resources"
-description: "Adopting existing AWS resources that were created using other tools"
-lead: ""
+description: "Adopting Existing AWS Resources"
+lead: "Adopting existing AWS resources that were created using other tools"
 draft: false
 menu:
   docs:
