@@ -25,7 +25,7 @@ resource that specifies the unique identifier for the AWS resource and a target
 K8s object. After applying this custom resource to the cluster, the ACK
 controller will describe the AWS resource and create the associated ACK resource
 inside the cluster - with a complete spec and status. The ACK controller will
-then treat the newly-created ACK resource the same way as any other.
+then treat the newly-created ACK resource like any other.
 
 All ACK controllers ship with the same `AdoptedResource` CRD. Every controller
 contains the logic for adopting resources from its particular service. That is,
