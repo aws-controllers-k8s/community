@@ -11,7 +11,7 @@ toc: true
 ---
 
 The ACK controllers are intended to manage the complete lifecycle of an AWS
-resource, from creation through until deletion. However, you may already be
+resource, from creation through deletion. However, you may already be
 managing those resources using other tools - such as CloudFormation or
 Terraform. Migrating to ACK could be time-consuming to redeclare all resources
 as YAML, or even cause you to lose the state of the application if parts of the
