@@ -16,7 +16,7 @@ managing those resources using other tools - such as CloudFormation or
 Terraform. Migrating to ACK could be time-consuming to redeclare all resources
 as YAML, or even cause you to lose the state of the application if parts of the
 system are recreated. The ACK `AdoptedResource` custom resource was designed to
-help with migrating the lifecycle of these AWS resources into your Kubernetes
+help migrate these AWS resources to be managed by an ACK controller in your Kubernetes
 cluster without having to define the full YAML spec or needing to delete and
 re-create the resource.
 
