@@ -20,7 +20,7 @@ help migrate these AWS resources to be managed by an ACK controller in your Kube
 cluster without having to define the full YAML spec or needing to delete and
 re-create the resource.
 
-To adopt an AWS resource, you need to create an `AdoptedResource` custom
+To adopt an AWS resource, create an `AdoptedResource` custom
 resource that specifies the unique identifier for the AWS resource and a target
 K8s object. After applying this custom resource to the cluster, the ACK
 controller will describe the AWS resource and create the associated ACK resource
