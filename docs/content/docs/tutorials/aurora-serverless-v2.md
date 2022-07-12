@@ -52,8 +52,9 @@ Define environment variables
 
 ```
 export SERVICE=rds
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/rds-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/rds-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
 export ACK_SYSTEM_NAMESPACE=ack-system
+export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 ```
 Log into the Helm registry that stores the ACK charts:
 
