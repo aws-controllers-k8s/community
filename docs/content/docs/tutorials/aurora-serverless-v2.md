@@ -69,7 +69,7 @@ For example, to specify that the RDS API calls go to the `us-east-1` region, you
 
 ```bash
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
-helm install --create-namespace -n $ACK_SYSTEM_NAMESPACE oci://public.ecr.aws/aws-controllers-k8s/$SERVICE-chart --version=$RELEASE_VERSION --generate-name --set=aws.region="$AWS_REGION"
+helm install --create-namespace -n "${ACK_SYSTEM_NAMESPACE}" "oci://public.ecr.aws/aws-controllers-k8s/${SERVICE}-chart" --version="${RELEASE_VERSION}" --generate-name --set=aws.region="${AWS_REGION}"
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/rds-controller/blob/main/helm/values.yaml).
