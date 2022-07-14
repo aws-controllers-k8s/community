@@ -54,7 +54,7 @@ Define environment variables
 SERVICE=rds
 RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
 ACK_SYSTEM_NAMESPACE=ack-system
-AWS_REGION=<ADD-REGION-HEER>
+AWS_REGION=<ADD-REGION-HERE>
 ```
 Log into the Helm registry that stores the ACK charts:
 
