@@ -51,10 +51,10 @@ To manage an Aurora Serverless v2 cluster from Kubernetes / Amazon EKS, you will
 Define environment variables
 
 ```
-export SERVICE=rds
+SERVICE=rds
 RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
-export ACK_SYSTEM_NAMESPACE=ack-system
-export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+ACK_SYSTEM_NAMESPACE=ack-system
+AWS_REGION=<ADD-REGION-HEER>
 ```
 Log into the Helm registry that stores the ACK charts:
 
@@ -84,7 +84,7 @@ To create an Aurora Serverless v2 database using the PostgreSQL engine, you must
 first create a DBSubnetGroup and a SecurityGroup for the VPC:
 
 ```bash
-export APP_NAMESPACE=mydb
+APP_NAMESPACE=mydb
 kubectl create ns "${APP_NAMESPACE}"
 
 EKS_VPC_ID=$(aws eks describe-cluster --name "${EKS_CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
