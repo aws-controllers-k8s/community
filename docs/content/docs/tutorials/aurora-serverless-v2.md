@@ -25,9 +25,7 @@ from an Amazon Elastic Kubernetes (EKS) deployment.
 
 ## Prerequisites
 
-There are two ways to create the environment for running this tutorial.
-
-The first method uses [Amazon EKS Workshop](https://www.eksworkshop.com/010_introduction/). The second method involves deploying your own Amazon EKS cluster.
+This tutorial uses [Amazon EKS Workshop](https://www.eksworkshop.com/010_introduction/) to deploy EKS cluster.
 
 ### Set up Amazon EKS Workshop
 
@@ -40,7 +38,6 @@ The first method uses [Amazon EKS Workshop](https://www.eksworkshop.com/010_intr
 
 ### Deploy an Amazon EKS cluster
 
-1. Create an Amazon EKS cluster
 2. Install [eksctl tools](https://www.eksworkshop.com/030_eksctl/prerequisites/)
 3. Install [Helm](https://www.eksworkshop.com/beginner/060_helm/helm_intro/install/)
 4. Launch an [EKS cluster](https://www.eksworkshop.com/030_eksctl/launcheks/)
@@ -51,6 +48,14 @@ The first method uses [Amazon EKS Workshop](https://www.eksworkshop.com/010_intr
 
 To manage an Aurora Serverless v2 cluster from Kubernetes / Amazon EKS, you will need to install the ACK for RDS service controller. You can deploy the ACK service controller for Amazon RDS using the [rds-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/rds-chart).
 
+Define environment variables
+
+```
+SERVICE=rds
+RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
+ACK_SYSTEM_NAMESPACE=ack-system
+AWS_REGION=<ADD-REGION-HERE>
+```
 Log into the Helm registry that stores the ACK charts:
 
 ```bash
@@ -63,8 +68,8 @@ You can now use the Helm chart to deploy the ACK service controller for Amazon R
 For example, to specify that the RDS API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/rds-chart \
-  --version=v0.0.27 --generate-name --set=aws.region=us-east-1
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+helm install --create-namespace -n "${ACK_SYSTEM_NAMESPACE}" "oci://public.ecr.aws/aws-controllers-k8s/${SERVICE}-chart" --version="${RELEASE_VERSION}" --generate-name --set=aws.region="${AWS_REGION}"
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/rds-controller/blob/main/helm/values.yaml).
@@ -79,9 +84,12 @@ To create an Aurora Serverless v2 database using the PostgreSQL engine, you must
 first create a DBSubnetGroup and a SecurityGroup for the VPC:
 
 ```bash
+APP_NAMESPACE=mydb
+kubectl create ns "${APP_NAMESPACE}"
+
 EKS_VPC_ID=$(aws eks describe-cluster --name "${EKS_CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
 
-RDS_SUBNET_GROUP_NAME="mydbsubnetgroupack"
+RDS_SUBNET_GROUP_NAME="mydbSubnetGroup"
 RDS_SUBNET_GROUP_DESCRIPTION="mydb-subnetgroup"
 EKS_SUBNET_IDS=$(aws ec2 describe-subnets --filter "Name=vpc-id,Values=${EKS_VPC_ID}" --query 'Subnets[?MapPublicIpOnLaunch==`false`].SubnetId' --output text)
 
@@ -111,8 +119,8 @@ EKS_CIDR_RANGE=$(aws ec2 describe-vpcs \
 )
 
 RDS_SECURITY_GROUP_ID=$(aws ec2 create-security-group \
- --group-name "${RDS_SUBNET_GROUP_NAME}" \
- --description "${RDS_SUBNET_GROUP_DESCRIPTION}" \
+ --group-name "${RDS_SECURITY_GROUP_NAME}" \
+ --description "${RDS_SECURITY_GROUP_DESCRIPTION}" \
  --vpc-id "${EKS_VPC_ID}" \
  --output text
 )
@@ -126,8 +134,6 @@ aws ec2 authorize-security-group-ingress \
 Set up a master password using a Kubernetes Secret. Set `RDS_DB_USERNAME` and `RDS_DB_PASSWORD` to your preferred values for your RDS credentials:
 
 ```bash
-export APP_NAMESPACE=mydb
-kubectl create ns "${APP_NAMESPACE}"
 
 RDS_DB_USERNAME="adminer"
 RDS_DB_PASSWORD="password"
@@ -137,7 +143,11 @@ kubectl create secret generic -n "${APP_NAMESPACE}" ack-creds \
   --from-literal=password="${RDS_DB_PASSWORD}"
 ```
 
-You can now create an Aurora Serverless v2 cluster:
+
+You can now create an Aurora Serverless v2 cluster for both the PostgreSQL and
+MySQL database engines. The example below uses the PostgreSQL engine. For example, to use
+MySQL, set `ENGINE_TYPE` to `aurora-mysql` and `ENGINE_VERSION` to [minimum supported version](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.requirements.html#aurora-serverless-v2.requirements.versions)
+
 
 ```bash
 export AURORA_DB_CLUSTER_NAME="ack-db"
@@ -146,11 +156,15 @@ export AURORA_DB_INSTANCE_CLASS="db.serverless"
 export MAX_ACU=64
 export MIN_ACU=4
 
+export ENGINE_TYPE=aurora-postgresql
+export ENGINE_VERSION=13
+
+
 cat <<-EOF > asv2-db-cluster.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBCluster
 metadata:
-  name: asv2-db
+  name: ${AURORA_DB_CLUSTER_NAME}
   namespace: ${APP_NAMESPACE}
 spec:
   backupRetentionPeriod: 7
@@ -159,8 +173,8 @@ spec:
     minCapacity: ${MIN_ACU}
   dbClusterIdentifier: ${AURORA_DB_CLUSTER_NAME}
   dbSubnetGroupName: ${RDS_SUBNET_GROUP_NAME}
-  engine: aurora-postgresql
-  engineVersion: "13.6"
+  engine: ${ENGINE_TYPE}
+  engineVersion: ${ENGINE_VERSION}
   masterUsername: adminer
   masterUserPassword:
     namespace: ${APP_NAMESPACE}
@@ -177,7 +191,7 @@ cat <<-EOF > asv2-db-instance.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: asv2-db-instance
+  name: ${AURORA_DB_INSTANCE_NAME}
   namespace: ${APP_NAMESPACE}
 spec:
   dbInstanceClass: ${AURORA_DB_INSTANCE_CLASS}
@@ -288,22 +302,24 @@ metadata:
   namespace: ${APP_NAMESPACE}
 spec:
   containers:
-  - env:
+  -image: busybox
+   name: myapp
+   env:
     - name: PGHOST
       valueFrom:
         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
-          key: "default.${AURORA_DB_INSTANCE_NAME}-host"
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-host"
     - name: PGPORT
       valueFrom:
         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
-          key: "default.${AURORA_DB_INSTANCE_NAME}-port"
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-port"
     - name: PGUSER
       valueFrom:
         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
-          key: "default.${AURORA_DB_INSTANCE_NAME}-user"
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-user"
     - name: PGPASSWORD
       valueFrom:
         secretRef:
