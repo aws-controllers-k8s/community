@@ -145,8 +145,8 @@ kubectl create secret generic -n "${APP_NAMESPACE}" ack-creds \
 
 
 You can now create an Aurora Serverless v2 cluster for both the PostgreSQL and
-MySQL database engines. The example below uses the PostgreSQL engine. To use
-MySQL, set `ENGINE_TYPE` to `aurora-mysql` and `ENGINE_VERSION` to `8.0`.
+MySQL database engines. The example below uses the PostgreSQL engine. For example, to use
+MySQL, set `ENGINE_TYPE` to `aurora-mysql` and `ENGINE_VERSION` to [minimum supported version](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.requirements.html#aurora-serverless-v2.requirements.versions)
 
 
 ```bash
