@@ -209,7 +209,98 @@ Then, the above script builds a testing container, containing a Python
 environment and the testing libraries we use, and runs the e2e tests for the
 controller within that environment. These tests create, update and delete each
 of the ACK resources and ensure their properties are properly mirrored in the
-AWS service.
+AWS service. The output of the test script should look like the following
+(edited down to the relevant parts):
+
+```
+2022-07-15T19:52:55+0000 [INFO] Creating KIND cluster ...
+2022-07-15T19:52:55+0000 [INFO] Creating cluster with name "ack-test-e9e83a17"
+2022-07-15T19:52:55+0000 [INFO] Using configuration "kind-two-node-cluster.yaml"
+Creating cluster "ack-test-e9e83a17" ...
+ ✓ Ensuring node image (kindest/node:v1.22.9) 🖼
+ ✓ Preparing nodes 📦 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-ack-test-e9e83a17"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-ack-test-e9e83a17 --kubeconfig /local/home/nithomso/go/src/github.com/aws-controllers-k8s/test-infra/scripts/../build/clusters/ack-test-e9e83a17/kubeconfig
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+2022-07-15T19:53:42+0000 [INFO] Exporting KUBECONFIG=/local/home/nithomso/go/src/github.com/aws-controllers-k8s/test-infra/scripts/../build/clusters/ack-test-e9e83a17/kubeconfig
+2022-07-15T19:53:42+0000 [INFO] Building controller image ...
+WARNING! Your password will be stored unencrypted in /home/nithomso/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+[+] Building 352.7s (21/21) FINISHED
+ => [internal] load build definition from Dockerfile                                       0.0s
+ => => transferring dockerfile: 39B                                                        0.0s
+ => [internal] load .dockerignore                                                          0.0s
+ => => transferring context: 2B                                                            0.0s
+ => [internal] load metadata for public.ecr.aws/eks-distro-build-tooling/eks-distro-minim  0.2s
+ => [internal] load metadata for public.ecr.aws/bitnami/golang:1.17                        0.5s
+ => [auth] aws:: eks-distro-build-tooling/eks-distro-minimal-base-nonroot:pull token for   0.0s
+ => [auth] aws:: bitnami/golang:pull token for public.ecr.aws                              0.0s
+ => [builder  1/11] FROM public.ecr.aws/bitnami/golang:1.17@sha256:386b0edb486b872c5db270  9.9s
+ => => resolve public.ecr.aws/bitnami/golang:1.17@sha256:386b0edb486b872c5db2702c997ac364  0.0s
+ => => sha256:386b0edb486b872c5db2702c997ac364749d5b52908ba2f8db33e67e32c 1.58kB / 1.58kB  0.0s
+ => => sha256:6474ea435b8fd7c66546676ee6bb9fafdede6679aa57119d3b3e91c23c9 4.25kB / 4.25kB  0.0s
+ => => sha256:e4d5dd6e67b14bf5bfc57a4ed6126d2ff9618ae17a809ba0eed98b68d 30.87MB / 30.87MB  0.5s
+ => => sha256:163e77b4424a8a2f2433544cd177d3ab5b67cd42ff2a6332788f2569a53e076 768B / 768B  0.2s
+ => => sha256:1f31511aab3c72a7f8227e41e7c0b2d71ba2b0bef7c18c9ae8343f9 125.13MB / 125.13MB  4.0s
+ => => sha256:c9e9361513e51d32efbc5726aa75f2bf6a0ee5d59d5ef002f127bd1 135.04MB / 135.04MB  5.3s
+ => => extracting sha256:e4d5dd6e67b14bf5bfc57a4ed6126d2ff9618ae17a809ba0eed98b68d62c200d  0.7s
+ => => sha256:f6e1dc6697990041781953a87be7a91a0b0a30f436b93fc277f2a160fd41f87 258B / 258B  0.6s
+ => => sha256:6ec6c2b2145be26a5e68b86aadf441144a44f1bba0e70b3cab1988d286814d5 124B / 124B  0.7s
+ => => extracting sha256:163e77b4424a8a2f2433544cd177d3ab5b67cd42ff2a6332788f2569a53e0769  0.0s
+ => => extracting sha256:1f31511aab3c72a7f8227e41e7c0b2d71ba2b0bef7c18c9ae8343f9739f78dfa  2.4s
+ => => extracting sha256:c9e9361513e51d32efbc5726aa75f2bf6a0ee5d59d5ef002f127bd1b503582b3  2.9s
+ => => extracting sha256:f6e1dc6697990041781953a87be7a91a0b0a30f436b93fc277f2a160fd41f87c  0.0s
+ => => extracting sha256:6ec6c2b2145be26a5e68b86aadf441144a44f1bba0e70b3cab1988d286814d51  0.0s
+ => CACHED [stage-1 1/3] FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-  0.0s
+ => [internal] load build context                                                          0.0s
+ => => transferring context: 567.03kB                                                      0.0s
+ => [builder  2/11] WORKDIR /github.com/aws-controllers-k8s/s3-controller                  0.8s
+ => [builder  3/11] COPY s3-controller/LICENSE /github.com/aws-controllers-k8s/s3-control  0.0s
+ => [builder  4/11] COPY s3-controller/ATTRIBUTION.md /github.com/aws-controllers-k8s/s3-  0.0s
+ => [builder  5/11] COPY s3-controller/go.mod /github.com/aws-controllers-k8s/s3-controll  0.0s
+ => [builder  6/11] COPY s3-controller/go.sum /github.com/aws-controllers-k8s/s3-controll  0.0s
+ => [builder  7/11] RUN go mod download                                                  319.2s
+ => [builder  8/11] COPY s3-controller/apis /github.com/aws-controllers-k8s/s3-controller  0.0s
+ => [builder  9/11] COPY s3-controller/cmd /github.com/aws-controllers-k8s/s3-controller/  0.0s
+ => [builder 10/11] COPY s3-controller/pkg /github.com/aws-controllers-k8s/s3-controller/  0.0s
+ => [builder 11/11] RUN GIT_VERSION=v0.1.0-dirty &&     GIT_COMMIT=46e9abeeae0e5838fdb65  21.4s
+ => [stage-1 2/3] COPY --from=builder /github.com/aws-controllers-k8s/s3-controller/bin/c  0.1s
+ => exporting to image                                                                     0.3s
+ => => exporting layers                                                                    0.2s
+ => => writing image sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064c  0.0s
+ => => naming to docker.io/library/aws-controllers-k8s:s3-v0.1.0-dirty                     0.0s
+2022-07-15T19:59:37+0000 [INFO] Loading image into cluster ...
+Image: "aws-controllers-k8s:s3-v0.1.0-dirty" with ID "sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064cfa8" not yet present on node "ack-test-e9e83a17-worker", loading...
+Image: "aws-controllers-k8s:s3-v0.1.0-dirty" with ID "sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064cfa8" not yet present on node "ack-test-e9e83a17-control-plane", loading...
+2022-07-15T19:59:40+0000 [INFO] Installing controller deployment ...
+namespace/ack-system created
+Warning: resource namespaces/ack-system is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+2022-07-15T19:59:47+0000 [INFO] Sleeping for 50 mins before rotating temporary aws credentials
+2022-07-15T19:59:47+0000 [INFO] Building e2e test container for s3 ...
+2022-07-15T20:00:11+0000 [INFO] Running e2e test container for s3 ...
+2022-07-15T20:00:11+00:00 [INFO] Running test bootstrap ...
+INFO:root:🛠️ Bootstrapping resources ...
+INFO:root:Attempting bootstrap Bucket
+INFO:root:Successfully bootstrapped Bucket
+INFO:root:Attempting bootstrap Role
+INFO:root:Attempting bootstrap UserPolicies
+INFO:root:Successfully bootstrapped UserPolicies
+INFO:root:Successfully bootstrapped Role
+INFO:root:Attempting bootstrap Topic
+INFO:root:Successfully bootstrapped Topic
+INFO:root:Wrote bootstrap to /s3-controller/tests/e2e/bootstrap.pkl
+2022-07-15T20:00:18+00:00 [INFO] Running tests ...
+```
 
 #### Repeat for other services
 
