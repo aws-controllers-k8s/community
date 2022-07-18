@@ -83,7 +83,95 @@ the default values are safe and that the controller stands up properly.</p><p>Th
 environment and the testing libraries we use, and runs the e2e tests for the
 controller within that environment. These tests create, update and delete each
 of the ACK resources and ensure their properties are properly mirrored in the
-AWS service.</p><h4 id=repeat-for-other-services>Repeat for other services<a href=#repeat-for-other-services class=anchor aria-hidden=true>#</a></h4><p>We have end-to-end tests for all services listed in the <code>DEVELOPER-PREVIEW</code>,
+AWS service. The output of the test script should look like the following
+(edited down to the relevant parts):</p><pre><code>2022-07-15T19:52:55+0000 [INFO] Creating KIND cluster ...
+2022-07-15T19:52:55+0000 [INFO] Creating cluster with name &quot;ack-test-e9e83a17&quot;
+2022-07-15T19:52:55+0000 [INFO] Using configuration &quot;kind-two-node-cluster.yaml&quot;
+Creating cluster &quot;ack-test-e9e83a17&quot; ...
+ ✓ Ensuring node image (kindest/node:v1.22.9) 🖼
+ ✓ Preparing nodes 📦 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+ ✓ Joining worker nodes 🚜
+Set kubectl context to &quot;kind-ack-test-e9e83a17&quot;
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-ack-test-e9e83a17 --kubeconfig /local/home/nithomso/go/src/github.com/aws-controllers-k8s/test-infra/scripts/../build/clusters/ack-test-e9e83a17/kubeconfig
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+2022-07-15T19:53:42+0000 [INFO] Exporting KUBECONFIG=/local/home/nithomso/go/src/github.com/aws-controllers-k8s/test-infra/scripts/../build/clusters/ack-test-e9e83a17/kubeconfig
+2022-07-15T19:53:42+0000 [INFO] Building controller image ...
+WARNING! Your password will be stored unencrypted in /home/nithomso/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+[+] Building 352.7s (21/21) FINISHED
+ =&gt; [internal] load build definition from Dockerfile                                       0.0s
+ =&gt; =&gt; transferring dockerfile: 39B                                                        0.0s
+ =&gt; [internal] load .dockerignore                                                          0.0s
+ =&gt; =&gt; transferring context: 2B                                                            0.0s
+ =&gt; [internal] load metadata for public.ecr.aws/eks-distro-build-tooling/eks-distro-minim  0.2s
+ =&gt; [internal] load metadata for public.ecr.aws/bitnami/golang:1.17                        0.5s
+ =&gt; [auth] aws:: eks-distro-build-tooling/eks-distro-minimal-base-nonroot:pull token for   0.0s
+ =&gt; [auth] aws:: bitnami/golang:pull token for public.ecr.aws                              0.0s
+ =&gt; [builder  1/11] FROM public.ecr.aws/bitnami/golang:1.17@sha256:386b0edb486b872c5db270  9.9s
+ =&gt; =&gt; resolve public.ecr.aws/bitnami/golang:1.17@sha256:386b0edb486b872c5db2702c997ac364  0.0s
+ =&gt; =&gt; sha256:386b0edb486b872c5db2702c997ac364749d5b52908ba2f8db33e67e32c 1.58kB / 1.58kB  0.0s
+ =&gt; =&gt; sha256:6474ea435b8fd7c66546676ee6bb9fafdede6679aa57119d3b3e91c23c9 4.25kB / 4.25kB  0.0s
+ =&gt; =&gt; sha256:e4d5dd6e67b14bf5bfc57a4ed6126d2ff9618ae17a809ba0eed98b68d 30.87MB / 30.87MB  0.5s
+ =&gt; =&gt; sha256:163e77b4424a8a2f2433544cd177d3ab5b67cd42ff2a6332788f2569a53e076 768B / 768B  0.2s
+ =&gt; =&gt; sha256:1f31511aab3c72a7f8227e41e7c0b2d71ba2b0bef7c18c9ae8343f9 125.13MB / 125.13MB  4.0s
+ =&gt; =&gt; sha256:c9e9361513e51d32efbc5726aa75f2bf6a0ee5d59d5ef002f127bd1 135.04MB / 135.04MB  5.3s
+ =&gt; =&gt; extracting sha256:e4d5dd6e67b14bf5bfc57a4ed6126d2ff9618ae17a809ba0eed98b68d62c200d  0.7s
+ =&gt; =&gt; sha256:f6e1dc6697990041781953a87be7a91a0b0a30f436b93fc277f2a160fd41f87 258B / 258B  0.6s
+ =&gt; =&gt; sha256:6ec6c2b2145be26a5e68b86aadf441144a44f1bba0e70b3cab1988d286814d5 124B / 124B  0.7s
+ =&gt; =&gt; extracting sha256:163e77b4424a8a2f2433544cd177d3ab5b67cd42ff2a6332788f2569a53e0769  0.0s
+ =&gt; =&gt; extracting sha256:1f31511aab3c72a7f8227e41e7c0b2d71ba2b0bef7c18c9ae8343f9739f78dfa  2.4s
+ =&gt; =&gt; extracting sha256:c9e9361513e51d32efbc5726aa75f2bf6a0ee5d59d5ef002f127bd1b503582b3  2.9s
+ =&gt; =&gt; extracting sha256:f6e1dc6697990041781953a87be7a91a0b0a30f436b93fc277f2a160fd41f87c  0.0s
+ =&gt; =&gt; extracting sha256:6ec6c2b2145be26a5e68b86aadf441144a44f1bba0e70b3cab1988d286814d51  0.0s
+ =&gt; CACHED [stage-1 1/3] FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-  0.0s
+ =&gt; [internal] load build context                                                          0.0s
+ =&gt; =&gt; transferring context: 567.03kB                                                      0.0s
+ =&gt; [builder  2/11] WORKDIR /github.com/aws-controllers-k8s/s3-controller                  0.8s
+ =&gt; [builder  3/11] COPY s3-controller/LICENSE /github.com/aws-controllers-k8s/s3-control  0.0s
+ =&gt; [builder  4/11] COPY s3-controller/ATTRIBUTION.md /github.com/aws-controllers-k8s/s3-  0.0s
+ =&gt; [builder  5/11] COPY s3-controller/go.mod /github.com/aws-controllers-k8s/s3-controll  0.0s
+ =&gt; [builder  6/11] COPY s3-controller/go.sum /github.com/aws-controllers-k8s/s3-controll  0.0s
+ =&gt; [builder  7/11] RUN go mod download                                                  319.2s
+ =&gt; [builder  8/11] COPY s3-controller/apis /github.com/aws-controllers-k8s/s3-controller  0.0s
+ =&gt; [builder  9/11] COPY s3-controller/cmd /github.com/aws-controllers-k8s/s3-controller/  0.0s
+ =&gt; [builder 10/11] COPY s3-controller/pkg /github.com/aws-controllers-k8s/s3-controller/  0.0s
+ =&gt; [builder 11/11] RUN GIT_VERSION=v0.1.0-dirty &amp;&amp;     GIT_COMMIT=46e9abeeae0e5838fdb65  21.4s
+ =&gt; [stage-1 2/3] COPY --from=builder /github.com/aws-controllers-k8s/s3-controller/bin/c  0.1s
+ =&gt; exporting to image                                                                     0.3s
+ =&gt; =&gt; exporting layers                                                                    0.2s
+ =&gt; =&gt; writing image sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064c  0.0s
+ =&gt; =&gt; naming to docker.io/library/aws-controllers-k8s:s3-v0.1.0-dirty                     0.0s
+2022-07-15T19:59:37+0000 [INFO] Loading image into cluster ...
+Image: &quot;aws-controllers-k8s:s3-v0.1.0-dirty&quot; with ID &quot;sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064cfa8&quot; not yet present on node &quot;ack-test-e9e83a17-worker&quot;, loading...
+Image: &quot;aws-controllers-k8s:s3-v0.1.0-dirty&quot; with ID &quot;sha256:57d227f5a6830f09da5d2e16ca5d4dfc48fd0473eb4f9a604de1de241064cfa8&quot; not yet present on node &quot;ack-test-e9e83a17-control-plane&quot;, loading...
+2022-07-15T19:59:40+0000 [INFO] Installing controller deployment ...
+namespace/ack-system created
+Warning: resource namespaces/ack-system is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+2022-07-15T19:59:47+0000 [INFO] Sleeping for 50 mins before rotating temporary aws credentials
+2022-07-15T19:59:47+0000 [INFO] Building e2e test container for s3 ...
+2022-07-15T20:00:11+0000 [INFO] Running e2e test container for s3 ...
+2022-07-15T20:00:11+00:00 [INFO] Running test bootstrap ...
+INFO:root:🛠️ Bootstrapping resources ...
+INFO:root:Attempting bootstrap Bucket
+INFO:root:Successfully bootstrapped Bucket
+INFO:root:Attempting bootstrap Role
+INFO:root:Attempting bootstrap UserPolicies
+INFO:root:Successfully bootstrapped UserPolicies
+INFO:root:Successfully bootstrapped Role
+INFO:root:Attempting bootstrap Topic
+INFO:root:Successfully bootstrapped Topic
+INFO:root:Wrote bootstrap to /s3-controller/tests/e2e/bootstrap.pkl
+2022-07-15T20:00:18+00:00 [INFO] Running tests ...
+</code></pre><h4 id=repeat-for-other-services>Repeat for other services<a href=#repeat-for-other-services class=anchor aria-hidden=true>#</a></h4><p>We have end-to-end tests for all services listed in the <code>DEVELOPER-PREVIEW</code>,
 <code>BETA</code> and <code>GA</code> release statuses in our <a href=../../community/services>service listing</a>
 document. Simply replace your <code>SERVICE</code> environment variable with the name of a
 supported service and re-run the IAM and test steps outlined above.</p><h3 id=unit-testing>Unit testing<a href=#unit-testing class=anchor aria-hidden=true>#</a></h3><p>We use <a href=https://github.com/vektra/mockery>mockery</a> for unit testing.
@@ -96,4 +184,4 @@ files created by the script specifically for said test cluster, execute:</p><pre
 feedback.</p><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/contributor-docs/testing.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/main.min.491f43bd0e1cabe525a61ecfcb2738d89c578585b04b9ebbaf9d125b55595f3b76e5497375a1da0c840e16966c9a910aae60fba0790088c7869bee07c3be997c.js integrity="sha512-SR9DvQ4cq+Ulph7Pyyc42JxXhYWwS567r50SW1VZXzt25UlzdaHaDIQOFpZsmpEKrmD7oHkAiMeGm+4Hw76ZfA==" crossorigin=anonymous defer></script>
-<script src=https://aws-controllers-k8s.github.io/community/index.min.9eea122ca5f72596c3b8f1ade22377499abe71cd740e5d749364e534e02ed7ae17931ee715917df1a05370ec807f6316ef7064f0c75ab5857dab5096de5ccb5c.js integrity="sha512-nuoSLKX3JZbDuPGt4iN3SZq+cc10Dl10k2TlNOAu164Xkx7nFZF98aBTcOyAf2MW73Bk8MdatYV9q1CW3lzLXA==" crossorigin=anonymous defer></script></body></html>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.80b8a0e6e7491987def183927b1bb15c363a8e08d84f3da281dc020e8d0d36d32c1205cbeee81874404126f1bf678e805b2e71fa20f55f2211e5f948913075e3.js integrity="sha512-gLig5udJGYfe8YOSexuxXDY6jgjYTz2igdwCDo0NNtMsEgXL7ugYdEBBJvG/Z46AWy5x+iD1XyIR5flIkTB14w==" crossorigin=anonymous defer></script></body></html>
