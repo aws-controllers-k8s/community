@@ -67,6 +67,14 @@ For detailed instructions, refer to Amazon EKS documentation on how to [create a
 
 ## Step 2. Create an IAM role and policy for your service account
 
+{{% hint type="info" title="Note" %}}
+If you're trying to set up IRSA on OpenShift replace the `OIDC_PROVIDER` line in the bash script below with the following command:
+
+```shell
+OIDC_PROVIDER=$(oc get authentication cluster -ojson | jq -r .spec.serviceAccountIssuer | sed -e "s/^https:\/\///")
+```
+{{% /hint %}}
+
 ### Create an IAM role for your ACK service controller
 ```bash
 # Update the service name variables as needed
@@ -99,7 +107,7 @@ EOF
 echo "${TRUST_RELATIONSHIP}" > trust.json
 
 ACK_CONTROLLER_IAM_ROLE="ack-${SERVICE}-controller"
-ACK_CONTROLLER_IAM_ROLE_DESCRIPTION='IRSA role for ACK $SERVICE controller deployment on EKS cluster using Helm charts'
+ACK_CONTROLLER_IAM_ROLE_DESCRIPTION="IRSA role for ACK ${SERVICE} controller deployment on EKS cluster using Helm charts"
 aws iam create-role --role-name "${ACK_CONTROLLER_IAM_ROLE}" --assume-role-policy-document file://trust.json --description "${ACK_CONTROLLER_IAM_ROLE_DESCRIPTION}"
 ACK_CONTROLLER_IAM_ROLE_ARN=$(aws iam get-role --role-name=$ACK_CONTROLLER_IAM_ROLE --query Role.Arn --output text)
 ```

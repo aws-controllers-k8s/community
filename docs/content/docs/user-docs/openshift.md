@@ -16,7 +16,7 @@ Configuration for ACK controllers in an OpenShift cluster.
 
 When ACK service controllers are installed via OperatorHub, a cluster administrator will need to perform the following pre-installation steps to provide the controller any credentials and authentication context it needs to interact with the AWS API.
 
-Configuration and authentication in OpenShift requires the use of IAM users and policies. Authentication credentials are set inside a `ConfigMap` and a `Secret` before installation of the controller.
+Configuration and authentication in OpenShift requires the use of IAM users and policies. Authentication credentials are set inside a `Secret` (optional if utilizing [IRSA](../irsa)) before installation of the controller.
 
 ### Step 1: Create the installation namespace
 
@@ -82,6 +82,13 @@ oc create configmap \
 --namespace ack-system \
 --from-env-file=config.txt ack-$SERVICE-user-config
 ```
+
+{{% hint type="info" title="Note" %}}
+The `Secret` is optional if [IRSA](../irsa) is intended to be used. In order to utilize IRSA, STS would have needed to be configured during cluster installation.
+There are two ways to provision an OpenShift cluster to utilize STS:
+1. [OpenShift Container Platform using manual mode for STS](https://docs.openshift.com/container-platform/latest/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
+2. [Red Hat OpenShift Service on AWS](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-creating-a-cluster-quickly.html)
+{{% /hint %}}
 
 Save another file, `secrets.txt`, with the following authentication values, which you should have saved from earlier when you created your user's access keys:
 ```bash
