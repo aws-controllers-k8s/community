@@ -256,13 +256,24 @@ spec:
 EOF
 ```
 
-## Restore Snapshot to DBInstance or DBCluster
+## Restore a Database Snapshot
 
-You can restore a snapshot to DBInstance or DBCluster with setting `SnapshotIdentifier` inside `DBCluster` or `DBSnapshotIdentifier` inside `DBInstance` CRD to restore the snapshot to a DBCluster or DBInstance. 
-`SnapshotIdentifier` need match the existing DBCluster snapshot identifier or ARN of DBInstance snapshot, `DBSnapshotIdentifier` need match the identifier of an existing DBSnapshot. 
-Once it's set and resource created, update them will have no effect. You can use the following example to restore a DBSnapshot to DBCluster: 
+You can also restore a database snapshot to a specific `DBInstance` or `DBCluster` using the ACK for RDS controller.
+
+To restore a database snapshot to a `DBInstance`, you must set the `Spec.DBSnapshotIdentifier` parameter. `Spec.DBSnapshotIdentifier` should match the identifier of an existing DBSnapshot.
+
+To restore a database snapshot to a `DBCluster`, you must set the `Spec.SnapshotIdentifier`. The value of `Spec.SnapshotIdentifier` should match either an existing `DBCluster` snapshot identifier or an ARN of a `DBInstance`snapshot.
+
+Once it's set and the resource is created, updating `Spec.SnapshotIdentifer` or `Spec.BSnapshotIdentifier` fields will have no effect.
+
+The following examples show how you can restore database snapshots both to `DBCluster` and `DBInstance` resources:
 
 ```bash
+RDS_CLUSTER_NAME="<your cluster name>"
+RDS_REGION="<your aws region>"
+RDS_CUSTOMER_ACCOUNT="<your aws account id>"
+RDS_DB_SNAPSHOT_IDENTIFIER="<your db snapshot identifier>"
+
 cat <<EOF > rds-restore-dbcluster-snapshot.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBCluster
@@ -278,9 +289,10 @@ EOF
 kubectl apply -f rds-restore-dbcluster-snapshot.yaml
 ```
 
-Example to restore a DBSnapshot to DBInstance:
-
 ```bash
+RDS_INSTANCE_NAME="<your instance name>"
+RDS_DB_SNAPSHOT_IDENTIFIER="<your db snapshot identifier>"
+
 cat <<EOF > rds-restore-dbinstance-snapshot.yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
