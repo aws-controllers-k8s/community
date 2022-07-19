@@ -256,6 +256,50 @@ spec:
 EOF
 ```
 
+## Restore Snapshot to DBInstance or DBCluster
+
+You can restore a snapshot to DBInstance or DBCluster with setting `SnapshotIdentifier` inside `DBCluster` or `DBSnapshotIdentifier` inside `DBInstance` CRD to restore the snapshot to a DBCluster or DBInstance. 
+'SnapshotIdentifier' need match the existing DBCluster snapshot identifier or ARN of DBInstance snapshot, `DBSnapshotIdentifier` need match the identifier of an existing DBSnapshot. 
+Once it's set and resource created, update them will have no effect. You can use the following example to restore a DBSnapshot to DBCluster: 
+
+```bash
+cat <<EOF > rds-restore-dbcluster-snapshot.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBCluster
+metadata:
+  name: "${RDS_CLUSTER_NAME}"
+spec:
+  dbClusterIdentifier: "${RDS_CLUSTER_NAME}"
+  engine: aurora-postgresql
+  engineVersion: "13.7"
+  snapshotIdentifier: arn:aws:rds:${RDS_REGION}:${RDS_CUSTOMER_ACCOUNT}:snapshot:${RDS_DB_SNAPSHOT_IDENTIFIER}
+EOF
+
+kubectl apply -f rds-restore-dbcluster-snapshot.yaml
+```
+
+Example to restore a DBSnapshot to DBInstance:
+
+```bash
+cat <<EOF > rds-restore-dbinstance-snapshot.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: "${RDS_INSTANCE_NAME}"
+spec:
+  allocatedStorage: 20
+  dbInstanceClass: db.m5.large
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
+  engine: postgres
+  engineVersion: "14"
+  masterUsername: "postgres"
+  multiAZ: true
+  dbSnapshotIdentifier: "${RDS_DB_SNAPSHOT_IDENTIFIER}"
+EOF
+
+kubectl apply -f rds-restore-dbinstance-snapshot.yaml
+```
+
 ## Next steps
 
 You can learn more about each of the ACK service controller for RDS custom resources by using `kubectl explain` on the API resources. These include:
