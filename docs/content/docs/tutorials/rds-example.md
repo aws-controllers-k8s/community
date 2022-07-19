@@ -259,7 +259,7 @@ EOF
 ## Restore Snapshot to DBInstance or DBCluster
 
 You can restore a snapshot to DBInstance or DBCluster with setting `SnapshotIdentifier` inside `DBCluster` or `DBSnapshotIdentifier` inside `DBInstance` CRD to restore the snapshot to a DBCluster or DBInstance. 
-'SnapshotIdentifier' need match the existing DBCluster snapshot identifier or ARN of DBInstance snapshot, `DBSnapshotIdentifier` need match the identifier of an existing DBSnapshot. 
+`SnapshotIdentifier` need match the existing DBCluster snapshot identifier or ARN of DBInstance snapshot, `DBSnapshotIdentifier` need match the identifier of an existing DBSnapshot. 
 Once it's set and resource created, update them will have no effect. You can use the following example to restore a DBSnapshot to DBCluster: 
 
 ```bash
