@@ -162,14 +162,14 @@ To generate the IAM role ARN and update your configuration file, do:
 
 ```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text) && \
-ACK_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE} \
-yq -i '.aws.assumed_role_arn = env(ACK_ROLE_ARN)' test_config.yaml
+ASSUMED_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACK_TEST_IAM_ROLE} \
+yq -i '.aws.assumed_role_arn = env(ASSUMED_ROLE_ARN)' test_config.yaml
 ```
 
 {{% hint type="info" %}}
 The tests uses the `generate_temp_creds` function from the
 `scripts/lib/aws.sh` script, executing effectively 
-`aws sts assume-role --role-session-arn $ACK_ROLE_ARN --role-session-name $TEMP_ROLE `
+`aws sts assume-role --role-session-arn $ASSUMED_ROLE_ARN --role-session-name $TEMP_ROLE `
 which fetches temporarily `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
 and an `AWS_SESSION_TOKEN` used in turn to authentication the ACK
 controller. The duration of the session token is 900 seconds (15 minutes).
