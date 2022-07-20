@@ -256,7 +256,7 @@ spec:
 EOF
 ```
 
-## Restore a Database Snapshot
+## Create a Database from Snapshot
 
 You can also restore a database snapshot to a specific `DBInstance` or `DBCluster` using the ACK for RDS controller.
 
