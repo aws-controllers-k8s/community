@@ -260,11 +260,11 @@ EOF
 
 You can also restore a database snapshot to a specific `DBInstance` or `DBCluster` using the ACK for RDS controller.
 
-To restore a database snapshot to a `DBInstance`, you must set the `Spec.DBSnapshotIdentifier` parameter. `Spec.DBSnapshotIdentifier` should match the identifier of an existing DBSnapshot.
+To restore a database snapshot to a `DBInstance`, you must set the `DBSnapshotIdentifier` parameter. `DBSnapshotIdentifier` should match the identifier of an existing DBSnapshot.
 
-To restore a database snapshot to a `DBCluster`, you must set the `Spec.SnapshotIdentifier`. The value of `Spec.SnapshotIdentifier` should match either an existing `DBCluster` snapshot identifier or an ARN of a `DBInstance`snapshot.
+To restore a database snapshot to a `DBCluster`, you must set the `SnapshotIdentifier`. The value of `SnapshotIdentifier` should match either an existing `DBCluster` snapshot identifier or an ARN of a `DBInstance`snapshot.
 
-Once it's set and the resource is created, updating `Spec.SnapshotIdentifer` or `Spec.BSnapshotIdentifier` fields will have no effect.
+Once it's set and the resource is created, updating `SnapshotIdentifer` or `DBSnapshotIdentifier` fields will have no effect.
 
 The following examples show how you can restore database snapshots both to `DBCluster` and `DBInstance` resources:
 
