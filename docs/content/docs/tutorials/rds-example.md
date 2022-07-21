@@ -256,6 +256,62 @@ spec:
 EOF
 ```
 
+## Create a Database from Snapshot
+
+You can also restore a database snapshot to a specific `DBInstance` or `DBCluster` using the ACK for RDS controller.
+
+To restore a database snapshot to a `DBInstance`, you must set the `DBSnapshotIdentifier` parameter. `DBSnapshotIdentifier` should match the identifier of an existing DBSnapshot.
+
+To restore a database snapshot to a `DBCluster`, you must set the `SnapshotIdentifier`. The value of `SnapshotIdentifier` should match either an existing `DBCluster` snapshot identifier or an ARN of a `DBInstance`snapshot.
+
+Once it's set and the resource is created, updating `SnapshotIdentifer` or `DBSnapshotIdentifier` fields will have no effect.
+
+The following examples show how you can restore database snapshots both to `DBCluster` and `DBInstance` resources:
+
+```bash
+RDS_CLUSTER_NAME="<your cluster name>"
+RDS_REGION="<your aws region>"
+RDS_CUSTOMER_ACCOUNT="<your aws account id>"
+RDS_DB_SNAPSHOT_IDENTIFIER="<your db snapshot identifier>"
+
+cat <<EOF > rds-restore-dbcluster-snapshot.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBCluster
+metadata:
+  name: "${RDS_CLUSTER_NAME}"
+spec:
+  dbClusterIdentifier: "${RDS_CLUSTER_NAME}"
+  engine: aurora-postgresql
+  engineVersion: "13.7"
+  snapshotIdentifier: arn:aws:rds:${RDS_REGION}:${RDS_CUSTOMER_ACCOUNT}:snapshot:${RDS_DB_SNAPSHOT_IDENTIFIER}
+EOF
+
+kubectl apply -f rds-restore-dbcluster-snapshot.yaml
+```
+
+```bash
+RDS_INSTANCE_NAME="<your instance name>"
+RDS_DB_SNAPSHOT_IDENTIFIER="<your db snapshot identifier>"
+
+cat <<EOF > rds-restore-dbinstance-snapshot.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: "${RDS_INSTANCE_NAME}"
+spec:
+  allocatedStorage: 20
+  dbInstanceClass: db.m5.large
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
+  engine: postgres
+  engineVersion: "14"
+  masterUsername: "postgres"
+  multiAZ: true
+  dbSnapshotIdentifier: "${RDS_DB_SNAPSHOT_IDENTIFIER}"
+EOF
+
+kubectl apply -f rds-restore-dbinstance-snapshot.yaml
+```
+
 ## Next steps
 
 You can learn more about each of the ACK service controller for RDS custom resources by using `kubectl explain` on the API resources. These include:
