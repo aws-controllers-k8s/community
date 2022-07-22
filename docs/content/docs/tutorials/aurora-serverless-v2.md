@@ -174,7 +174,7 @@ spec:
   dbClusterIdentifier: ${AURORA_DB_CLUSTER_NAME}
   dbSubnetGroupName: ${RDS_SUBNET_GROUP_NAME}
   engine: ${ENGINE_TYPE}
-  engineVersion: "${ENGINE_VERSION}"
+  engineVersion: ${ENGINE_VERSION}
   masterUsername: adminer
   masterUserPassword:
     namespace: ${APP_NAMESPACE}
@@ -198,8 +198,8 @@ spec:
   dbInstanceIdentifier: ${AURORA_DB_INSTANCE_NAME}
   dbClusterIdentifier: ${AURORA_DB_CLUSTER_NAME}
   dbSubnetGroupName: ${RDS_SUBNET_GROUP_NAME}
-  engine: ${ENGINE_TYPE}
-  engineVersion: "${ENGINE_VERSION}"
+  engine: aurora-postgresql
+  engineVersion: "13"
   publiclyAccessible: false
 EOF
 
