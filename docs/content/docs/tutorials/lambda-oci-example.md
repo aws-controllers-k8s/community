@@ -50,9 +50,9 @@ For a full list of available values to the Helm chart, please [review the values
 
 ### Configure IAM permissions
 
-Once the service controller is deployed [configure the IAM permissions][irsa-permissions] for the
+Once the service controller is deployed [configure the IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) for the
 controller to invoke the Lambda API. For full details, please review the AWS Controllers for Kubernetes documentation
-for [how to configure the IAM permissions][irsa-permissions]. If you follow the examples in the documentation, use the
+for [how to configure the IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/). If you follow the examples in the documentation, use the
 value of `lambda` for `SERVICE`.
 
 ## Create Lambda function handler
@@ -61,7 +61,6 @@ The Lambda [function handler](https://docs.aws.amazon.com/lambda/latest/dg/nodej
 ```bash
 cat <<EOF > app.js
 exports.handler = async (event) => {
-    // TODO implement
     const response = {
         statusCode: 200,
         body: JSON.stringify('Hello from Lambda!'),
@@ -94,11 +93,14 @@ docker build -t hello-world .
 ## Publish the Docker image to ECR
 Publish the Docker image to an ECR repository. It's a requirement for container images to be published to the ECR repository to run Lambda OCI image functions.
 
-```bash
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <aws account id>.dkr.ecr.<region>.amazonaws.com
+```shell
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+export AWS_REGION=us-west-2
+
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 aws ecr create-repository --repository-name hello-world --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
-docker tag  hello-world:latest <aws account id>.dkr.ecr.<region>.amazonaws.com /hello-world:latest
-docker push <aws account id>.dkr.ecr.<region>.amazonaws.com /hello-world:latest
+docker tag  hello-world:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest
 ```
 
 ## Deploy the Lambda OCI function using the ACK Lambda controller
@@ -106,8 +108,8 @@ Execute the following commands to create a manifest containing the Lambda OCI fu
 
 ```shell
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-export IMAGE_URI="${AWS_ACCOUNT_ID}. dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest "
-export FUNCTION_NAME=<Give the Lambda function name that will be created>
+export IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest "
+export FUNCTION_NAME="lambda-oci-ack"
 export LAMBDA_ROLE="arn:aws:iam::${AWS_ACCOUNT_ID}:role/lambda_basic_execution"
 
 read -r -d '' LAMBDA_MANIFEST <<EOF
@@ -133,7 +135,12 @@ kubectl create -f function.yaml
 You should get a confirmation that the function was created successfully.
 
 ```
-function.lambda.services.k8s.aws/<FUNCTION_NAME> created
+function.lambda.services.k8s.aws/lambda-oci-ack created
+```
+To get details about the Lambda function, run the following.
+
+```bash
+kubectl describe function/${FUNCTION_NAME}
 ```
 
 ## Next steps
@@ -162,7 +169,6 @@ To remove the Lambda ACK service controller, related CRDs, and namespaces, see [
 To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 
 [eks-setup]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html
-[irsa-permissions]: ../../user-docs/irsa/
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
 
