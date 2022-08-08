@@ -143,6 +143,19 @@ To get details about the Lambda function, run the following.
 kubectl describe function/${FUNCTION_NAME}
 ```
 
+## Invoke the Lambda OCI Function
+After you have verified that the Lambda OCI function is deployed correctly, you can now invoke your function through the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/lambda/index.html).
+
+```bash
+aws lambda invoke --function-name ${FUNCTION_NAME} response.json
+cat response.json
+```
+
+You will get the output as below:
+```
+{"statusCode":200,"body":"\"Hello from Lambda!\""} 
+```
+
 ## Next steps
 
 The ACK service controller for Amazon Lambda is based on the [Amazon Lambda API](https://docs.aws.amazon.com/lambda/latest/dg/API_Reference.html).
