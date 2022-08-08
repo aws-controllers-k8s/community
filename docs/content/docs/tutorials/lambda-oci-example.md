@@ -165,16 +165,10 @@ all the supported Kubernetes custom resources and fields.
 
 ### Cleanup
 
-Remove all the resource created in this tutorial using `kubectl delete` command.
+You can delete your Lambda OCI function using the `kubectl delete` command.
 
 ```bash
 kubectl delete -f function.yaml
-```
-
-The output of delete command should look like
-
-```bash
-
 ```
 
 To remove the Lambda ACK service controller, related CRDs, and namespaces, see [ACK Cleanup][cleanup].
