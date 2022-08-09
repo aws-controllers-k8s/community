@@ -248,8 +248,8 @@ spec:
       - name: PGPORT
         valueFrom:
          configMapKeyRef:
-          name: ${AURORA_INSTANCE_CONN_CM}
-          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-port"
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-port"
       - name: PGUSER
         valueFrom:
          configMapKeyRef:
