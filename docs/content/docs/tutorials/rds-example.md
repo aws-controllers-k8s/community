@@ -249,7 +249,7 @@ spec:
         valueFrom:
          configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-port"
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-port"
       - name: PGUSER
         valueFrom:
          configMapKeyRef:
