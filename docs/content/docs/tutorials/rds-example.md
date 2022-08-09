@@ -253,8 +253,8 @@ spec:
       - name: PGUSER
         valueFrom:
          configMapKeyRef:
-          name: ${AURORA_INSTANCE_CONN_CM}
-          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-user"
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-user"
       - name: PGPASSWORD
         valueFrom:
           secretKeyRef:
