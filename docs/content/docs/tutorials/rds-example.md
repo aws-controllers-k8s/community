@@ -1,6 +1,6 @@
 ---
-title: "Deploy PostgreSQL + MariaDB Instances Using the ACK RDS Controller"
-description: "Create managed PostgreSQL or MariaDB instances in Amazon Relational Database Service (RDS) from a Amazon Elastic Kubernetes Service (EKS) deployment."
+title: "Deploy PostgreSQL, MySQL, MariaDB Instances Using the ACK RDS Controller"
+description: "Create managed PostgreSQL, MySQL, and MariaDB instances in Amazon Relational Database Service (RDS) from a Amazon Elastic Kubernetes Service (EKS) deployment."
 lead: "Create and use PostgreSQL or MariaDB instances in Amazon RDS using Amazon Elastic Kubernetes Service (EKS)."
 draft: false
 menu:
@@ -99,6 +99,49 @@ spec:
 EOF
 
 kubectl apply -f rds-postgresql.yaml
+```
+
+You can track the status of the provisioned database using `kubectl describe` on the `DBInstance` custom resource:
+
+```bash
+kubectl describe dbinstance "${RDS_INSTANCE_NAME}"
+```
+
+When the `DB Instance Status` says `Available`, you can connect to the database instance.
+
+### MySQL
+
+To create a [AWS RDS for MySQL](https://aws.amazon.com/rds/mysql/) instance, you must first set up a master password. You can do this by [creating a Kubernetes Secret](https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret), e.g.:
+
+```bash
+RDS_INSTANCE_NAME="<your instance name>"
+
+kubectl create secret generic "${RDS_INSTANCE_NAME}-password" \
+  --from-literal=password="<your password>"
+```
+
+Next, create a `DBInstance` custom resource. The example below shows how to provision a RDS for MySQL 8.0 instance with the credentials created in the previous step:
+
+```bash
+cat <<EOF > rds-mysql.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: "${RDS_INSTANCE_NAME}"
+spec:
+  allocatedStorage: 20
+  dbInstanceClass: db.t4g.micro
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
+  engine: mysql
+  engineVersion: "8.0"
+  masterUsername: "admin"
+  masterUserPassword:
+    namespace: default
+    name: "${RDS_INSTANCE_NAME}-password"
+    key: password
+EOF
+
+kubectl apply -f rds-mysql.yaml
 ```
 
 You can track the status of the provisioned database using `kubectl describe` on the `DBInstance` custom resource:
@@ -291,7 +334,7 @@ metadata:
 spec:
   dbClusterIdentifier: "${RDS_CLUSTER_NAME}"
   engine: aurora-postgresql
-  engineVersion: "13.7"
+  engineVersion: "14"
   snapshotIdentifier: arn:aws:rds:${RDS_REGION}:${RDS_CUSTOMER_ACCOUNT}:snapshot:${RDS_DB_SNAPSHOT_IDENTIFIER}
 EOF
 
