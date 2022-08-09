@@ -243,8 +243,8 @@ spec:
       - name: PGHOST
         valueFrom:
          configMapKeyRef:
-          name: ${AURORA_INSTANCE_CONN_CM}
-          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-host"
+          name: ${RDS_INSTANCE_CONN_CM}
+          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-host"
       - name: PGPORT
         valueFrom:
          configMapKeyRef:
