@@ -244,7 +244,7 @@ spec:
         valueFrom:
          configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-host"
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-host"
       - name: PGPORT
         valueFrom:
          configMapKeyRef:
