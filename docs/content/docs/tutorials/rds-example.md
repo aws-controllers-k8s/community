@@ -258,7 +258,7 @@ spec:
       - name: PGPASSWORD
         valueFrom:
           secretKeyRef:
-           name: "ack-creds"
+           name: "${RDS_INSTANCE_NAME}-password"
            key: password
 EOF
 
