@@ -230,30 +230,39 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: app
+  namespace: ${APP_NAMESPACE}
 spec:
   containers:
-  - env:
-    - name: PGHOST
-      valueFrom:
-        configMapKeyRef:
+   - image: busybox
+     name: myapp
+     command:
+        - sleep
+        - "3600"
+     imagePullPolicy: IfNotPresent
+     env:
+      - name: PGHOST
+        valueFrom:
+         configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-host"
-    - name: PGPORT
-      valueFrom:
-        configMapKeyRef:
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-host"
+      - name: PGPORT
+        valueFrom:
+         configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-port"
-    - name: PGUSER
-      valueFrom:
-        configMapKeyRef:
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-port"
+      - name: PGUSER
+        valueFrom:
+         configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-user"
-    - name: PGPASSWORD
-      valueFrom:
-        secretRef:
-          name: "${RDS_INSTANCE_NAME}-password"
-          key: password
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-user"
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+           name: "${RDS_INSTANCE_NAME}-password"
+           key: password
 EOF
+
+kubectl apply -f rds-pods.yaml
 ```
 
 ## Create a Database from Snapshot
