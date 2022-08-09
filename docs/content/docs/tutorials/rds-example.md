@@ -230,30 +230,39 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: app
+  namespace: ${APP_NAMESPACE}
 spec:
   containers:
-  - env:
-    - name: PGHOST
-      valueFrom:
-        configMapKeyRef:
-          name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-host"
-    - name: PGPORT
-      valueFrom:
-        configMapKeyRef:
-          name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-port"
-    - name: PGUSER
-      valueFrom:
-        configMapKeyRef:
-          name: ${RDS_INSTANCE_CONN_CM}
-          key: "default.${RDS_INSTANCE_NAME}-user"
-    - name: PGPASSWORD
-      valueFrom:
-        secretRef:
-          name: "${RDS_INSTANCE_NAME}-password"
-          key: password
+   - image: busybox
+     name: myapp
+     command:
+        - sleep
+        - "3600"
+     imagePullPolicy: IfNotPresent
+     env:
+      - name: PGHOST
+        valueFrom:
+         configMapKeyRef:
+          name: ${AURORA_INSTANCE_CONN_CM}
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-host"
+      - name: PGPORT
+        valueFrom:
+         configMapKeyRef:
+          name: ${AURORA_INSTANCE_CONN_CM}
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-port"
+      - name: PGUSER
+        valueFrom:
+         configMapKeyRef:
+          name: ${AURORA_INSTANCE_CONN_CM}
+          key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-user"
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+           name: "ack-creds"
+           key: password
 EOF
+
+kubectl apply -f rds-pods.yaml
 ```
 
 ## Create a Database from Snapshot

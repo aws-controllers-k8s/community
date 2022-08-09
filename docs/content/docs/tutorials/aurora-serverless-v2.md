@@ -89,8 +89,8 @@ kubectl create ns "${APP_NAMESPACE}"
 
 EKS_VPC_ID=$(aws eks describe-cluster --name "${EKS_CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
 
-RDS_SUBNET_GROUP_NAME="mydbSubnetGroup"
-RDS_SUBNET_GROUP_DESCRIPTION="mydb-subnetgroup"
+RDS_SUBNET_GROUP_NAME="my-subnet-group"
+RDS_SUBNET_GROUP_DESCRIPTION="database subnet group"
 EKS_SUBNET_IDS=$(aws ec2 describe-subnets --filter "Name=vpc-id,Values=${EKS_VPC_ID}" --query 'Subnets[?MapPublicIpOnLaunch==`false`].SubnetId' --output text)
 
 cat <<-EOF > db-subnet-groups.yaml
@@ -109,7 +109,7 @@ EOF
 
 kubectl apply -f db-subnet-groups.yaml
 
-RDS_SECURITY_GROUP_NAME="ackSecurityGroup"
+RDS_SECURITY_GROUP_NAME="ack-security-group"
 RDS_SECURITY_GROUP_DESCRIPTION="ACK security group"
 
 EKS_CIDR_RANGE=$(aws ec2 describe-vpcs \
@@ -302,29 +302,33 @@ metadata:
   namespace: ${APP_NAMESPACE}
 spec:
   containers:
-  -image: busybox
-   name: myapp
-   env:
-    - name: PGHOST
-      valueFrom:
-        configMapKeyRef:
+   - image: busybox
+     name: myapp
+     command:
+        - sleep
+        - "3600"
+     imagePullPolicy: IfNotPresent
+     env:
+      - name: PGHOST
+        valueFrom:
+         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
           key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-host"
-    - name: PGPORT
-      valueFrom:
-        configMapKeyRef:
+      - name: PGPORT
+        valueFrom:
+         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
           key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-port"
-    - name: PGUSER
-      valueFrom:
-        configMapKeyRef:
+      - name: PGUSER
+        valueFrom:
+         configMapKeyRef:
           name: ${AURORA_INSTANCE_CONN_CM}
           key: "${APP_NAMESPACE}.${AURORA_DB_INSTANCE_NAME}-user"
-    - name: PGPASSWORD
-      valueFrom:
-        secretRef:
-          name: "ack-creds"
-          key: password
+      - name: PGPASSWORD
+        valueFrom:
+         secretKeyRef:
+           name: "ack-creds"
+           key: password
 EOF
 
 kubectl apply -f rds-pods.yaml
