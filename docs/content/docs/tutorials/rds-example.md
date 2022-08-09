@@ -254,7 +254,7 @@ spec:
         valueFrom:
          configMapKeyRef:
           name: ${RDS_INSTANCE_CONN_CM}
-          key: "APP_NAMESPACE.${RDS_INSTANCE_NAME}-user"
+          key: "${APP_NAMESPACE}.${RDS_INSTANCE_NAME}-user"
       - name: PGPASSWORD
         valueFrom:
           secretKeyRef:
