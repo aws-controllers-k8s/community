@@ -44,7 +44,8 @@ aws ecr-public get-login-password --region us-west-2 | helm registry login --use
 Deploy the ACK service controller for Amazon Lambda using the [lambda-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/lambda-chart). This example creates resources in the `us-west-2` region, but you can use any other region supported in AWS.
 
 ```bash
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+SERVICE=lambda
+RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
 helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/lambda-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=us-west-2
 ```
 
