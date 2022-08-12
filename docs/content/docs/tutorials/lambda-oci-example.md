@@ -6,12 +6,12 @@ draft: false
 menu:
   docs:
     parent: "tutorials"
-weight: 43
+weight: 46
 toc: true
 ---
 
 The ACK service controller for Amazon Lambda lets you manage Lambda functions directly from Kubernetes.
-This guide will show you how to create a Lambda function with OCI image using a single Kubernetes resource manifest.
+This guide shows you how to create a Lambda function with OCI image using a single Kubernetes resource manifest.
 
 ## Setup
 
@@ -36,14 +36,16 @@ This guide assumes that you have:
 ### Install the ACK service controller for Lambda
 
 Log into the Helm registry that stores the ACK charts:
+
 ```bash
-aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+aws ecr-public get-login-password --region us-west-2 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
-Deploy the ACK service controller for Amazon Lambda using the [lambda-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/lambda-chart). Resources should be created in the `us-east-1` region:
+Deploy the ACK service controller for Amazon Lambda using the [lambda-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/lambda-chart). This example creates resources in the `us-west-2` region, but you can use any other region supported in AWS.
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/lambda-chart --version=v0.0.16 --generate-name --set=aws.region=us-east-1
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/lambda-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=us-west-2
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/lambda-controller/blob/main/helm/values.yaml).
@@ -62,8 +64,8 @@ The Lambda [function handler](https://docs.aws.amazon.com/lambda/latest/dg/nodej
 cat <<EOF > app.js
 exports.handler = async (event) => {
     const response = {
-        statusCode: 200,
-        body: JSON.stringify('Hello from Lambda!'),
+        statusCode: 200
+        body: JSON.stringify('Hello from Lambda!')
     };
     return response;
 };
@@ -71,7 +73,7 @@ EOF
 ```
 
 ## Create and Build a Docker Image
-Create a Dockerfile to build an image from. 
+Create a Dockerfile that will be used to build the image for our Lambda function:
 
 ```bash
 cat <<EOF > Dockerfile
@@ -84,7 +86,7 @@ RUN npm install
 CMD [ "app.handler" ]
 EOF
 ```
-Install dependencies and build a Docker image called hello-world.
+Build the Docker image in your local environment. You will need to install dependencies using `npm`:
 
 ```shell
 npm init -y
@@ -99,12 +101,12 @@ export AWS_REGION=us-west-2
 
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 aws ecr create-repository --repository-name hello-world --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
-docker tag  hello-world:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest
+docker tag  "hello-world:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest"
+docker push "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/hello-world:latest"
 ```
 
 ## Deploy the Lambda OCI function using the ACK Lambda controller
-Execute the following commands to create a manifest containing the Lambda OCI function and submit this manifest to the EKS cluster using kubectl.
+The following example creates a manifest that contains the Lambda OCI function. It then uses `kubectl` to create the resource in Kubernetes:
 
 ```shell
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
@@ -140,11 +142,11 @@ function.lambda.services.k8s.aws/lambda-oci-ack created
 To get details about the Lambda function, run the following.
 
 ```bash
-kubectl describe function/${FUNCTION_NAME}
+kubectl describe "function/${FUNCTION_NAME}"
 ```
 
 ## Invoke the Lambda OCI Function
-After you have verified that the Lambda OCI function is deployed correctly, you can now invoke your function through the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/lambda/index.html).
+After you have verified that the Lambda OCI function is deployed correctly, you can invoke the function through the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/lambda/index.html).
 
 ```bash
 aws lambda invoke --function-name ${FUNCTION_NAME} response.json
@@ -165,7 +167,7 @@ all the supported Kubernetes custom resources and fields.
 
 ### Cleanup
 
-You can delete your Lambda OCI function using the `kubectl delete` command.
+You can delete your Lambda OCI function using the `kubectl delete` command:
 
 ```bash
 kubectl delete -f function.yaml
