@@ -150,8 +150,7 @@ kubectl describe "function/${FUNCTION_NAME}"
 After you have verified that the Lambda OCI function is deployed correctly, you can invoke the function through the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/lambda/index.html).
 
 ```bash
-aws lambda invoke --function-name ${FUNCTION_NAME} response.json
-cat response.json
+aws lambda invoke --function-name ${FUNCTION_NAME} --region us-west-2 demo-function-list-items /dev/stdout | jq
 ```
 
 You will get the output as below:
