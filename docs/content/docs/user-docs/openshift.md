@@ -109,7 +109,22 @@ Delete `config.txt` and `secrets.txt`.
 If you change the name of either the `ConfigMap` or the `Secret` from the values given above, i.e. `ack-$SERVICE-user-config` and `ack-$SERVICE-user-secrets`, then installations from OperatorHub will not function properly. The Deployment for the controller is preconfigured for these key values.
 {{% /hint %}}
 
-### Step 4: Install the controller
+### Step 4 (Optional): Apply Additional Custom Resource Definitions(CRD)
+To prevent CRD installation conflicts for CRDs shared across multiple AWS Controllers for Kubernetes,
+the [AdoptedResource](../../../reference/common/v1alpha1/adoptedresource/) and [FieldExport](../../../reference/common/v1alpha1/fieldexport/) CRDs are not included in the OpenShift Embedded OperatorHub.
+These must be installed manually by a cluster administrator before any controller is installed by running the following commands:
+
+Apply the `AdoptedResource` CRD
+```bash
+oc apply -f https://raw.githubusercontent.com/aws-controllers-k8s/runtime/main/config/crd/bases/services.k8s.aws_adoptedresources.yaml
+```
+
+Apply the `FieldExport` CRD
+```bash
+oc apply -f https://raw.githubusercontent.com/aws-controllers-k8s/runtime/main/config/crd/bases/services.k8s.aws_fieldexports.yaml
+```
+
+### Step 5: Install the controller
 
 Follow the instructions for [installing the controller using OperatorHub](../install/#install-an-ack-service-controller-with-operatorhub-in-red-hat-openshift).
 
