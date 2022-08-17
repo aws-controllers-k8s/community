@@ -1,7 +1,7 @@
 ---
-title: "Create a Lambda Function with OCI Image with the ACK Lambda Controller"
-description: "Create a Lambda Function with OCI Image Using the ACK Lambda Controller deployed on Amazon Elastic Kubernetes Service (EKS)."
-lead: "Create a Lambda Function with OCI Image Using Elastic Kubernetes Service (EKS)."
+title: "Create a Lambda OCI Function with the ACK Lambda Controller"
+description: "Create a Lambda Function with an OCI Image Using the ACK Lambda Controller deployed on Amazon Elastic Kubernetes Service (EKS)."
+lead: "Create a Lambda Function with an OCI Image Using Elastic Kubernetes Service (EKS)."
 draft: false
 menu:
   docs:
