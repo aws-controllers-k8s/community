@@ -85,7 +85,7 @@ For help, please consider the following venues (in order):
 * [ACK project documentation](https://aws-controllers-k8s.github.io/community/)
 * [Search open issues](https://github.com/aws-controllers-k8s/community/issues)
 * [File an issue](https://github.com/aws-controllers-k8s/community/issues/new/choose)
-* Chat with us on the `#provider-aws` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.
+* Chat with us on the `#aws-controllers-k8s` channel in the [Kubernetes Slack](https://kubernetes.slack.com/) community.
 
 ## Contributing
 
