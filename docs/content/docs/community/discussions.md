@@ -10,4 +10,4 @@ weight: 30
 toc: true
 ---
 
-For discussions, please use the `#provider-aws` channel on the [Kubernetes Slack community](https://kubernetes.slack.com/).
+For discussions, please use the `#aws-controllers-k8s` channel on the [Kubernetes Slack community](https://kubernetes.slack.com/).
