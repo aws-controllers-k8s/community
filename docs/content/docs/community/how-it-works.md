@@ -3,7 +3,7 @@ title : "How it Works"
 description: "How the ACK controller works"
 lead: ""
 draft: false
-menu: 
+menu:
   docs:
     parent: "introduction"
 weight: 20
@@ -52,6 +52,14 @@ calling the [S3 `CreateBucket` API call][s3-cb-api] to create the bucket in
 AWS. After communicating with the S3 API, the ACK service controller then calls
 the Kubernetes API server to update `(7)` the CR's [`Status`][spec-status] with
 information it received from S3.
+
+## Drift Detection and Remediation
+
+There are times where a resource that an ACK service controller is managing is
+modified outside of ACK, e.g. through the AWS CLI or the console. Every 10 hours,
+an ACK service controller will look for any drift and attempt to remediate. As
+part of the remediation, an ACK service controller will reconfigure the managed
+resource based on the `Spec`.
 
 [api-kind]: https://kubernetes.io/docs/reference/using-api/api-concepts/#standard-api-terminology
 [authz]: ../../user-docs/authorization/
