@@ -375,6 +375,7 @@ You can learn more about each of the ACK service controller for RDS custom resou
 * `dbsecuritygroup`
 * `dbsubnetgroup`
 * `globalclusters`
+* `dbproxy`
 
 The ACK service controller for Amazon RDS is based on the [Amazon RDS API](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/). To get a full understanding of how all of the APIs work, please review the [Amazon RDS API documentation](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/).
 
