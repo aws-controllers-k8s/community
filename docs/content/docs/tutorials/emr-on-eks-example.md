@@ -9,11 +9,19 @@ menu:
 weight: 47
 toc: true
 ---
-We are excited to announce ACK service controller for EMR on EKS. Customers have told us that they like the declarative way of managing resources on EKS clusters. Using ACK service controller for EMR on EKS, customers now have the ability to define and run EMR jobs directly from their Kubernetes clusters. EMR on EKS manages the lifecycle of these jobs and it is [3.5 times faster than open-source Spark](https://aws.amazon.com/blogs/big-data/amazon-emr-on-amazon-eks-provides-up-to-61-lower-costs-and-up-to-68-performance-improvement-for-spark-workloads/) because it uses highly optimized EMR runtime  
+Using ACK service controller for EMR on EKS, customers have the ability to define and run EMR jobs directly from their Kubernetes clusters. EMR on EKS manages the lifecycle of these jobs and it is [3.5 times faster than open-source Spark](https://aws.amazon.com/blogs/big-data/amazon-emr-on-amazon-eks-provides-up-to-61-lower-costs-and-up-to-68-performance-improvement-for-spark-workloads/) because it uses highly optimized EMR runtime  
 
 To get started, you can download the EMR on EKS controller image from [Amazon ECR](https://gallery.ecr.aws/aws-controllers-k8s/emrcontainers-controller) and run Spark jobs in minutes. ACK service controller for EMR on EKS is available as a *developer preview* and is not recommended for production use. To learn more, visit the [EMR on EKS documentation](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html).
 
 ## Installation steps
+Here are the steps involved for installing EMR on EKS controller.
+1. Install EKS cluster
+  - Create IAM Identity mapping
+2. Install EMR on EKS controller
+  - Configure IRSA for emr on eks controller
+3. Create EMR VirtualCluster
+4. Create EMR Job Execution Role & configure IRSA
+5. Run sample job
 
 #### Prereqs
 Install these tools before proceeding:
@@ -25,13 +33,13 @@ Install these tools before proceeding:
 
 Configure AWS CLI with sufficient permissions to install EKS cluster. Please see [documentation](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) for further guidance
 
-#### Install EKS cluster
+## Install EKS cluster
 
-Let's export environment variables that are needed for the EMR on EKS cluster setup. Please copy and paste commands into terminal for faster provisioning
+You can either create an EKS cluster or re-use existing one. Below listed are steps for creating new EKS cluster. Let's export environment variables that are needed for the EMR on EKS cluster setup. Please copy and paste commands into terminal for faster provisioning
 ```
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 export EKS_CLUSTER_NAME="ack-emr-eks"
-export AWS_DEFAULT_REGION="us-west-2"
+# export AWS_DEFAULT_REGION="us-west-2"
 export AWS_REGION="us-west-2"
 ```
 We'll use eksctl to install EKS cluster.
@@ -42,8 +50,8 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: ${EKS_CLUSTER_NAME}
-  region: ${AWS_DEFAULT_REGION}
-  version: "1.21"
+  region: ${AWS_REGION}
+  version: "1.23"
 
 managedNodeGroups:
   - instanceType: m5.xlarge
@@ -69,13 +77,11 @@ eksctl create iamidentitymapping \
 ```
 **Expected outcome**
 ```
-2022-08-26 09:07:40 [ℹ]  eksctl version 0.84.0
-2022-08-26 09:07:40 [ℹ]  using region us-west-2
 2022-08-26 09:07:42 [ℹ]  created "emr-ns:Role.rbac.authorization.k8s.io/emr-containers"
 2022-08-26 09:07:42 [ℹ]  created "emr-ns:RoleBinding.rbac.authorization.k8s.io/emr-containers"
 2022-08-26 09:07:42 [ℹ]  adding identity "arn:aws:iam::012345678910:role/AWSServiceRoleForAmazonEMRContainers" to auth ConfigMap
 ```
-#### Install EMR on EKS controller
+## Install EMR on EKS controller
 Now we can go ahead and install EMR on EKS controller. First, let's export environment variables needed for setup
 ```
 export SERVICE=emrcontainers
@@ -439,10 +445,6 @@ kubectl delete -f virtualcluster.yaml
 # uninstall emrcontainers controller
 helm delete ack-$SERVICE-controller -n $ACK_SYSTEM_NAMESPACE
 
-# delete crds
-kubectl delete crd/virtualclusters.emrcontainers.services.k8s.aws
-kubectl delete crd/jobruns.emrcontainers.services.k8s.aws
-
 # delete namespace
 kubectl delete ns $ACK_K8S_NAMESPACE
 kubectl delete ns $EMR_NAMESPACE
@@ -450,7 +452,6 @@ kubectl delete ns $EMR_NAMESPACE
 # delete EKS cluster
 eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 ```
-
 ## Limitations
 
 1. JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, customers can’t use all the configuration from `**configuration overrides**` section.
