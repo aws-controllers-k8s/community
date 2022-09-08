@@ -39,7 +39,6 @@ You can either create an EKS cluster or re-use existing one. Below listed are st
 ```
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 export EKS_CLUSTER_NAME="ack-emr-eks"
-# export AWS_DEFAULT_REGION="us-west-2"
 export AWS_REGION="us-west-2"
 ```
 We'll use eksctl to install EKS cluster.
