@@ -62,7 +62,7 @@ iam:
 EOF
 ```
 #### Create IAM Identity mapping
-We need to create emr-containers identity in EKS cluster so that EMR service has proper RBAC permissions needed to manage and run Spark jobs
+We need to create emr-containers identity in EKS cluster so that EMR service has proper RBAC permissions needed to  run and manage Spark jobs
 ```
 export EMR_NAMESPACE=emr-ns
 echo "creating namespace for $SERVICE"
@@ -84,7 +84,7 @@ eksctl create iamidentitymapping \
 Now we can go ahead and install EMR on EKS controller. First, let's export environment variables needed for setup
 ```
 export SERVICE=emrcontainers
-export RELEASE_VERSION=v0.0.6
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
 export ACK_SYSTEM_NAMESPACE=ack-system
 ```
 We cam use Helm for the installation
@@ -112,56 +112,11 @@ Check its status by running:
 You are now able to create Amazon EMR on EKS (EMRContainers) resources!
 ```
 #### Configure IRSA for emr on eks controller
-Once the controller is deployed, you need to setup IAM permissions for the controller so that it create and manage resources with EMR, S3 and other API's. We will use [IAM Roles for Service Account](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to secure this IAM role so that only EMR on EKS controller can assume the permissions assigned.
-```
-OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
-ACK_K8S_SERVICE_ACCOUNT_NAME=ack-$SERVICE-controller
+Once the controller is deployed, you need to setup IAM permissions for the controller so that it can create and manage resources using EMR, S3 and other API's. We will use [IAM Roles for Service Account](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to secure this IAM role so that only EMR on EKS controller service account can assume the permissions assigned.
+Please follow [how to configure IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) for IRSA setup. Make sure to change the value for `**SERVICE**` to `**emrcontainers**`
 
-echo "creating ${ACK_CONTROLLER_IAM_ROLE}"
-read -r -d '' TRUST_RELATIONSHIP <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${ACK_K8S_NAMESPACE}:${ACK_K8S_SERVICE_ACCOUNT_NAME}"
-        }
-      }
-    }
-  ]
-}
-EOF
-echo "${TRUST_RELATIONSHIP}" > trust.json
+After completing all the steps, please validate annotation for service account before proceeding.
 ```
-```
-ACK_CONTROLLER_IAM_ROLE="ack-${SERVICE}-controller"
-ACK_CONTROLLER_IAM_ROLE_DESCRIPTION="IRSA role for ACK ${SERVICE} controller deployment on EKS cluster using Helm charts"
-aws iam create-role --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
-    --assume-role-policy-document file://trust.json \
-    --description "${ACK_CONTROLLER_IAM_ROLE_DESCRIPTION}"
-```
-Once the IAM role is created, we can secure it by annotating to EMR on EKS controller service account
-```
-export ACK_K8S_NAMESPACE=ack-system
-export ACK_K8S_SERVICE_ACCOUNT_NAME=ack-$SERVICE-controller
-export ACK_CONTROLLER_IAM_ROLE_ARN=$(aws iam get-role --role-name=$ACK_CONTROLLER_IAM_ROLE --query Role.Arn --output text)
-export IRSA_ROLE_ARN=eks.amazonaws.com/role-arn=$ACK_CONTROLLER_IAM_ROLE_ARN
-```
-```
-echo "annotating ${SERVICE}-controller serviceaccount"
-kubectl annotate serviceaccount -n $ACK_K8S_NAMESPACE $ACK_K8S_SERVICE_ACCOUNT_NAME $IRSA_ROLE_ARN
-
-# Note the deployment name for ACK service controller from following command
-echo "restarting ${SERVICE}-controller pods"
-kubectl get deployments -n $ACK_K8S_NAMESPACE
-kubectl -n $ACK_K8S_NAMESPACE rollout restart deployment ack-emrcontainers-controller-emrcontainers-chart
-
 # validate annotation
 kubectl get pods -n $ACK_K8S_NAMESPACE
 echo "sleeping for 5sec for pod to get ready"
@@ -175,86 +130,6 @@ AWS_REGION:                      us-west-2
 AWS_ENDPOINT_URL:                
 AWS_ROLE_ARN:                    arn:aws:iam::012345678910:role/ack-emrcontainers-controller
 AWS_WEB_IDENTITY_TOKEN_FILE:     /var/run/secrets/eks.amazonaws.com/serviceaccount/token (http://eks.amazonaws.com/serviceaccount/token)
-```
-Download the recommended managed policies and apply them to the newly created IRSA role
-```
-cat <<EOF > controller_policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "iam:CreateServiceLinkedRole"
-            ],
-            "Resource": "*",
-            "Condition": {
-                "StringLike": {
-                    "iam:AWSServiceName": "emr-containers.amazonaws.com"
-                }
-            }
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "emr-containers:CreateVirtualCluster",
-                "emr-containers:ListVirtualClusters",
-                "emr-containers:DescribeVirtualCluster",
-                "emr-containers:DeleteVirtualCluster"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "emr-containers:StartJobRun",
-                "emr-containers:ListJobRuns",
-                "emr-containers:DescribeJobRun",
-                "emr-containers:CancelJobRun"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "emr-containers:DescribeJobRun",
-                "emr-containers:TagResource",
-                "elasticmapreduce:CreatePersistentAppUI",
-                "elasticmapreduce:DescribePersistentAppUI",
-                "elasticmapreduce:GetPersistentAppUIPresignedURL"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:GetObject",
-                "s3:ListBucket"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:Get*",
-                "logs:DescribeLogGroups",
-                "logs:DescribeLogStreams"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-```
-```
-echo "Creating ACK-${SERVICE}-Controller-POLICY"
-aws iam create-policy   \
-  --policy-name ack-${SERVICE}-controller-policy \
-  --policy-document file://controller_policy.json
-echo -n "Attaching IAM policy ..."
-aws iam attach-role-policy \
-  --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
-  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/ack-${SERVICE}-controller-policy"
 ```
 
 ## Create EMR VirtualCluster
@@ -382,9 +257,6 @@ echo "checking if VirtualCluster Status is "True""
 VC=$(kubectl get virtualcluster -o jsonpath='{.items..metadata.name}')
 kubectl describe virtualcluster/$VC | yq e '.Status.Conditions.Status'
 
-echo "get VirtualCluster ID"
-export VC_ID=$(kubectl describe virtualcluster/$VC | yq e '.Status.Id')
-
 export RANDOM_ID=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 8)
 
 cat << EOF > jobrun.yaml
@@ -395,9 +267,11 @@ metadata:
   name: my-ack-jobrun-${RANDOM_ID}
 spec:
   name: my-ack-jobrun-${RANDOM_ID}
-  virtualClusterID: "${VC_ID}"
+  virtualClusterRef:
+    from:
+      name: my-ack-vc
   executionRoleARN: "${ACK_JOB_EXECUTION_ROLE_ARN}"
-  releaseLabel: "emr-6.3.0-latest"
+  releaseLabel: "emr-6.7.0-latest"
   jobDriver:
     sparkSubmitJobDriver:
       entryPoint: "local:///usr/lib/spark/examples/src/main/python/pi.py"
@@ -453,7 +327,7 @@ eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 ```
 ## Limitations
 
-1. JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, customers can’t use all the configuration from `**configuration overrides**` section.
+1. JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, you can’t specify configurations from `**configuration overrides**` structure.
 ```
 # configurationOverrides:
 #   applicationConfiguration:
