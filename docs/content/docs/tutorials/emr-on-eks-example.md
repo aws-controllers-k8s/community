@@ -1,5 +1,5 @@
 ---
-title: "Run Spark jobs using EMR on EKS controller"
+title: "Run Spark jobs using ACK service controller for EMR on EKS"
 description: "ACK service controller for EMR on EKS enables customers to run spark jobs on EKS clusters"
 lead: "Run Spark jobs using ACK service controller for EMR on EKS."
 draft: false
@@ -11,17 +11,17 @@ toc: true
 ---
 Using ACK service controller for EMR on EKS, customers have the ability to define and run EMR jobs directly from their Kubernetes clusters. EMR on EKS manages the lifecycle of these jobs and it is [3.5 times faster than open-source Spark](https://aws.amazon.com/blogs/big-data/amazon-emr-on-amazon-eks-provides-up-to-61-lower-costs-and-up-to-68-performance-improvement-for-spark-workloads/) because it uses highly optimized EMR runtime  
 
-To get started, you can download the EMR on EKS controller image from [Amazon ECR](https://gallery.ecr.aws/aws-controllers-k8s/emrcontainers-controller) and run Spark jobs in minutes. ACK service controller for EMR on EKS is available as a *developer preview* and is not recommended for production use. To learn more, visit the [EMR on EKS documentation](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html).
+To get started, you can download the EMR on EKS controller image from [Amazon ECR](https://gallery.ecr.aws/aws-controllers-k8s/emrcontainers-controller) and run Spark jobs in minutes. ACK service controller for EMR on EKS is available as **developer preview** and is not recommended for production use. To learn more, visit the [EMR on EKS documentation](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html).
 
 ## Installation steps
 Here are the steps involved for installing EMR on EKS controller.
-1. [Install EKS cluster](#Install EKS cluster)
-  - [Create IAM Identity mapping](#Create IAM Identity mapping)
-2. [Install emrcontainers-controller](#Install emrcontainers-controller in your EKS cluster)
-  - [Configure IRSA for emr on eks controller](#Configure IRSA for emr on eks controller)
-3. [Create EMR VirtualCluster](#Create EMR VirtualCluster)
-4. [Create EMR Job Execution Role & configure IRSA](#Create Job Execution Role)
-5. [Run a sample job](#Run a Sample Spark Job)
+1. [Install EKS cluster](#install-eks-cluster)
+  - [Create IAM Identity mapping](#create-iam-identity-mapping)
+2. [Install emrcontainers-controller](#install-emrcontainers-controller-in-your-eks-cluster)
+  - [Configure IRSA for emr on eks controller](#configure-irsa-for-emr-on-eks-controller)
+3. [Create EMR VirtualCluster](#create-emr-virtualcluster)
+  - [Create EMR Job Execution Role & configure IRSA](#create-job-execution-role)
+4. [Run a sample job](#run-a-sample-spark-job)
 
 #### Prereqs
 Install these tools before proceeding:
@@ -113,7 +113,8 @@ You are now able to create Amazon EMR on EKS (EMRContainers) resources!
 ```
 #### Configure IRSA for emr on eks controller
 Once the controller is deployed, you need to setup IAM permissions for the controller so that it can create and manage resources using EMR, S3 and other API's. We will use [IAM Roles for Service Account](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to secure this IAM role so that only EMR on EKS controller service account can assume the permissions assigned.
-Please follow [how to configure IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) for IRSA setup. Make sure to change the value for `**SERVICE**` to `**emrcontainers**`
+
+Please follow [how to configure IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) for IRSA setup. Make sure to change the value for **`SERVICE`** to **`emrcontainers`**
 
 After completing all the steps, please validate annotation for service account before proceeding.
 ```
@@ -327,7 +328,7 @@ eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 ```
 ## Limitations
 
-1. JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, you can’t specify configurations from `**configuration overrides**` structure.
+* JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, you can’t specify configurations from **`configuration overrides`** structure.
 ```
 # configurationOverrides:
 #   applicationConfiguration:
@@ -338,7 +339,7 @@ eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 #     s3MonitoringConfiguration:
 #       logUri:
 ```
-2. You cannot delete a JobRun unless its in **error** state. There is no delete-job-run API for deleting jobs (for good reason). However, if your JobRun goes into error state, you can run `kubectl delete jobrun/<job-run-name>` to cancel the job.
+* You cannot delete a JobRun unless its in **error** state. There is no delete-job-run API for deleting jobs (for good reason). However, if your JobRun goes into error state, you can run `kubectl delete jobrun/<job-run-name>` to cancel the job.
 
 ## Troubleshooting
 
@@ -352,17 +353,17 @@ kubectl logs ${CONTROLLER_POD} -n ${ACK_K8S_NAMESPACE}
 CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
 kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_K8S_NAMESPACE}
 ```
-This is how your values should look after change.
+This is how your values should look after changes are applied.
 ```
         - --aws-region
         - $(AWS_REGION)
         - --aws-endpoint-url
         - $(AWS_ENDPOINT_URL)
-        **- --enable-development-logging
+        - --enable-development-logging
         - "true"
         - --log-level
-        - debug**
+        - debug
         - --resource-tags
         - $(ACK_RESOURCE_TAGS)
 ```
-* If you run into any issue, please create [Github issue](https://github.com/aws-controllers-k8s/community/issues) under aws-controller-k8s/community repo. Click **New issue** and select the type of issue, add `[emr-containers] <highlevel overview>` under title, and add enough details so that we can reproduce and provide a response
+* If you run into any issue, please create [Github issue](https://github.com/aws-controllers-k8s/community/issues). Click **New issue** and select the type of issue, add `[emr-containers] <highlevel overview>` under title, and add enough details so that we can reproduce and provide a response
