@@ -1,5 +1,5 @@
 ---
-title: "Run Spark jobs using ACK service controller for EMR on EKS"
+title: "Run Spark jobs using the ACK EMR on EKS controller"
 description: "ACK service controller for EMR on EKS enables customers to run spark jobs on EKS clusters"
 lead: "Run Spark jobs using ACK service controller for EMR on EKS."
 draft: false
