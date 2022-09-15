@@ -15,13 +15,13 @@ To get started, you can download the EMR on EKS controller image from [Amazon EC
 
 ## Installation steps
 Here are the steps involved for installing EMR on EKS controller.
-1. Install EKS cluster
-  - Create IAM Identity mapping
-2. Install EMR on EKS controller
-  - Configure IRSA for emr on eks controller
-3. Create EMR VirtualCluster
-4. Create EMR Job Execution Role & configure IRSA
-5. Run sample job
+1. [Install EKS cluster](#Install EKS cluster)
+  - [Create IAM Identity mapping](#Create IAM Identity mapping)
+2. [Install emrcontainers-controller](#Install emrcontainers-controller in your EKS cluster)
+  - [Configure IRSA for emr on eks controller](#Configure IRSA for emr on eks controller)
+3. [Create EMR VirtualCluster](#Create EMR VirtualCluster)
+4. [Create EMR Job Execution Role & configure IRSA](#Create Job Execution Role)
+5. [Run a sample job](#Run a Sample Spark Job)
 
 #### Prereqs
 Install these tools before proceeding:
@@ -80,7 +80,7 @@ eksctl create iamidentitymapping \
 2022-08-26 09:07:42 [ℹ]  created "emr-ns:RoleBinding.rbac.authorization.k8s.io/emr-containers"
 2022-08-26 09:07:42 [ℹ]  adding identity "arn:aws:iam::012345678910:role/AWSServiceRoleForAmazonEMRContainers" to auth ConfigMap
 ```
-## Install EMR on EKS controller
+## Install emrcontainers-controller in your EKS cluster
 Now we can go ahead and install EMR on EKS controller. First, let's export environment variables needed for setup
 ```
 export SERVICE=emrcontainers
@@ -119,8 +119,6 @@ After completing all the steps, please validate annotation for service account b
 ```
 # validate annotation
 kubectl get pods -n $ACK_K8S_NAMESPACE
-echo "sleeping for 5sec for pod to get ready"
-sleep 5
 CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_K8S_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
 kubectl describe pod -n $ACK_K8S_NAMESPACE $CONTROLLER_POD_NAME | grep "^\s*AWS_"
 ```
@@ -180,8 +178,9 @@ Status:
 Events:                    <none>
 ```
 
-## Run a Sample Spark Job
+#### Create Job Execution Role
 In order to run sample spark job, we need to create EMR Job Execution Role. This Role will have IAM permissions such as S3, CloudWatch Logs for running your job. We will use IRSA to secure this job role
+
 ```
 ACK_JOB_EXECUTION_ROLE="ack-${SERVICE}-jobexecution-role"
 ACK_JOB_EXECUTION_IAM_ROLE_DESCRIPTION="IRSA role for ACK ${SERVICE} Job Execution"
@@ -251,6 +250,7 @@ aws emr-containers update-role-trust-policy \
   --namespace ${EMR_NAMESPACE} \
   --role-name ${ACK_JOB_EXECUTION_ROLE}
 ```
+## Run a Sample Spark Job
 Now let's submit sample spark job
 ```
 echo "checking if VirtualCluster Status is "True""
