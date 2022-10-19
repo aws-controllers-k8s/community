@@ -152,7 +152,6 @@ Events:       <none>
   * `kubectl delete -f vpc.yaml`
  
  
- 
 Both resources were successfully deployed, managed, then deleted by their respective controllers. Although contrived, this example highlights how easy it can be to deploy AWS resources via YAML files and how it feels like managing any other K8s resource. 
  
 In this example, waiting for the `vpc-ID` in order to create the **Subnet** was sub-optimal; the workflow didn't feel declarative. The next example alleviates these concerns using a single manifest (YAML) to deploy the entire network topology.
@@ -405,17 +404,18 @@ spec:
     ssh -i "created_key_in_console_for_region.pem" ec2-user@<Private IP>
     ```
 * Validate instance in private subnet can connect to internet
-  * Try to ping websites from your private subnet, sample output is shown here
-  ```bash
-  ping google.com
+  * Try to ping websites from your private subnet, sample output looks like
+    ```bash
+    ping google.com
   
-  PING google.com (142.250.217.78) 56(84) bytes of data.
-  64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=1 ttl=102 time=8.30 ms
-  64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=2 ttl=102 time=7.82 ms
-  64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=3 ttl=102 time=7.77 ms
-  ^C
-  --- google.com ping statistics ---
-  3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+    PING google.com (142.250.217.78) 56(84) bytes of data.
+    64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=1 ttl=102 time=8.30 ms
+    64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=2 ttl=102 time=7.82 ms
+    64 bytes from sea09s29-in-f14.1e100.net (142.250.217.78): icmp_seq=3 ttl=102 time=7.77 ms
+    ^C
+    --- google.com ping statistics ---
+    3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+    ```
  
 ### Cleanup
  
@@ -427,7 +427,7 @@ kubectl delete -f ack-instance-private.yaml
 kubectl delete -f vpc-workflow.yaml
 ```
  
-The output of delete command should look like
+The output of delete commands should look like
  
 ```bash
 instance.ec2.services.k8s.aws/ack-instance-public.yaml deleted
