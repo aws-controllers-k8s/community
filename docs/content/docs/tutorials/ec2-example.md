@@ -54,7 +54,7 @@ For a full list of available values in the Helm chart, refer to [values.yaml](ht
  
 ### Configure IAM permissions
  
-The controller requires permissions to invoke EC2 APIs. Once the service controller is deployed [configure the IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) using the value `SERVICE=ec2` throughout. The recommended IAM Policy for EC2-Controller can be found in [recommended-policy-arn](https://github.com/aws-controllers-k8s/ec2-controller/blob/5414fc242d29af59309b4191b5a085439bf8730a/config/iam/recommended-policy-arn#L1).
+The controller requires permissions to invoke EC2 APIs. Once the service controller is deployed [configure the IAM permissions](https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/) using the value `SERVICE=ec2` throughout. The recommended IAM Policy for EC2-Controller can be found in [recommended-policy-arn](https://github.com/aws-controllers-k8s/ec2-controller/blob/main/config/iam/recommended-policy-arn).
  
  
 ### [Optional] Create a VPC and Subnet
@@ -67,7 +67,7 @@ cat <<EOF > vpc.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: VPC
 metadata:
-  name: vpc-ack-test
+  name: vpc-tutorial-test
 spec:
   cidrBlocks: 
   - 10.0.0.0/16
@@ -113,7 +113,7 @@ cat <<EOF > subnet.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Subnet
 metadata:
-  name: subnet-ack-test
+  name: subnet-tutorial-test
 spec:
   cidrBlock: 10.0.0.0/20
   vpcID: vpc-<ID>
@@ -143,7 +143,7 @@ Status:
   Owner ID:                         <ID>
   Private DNS Name Options On Launch:
   State:      available
-  Subnet ID:  subnet-0f0eb8efb37eb43b0
+  Subnet ID:  subnet-<ID>
 Events:       <none>
 ```
  
@@ -154,7 +154,7 @@ Events:       <none>
  
 Both resources were successfully deployed, managed, then deleted by their respective controllers. Although contrived, this example highlights how easy it can be to deploy AWS resources via YAML files and how it feels like managing any other K8s resource. 
  
-In this example, waiting for the `vpc-ID` in order to create the **Subnet** was sub-optimal; the workflow didn't feel declarative. The next example alleviates these concerns using a single manifest (YAML) to deploy the entire network topology.
+In this example, waiting for the `vpcID` to be generated and manually updating the Subnet custom resource is not fully declarative. The next example alleviates these concerns using a single manifest (YAML) to deploy the entire network topology.
  
  
 ### Create a VPC Workflow
@@ -172,119 +172,126 @@ This section details the steps to create a network topology consisting of multip
  
 The VPC is connected to the internet through an Internet Gateway. The NAT Gateway is created in the public Subnet with an associated Elastic IP. The Instance is deployed into the private Subnet which can connect to the internet using the NAT Gateway in the public Subnet. Lastly, one Route Table (public) will contain a route to the Internet Gateway while the other Route Table (private) contains a route to the NAT Gateway.
 
+{{% hint type="info" title="Referencing Resources" %}}
+Notice that the ACK custom resources reference each other using "*Ref" fields inside the manifest and the user does not have to worry about finding `vpc-ID` when creating the Subnet resource manifests.
+ 
+Refer to [API Reference](https://aws-controllers-k8s.github.io/community/reference/) for *EC2*
+to find the supported reference fields.
+{{% /hint %}}
+
 * Deploy the resources using the provided YAML and `kubectl apply -f vpc-workflow.yaml`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: VPC
 metadata:
-  name: ack-vpc
+  name: tutorial-vpc
 spec:
   cidrBlocks: 
   - 10.0.0.0/16
   enableDNSSupport: true
   enableDNSHostnames: true
   tags:
-    - key: purpose
-      value: ack-tutorial
+    - key: name
+      value: vpc-tutorial
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: InternetGateway
 metadata:
-  name: ack-igw
+  name: tutorial-igw
 spec:
   vpcRef:
     from:
-      name: ack-vpc
+      name: tutorial-vpc
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: NATGateway
 metadata:
-  name: ack-natgateway1
+  name: tutorial-natgateway1
 spec:
   subnetRef:
     from:
-      name: ack-public-subnet1
+      name: tutorial-public-subnet1
   allocationRef:
     from:
-      name: ack-eip1
+      name: tutorial-eip1
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: ElasticIPAddress
 metadata:
-  name: ack-eip1
+  name: tutorial-eip1
 spec:
   tags:
-    - key: purpose
-      value: ack-tutorial
+    - key: name
+      value: eip-tutorial
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: RouteTable
 metadata:
-  name: ack-public-route-table
+  name: tutorial-public-route-table
 spec:
   vpcRef:
     from:
-      name: ack-vpc
+      name: tutorial-vpc
   routes:
   - destinationCIDRBlock: 0.0.0.0/0
     gatewayRef:
       from:
-        name: ack-igw
+        name: tutorial-igw
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: RouteTable
 metadata:
-  name: ack-private-route-table-az1
+  name: tutorial-private-route-table-az1
 spec:
   vpcRef:
     from:
-      name: ack-vpc
+      name: tutorial-vpc
   routes:
   - destinationCIDRBlock: 0.0.0.0/0
     natGatewayRef:
       from:
-        name: ack-natgateway1
+        name: tutorial-natgateway1
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Subnet
 metadata:
-  name: ack-public-subnet1
+  name: tutorial-public-subnet1
 spec:
   availabilityZone: us-west-2a
   cidrBlock: 10.0.0.0/20
   mapPublicIPOnLaunch: true
   vpcRef:
     from:
-      name: ack-vpc
+      name: tutorial-vpc
   routeTableRefs:
   - from:
-      name: ack-public-route-table
+      name: tutorial-public-route-table
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Subnet
 metadata:
-  name: ack-private-subnet1
+  name: tutorial-private-subnet1
 spec:
   availabilityZone: us-west-2a
   cidrBlock: 10.0.128.0/20
   vpcRef:
     from:
-      name: ack-vpc
+      name: tutorial-vpc
   routeTableRefs:
   - from:
-      name: ack-private-route-table-az1
+      name: tutorial-private-route-table-az1
 ---
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: SecurityGroup
 metadata:
-  name: ack-security-group
+  name: tutorial-security-group
 spec:
   description: "ack security group"
-  name: ack-sg
+  name: tutorial-sg
   vpcRef:
      from:
-       name: ack-vpc
+       name: tutorial-vpc
   ingressRules:
     - ipProtocol: tcp
       fromPort: 22
@@ -294,26 +301,17 @@ spec:
           description: "ingress"
 ```
  
- 
-{{% hint type="info" title="Referencing Resources" %}}
-Notice that the ACK custom resources reference each other using "*Ref" fields inside the manifest and the user does not have to worry about finding `vpc-ID` when creating the Subnet resource manifests.
- 
-Refer to [API Reference](https://aws-controllers-k8s.github.io/community/reference/) for *EC2*
-to find the supported reference fields.
-{{% /hint %}}
- 
- 
 The output should look similar to:
 ```
-vpc.ec2.services.k8s.aws/ack-vpc created
-internetgateway.ec2.services.k8s.aws/ack-igw created
-routetable.ec2.services.k8s.aws/ack-public-route-table created
-routetable.ec2.services.k8s.aws/ack-private-route-table created
-natgateway.ec2.services.k8s.aws/ack-natgateway created
-elasticipaddress.ec2.services.k8s.aws/ack-eip created
-subnet.ec2.services.k8s.aws/ack-public-subnet created
-subnet.ec2.services.k8s.aws/ack-private-subnet created
-securitygroup.ec2.services.k8s.aws/ack-security-group created
+vpc.ec2.services.k8s.aws/tutorial-vpc created
+internetgateway.ec2.services.k8s.aws/tutorial-igw created
+natgateway.ec2.services.k8s.aws/tutorial-natgateway1 created
+elasticipaddress.ec2.services.k8s.aws/tutorial-eip1 created
+routetable.ec2.services.k8s.aws/tutorial-public-route-table created
+routetable.ec2.services.k8s.aws/tutorial-private-route-table-az1 created
+subnet.ec2.services.k8s.aws/tutorial-public-subnet1 created
+subnet.ec2.services.k8s.aws/tutorial-private-subnet1 created
+securitygroup.ec2.services.k8s.aws/tutorial-security-group created
 ```
  
 * Check the **Custom Resource's** using `kubectl describe`:
@@ -364,7 +362,7 @@ This network setup should allow Instances deployed in the Private Subnet to conn
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Instance
 metadata:
-  name: ack-instance-private
+  name: tutorial-instance-private
 spec:
   imageID: ami-02b92c281a4d3dc79 # AL2; us-west-2
   instanceType: c3.large
@@ -383,7 +381,7 @@ spec:
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Instance
 metadata:
-  name: ack-instance-public
+  name: tutorial-instance-public
 spec:
   imageID: ami-02b92c281a4d3dc79 # AL2 in us-west-2
   instanceType: c3.large
@@ -422,24 +420,25 @@ spec:
 Remove all the resources using `kubectl delete` command.
 
 ```bash
-kubectl delete -f ack-instance-public.yaml
-kubectl delete -f ack-instance-private.yaml
+kubectl delete -f tutorial-instance-public.yaml
+kubectl delete -f tutorial-instance-private.yaml
 kubectl delete -f vpc-workflow.yaml
 ```
  
 The output of delete commands should look like
  
 ```bash
-instance.ec2.services.k8s.aws/ack-instance-public.yaml deleted
-instance.ec2.services.k8s.aws/ack-instance-private.yaml deleted
-vpc.ec2.services.k8s.aws/ack-vpc deleted
-internetgateway.ec2.services.k8s.aws/ack-igw deleted
-routetable.ec2.services.k8s.aws/ack-public-route-table deleted
-routetable.ec2.services.k8s.aws/ack-private-route-table deleted
-natgateway.ec2.services.k8s.aws/ack-natgateway deleted
-elasticipaddress.ec2.services.k8s.aws/ack-eip deleted
-subnet.ec2.services.k8s.aws/ack-public-subnet deleted
-subnet.ec2.services.k8s.aws/ack-private-subnet deleted
+instance.ec2.services.k8s.aws/tutorial-instance-public.yaml deleted
+instance.ec2.services.k8s.aws/tutorial-instance-private.yaml deleted
+vpc.ec2.services.k8s.aws/tutorial-vpc deleted
+internetgateway.ec2.services.k8s.aws/tutorial-igw deleted
+natgateway.ec2.services.k8s.aws/tutorial-natgateway1 deleted
+elasticipaddress.ec2.services.k8s.aws/tutorial-eip1 deleted
+routetable.ec2.services.k8s.aws/tutorial-public-route-table deleted
+routetable.ec2.services.k8s.aws/tutorial-private-route-table-az1 deleted
+subnet.ec2.services.k8s.aws/tutorial-public-subnet1 deleted
+subnet.ec2.services.k8s.aws/tutorial-private-subnet1 deleted
+securitygroup.ec2.services.k8s.aws/tutorial-security-group deleted
 ```
  
 To remove the EC2 ACK service controller, related CRDs, and namespaces, see [ACK Cleanup][cleanup].
