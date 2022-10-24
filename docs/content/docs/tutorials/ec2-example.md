@@ -38,14 +38,14 @@ Deploy the EC2-Controller using the Helm chart, [ec2-chart](https://gallery.ecr.
 * Log into the Helm registry that stores the ACK charts:
  
 ```bash
-aws ecr-public get-login-password --region us-west-2 | helm registry login --username AWS --password-stdin public.ecr.aws
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
 * Install Helm chart:
  
 ```bash
-SERVICE=ec2
-RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
+export SERVICE=ec2
+export RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
 helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/ec2-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=us-west-2
 ```
  
@@ -313,6 +313,45 @@ subnet.ec2.services.k8s.aws/tutorial-public-subnet1 created
 subnet.ec2.services.k8s.aws/tutorial-private-subnet1 created
 securitygroup.ec2.services.k8s.aws/tutorial-security-group created
 ```
+
+* Check the CRD's installed using `kubectl get crds`:
+
+The output should look similar to:
+```
+NAME                                         CREATED AT
+adoptedresources.services.k8s.aws            2022-10-15T01:58:26Z
+awsnodetemplates.karpenter.k8s.aws           2022-09-30T23:16:40Z
+clusterinterceptors.triggers.tekton.dev      2022-09-30T23:20:17Z
+clustertasks.tekton.dev                      2022-10-03T19:56:17Z
+clustertriggerbindings.triggers.tekton.dev   2022-09-30T23:20:17Z
+dhcpoptions.ec2.services.k8s.aws             2022-10-15T01:58:26Z
+elasticipaddresses.ec2.services.k8s.aws      2022-10-15T01:58:26Z
+eniconfigs.crd.k8s.amazonaws.com             2022-09-30T23:00:32Z
+eventlisteners.triggers.tekton.dev           2022-09-30T23:20:17Z
+extensions.dashboard.tekton.dev              2022-09-30T23:22:14Z
+fieldexports.services.k8s.aws                2022-10-15T01:58:26Z
+instances.ec2.services.k8s.aws               2022-10-15T01:58:27Z
+internetgateways.ec2.services.k8s.aws        2022-10-15T01:58:27Z
+natgateways.ec2.services.k8s.aws             2022-10-15T01:58:27Z
+pipelineresources.tekton.dev                 2022-10-03T19:56:19Z
+pipelineruns.tekton.dev                      2022-10-03T19:56:18Z
+pipelines.tekton.dev                         2022-10-03T19:56:18Z
+provisioners.karpenter.sh                    2022-09-30T23:16:43Z
+resolutionrequests.resolution.tekton.dev     2022-10-03T19:56:19Z
+routetables.ec2.services.k8s.aws             2022-10-15T01:58:27Z
+runs.tekton.dev                              2022-10-03T19:56:19Z
+securitygrouppolicies.vpcresources.k8s.aws   2022-09-30T23:00:35Z
+securitygroups.ec2.services.k8s.aws          2022-10-15T01:58:28Z
+subnets.ec2.services.k8s.aws                 2022-10-15T01:58:28Z
+taskruns.tekton.dev                          2022-10-03T19:56:20Z
+tasks.tekton.dev                             2022-10-03T19:56:20Z
+transitgateways.ec2.services.k8s.aws         2022-10-15T01:58:28Z
+triggerbindings.triggers.tekton.dev          2022-09-30T23:20:18Z
+triggers.triggers.tekton.dev                 2022-09-30T23:20:18Z
+triggertemplates.triggers.tekton.dev         2022-09-30T23:20:19Z
+vpcendpoints.ec2.services.k8s.aws            2022-10-15T01:58:28Z
+vpcs.ec2.services.k8s.aws                    2022-10-15T01:58:28Z
+```
  
 * Check the **Custom Resource's** using `kubectl describe`:
 ```
@@ -354,9 +393,11 @@ Status:
  
 ### Validate
  
-This network setup should allow Instances deployed in the Private Subnet to connect to the internet. To validate this behavior deploy an Instance into the Private Subnet and the Public Subnet (bastion host). After deployments, `ssh` into the bastion host, then `ssh` into the Private Subnet Instance, and test internet connection. Security group is required by both instances launched in public and private subnets.
+This network setup should allow Instances deployed in the Private Subnet to connect to the internet. To validate this behavior deploy an Instance into the Private Subnet and the Public Subnet (bastion host). After deployments, `ssh` into the bastion host, then `ssh` into the Private Subnet Instance, and test internet connection. Security group is required by both instances launched in public and private subnets. 
+
+Note, we need to provide Subnet and SecurityGroup ID's in the yaml manually; run `kubectl describe subnets` and `kubectl describe securitygroups` commands to get ID's.
  
-* Deploy an Instance into the Private Subnet:
+* Deploy an Instance into the Private Subnet using provided yaml and `kubectl apply -f instance-private-subnet.yaml`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -368,14 +409,14 @@ spec:
   instanceType: c3.large
   subnetID: subnet-<private-ID>
   securityGroupIDs:
-  	- sg-<ID>
+  - sg-<ID>
   keyName: us-west-2-key # created via console
   tags:
     - key: producer
       value: ack
 ```
  
-* Deploy an Instance into the Public Subnet:
+* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f instance-public-subnet`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -387,7 +428,7 @@ spec:
   instanceType: c3.large
   subnetID: subnet-<public-ID>
   securityGroupIDs:
-  	- sg-<ID>
+  - sg-<ID>
   keyName: us-west-2-key # created via console
   tags:
     - key: producer
