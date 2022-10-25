@@ -45,8 +45,9 @@ aws ecr-public get-login-password --region us-east-1 | helm registry login --use
  
 ```bash
 export SERVICE=ec2
+export AWS_REGION=<aws region id>
 export RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/ec2-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=us-west-2
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/ec2-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=${AWS_REGION}
 ```
  
 For a full list of available values in the Helm chart, refer to [values.yaml](https://github.com/aws-controllers-k8s/ec2-controller/blob/main/helm/values.yaml).
@@ -178,6 +179,8 @@ Notice that the ACK custom resources reference each other using "*Ref" fields in
 Refer to [API Reference](https://aws-controllers-k8s.github.io/community/reference/) for *EC2*
 to find the supported reference fields.
 {{% /hint %}}
+
+Note, in case if the region used while installing helm chart is different from us-west-2, we need to modify availability zones and CIDR ranges in the provided yaml based on region.
 
 * Deploy the resources using the provided YAML and `kubectl apply -f vpc-workflow.yaml`:
  
@@ -320,35 +323,18 @@ The output should look similar to:
 ```
 NAME                                         CREATED AT
 adoptedresources.services.k8s.aws            2022-10-15T01:58:26Z
-awsnodetemplates.karpenter.k8s.aws           2022-09-30T23:16:40Z
-clusterinterceptors.triggers.tekton.dev      2022-09-30T23:20:17Z
-clustertasks.tekton.dev                      2022-10-03T19:56:17Z
-clustertriggerbindings.triggers.tekton.dev   2022-09-30T23:20:17Z
 dhcpoptions.ec2.services.k8s.aws             2022-10-15T01:58:26Z
 elasticipaddresses.ec2.services.k8s.aws      2022-10-15T01:58:26Z
 eniconfigs.crd.k8s.amazonaws.com             2022-09-30T23:00:32Z
-eventlisteners.triggers.tekton.dev           2022-09-30T23:20:17Z
-extensions.dashboard.tekton.dev              2022-09-30T23:22:14Z
 fieldexports.services.k8s.aws                2022-10-15T01:58:26Z
 instances.ec2.services.k8s.aws               2022-10-15T01:58:27Z
 internetgateways.ec2.services.k8s.aws        2022-10-15T01:58:27Z
 natgateways.ec2.services.k8s.aws             2022-10-15T01:58:27Z
-pipelineresources.tekton.dev                 2022-10-03T19:56:19Z
-pipelineruns.tekton.dev                      2022-10-03T19:56:18Z
-pipelines.tekton.dev                         2022-10-03T19:56:18Z
-provisioners.karpenter.sh                    2022-09-30T23:16:43Z
-resolutionrequests.resolution.tekton.dev     2022-10-03T19:56:19Z
 routetables.ec2.services.k8s.aws             2022-10-15T01:58:27Z
-runs.tekton.dev                              2022-10-03T19:56:19Z
 securitygrouppolicies.vpcresources.k8s.aws   2022-09-30T23:00:35Z
 securitygroups.ec2.services.k8s.aws          2022-10-15T01:58:28Z
 subnets.ec2.services.k8s.aws                 2022-10-15T01:58:28Z
-taskruns.tekton.dev                          2022-10-03T19:56:20Z
-tasks.tekton.dev                             2022-10-03T19:56:20Z
 transitgateways.ec2.services.k8s.aws         2022-10-15T01:58:28Z
-triggerbindings.triggers.tekton.dev          2022-09-30T23:20:18Z
-triggers.triggers.tekton.dev                 2022-09-30T23:20:18Z
-triggertemplates.triggers.tekton.dev         2022-09-30T23:20:19Z
 vpcendpoints.ec2.services.k8s.aws            2022-10-15T01:58:28Z
 vpcs.ec2.services.k8s.aws                    2022-10-15T01:58:28Z
 ```
