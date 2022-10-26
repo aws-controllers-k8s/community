@@ -424,7 +424,7 @@ spec:
 * Deployed 2 instances; one to each Subnet
   * The instance in the public subnet will be the bastion host so we can ssh to the Instance in the private Subnet
     ```bash
-    scp "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>:
+    scp -i "/path/created_key_in_console_for_region.pem" "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>:
     ssh -i "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>
     ssh -i "created_key_in_console_for_region.pem" ec2-user@<Private IP>
     ```
