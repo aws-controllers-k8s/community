@@ -180,7 +180,7 @@ Refer to [API Reference](https://aws-controllers-k8s.github.io/community/referen
 to find the supported reference fields.
 {{% /hint %}}
 
-Note, in case if the region used while installing helm chart is different from us-west-2, we need to modify availability zones and CIDR ranges in the provided yaml based on region.
+Note, if the region used while installing helm chart is different from us-west-2, we need to modify availability zones and CIDR ranges in the provided yaml based on the region.
 
 * Deploy the resources using the provided YAML and `kubectl apply -f vpc-workflow.yaml`:
  
@@ -381,7 +381,7 @@ Status:
  
 This network setup should allow Instances deployed in the Private Subnet to connect to the internet. To validate this behavior deploy an Instance into the Private Subnet and the Public Subnet (bastion host). After deployments, `ssh` into the bastion host, then `ssh` into the Private Subnet Instance, and test internet connection. Security group is required by both instances launched in public and private subnets. 
 
-Note, we need to provide Subnet and SecurityGroup ID's in the yaml manually; run `kubectl describe subnets` and `kubectl describe securitygroups` commands to get ID's.
+Note, we need to provide Subnet and SecurityGroup ID's in the yaml manually; run `kubectl describe subnets` and `kubectl describe securitygroups` commands to get ID's. We need to create key-pair via console and provide in yaml to launch instances.
  
 * Deploy an Instance into the Private Subnet using provided yaml and `kubectl apply -f instance-private-subnet.yaml`:
  
