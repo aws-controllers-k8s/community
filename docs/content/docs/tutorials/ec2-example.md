@@ -383,7 +383,7 @@ This network setup should allow Instances deployed in the Private Subnet to conn
 
 Note, we need to provide Subnet and SecurityGroup ID's in the yaml manually; run `kubectl describe subnets` and `kubectl describe securitygroups` commands to get ID's. We need to create key-pair via console and provide in yaml to launch instances.
  
-* Deploy an Instance into the Private Subnet using provided yaml and `kubectl apply -f instance-private-subnet.yaml`:
+* Deploy an Instance into the Private Subnet using provided yaml and `kubectl apply -f tutorial-instance-private.yaml`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -402,7 +402,7 @@ spec:
       value: ack
 ```
  
-* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f instance-public-subnet`:
+* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f tutorial-instance-public.yaml`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -420,6 +420,7 @@ spec:
     - key: producer
       value: ack
 ```
+ Note, we need to get `Public IPV4 DNS` for public instance from EC2 console and substitute in the below commands.
  
 * Deployed 2 instances; one to each Subnet
   * The instance in the public subnet will be the bastion host so we can ssh to the Instance in the private Subnet
@@ -451,7 +452,8 @@ kubectl delete -f tutorial-instance-public.yaml
 kubectl delete -f tutorial-instance-private.yaml
 kubectl delete -f vpc-workflow.yaml
 ```
- 
+Note, deleting resources can take a few minutes as we have couple of resources created using a single manifest, do not kill the `kubectl delete` command, wait until it finishes completely.
+
 The output of delete commands should look like
  
 ```bash
