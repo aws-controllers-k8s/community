@@ -455,8 +455,8 @@ kubectl delete -f vpc-workflow.yaml
 The output of delete commands should look like
  
 ```bash
-instance.ec2.services.k8s.aws/tutorial-instance-public.yaml deleted
-instance.ec2.services.k8s.aws/tutorial-instance-private.yaml deleted
+instance.ec2.services.k8s.aws "tutorial-instance-public" deleted
+instance.ec2.services.k8s.aws "tutorial-instance-private" deleted
 vpc.ec2.services.k8s.aws/tutorial-vpc deleted
 internetgateway.ec2.services.k8s.aws/tutorial-igw deleted
 natgateway.ec2.services.k8s.aws/tutorial-natgateway1 deleted
