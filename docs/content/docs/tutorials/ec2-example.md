@@ -425,7 +425,7 @@ spec:
 * Deployed 2 instances; one to each Subnet
   * The instance in the public subnet will be the bastion host so we can ssh to the Instance in the private Subnet
     ```bash
-    scp "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>:
+    scp -i "/path/created_key_in_console_for_region.pem" "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>:
     ssh -i "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>
     ssh -i "created_key_in_console_for_region.pem" ec2-user@<Private IP>
     ```
@@ -457,8 +457,8 @@ Note, deleting resources can take a few minutes as we have couple of resources c
 The output of delete commands should look like
  
 ```bash
-instance.ec2.services.k8s.aws/tutorial-instance-public.yaml deleted
-instance.ec2.services.k8s.aws/tutorial-instance-private.yaml deleted
+instance.ec2.services.k8s.aws "tutorial-instance-public" deleted
+instance.ec2.services.k8s.aws "tutorial-instance-private" deleted
 vpc.ec2.services.k8s.aws/tutorial-vpc deleted
 internetgateway.ec2.services.k8s.aws/tutorial-igw deleted
 natgateway.ec2.services.k8s.aws/tutorial-natgateway1 deleted
