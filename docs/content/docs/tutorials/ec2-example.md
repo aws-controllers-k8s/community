@@ -402,7 +402,7 @@ spec:
       value: ack
 ```
  
-* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f instance-public-subnet`:
+* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f instance-public-subnet.yaml`:
  
 ```
 apiVersion: ec2.services.k8s.aws/v1alpha1
