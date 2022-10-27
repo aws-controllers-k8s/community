@@ -253,7 +253,7 @@ aws emr-containers update-role-trust-policy \
 ```
 ## Run a Sample Spark Job
 
-Befoe running sample job, let's create CloudWatch Logs and S3 bucket to store EMR on EKS logs 
+Before running a sample job, let's create CloudWatch Logs and an S3 bucket to store EMR on EKS logs
 ```
 export RANDOM_ID1=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 8)
 
