@@ -60,9 +60,9 @@ Check its status by running:
 
 You are now able to create Amazon EMR on EKS (EMRContainers) resources!
 </code></pre><h4 id=configure-irsa-for-emr-on-eks-controller>Configure IRSA for emr on eks controller<a href=#configure-irsa-for-emr-on-eks-controller class=anchor aria-hidden=true>#</a></h4><p>Once the controller is deployed, you need to setup IAM permissions for the controller so that it can create and manage resources using EMR, S3 and other API&rsquo;s. We will use <a href=https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html>IAM Roles for Service Account</a> to secure this IAM role so that only EMR on EKS controller service account can assume the permissions assigned.</p><p>Please follow <a href=https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/>how to configure IAM permissions</a> for IRSA setup. Make sure to change the value for <strong><code>SERVICE</code></strong> to <strong><code>emrcontainers</code></strong></p><p>After completing all the steps, please validate annotation for service account before proceeding.</p><pre><code># validate annotation
-kubectl get pods -n $ACK_K8S_NAMESPACE
-CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_K8S_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
-kubectl describe pod -n $ACK_K8S_NAMESPACE $CONTROLLER_POD_NAME | grep &quot;^\s*AWS_&quot;
+kubectl get pods -n $ACK_SYSTEM_NAMESPACE
+CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_SYSTEM_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
+kubectl describe pod -n $ACK_SYSTEM_NAMESPACE $CONTROLLER_POD_NAME | grep &quot;^\s*AWS_&quot;
 </code></pre><p><strong>Expected outcome</strong></p><pre><code>AWS_REGION:                      us-west-2
 AWS_ENDPOINT_URL:                
 AWS_ROLE_ARN:                    arn:aws:iam::012345678910:role/ack-emrcontainers-controller
@@ -169,20 +169,24 @@ aws emr-containers update-role-trust-policy \
   --cluster-name ${EKS_CLUSTER_NAME} \
   --namespace ${EMR_NAMESPACE} \
   --role-name ${ACK_JOB_EXECUTION_ROLE}
-</code></pre><h2 id=run-a-sample-spark-job>Run a Sample Spark Job<a href=#run-a-sample-spark-job class=anchor aria-hidden=true>#</a></h2><p>Now let&rsquo;s submit sample spark job</p><pre><code>echo &quot;checking if VirtualCluster Status is &quot;True&quot;&quot;
+</code></pre><h2 id=run-a-sample-spark-job>Run a Sample Spark Job<a href=#run-a-sample-spark-job class=anchor aria-hidden=true>#</a></h2><p>Before running a sample job, let&rsquo;s create CloudWatch Logs and an S3 bucket to store EMR on EKS logs</p><pre><code>export RANDOM_ID1=$(LC_ALL=C tr -dc a-z0-9 &lt;/dev/urandom | head -c 8)
+
+aws logs create-log-group --log-group-name=/emr-on-eks-logs/$EKS_CLUSTER_NAME
+aws s3 mb s3://$EKS_CLUSTER_NAME-$RANDOM_ID1
+</code></pre><p>Now let&rsquo;s submit sample spark job</p><pre><code>echo &quot;checking if VirtualCluster Status is &quot;True&quot;&quot;
 VC=$(kubectl get virtualcluster -o jsonpath='{.items..metadata.name}')
 kubectl describe virtualcluster/$VC | yq e '.Status.Conditions.Status'
 
-export RANDOM_ID=$(LC_ALL=C tr -dc a-z0-9 &lt;/dev/urandom | head -c 8)
+export RANDOM_ID2=$(LC_ALL=C tr -dc a-z0-9 &lt;/dev/urandom | head -c 8)
 
 cat &lt;&lt; EOF &gt; jobrun.yaml
 ---
 apiVersion: emrcontainers.services.k8s.aws/v1alpha1
 kind: JobRun
 metadata:
-  name: my-ack-jobrun-${RANDOM_ID}
+  name: my-ack-jobrun-${RANDOM_ID2}
 spec:
-  name: my-ack-jobrun-${RANDOM_ID}
+  name: my-ack-jobrun-${RANDOM_ID2}
   virtualClusterRef:
     from:
       name: my-ack-vc
@@ -193,6 +197,14 @@ spec:
       entryPoint: &quot;local:///usr/lib/spark/examples/src/main/python/pi.py&quot;
       entryPointArguments:
       sparkSubmitParameters: &quot;--conf spark.executor.instances=2 --conf spark.executor.memory=1G --conf spark.executor.cores=1 --conf spark.driver.cores=1&quot;
+  configurationOverrides: |
+    ApplicationConfiguration: null
+    MonitoringConfiguration:
+      CloudWatchMonitoringConfiguration:
+        LogGroupName: /emr-on-eks-logs/$EKS_CLUSTER_NAME
+        LogStreamNamePrefix: pi-job
+      S3MonitoringConfiguration:
+        LogUri: s3://$EKS_CLUSTER_NAME-$RANDOM_ID1   
 EOF
 </code></pre><pre><code>echo &quot;running sample job&quot;
 kubectl apply -f jobrun.yaml
@@ -219,29 +231,27 @@ Status:
 Events:                    &lt;none&gt;
 </code></pre><h2 id=cleanup>Cleanup<a href=#cleanup class=anchor aria-hidden=true>#</a></h2><p>Simply run these commands to cleanup your environment</p><pre><code># delete all custom resources
 kubectl delete -f virtualcluster.yaml
-# note: you cannot delete jobruns unless you want to cancel them
+kubectl delete -f jobrun.yaml
+# note: you cannot delete jobruns until virtualcluster its mapped to is deleted
 
 # uninstall emrcontainers controller
 helm delete ack-$SERVICE-controller -n $ACK_SYSTEM_NAMESPACE
 
 # delete namespace
-kubectl delete ns $ACK_K8S_NAMESPACE
+kubectl delete ns $ACK_SYSTEM_NAMESPACE
 kubectl delete ns $EMR_NAMESPACE
+
+# delete aws resources
+aws logs delete-log-group --log-group-name=/emr-on-eks-logs/$EKS_CLUSTER_NAME
+aws s3 rm s3://$EKS_CLUSTER_NAME-$RANDOM_ID1 --recursive
+aws s3 rb s3://$EKS_CLUSTER_NAME-$RANDOM_ID1 
 
 # delete EKS cluster
 eksctl delete cluster --name &quot;${EKS_CLUSTER_NAME}&quot;
-</code></pre><h2 id=limitations>Limitations<a href=#limitations class=anchor aria-hidden=true>#</a></h2><ul><li>JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this <a href=https://github.com/aws-controllers-k8s/community/issues/1445>issue</a> is resolved, you can’t specify configurations from <strong><code>configuration overrides</code></strong> structure.</li></ul><pre><code># configurationOverrides:
-#   applicationConfiguration:
-#   monitoringConfiguration:
-#     cloudWatchMonitoringConfiguration:
-#       logGroupName:
-#       logStreamNamePrefix:
-#     s3MonitoringConfiguration:
-#       logUri:
-</code></pre><ul><li>You cannot delete a JobRun unless its in <strong>error</strong> state. There is no delete-job-run API for deleting jobs (for good reason). However, if your JobRun goes into error state, you can run <code>kubectl delete jobrun/&lt;job-run-name></code> to cancel the job.</li></ul><h2 id=troubleshooting>Troubleshooting<a href=#troubleshooting class=anchor aria-hidden=true>#</a></h2><ul><li>If you run into issues creating VirtualCluster or JobRuns, check EMR on EKS controller logs for troubleshooting</li></ul><pre><code>CONTROLLER_POD=$(kubectl get pod -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl logs ${CONTROLLER_POD} -n ${ACK_K8S_NAMESPACE}
-</code></pre><ul><li>You can enable debug logs for EMR on EKS controller if you are unable to determine cause of the error. You need to change values for <code>enable-development-logging</code> to <code>true</code> and <code>--log-level</code> to <code>debug</code></li></ul><pre><code>CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_K8S_NAMESPACE}
+</code></pre><h2 id=limitations>Limitations<a href=#limitations class=anchor aria-hidden=true>#</a></h2><ul><li>You cannot delete a JobRun unless its in <strong>error</strong> state. There is no delete-job-run API for deleting jobs (for good reason). However, if your JobRun goes into error state, you can run <code>kubectl delete jobrun/&lt;job-run-name></code> to cancel the job.</li></ul><h2 id=troubleshooting>Troubleshooting<a href=#troubleshooting class=anchor aria-hidden=true>#</a></h2><ul><li>If you run into issues creating VirtualCluster or JobRuns, check EMR on EKS controller logs for troubleshooting</li></ul><pre><code>CONTROLLER_POD=$(kubectl get pod -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl logs ${CONTROLLER_POD} -n ${ACK_SYSTEM_NAMESPACE}
+</code></pre><ul><li>You can enable debug logs for EMR on EKS controller if you are unable to determine cause of the error. You need to change values for <code>enable-development-logging</code> to <code>true</code> and <code>--log-level</code> to <code>debug</code></li></ul><pre><code>CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_SYSTEM_NAMESPACE}
 </code></pre><p>This is how your values should look after changes are applied.</p><pre><code>        - --aws-region
         - $(AWS_REGION)
         - --aws-endpoint-url
@@ -255,4 +265,4 @@ kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_K8S_NAMESPACE}
 </code></pre><ul><li>If you run into any issue, please create <a href=https://github.com/aws-controllers-k8s/community/issues>Github issue</a>. Click <strong>New issue</strong> and select the type of issue, add <code>[emr-containers] &lt;highlevel overview></code> under title, and add enough details so that we can reproduce and provide a response</li></ul><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/tutorials/emr-on-eks-example.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
 <script src=https://aws-controllers-k8s.github.io/community/main.min.491f43bd0e1cabe525a61ecfcb2738d89c578585b04b9ebbaf9d125b55595f3b76e5497375a1da0c840e16966c9a910aae60fba0790088c7869bee07c3be997c.js integrity="sha512-SR9DvQ4cq+Ulph7Pyyc42JxXhYWwS567r50SW1VZXzt25UlzdaHaDIQOFpZsmpEKrmD7oHkAiMeGm+4Hw76ZfA==" crossorigin=anonymous defer></script>
-<script src=https://aws-controllers-k8s.github.io/community/index.min.2a1eaa83d7786ccc37c16929a593f6ce7d6af8e7df6e1f372321e8d6c5c872dd7d52905254fb3a95bd0de8c0ffb9cdc31a4bdb16a83519c8fb8d135d774d558f.js integrity="sha512-Kh6qg9d4bMw3wWkppZP2zn1q+Offbh83IyHo1sXIct19UpBSVPs6lb0N6MD/uc3DGkvbFqg1Gcj7jRNdd01Vjw==" crossorigin=anonymous defer></script></body></html>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.f20e4633d9962836afe749fce8f2ac5d6d8af01ac923e53ffd6eba2651f453e1e8e13a51f725b70ba38260ffefa5f0310b1c401e96af03cd42e14682a5f6b509.js integrity="sha512-8g5GM9mWKDav50n86PKsXW2K8BrJI+U//W66JlH0U+Ho4TpR9yW3C6OCYP/vpfAxCxxAHpavA81C4UaCpfa1CQ==" crossorigin=anonymous defer></script></body></html>
