@@ -85,13 +85,13 @@ Now we can go ahead and install EMR on EKS controller. First, let's export envir
 ```
 export SERVICE=emrcontainers
 export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
-export ACK_K8S_NAMESPACE=ack-system
+export ACK_SYSTEM_NAMESPACE=ack-system
 ```
 We cam use Helm for the installation
 ```
 echo "installing ack-$SERVICE-controller"
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
-helm install --create-namespace -n $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
+helm install --create-namespace -n $ACK_SYSTEM_NAMESPACE ack-$SERVICE-controller \
   oci://public.ecr.aws/aws-controllers-k8s/$SERVICE-chart --version=$RELEASE_VERSION --set=aws.region=$AWS_REGION
 ```
 **Expected outcome**
@@ -119,9 +119,9 @@ Please follow [how to configure IAM permissions](https://aws-controllers-k8s.git
 After completing all the steps, please validate annotation for service account before proceeding.
 ```
 # validate annotation
-kubectl get pods -n $ACK_K8S_NAMESPACE
-CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_K8S_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
-kubectl describe pod -n $ACK_K8S_NAMESPACE $CONTROLLER_POD_NAME | grep "^\s*AWS_"
+kubectl get pods -n $ACK_SYSTEM_NAMESPACE
+CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_SYSTEM_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
+kubectl describe pod -n $ACK_SYSTEM_NAMESPACE $CONTROLLER_POD_NAME | grep "^\s*AWS_"
 ```
 **Expected outcome**
 ```
@@ -335,10 +335,10 @@ kubectl delete -f jobrun.yaml
 # note: you cannot delete jobruns until virtualcluster its mapped to is deleted
 
 # uninstall emrcontainers controller
-helm delete ack-$SERVICE-controller -n $ACK_K8S_NAMESPACE
+helm delete ack-$SERVICE-controller -n $ACK_SYSTEM_NAMESPACE
 
 # delete namespace
-kubectl delete ns $ACK_K8S_NAMESPACE
+kubectl delete ns $ACK_SYSTEM_NAMESPACE
 kubectl delete ns $EMR_NAMESPACE
 
 # delete aws resources
@@ -357,13 +357,13 @@ eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 
 * If you run into issues creating VirtualCluster or JobRuns, check EMR on EKS controller logs for troubleshooting
 ```
-CONTROLLER_POD=$(kubectl get pod -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl logs ${CONTROLLER_POD} -n ${ACK_K8S_NAMESPACE}
+CONTROLLER_POD=$(kubectl get pod -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl logs ${CONTROLLER_POD} -n ${ACK_SYSTEM_NAMESPACE}
 ```
 * You can enable debug logs for EMR on EKS controller if you are unable to determine cause of the error. You need to change values for `enable-development-logging` to `true` and `--log-level` to `debug`
 ```
-CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_K8S_NAMESPACE}
+CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_SYSTEM_NAMESPACE}
 ```
 This is how your values should look after changes are applied.
 ```
