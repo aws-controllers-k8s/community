@@ -119,9 +119,9 @@ Please follow [how to configure IAM permissions](https://aws-controllers-k8s.git
 After completing all the steps, please validate annotation for service account before proceeding.
 ```
 # validate annotation
-kubectl get pods -n $ACK_K8S_NAMESPACE
-CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_K8S_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
-kubectl describe pod -n $ACK_K8S_NAMESPACE $CONTROLLER_POD_NAME | grep "^\s*AWS_"
+kubectl get pods -n $ACK_SYSTEM_NAMESPACE
+CONTROLLER_POD_NAME=$(kubectl get pods -n $ACK_SYSTEM_NAMESPACE --selector=app.kubernetes.io/name=emrcontainers-chart -o jsonpath='{.items..metadata.name}')
+kubectl describe pod -n $ACK_SYSTEM_NAMESPACE $CONTROLLER_POD_NAME | grep "^\s*AWS_"
 ```
 **Expected outcome**
 ```
@@ -252,22 +252,31 @@ aws emr-containers update-role-trust-policy \
   --role-name ${ACK_JOB_EXECUTION_ROLE}
 ```
 ## Run a Sample Spark Job
+
+Before running a sample job, let's create CloudWatch Logs and an S3 bucket to store EMR on EKS logs
+```
+export RANDOM_ID1=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 8)
+
+aws logs create-log-group --log-group-name=/emr-on-eks-logs/$EKS_CLUSTER_NAME
+aws s3 mb s3://$EKS_CLUSTER_NAME-$RANDOM_ID1
+```
+
 Now let's submit sample spark job
 ```
 echo "checking if VirtualCluster Status is "True""
 VC=$(kubectl get virtualcluster -o jsonpath='{.items..metadata.name}')
 kubectl describe virtualcluster/$VC | yq e '.Status.Conditions.Status'
 
-export RANDOM_ID=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 8)
+export RANDOM_ID2=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 8)
 
 cat << EOF > jobrun.yaml
 ---
 apiVersion: emrcontainers.services.k8s.aws/v1alpha1
 kind: JobRun
 metadata:
-  name: my-ack-jobrun-${RANDOM_ID}
+  name: my-ack-jobrun-${RANDOM_ID2}
 spec:
-  name: my-ack-jobrun-${RANDOM_ID}
+  name: my-ack-jobrun-${RANDOM_ID2}
   virtualClusterRef:
     from:
       name: my-ack-vc
@@ -278,6 +287,14 @@ spec:
       entryPoint: "local:///usr/lib/spark/examples/src/main/python/pi.py"
       entryPointArguments:
       sparkSubmitParameters: "--conf spark.executor.instances=2 --conf spark.executor.memory=1G --conf spark.executor.cores=1 --conf spark.driver.cores=1"
+  configurationOverrides: |
+    ApplicationConfiguration: null
+    MonitoringConfiguration:
+      CloudWatchMonitoringConfiguration:
+        LogGroupName: /emr-on-eks-logs/$EKS_CLUSTER_NAME
+        LogStreamNamePrefix: pi-job
+      S3MonitoringConfiguration:
+        LogUri: s3://$EKS_CLUSTER_NAME-$RANDOM_ID1   
 EOF
 ```
 ```
@@ -314,44 +331,39 @@ Simply run these commands to cleanup your environment
 ```
 # delete all custom resources
 kubectl delete -f virtualcluster.yaml
-# note: you cannot delete jobruns unless you want to cancel them
+kubectl delete -f jobrun.yaml
+# note: you cannot delete jobruns until virtualcluster its mapped to is deleted
 
 # uninstall emrcontainers controller
 helm delete ack-$SERVICE-controller -n $ACK_SYSTEM_NAMESPACE
 
 # delete namespace
-kubectl delete ns $ACK_K8S_NAMESPACE
+kubectl delete ns $ACK_SYSTEM_NAMESPACE
 kubectl delete ns $EMR_NAMESPACE
+
+# delete aws resources
+aws logs delete-log-group --log-group-name=/emr-on-eks-logs/$EKS_CLUSTER_NAME
+aws s3 rm s3://$EKS_CLUSTER_NAME-$RANDOM_ID1 --recursive
+aws s3 rb s3://$EKS_CLUSTER_NAME-$RANDOM_ID1 
 
 # delete EKS cluster
 eksctl delete cluster --name "${EKS_CLUSTER_NAME}"
 ```
 ## Limitations
 
-* JobRun CRD doesn’t have complete features available due to an issue with how ACK handles cyclic structure. Until this [issue](https://github.com/aws-controllers-k8s/community/issues/1445) is resolved, you can’t specify configurations from **`configuration overrides`** structure.
-```
-# configurationOverrides:
-#   applicationConfiguration:
-#   monitoringConfiguration:
-#     cloudWatchMonitoringConfiguration:
-#       logGroupName:
-#       logStreamNamePrefix:
-#     s3MonitoringConfiguration:
-#       logUri:
-```
 * You cannot delete a JobRun unless its in **error** state. There is no delete-job-run API for deleting jobs (for good reason). However, if your JobRun goes into error state, you can run `kubectl delete jobrun/<job-run-name>` to cancel the job.
 
 ## Troubleshooting
 
 * If you run into issues creating VirtualCluster or JobRuns, check EMR on EKS controller logs for troubleshooting
 ```
-CONTROLLER_POD=$(kubectl get pod -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl logs ${CONTROLLER_POD} -n ${ACK_K8S_NAMESPACE}
+CONTROLLER_POD=$(kubectl get pod -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl logs ${CONTROLLER_POD} -n ${ACK_SYSTEM_NAMESPACE}
 ```
 * You can enable debug logs for EMR on EKS controller if you are unable to determine cause of the error. You need to change values for `enable-development-logging` to `true` and `--log-level` to `debug`
 ```
-CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_K8S_NAMESPACE} -o jsonpath='{.items..metadata.name}')
-kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_K8S_NAMESPACE}
+CONTROLLER_DEPLOYMENT=$(kubectl get deploy -n ${ACK_SYSTEM_NAMESPACE} -o jsonpath='{.items..metadata.name}')
+kubectl edit deploy/${CONTROLLER_DEPLOYMENT} -n ${ACK_SYSTEM_NAMESPACE}
 ```
 This is how your values should look after changes are applied.
 ```
