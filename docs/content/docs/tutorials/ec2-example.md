@@ -190,7 +190,7 @@ In this section, we create a network topology consisting of multiple, connected 
 * 2 Subnets (1 Public; 1 Private)
 * 1 Security Group
 
-![Network Topology](../tutorials/images/networktopology.png)
+![Network Topology](../images/networktopology.png)
  
  
 The VPC is connected to the Internet through an Internet Gateway. A NAT Gateway is created in the public Subnet with an associated Elastic IP. An Instance is deployed into the private Subnet which can connect to the Internet using the NAT Gateway in the public Subnet. Lastly, one Route Table (public) will contain a route to the Internet Gateway while the other Route Table (private) contains a route to the NAT Gateway.
