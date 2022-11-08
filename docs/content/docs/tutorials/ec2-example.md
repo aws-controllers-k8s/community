@@ -35,21 +35,41 @@ This guide assumes that you have:
  
 Deploy the EC2-Controller using the Helm chart, [ec2-chart](https://gallery.ecr.aws/aws-controllers-k8s/ec2-chart). Note, this example creates resources in the `us-west-2` region, but you can use any other region supported in AWS.
  
-* Log into the Helm registry that stores the ACK charts:
+Log into the Helm registry that stores the ACK charts:
  
 ```bash
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
-* Install Helm chart:
- 
+Install Helm chart:
+
 ```bash
 export SERVICE=ec2
 export AWS_REGION=<aws region id>
 export RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
 helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/ec2-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=${AWS_REGION}
 ```
- 
+
+Check the CRDs have been installed using `kubectl get crds`:
+```
+NAME                                         CREATED AT
+adoptedresources.services.k8s.aws            2022-10-15T01:58:26Z
+dhcpoptions.ec2.services.k8s.aws             2022-10-15T01:58:26Z
+elasticipaddresses.ec2.services.k8s.aws      2022-10-15T01:58:26Z
+eniconfigs.crd.k8s.amazonaws.com             2022-09-30T23:00:32Z
+fieldexports.services.k8s.aws                2022-10-15T01:58:26Z
+instances.ec2.services.k8s.aws               2022-10-15T01:58:27Z
+internetgateways.ec2.services.k8s.aws        2022-10-15T01:58:27Z
+natgateways.ec2.services.k8s.aws             2022-10-15T01:58:27Z
+routetables.ec2.services.k8s.aws             2022-10-15T01:58:27Z
+securitygrouppolicies.vpcresources.k8s.aws   2022-09-30T23:00:35Z
+securitygroups.ec2.services.k8s.aws          2022-10-15T01:58:28Z
+subnets.ec2.services.k8s.aws                 2022-10-15T01:58:28Z
+transitgateways.ec2.services.k8s.aws         2022-10-15T01:58:28Z
+vpcendpoints.ec2.services.k8s.aws            2022-10-15T01:58:28Z
+vpcs.ec2.services.k8s.aws                    2022-10-15T01:58:28Z
+```
+
 For a full list of available values in the Helm chart, refer to [values.yaml](https://github.com/aws-controllers-k8s/ec2-controller/blob/main/helm/values.yaml).
  
  
@@ -62,7 +82,7 @@ The controller requires permissions to invoke EC2 APIs. Once the service control
  
 This section is optional and will NOT be using a single manifest file to deploy the VPC and Subnet. The purpose of this section is to demonstrate a simple use case to shed light on some of the functionality before jumping into a more complex deployment.
  
-* Create the **VPC** using the provided YAML and `kubectl apply`:
+Create the **VPC** using the provided YAML and `kubectl apply`:
 ```
 cat <<EOF > vpc.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -79,7 +99,7 @@ EOF
 kubectl apply -f vpc.yaml
 ```
  
-* Check the **VPC** `Status` using `kubectl describe`:
+Check the **VPC** `Status` using `kubectl describe`:
 ```
 > kubectl describe vpcs
 ...
@@ -106,9 +126,9 @@ Status:
 Events:                    <none>
 ```
  
-* The **VPC** resource synced successfully and is available. Note the `vpc-<ID>`.
+The **VPC** resource synced successfully and is available. Note the `vpc-<ID>`.
  
-* Create the **Subnet** using `vpc-<ID>`, the provided YAML, and `kubectl apply`:
+Create the **Subnet** using `vpc-<ID>`, the provided YAML, and `kubectl apply`:
 ```
 cat <<EOF > subnet.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
@@ -123,7 +143,7 @@ EOF
 kubectl apply -f subnet.yaml
 ```
  
-* Check the **Subnet** availability and ID using `kubectl describe`:
+Check the **Subnet** availability and ID using `kubectl describe`:
 ```
 > kubectl describe subnets
 ...
@@ -148,19 +168,19 @@ Status:
 Events:       <none>
 ```
  
-* Delete the resources:
+Delete the resources:
   * `kubectl delete -f subnet.yaml`
   * `kubectl delete -f vpc.yaml`
  
  
 Both resources were successfully deployed, managed, then deleted by their respective controllers. Although contrived, this example highlights how easy it can be to deploy AWS resources via YAML files and how it feels like managing any other K8s resource. 
  
-In this example, waiting for the `vpcID` to be generated and manually updating the Subnet custom resource is not fully declarative. The next example alleviates these concerns using a single manifest (YAML) to deploy the entire network topology.
+In this example, we used multiple YAML manifests and waited for the `vpcID` to be generated before manually updating the Subnet custom resources to reference that VPC ID. This technique is less aligned to a fully declarative, GitOps-style of configuration management because dependencies between resources need to be manually resolved using a specific order of operations. The next example uses a single YAML manifest to deploy an entire network topology using ACK Resource References, a technique that better aligns with a fully automated and declarative GitOps-style of configuration management.
  
  
 ### Create a VPC Workflow
  
-This section details the steps to create a network topology consisting of multiple, connected resources from a single manifest file. The following resources will be present in said manifest:
+In this section, we create a network topology consisting of multiple, connected resources using a single YAML manifest. The following resources are present in this network topology:
 * 1 VPC
 * 1 Instance
 * 1 Internet Gateway
@@ -169,9 +189,11 @@ This section details the steps to create a network topology consisting of multip
 * 2 Route Tables
 * 2 Subnets (1 Public; 1 Private)
 * 1 Security Group
+
+![Network Topology](../tutorials/images/networktopology.png)
  
  
-The VPC is connected to the internet through an Internet Gateway. The NAT Gateway is created in the public Subnet with an associated Elastic IP. The Instance is deployed into the private Subnet which can connect to the internet using the NAT Gateway in the public Subnet. Lastly, one Route Table (public) will contain a route to the Internet Gateway while the other Route Table (private) contains a route to the NAT Gateway.
+The VPC is connected to the Internet through an Internet Gateway. A NAT Gateway is created in the public Subnet with an associated Elastic IP. An Instance is deployed into the private Subnet which can connect to the Internet using the NAT Gateway in the public Subnet. Lastly, one Route Table (public) will contain a route to the Internet Gateway while the other Route Table (private) contains a route to the NAT Gateway.
 
 {{% hint type="info" title="Referencing Resources" %}}
 Notice that the ACK custom resources reference each other using "*Ref" fields inside the manifest and the user does not have to worry about finding `vpc-ID` when creating the Subnet resource manifests.
@@ -180,11 +202,12 @@ Refer to [API Reference](https://aws-controllers-k8s.github.io/community/referen
 to find the supported reference fields.
 {{% /hint %}}
 
-Note, if the region used while installing helm chart is different from us-west-2, we need to modify availability zones and CIDR ranges in the provided yaml based on the region.
+Note, if the region used while installing the Helm chart is different from `us-west-2`, we need to modify availability zones and CIDR ranges in the provided YAML to match the needed region.
 
-* Deploy the resources using the provided YAML and `kubectl apply -f vpc-workflow.yaml`:
+Deploy the resources using the provided YAML and `kubectl apply -f vpc-workflow.yaml`:
  
 ```
+cat <<EOF > vpc-workflow.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: VPC
 metadata:
@@ -302,6 +325,7 @@ spec:
       ipRanges:
         - cidrIP: "0.0.0.0/0"
           description: "ingress"
+EOF
 ```
  
 The output should look similar to:
@@ -317,29 +341,7 @@ subnet.ec2.services.k8s.aws/tutorial-private-subnet1 created
 securitygroup.ec2.services.k8s.aws/tutorial-security-group created
 ```
 
-* Check the CRD's installed using `kubectl get crds`:
-
-The output should look similar to:
-```
-NAME                                         CREATED AT
-adoptedresources.services.k8s.aws            2022-10-15T01:58:26Z
-dhcpoptions.ec2.services.k8s.aws             2022-10-15T01:58:26Z
-elasticipaddresses.ec2.services.k8s.aws      2022-10-15T01:58:26Z
-eniconfigs.crd.k8s.amazonaws.com             2022-09-30T23:00:32Z
-fieldexports.services.k8s.aws                2022-10-15T01:58:26Z
-instances.ec2.services.k8s.aws               2022-10-15T01:58:27Z
-internetgateways.ec2.services.k8s.aws        2022-10-15T01:58:27Z
-natgateways.ec2.services.k8s.aws             2022-10-15T01:58:27Z
-routetables.ec2.services.k8s.aws             2022-10-15T01:58:27Z
-securitygrouppolicies.vpcresources.k8s.aws   2022-09-30T23:00:35Z
-securitygroups.ec2.services.k8s.aws          2022-10-15T01:58:28Z
-subnets.ec2.services.k8s.aws                 2022-10-15T01:58:28Z
-transitgateways.ec2.services.k8s.aws         2022-10-15T01:58:28Z
-vpcendpoints.ec2.services.k8s.aws            2022-10-15T01:58:28Z
-vpcs.ec2.services.k8s.aws                    2022-10-15T01:58:28Z
-```
- 
-* Check the **Custom Resource's** using `kubectl describe`:
+Check the resources you just created using `kubectl describe`:
 ```
 kubectl describe vpcs
 kubectl describe internetgateways
@@ -349,9 +351,9 @@ kubectl describe elasticipaddresses
 kubectl describe subnets
 kubectl describe securitygroups
 ```
- 
-* Subnet gets into an 'available' state with a `ACK.ReferencesResolved = True` condition attached notifying users that the references (VPC, RouteTable) have been found and resolved:
- 
+
+Note that Subnet gets into an 'available' state with a `ACK.ReferencesResolved = True` condition attached notifying users that the references (VPC, RouteTable) have been found and resolved:
+
 ```
 Status:
   Ack Resource Metadata:
@@ -379,13 +381,13 @@ Status:
  
 ### Validate
  
-This network setup should allow Instances deployed in the Private Subnet to connect to the internet. To validate this behavior deploy an Instance into the Private Subnet and the Public Subnet (bastion host). After deployments, `ssh` into the bastion host, then `ssh` into the Private Subnet Instance, and test internet connection. Security group is required by both instances launched in public and private subnets. 
+This network setup should allow Instances deployed in the Private Subnet to connect to the Internet. To validate this behavior, deploy an Instance into the private Subnet and the public Subnet (bastion host). After waiting until the Instances are in an `available` state, `ssh` into the bastion host, then `ssh` into the private Subnet Instance, and test internet connectivity. A SecurityGroup is required by both instances launched in the public and private Subnets.
 
 Note, we need to provide Subnet and SecurityGroup ID's in the yaml manually; run `kubectl describe subnets` and `kubectl describe securitygroups` commands to get ID's. We need to create key-pair via console and provide in yaml to launch instances.
  
-* Deploy an Instance into the Private Subnet using provided yaml and `kubectl apply -f tutorial-instance-private.yaml`:
- 
+Deploy an Instance into the Private Subnet using provided YAML and `kubectl apply -f tutorial-instance-private.yaml`:
 ```
+cat <<EOF > tutorial-instance-private.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Instance
 metadata:
@@ -400,15 +402,15 @@ spec:
   tags:
     - key: producer
       value: ack
+EOF
 ```
- 
-* Deploy an Instance into the Public Subnet using provided yaml and `kubectl apply -f tutorial-instance-public.yaml`:
- 
+Deploy the bastion host Instance into the Public Subnet using provided YAML and `kubectl apply -f tutorial-bastion-host.yaml`: 
 ```
+cat <<EOF > tutorial-bastion-host.yaml
 apiVersion: ec2.services.k8s.aws/v1alpha1
 kind: Instance
 metadata:
-  name: tutorial-instance-public
+  name: tutorial-bastion-host
 spec:
   imageID: ami-02b92c281a4d3dc79 # AL2 in us-west-2
   instanceType: c3.large
@@ -419,17 +421,36 @@ spec:
   tags:
     - key: producer
       value: ack
+EOF
 ```
- Note, we need to get `Public IPV4 DNS` for public instance from EC2 console and substitute in the below commands.
+
+Validate if the instances are created successfully with `kubectl describe instances`
+
+If you see following type of error in the output of above command, then find one of the available instance types for your Region and Availability zone and replace in the above YAML files
+```
+Message: Unsupported: Your requested instance type (c3.large) is not supported in your requested Availability Zone (us-west-2a). Please retry your request by not specifying an Availability Zone or choosing us-west-2b, us-west-2c, us-west-2d, us-west-2e.
+```
+You can use below command to find EC2 instance types supported in your AWS region and availability zone (for example, to check if c5.large is supported in us-west-2 region and us-west-2a availability zone):
+```
+aws ec2 describe-instance-type-offerings --location-type "availability-zone" --filters Name=location,Values=us-west-2a --region us-west-2 --query "InstanceTypeOfferings[*].[InstanceType]" --output text | sort | grep c5.large
+```
+Find out IDs of the instances in public and private subnets by running this command `kubectl get instances`
+```
+NAME                      ID
+tutorial-instance-private *i-xxxxxxxxxxxxxxxx*
+tutorial-bastion-host *i-xxxxxxxxxxxxxxxx*
+```
+
+Note, we need to get `Public IPV4 DNS` for bastion host instance from EC2 console and substitute in the below commands. We can get the `Private IP` for private instance on running `kubectl describe instance tutorial-instance-private`
  
-* Deployed 2 instances; one to each Subnet
+Deployed 2 instances; one to each Subnet
   * The instance in the public subnet will be the bastion host so we can ssh to the Instance in the private Subnet
     ```bash
     scp -i "/path/created_key_in_console_for_region.pem" "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>:
     ssh -i "/path/created_key_in_console_for_region.pem" ec2-user@<Public IPV4 DNS>
     ssh -i "created_key_in_console_for_region.pem" ec2-user@<Private IP>
     ```
-* Validate instance in private subnet can connect to internet
+Validate instance in private subnet can connect to internet
   * Try to ping websites from your private subnet, sample output looks like
     ```bash
     ping google.com
@@ -448,7 +469,7 @@ spec:
 Remove all the resources using `kubectl delete` command.
 
 ```bash
-kubectl delete -f tutorial-instance-public.yaml
+kubectl delete -f tutorial-bastion-host.yaml
 kubectl delete -f tutorial-instance-private.yaml
 kubectl delete -f vpc-workflow.yaml
 ```
@@ -457,7 +478,7 @@ Note, deleting resources can take a few minutes as we have couple of resources c
 The output of delete commands should look like
  
 ```bash
-instance.ec2.services.k8s.aws "tutorial-instance-public" deleted
+instance.ec2.services.k8s.aws "tutorial-bastion-host" deleted
 instance.ec2.services.k8s.aws "tutorial-instance-private" deleted
 vpc.ec2.services.k8s.aws/tutorial-vpc deleted
 internetgateway.ec2.services.k8s.aws/tutorial-igw deleted
@@ -475,5 +496,5 @@ To remove the EC2 ACK service controller, related CRDs, and namespaces, see [ACK
 To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
  
 [eks-setup]: https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html
-[cleanup]: ../../user-docs/cleanup/
+[cleanup]: https://aws-controllers-k8s.github.io/community/docs/user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
