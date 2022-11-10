@@ -20,7 +20,7 @@ Reference as per the
 specification](https://github.com/servicebinding/spec#direct-secret-reference).
 This solution needs more effort from the application developers.
 
-The FieldExports resources required for application developers are the
+The FieldExport resources required for application developers are the
 same, but every developer needs to repeat this same configuration for
 every application they deploy. The proposed solution avoids this
 repetition through Provisioned Services.
