@@ -52,7 +52,7 @@ Generated code is easier to maintain and encourages consistency.
 The ACK code generator produces controller implementations that include a
 [common ACK runtime][rt]. This common runtime builds on top of the Kubernetes
 upstream [controller-runtime][ctrl-rt] framework and provides a common
-reconciliation loop that processes events receive from the Kubernetes API
+reconciliation loop that processes events received from the Kubernetes API
 server representing create, modify or delete operations for a custom resource.
 By building ACK controllers with a common ACK runtime, we encourage consistent
 behaviour in how controllers handle these custom resources.
