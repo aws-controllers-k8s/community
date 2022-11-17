@@ -224,13 +224,24 @@ cat <<EOF > job_policy.json
         {
             "Effect": "Allow",
             "Action": [
+                "s3:ListBucket",
+                "s3:GetObject*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::tripdata",
+                "arn:aws:s3:::tripdata/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
                 "logs:PutLogEvents",
                 "logs:CreateLogStream",
                 "logs:DescribeLogGroups",
                 "logs:DescribeLogStreams"
             ],
             "Resource": [
-                "arn:aws:logs:::"
+                "arn:aws:logs:*:*:*"
             ]
         }
     ]
