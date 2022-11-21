@@ -1,0 +1,525 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300..800&display=swap" rel=stylesheet><link rel=stylesheet href=https://aws-controllers-k8s.github.io/community/main.694f9289fcb870e6d7ba4c9b1956a6927a5ceb4f6bf78589e802006f737d5f29559db14c57c630c957a6ec529629754a40df242baf096d25187ac4be2148ea3f.css integrity="sha512-aU+Sify4cObXukybGVamknpc609r94WJ6AIAb3N9XylVnbFMV8YwyVem7FKWKXVKQN8kK68JbSUYesS+IUjqPw==" crossorigin=anonymous><noscript><style>img.lazyload{display:none}</style></noscript><meta name=robots content="index, follow"><meta name=googlebot content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><meta name=bingbot content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><title>- ACK</title><meta name=description content="Doks is a Hugo theme helping you build modern documentation websites that are secure, fast, and SEO-ready — by default."><link rel=canonical href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:title" content><meta property="og:description" content="Understanding generator.yaml Configuration This document describes the various configuration fields in a generator.yaml file that can be used to control the API inference and code generation for an ACK controller.
+We will show examples of configuring specific ACK controllers to highlight various configuration options.
+Generate a resource manager package For this section, we will use ECR as our example service API.
+When creating a new ACK controller, after running the controller-bootstrap program, you will be left with a generator."><meta property="og:url" content="https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/"><meta property="og:site_name" content="ACK"><meta property="og:image" content="https://aws-controllers-k8s.github.io/community/og.png"><meta property="og:image:alt" content="ACK"><meta name=twitter:card content="summary_large_image"><meta name=twitter:site content="@awscloud"><meta name=twitter:creator content><meta name=twitter:title content><meta name=twitter:description content><meta name=twitter:image content="https://aws-controllers-k8s.github.io/community/og.png"><meta name=twitter:image:alt content><script type=application/ld+json>{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://aws-controllers-k8s.github.io/#/schema/organization/1","name":"AWS Controllers for K8s","url":"https://aws-controllers-k8s.github.io/","sameAs":["https://twitter.com/awscloud","https://github.com/aws-controllers-k8s/community"],"logo":{"@type":"ImageObject","@id":"https://aws-controllers-k8s.github.io/#/schema/image/1","url":"https://aws-controllers-k8s.github.io/ack.png","width":512,"height":512,"caption":"AWS Controllers for K8s"},"image":{"@id":"https://aws-controllers-k8s.github.io/#/schema/image/1"}},{"@type":"WebSite","@id":"https://aws-controllers-k8s.github.io/#/schema/website/1","url":"https://aws-controllers-k8s.github.io/","name":"ACK","description":"Doks is a Hugo theme helping you build modern documentation websites that are secure, fast, and SEO-ready — by default.","publisher":{"@id":"https://aws-controllers-k8s.github.io/#/schema/organization/1"}},{"@type":"WebPage","@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/","url":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/","name":"","description":"","isPartOf":{"@id":"https://aws-controllers-k8s.github.io/#/schema/website/1"},"about":{"@id":"https://aws-controllers-k8s.github.io/#/schema/organization/1"},"datePublished":"0001-01-01T00:00:00CET","dateModified":"0001-01-01T00:00:00CET","breadcrumb":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/#/schema/breadcrumb/1"},"primaryImageOfPage":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/#/schema/image/2"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/"]}]},{"@type":"BreadcrumbList","@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/#/schema/breadcrumb/1","name":"Breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"WebPage","@id":"https://aws-controllers-k8s.github.io/community/","url":"https://aws-controllers-k8s.github.io/community/","name":"Home"}},{"@type":"ListItem","position":2,"item":{"@type":"WebPage","@id":"https://aws-controllers-k8s.github.io/community/docs/","url":"https://aws-controllers-k8s.github.io/community/docs/","name":"Docs"}},{"@type":"ListItem","position":3,"item":{"@type":"WebPage","@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/","url":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/","name":"Contributor Docs"}},{"@type":"ListItem","position":4,"item":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/"}}]},{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://aws-controllers-k8s.github.io/#/schema/article/1","headline":"","description":"","isPartOf":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/"},"mainEntityOfPage":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/"},"datePublished":"0001-01-01T00:00:00CET","dateModified":"0001-01-01T00:00:00CET","author":{"@id":"https://aws-controllers-k8s.github.io/#/schema/person/2"},"publisher":{"@id":"https://aws-controllers-k8s.github.io/#/schema/organization/1"},"image":{"@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/#/schema/image/2"}}]},{"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://aws-controllers-k8s.github.io/#/schema/person/2","name":"AWS","sameAs":["https://twitter.com/awscloud","https://github.com/aws-controllers-k8s"]}]},{"@context":"https://schema.org","@graph":[{"@type":"ImageObject","@id":"https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generator-config/#/schema/image/2","url":"https://aws-controllers-k8s.github.io/community/og.png","contentUrl":"https://aws-controllers-k8s.github.io/community/og.png","caption":""}]}]}</script><meta name=theme-color content="#ff9900"><link rel=apple-touch-icon sizes=180x180 href=https://aws-controllers-k8s.github.io/community/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=https://aws-controllers-k8s.github.io/community/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=https://aws-controllers-k8s.github.io/community/favicon-16x16.png><link rel=manifest crossorigin=use-credentials href=https://aws-controllers-k8s.github.io/community/site.webmanifest><link rel=mask-icon color=#5bbad5 href=https://aws-controllers-k8s.github.io/community/safari-pinned-tab.svg><meta name=msapplication-TileColor content="#da532c"><script>(()=>{var b=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,a=localStorage.getItem("theme");b&&a===null&&(localStorage.setItem("theme","dark"),document.documentElement.setAttribute("data-dark-mode","")),b&&a==="dark"&&document.documentElement.setAttribute("data-dark-mode",""),a==="dark"&&document.documentElement.setAttribute("data-dark-mode","")})()</script></head><body class="docs single d-flex flex-column h-100 dark"><div class="header-bar fixed-top"></div><header class="navbar fixed-top navbar-expand-md navbar-light"><div class=container><input class="menu-btn order-0" type=checkbox id=menu-btn>
+<label class="menu-icon d-md-none" for=menu-btn><span class=navicon></span></label>
+<a class="navbar-brand order-1 order-md-0 me-auto" href=https://aws-controllers-k8s.github.io/community/><span class="navbar-logo logo-light"><svg width="30" height="34" viewBox="0 0 64.386 62.635" xmlns="http://www.w3.org/2000/svg"><path d="m18.112 62.241c-.58208-.2097-1.0825-.38307-1.1121-.38526-.05964-.004-6.9703-8.5523-8.016-9.9151-.3638-.47411-1.8521-2.3244-3.3073-4.1118-6.169-7.5771-5.7671-6.894-5.6043-9.525.07652-1.2369.2681-2.6062.42574-3.0427.15763-.43656.88408-3.4726 1.6143-6.7469s1.4423-6.4294 1.5822-7.0115c.13998-.58209.49521-2.1299.78941-3.4396 1.3414-5.9718 1.3876-6.0514 4.3737-7.5406 1.313-.65484 3.9324-1.927 5.8208-2.8269 1.8885-.89995 6.3475-3.0258 9.9091-4.7242 7.7798-3.7099 7.4615-3.6736 12.178-1.3871 1.6735.81137 4.531 2.1853 6.35 3.0532 1.819.86788 4.4384 2.1189 5.8208 2.78 1.3824.66112 3.7644 1.7868 5.2931 2.5015 2.9983 1.4017 4.0296 2.3189 4.4852 3.9889.24392.89408.61395 2.4653 2.1314 9.0501.28504 1.2369.86914 3.7372 1.298 5.5562s.97374 4.2003 1.2108 5.2917c.2371 1.0914.56563 2.4425.73006 3.0024.50213 1.7098.37232 3.363-.34938 4.4494-.35422.53325-2.549 3.3137-4.8774 6.1788-2.3283 2.8651-4.531 5.6016-4.8948 6.0813-3.5052 4.6213-6.5923 8.1362-7.558 8.6052-1.0278.49922-1.6581.52197-14.155.51087-10.7-.01-13.272-.081-14.138-.39289zm14.42-14.853c1.993-.65861 4.1321-1.8055 5.208-2.7923l.57777-.52995.15829 1.0218c.37804 2.4404.25325 2.3447 3.0582 2.3447h2.5072v-12.965c0-14.742.01357-14.637-2.1954-17.096-2.2207-2.4725-5.3026-3.3183-11.157-3.0616-3.7392.16395-6.9101.77913-9.2875 1.8019l-1.3054.56157v2.2164c0 1.219.0817 2.2164.18156 2.2164s1.0226-.23473 2.0505-.52163c2.4182-.67492 6.8343-1.3304 8.9629-1.3304 2.0099.0 4.3168.63112 5.1681 1.4139 1.22 1.1218 1.459 1.9649 1.5795 5.5722.10844 3.2453.08971 3.4049-.37858 3.2252-.27096-.10398-1.6251-.35976-3.0091-.56841-6.4942-.979-10.999.005-14.067 3.0735-2.0011 2.0011-2.4548 3.2402-2.4641 6.7305-.0065 2.4258.08634 3.1141.55768 4.1334 1.179 2.5499 3.2925 4.2534 5.9416 4.9794 2.3169.63499 5.0434.52227 7.9127-.42589zm-5.3603-4.4174c-1.3419-.50246-1.7811-.90498-2.3487-2.1529-.96238-2.1156-.37837-5.1724 1.2299-6.4375 1.6643-1.3091 6.0181-1.7402 10.183-1.0084l1.7198.30217v6.6092l-1.4496.86623c-3.1522 1.8836-7.1071 2.6552-9.3347 1.8212z" stroke-width=".26458" style="fill:#212529"/><path style="fill:none;stroke-width:.271169" d="m97.026736 181.42372c-11.841729-2.08439-21.332462-9.10215-26.093859-19.29466-1.998022-4.27707-2.054194-4.6839-2.055098-14.88419-841e-6-9.49243.144169-11.16725 1.267846-14.64314 1.712817-5.29828 6.177554-10.936 12.299033-15.53024 2.542552-1.90822 7.390509-4.53026 10.594967-5.73033 8.933335-3.34556 20.674605-4.18152 34.409895-2.44995 4.41785.55695 12.65266 1.97363 14.19738 2.44244 1.76241.53489 1.85502.50959 2.22367-.60744.24279-.73566.28029-2.73516.14369-7.66053-.44788-16.149002-1.23751-19.911778-5.02917-23.965076-1.80821-1.932978-3.56225-2.973051-7.11557-4.219231-5.30124-1.859191-12.26098-2.569875-19.19872-1.960452-10.49153.921594-19.993865 2.573896-30.430988 5.291456l-5.619006 1.463045-.198978-.992725C76.31239 78.136699 76.217381 74.401849 76.210696 70.38303l-.01215-7.306943 3.356503-1.444983c10.517529-4.527823 21.216871-6.656502 37.293351-7.419665 12.51101-.593907 22.76653.582675 29.54824 3.389974 4.64166 1.921419 7.46417 3.920688 11.49419 8.14168 5.92808 6.208991 7.10885 9.292714 7.94906 20.759878.20234 2.761617.35353 19.385439.44083 48.471489l.13286 44.26837-6.87266-.008c-7.35796-.009-10.40797-.26157-11.45694-.94889-1.06894-.70039-1.56607-2.17132-2.37024-7.01314-.41845-2.51943-.81979-4.63975-.89185-4.71182-.0721-.0721-.94053.61073-1.92991 1.51732-2.61666 2.39769-6.17638 4.67392-11.10375 7.10019-7.00303 3.44832-13.15672 5.41292-19.90153 6.35366-4.14851.57862-11.25229.52696-14.85996-.10807zM117.9586 163.14859c7.66738-1.41157 14.24402-3.97835 21.89691-8.5461l3.72858-2.22546v-12.58107c0-11.74762-.0314-12.59038-.47455-12.72168-1.42309-.42168-10.77757-1.80215-14.1221-2.08405-4.68265-.39467-14.28993-.18758-17.80807.38387-8.70887 1.41459-13.028171 3.55254-15.811026 7.82606-2.230704 3.42561-3.30745 7.4555-3.304504 12.36763.0032 5.38208 1.685615 10.33001 4.555689 13.39835 1.872987 2.00238 6.082191 3.96008 9.779001 4.54822 2.10281.33454 8.92935.11855 11.56007-.36577z" transform="scale(0.26458333)"/></svg></span><span class="navbar-logo logo-dark d-none"><svg width="30" height="34" viewBox="0 0 64.386 62.635" xmlns="http://www.w3.org/2000/svg"><path d="m18.112 62.241c-.58208-.2097-1.0825-.38307-1.1121-.38526-.05964-.004-6.9703-8.5523-8.016-9.9151-.3638-.47411-1.8521-2.3244-3.3073-4.1118-6.169-7.5771-5.7671-6.894-5.6043-9.525.07652-1.2369.2681-2.6062.42574-3.0427.15763-.43656.88408-3.4726 1.6143-6.7469s1.4423-6.4294 1.5822-7.0115c.13998-.58209.49521-2.1299.78941-3.4396 1.3414-5.9718 1.3876-6.0514 4.3737-7.5406 1.313-.65484 3.9324-1.927 5.8208-2.8269 1.8885-.89995 6.3475-3.0258 9.9091-4.7242 7.7798-3.7099 7.4615-3.6736 12.178-1.3871 1.6735.81137 4.531 2.1853 6.35 3.0532 1.819.86788 4.4384 2.1189 5.8208 2.78 1.3824.66112 3.7644 1.7868 5.2931 2.5015 2.9983 1.4017 4.0296 2.3189 4.4852 3.9889.24392.89408.61395 2.4653 2.1314 9.0501.28504 1.2369.86914 3.7372 1.298 5.5562s.97374 4.2003 1.2108 5.2917c.2371 1.0914.56563 2.4425.73006 3.0024.50213 1.7098.37232 3.363-.34938 4.4494-.35422.53325-2.549 3.3137-4.8774 6.1788-2.3283 2.8651-4.531 5.6016-4.8948 6.0813-3.5052 4.6213-6.5923 8.1362-7.558 8.6052-1.0278.49922-1.6581.52197-14.155.51087-10.7-.01-13.272-.081-14.138-.39289zm14.42-14.853c1.993-.65861 4.1321-1.8055 5.208-2.7923l.57777-.52995.15829 1.0218c.37804 2.4404.25325 2.3447 3.0582 2.3447h2.5072v-12.965c0-14.742.01357-14.637-2.1954-17.096-2.2207-2.4725-5.3026-3.3183-11.157-3.0616-3.7392.16395-6.9101.77913-9.2875 1.8019l-1.3054.56157v2.2164c0 1.219.0817 2.2164.18156 2.2164s1.0226-.23473 2.0505-.52163c2.4182-.67492 6.8343-1.3304 8.9629-1.3304 2.0099.0 4.3168.63112 5.1681 1.4139 1.22 1.1218 1.459 1.9649 1.5795 5.5722.10844 3.2453.08971 3.4049-.37858 3.2252-.27096-.10398-1.6251-.35976-3.0091-.56841-6.4942-.979-10.999.005-14.067 3.0735-2.0011 2.0011-2.4548 3.2402-2.4641 6.7305-.0065 2.4258.08634 3.1141.55768 4.1334 1.179 2.5499 3.2925 4.2534 5.9416 4.9794 2.3169.63499 5.0434.52227 7.9127-.42589zm-5.3603-4.4174c-1.3419-.50246-1.7811-.90498-2.3487-2.1529-.96238-2.1156-.37837-5.1724 1.2299-6.4375 1.6643-1.3091 6.0181-1.7402 10.183-1.0084l1.7198.30217v6.6092l-1.4496.86623c-3.1522 1.8836-7.1071 2.6552-9.3347 1.8212z" stroke-width=".26458" style="fill:#fff"/><path style="fill:none;stroke-width:.271169" d="m97.026736 181.42372c-11.841729-2.08439-21.332462-9.10215-26.093859-19.29466-1.998022-4.27707-2.054194-4.6839-2.055098-14.88419-841e-6-9.49243.144169-11.16725 1.267846-14.64314 1.712817-5.29828 6.177554-10.936 12.299033-15.53024 2.542552-1.90822 7.390509-4.53026 10.594967-5.73033 8.933335-3.34556 20.674605-4.18152 34.409895-2.44995 4.41785.55695 12.65266 1.97363 14.19738 2.44244 1.76241.53489 1.85502.50959 2.22367-.60744.24279-.73566.28029-2.73516.14369-7.66053-.44788-16.149002-1.23751-19.911778-5.02917-23.965076-1.80821-1.932978-3.56225-2.973051-7.11557-4.219231-5.30124-1.859191-12.26098-2.569875-19.19872-1.960452-10.49153.921594-19.993865 2.573896-30.430988 5.291456l-5.619006 1.463045-.198978-.992725C76.31239 78.136699 76.217381 74.401849 76.210696 70.38303l-.01215-7.306943 3.356503-1.444983c10.517529-4.527823 21.216871-6.656502 37.293351-7.419665 12.51101-.593907 22.76653.582675 29.54824 3.389974 4.64166 1.921419 7.46417 3.920688 11.49419 8.14168 5.92808 6.208991 7.10885 9.292714 7.94906 20.759878.20234 2.761617.35353 19.385439.44083 48.471489l.13286 44.26837-6.87266-.008c-7.35796-.009-10.40797-.26157-11.45694-.94889-1.06894-.70039-1.56607-2.17132-2.37024-7.01314-.41845-2.51943-.81979-4.63975-.89185-4.71182-.0721-.0721-.94053.61073-1.92991 1.51732-2.61666 2.39769-6.17638 4.67392-11.10375 7.10019-7.00303 3.44832-13.15672 5.41292-19.90153 6.35366-4.14851.57862-11.25229.52696-14.85996-.10807zM117.9586 163.14859c7.66738-1.41157 14.24402-3.97835 21.89691-8.5461l3.72858-2.22546v-12.58107c0-11.74762-.0314-12.59038-.47455-12.72168-1.42309-.42168-10.77757-1.80215-14.1221-2.08405-4.68265-.39467-14.28993-.18758-17.80807.38387-8.70887 1.41459-13.028171 3.55254-15.811026 7.82606-2.230704 3.42561-3.30745 7.4555-3.304504 12.36763.0032 5.38208 1.685615 10.33001 4.555689 13.39835 1.872987 2.00238 6.082191 3.96008 9.779001 4.54822 2.10281.33454 8.92935.11855 11.56007-.36577z" transform="scale(0.26458333)"/></svg></span></a><button id=mode class="btn btn-link order-2 order-md-4" type=button aria-label="Toggle mode">
+<span class=toggle-dark><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></span><span class=toggle-light><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button><ul class="navbar-nav social-nav order-3 order-md-5"><li class=nav-item><a class=nav-link href=https://github.com/aws-controllers-k8s/community><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg><span class="ms-2 visually-hidden">GitHub</span></a></li></ul><div class="collapse navbar-collapse order-4 order-md-1"><ul class="navbar-nav flex-grow-1 main-nav me-auto order-5 order-md-2"><li class="nav-item active"><a class=nav-link href=https://aws-controllers-k8s.github.io/community/docs/community/overview/>Documentation</a></li><li class=nav-item><a class=nav-link href=https://aws-controllers-k8s.github.io/community/reference/>API Reference</a></li></ul><div class="break order-6 d-md-none"></div><form class="navbar-form flex-grow-1 order-7 order-md-3"><input id=userinput class="form-control is-search" type=search placeholder="Search docs..." aria-label="Search docs..." autocomplete=off><div id=suggestions class="shadow bg-white rounded"></div></form></div></div></header><div class="wrap container" role=document><div class=content><div class="row flex-xl-nowrap"><div class="col-lg-5 col-xl-4 docs-sidebar"><nav class=docs-links aria-label="Main navigation"><ul class="list-unstyled collapsible-sidebar"><li class=mb-1><button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle=collapse data-bs-target=#section-introduction aria-expanded=true>
+Introduction</button><div class="collapse show" id=section-introduction><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/overview/>Overview</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/how-it-works/>How it Works</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/services/>Services</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/releases/>Release Phases</a></li></ul></div></li><li class=mb-1><button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle=collapse data-bs-target=#section-getting-started aria-expanded=true>
+Getting Started</button><div class="collapse show" id=section-getting-started><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/install/>Install an ACK Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/>Configure IAM Permissions</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/resource-crud/>Create an ACK Resource</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/multi-region-resource-management/>Manage Resources In Multiple Regions</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/>Manage Resources In Multiple AWS Accounts</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/authorization/>Permissions Overview</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/authentication/>Authentication and Credentials</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/field-export/>Copy a resource field into a ConfigMap or Secret</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/adopted-resource/>Adopting Existing AWS Resources</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/ack-tags/>Managing Tags on your AWS Resources</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/>Red Hat OpenShift</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/user-docs/cleanup/>Uninstall an ACK Controller</a></li></ul></div></li><li class=mb-1><button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle=collapse data-bs-target=#section-tutorials aria-expanded=true>
+Tutorials</button><div class="collapse show" id=section-tutorials><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/sagemaker-example/>Machine Learning with the ACK SageMaker Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/autoscaling-example/>Scale SageMaker Workloads with Application Auto Scaling</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/rds-example/>Deploy PostgreSQL, MySQL, MariaDB Instances Using the ACK RDS Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/ec2-example/>Manage a VPC Workflow with the ACK EC2-Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/apigatewayv2-reference-example/>Manage HTTP APIs with the ACK APIGatewayv2 Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/memorydb-example/>Create a managed Amazon MemoryDB for Redis Cluster using the ACK MemoryDB Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/aurora-serverless-v2/>Manage an Aurora Serverless v2 cluster with the ACK RDS Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/lambda-oci-example/>Create a Lambda OCI Function with the ACK Lambda Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/tutorials/emr-on-eks-example/>Run Spark jobs using the ACK EMR on EKS controller</a></li></ul></div></li><li class=mb-1><button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle=collapse data-bs-target=#section-contributor aria-expanded=true>
+Contributor Docs</button><div class="collapse show" id=section-contributor><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/overview/>Contribution Overview</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/tenets/>Project Tenets</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-generation/>Code Generation</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/code-organization/>Code Organization</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/operatorhub-onboarding/>OperatorHub Onboarding</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/>API Inference</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/setup/>Setup</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/building-controller/>Building a Controller</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/testing/>Testing</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/contributor-docs/release/>Release</a></li></ul></div></li><li class=mb-1><button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle=collapse data-bs-target=#section-discussion aria-expanded=true>
+Discussion</button><div class="collapse show" id=section-discussion><ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small"><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/background/>Background</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/faq/>FAQ</a></li><li><a class="docs-link rounded" href=https://aws-controllers-k8s.github.io/community/docs/community/discussions/>Discussions</a></li></ul></div></li></ul></nav></div><nav class="docs-toc d-none d-xl-block col-xl-3" aria-label="Secondary navigation"><div class=page-links><h3>On this page</h3><hr><span class=small><nav id=TableOfContents><ul><li><a href=#generate-a-resource-manager-package>Generate a resource manager package</a></li><li><a href=#renaming-things>Renaming things</a><ul><li><a href=#renaming-things-with-different-names-in-input-and-output-shapes>Renaming things with different names in input and output shapes</a></li></ul></li><li><a href=#ignoring-things>Ignoring things</a></li><li><a href=#tags>Tags</a><ul><li><a href=#telling-ack-code-generator-that-a-resource-does-not-support-tags>Telling ACK code generator that a resource does not support tags</a></li></ul></li><li><a href=#resource-configuration>Resource configuration</a><ul><li><a href=#understanding-resource-identifying-fields>Understanding resource identifying fields</a></li><li><a href=#correcting-exception-codes>Correcting exception codes</a></li><li><a href=#controlling-reconciliation-and-requeue-logic>Controlling reconciliation and requeue logic</a></li></ul></li><li><a href=#field-configuration>Field configuration</a><ul><li><a href=#marking-a-field-as-required>Marking a field as required</a></li><li><a href=#controlling-a-fields-go-type>Controlling a field&rsquo;s Go type</a></li><li><a href=#controlling-how-a-fields-values-are-compared>Controlling how a field&rsquo;s values are compared</a></li><li><a href=#mutable-vs-immutable-fields>Mutable vs. immutable fields</a></li><li><a href=#controlling-where-a-fields-definition-comes-from>Controlling where a field&rsquo;s definition comes from</a></li><li><a href=#annotating-a-field-as-a-printer-column>Annotating a field as a &ldquo;Printer Column&rdquo;</a></li><li><a href=#controlling-field-late-initialization>Controlling field &ldquo;late initialization&rdquo;</a></li><li><a href=#informing-the-code-generator-that-a-field-refers-to-another-resource>Informing the code generator that a field refers to another Resource</a></li><li><a href=#adding-custom-fields>Adding custom fields</a></li></ul></li><li><a href=#custom-code-hook-points>Custom code hook points</a></li><li><a href=#attribute-based-apis>Attribute-based APIs</a></li><li><a href=#miscellaneousmaybe-cover-laterdocumentation-backlog>Miscellaneous/maybe cover later/documentation backlog</a><ul><li><a href=#what-does-prefixconfig-do>What does PrefixConfig do?</a></li><li><a href=#what-if-the-code-generator-cannot-figure-out-my-services-api-model-name>What if the code generator cannot figure out my service&rsquo;s API model name?</a></li><li><a href=#list_operationmatch_fields>list_operation.match_fields</a></li></ul></li></ul></nav></span></div></nav><main class="docs-content col-lg-11 col-xl-9 mx-xl-auto"><h1></h1><p class=lead></p><h1 id=understanding-generatoryaml-configuration>Understanding generator.yaml Configuration</h1><p>This document describes the various configuration fields in a <code>generator.yaml</code> file that can be used to control the API inference and code generation for an ACK controller.</p><p>We will show examples of configuring specific ACK controllers to highlight various configuration options.</p><h2 id=generate-a-resource-manager-package>Generate a resource manager package<a href=#generate-a-resource-manager-package class=anchor aria-hidden=true>#</a></h2><p>For this section, we will use <a href=https://docs.aws.amazon.com/AmazonECR/latest/APIReference/Welcome.html>ECR</a> as our example service API.</p><p>When creating a new ACK controller, after running the <a href=https://github.com/aws-controllers-k8s/controller-bootstrap><code>controller-bootstrap</code></a> program, you will be left with a <code>generator.yaml</code> that has all inferred API resources ignored.</p><p>For the ECR controller, the <code>generator.yaml</code> file would look like this:</p><pre><code class="language-yaml=">ignore:
+  resources:
+    - Repository
+    - PullThroughCacheRule
+</code></pre><p>If we ran <code>make build-controller SERVICE=ecr</code> with the above <code>generator.yaml</code> file, we would have some basic directories and files created:</p><pre><code class="language-bash=">[jaypipes@thelio code-generator]$ make build-controller SERVICE=ecr
+building ack-generate ... ok.
+==== building ecr-controller ====
+Copying common custom resource definitions into ecr
+Building Kubernetes API objects for ecr
+Generating deepcopy code for ecr
+Generating custom resource definitions for ecr
+Building service controller for ecr
+Generating RBAC manifests for ecr
+Running gofmt against generated code for ecr
+Updating additional GitHub repository maintenance files
+==== building ecr-controller release artifacts ====
+Building release artifacts for ecr-v0.0.0-non-release
+Generating common custom resource definitions
+Generating custom resource definitions for ecr
+Generating RBAC manifests for ecr
+</code></pre><pre><code>[jaypipes@thelio ecr-controller]$ tree apis/ config/ pkg/
+apis/
+└── v1alpha1
+    ├── ack-generate-metadata.yaml
+    ├── doc.go
+    ├── enums.go
+    ├── generator.yaml
+    ├── groupversion_info.go
+    └── types.go
+config/
+├── controller
+│   ├── deployment.yaml
+│   ├── kustomization.yaml
+│   └── service.yaml
+├── crd
+│   ├── common
+│   │   ├── bases
+│   │   │   ├── services.k8s.aws_adoptedresources.yaml
+│   │   │   └── services.k8s.aws_fieldexports.yaml
+│   │   └── kustomization.yaml
+│   └── kustomization.yaml
+├── default
+│   └── kustomization.yaml
+├── overlays
+│   └── namespaced
+│       ├── kustomization.yaml
+│       ├── role-binding.json
+│       └── role.json
+└── rbac
+    ├── cluster-role-binding.yaml
+    ├── cluster-role-controller.yaml
+    ├── kustomization.yaml
+    ├── role-reader.yaml
+    ├── role-writer.yaml
+    └── service-account.yaml
+pkg/
+├── resource
+│   └── registry.go
+└── version
+    └── version.go
+
+11 directories, 25 files
+</code></pre><p>To begin generating a particular resource manager, comment out the name of the resource from the ignore list and run <code>make build-controller SERVICE=$SERVICE</code>.</p><pre><code class="language-yaml=">ignore:
+  resources:
+&gt;   #- Repository
+    - PullThroughCacheRule
+</code></pre><p>After doing so, the resource manager for <code>Repository</code> resources will have been generated in the <code>ecr-controller</code> source code repository.</p><pre><code>[jaypipes@thelio ecr-controller]$ tree apis/ config/ pkg/
+apis/
+└── v1alpha1
+    ├── ack-generate-metadata.yaml
+    ├── doc.go
+    ├── enums.go
+    ├── generator.yaml
+    ├── groupversion_info.go
+    ├── repository.go
+    ├── types.go
+    └── zz_generated.deepcopy.go
+config/
+├── controller
+│   ├── deployment.yaml
+│   ├── kustomization.yaml
+│   └── service.yaml
+├── crd
+│   ├── bases
+│   │   └── ecr.services.k8s.aws_repositories.yaml
+│   ├── common
+│   │   ├── bases
+│   │   │   ├── services.k8s.aws_adoptedresources.yaml
+│   │   │   └── services.k8s.aws_fieldexports.yaml
+│   │   └── kustomization.yaml
+│   └── kustomization.yaml
+├── default
+│   └── kustomization.yaml
+├── overlays
+│   └── namespaced
+│       ├── kustomization.yaml
+│       ├── role-binding.json
+│       └── role.json
+└── rbac
+    ├── cluster-role-binding.yaml
+    ├── cluster-role-controller.yaml
+    ├── kustomization.yaml
+    ├── role-reader.yaml
+    ├── role-writer.yaml
+    └── service-account.yaml
+pkg/
+├── resource
+│   ├── registry.go
+│   └── repository
+│       ├── delta.go
+│       ├── descriptor.go
+│       ├── identifiers.go
+│       ├── manager_factory.go
+│       ├── manager.go
+│       ├── references.go
+│       ├── resource.go
+│       ├── sdk.go
+│       └── tags.go
+└── version
+    └── version.go
+
+13 directories, 37 files
+</code></pre><p>Note the new files under <code>pkg/resource/repository/</code>, <code>apis/v1alpha1/repository.go</code> and <code>config/crd/bases/</code>. These files represent the Go type for the generated <code>Repository</code> custom resource definition (CRD), the resource manager package and the YAML representation for the CRD, respectively.</p><h2 id=renaming-things>Renaming things<a href=#renaming-things class=anchor aria-hidden=true>#</a></h2><p>Why might we want to rename fields or resources? Generally, there are two reasons for this:</p><ul><li>reducing stutter in the input shape</li><li>correcting instances where a field is named differently in the input and output shapes</li></ul><p>The first reason is to reduce &ldquo;stutter&rdquo; (or redundancy) in naming. For example, the ECR <a href=https://github.com/aws-controllers-k8s/ecr-controller/blob/cefc45b65e1a560b9666a1544f26f955c6f84d36/generator.yaml#L2><code>Repository</code></a> resource has a field called <code>RepositoryName</code>. This field is redundantly named because the resource itself is called <code>Repository</code>. Every Kubernetes object has a <code>Metadata.Name</code> field and we like to align resource &ldquo;name fields&rdquo; with this simple <code>Name</code> moniker.</p><p>For this example, let&rsquo;s go ahead and &ldquo;destutter&rdquo; the <code>RepositoryName</code> field. To do this, we use the <code>renames</code> configuration option, specifying the input and output shapes and their members that we want to rename:</p><pre><code class="language-yaml=">ignore:
+  resources:
+    #- Repository
+    - PullThroughCacheRule
+resources:
+  Repository:
+&gt;   renames:
+&gt;     operations:
+&gt;       CreateRepository:
+&gt;         input_fields:
+&gt;           RepositoryName: Name
+&gt;       DeleteRepository:
+&gt;         input_fields:
+&gt;           RepositoryName: Name
+&gt;       DescribeRepositories:
+&gt;         input_fields:
+&gt;           RepositoryName: Name
+</code></pre><blockquote><p>📝 Note that we must tell the code generator which fields to rename in the input shapes for each API operation that the resource manager will call. In the case of ECR <code>Repository</code> resources, the resource manager calls the <code>CreateRepository</code>, <code>DeleteRepository</code> and <code>DescribeRepositories</code> API calls and so we need specify the <code>RepositoryName</code> member field in each of those input shapes should be renamed to <code>Name</code>.</p></blockquote><p>After calling <code>make build-controller SERVICE=ecr</code>, we see the above generator configuration items produced the following diff:</p><pre><code class="language-diff=">diff --git a/apis/v1alpha1/ack-generate-metadata.yaml b/apis/v1alpha1/ack-generate-metadata.yaml
+index e34e029..f214b43 100755
+--- a/apis/v1alpha1/ack-generate-metadata.yaml
++++ b/apis/v1alpha1/ack-generate-metadata.yaml
+@@ -1,13 +1,13 @@
+ ack_generate_info:
+-  build_date: &quot;2022-11-09T20:15:42Z&quot;
++  build_date: &quot;2022-11-09T20:16:52Z&quot;
+   build_hash: 5ee0ac052c54f008dff50f6f5ebb73f2cf3a0bd7
+   go_version: go1.18.1
+   version: v0.20.1-4-g5ee0ac0
+-api_directory_checksum: 0a514bef9cff983f9fe28f080d85725ccf578060
++api_directory_checksum: 84fb59a0991980da922a385f585111a1ff784d82
+ api_version: v1alpha1
+ aws_sdk_go_version: v1.44.93
+ generator_config_info:
+-  file_checksum: 87446926d73abae9355e6328eb7f8f668b16b18e
++  file_checksum: a383007f82a686dc544879792dde7b091aeededa
+   original_file_name: generator.yaml
+ last_modification:
+   reason: API generation
+diff --git a/apis/v1alpha1/generator.yaml b/apis/v1alpha1/generator.yaml
+index cb7045a..ed0130f 100644
+--- a/apis/v1alpha1/generator.yaml
++++ b/apis/v1alpha1/generator.yaml
+@@ -2,3 +2,16 @@ ignore:
+   resource_names:
+     #- Repository
+     - PullThroughCacheRule
++resources:
++  Repository:
++    renames:
++      operations:
++        CreateRepository:
++          input_fields:
++            RepositoryName: Name
++        DeleteRepository:
++          input_fields:
++            RepositoryName: Name
++        DescribeRepositories:
++          input_fields:
++            RepositoryName: Name
+diff --git a/apis/v1alpha1/repository.go b/apis/v1alpha1/repository.go
+index c226d4f..fc6165d 100644
+--- a/apis/v1alpha1/repository.go
++++ b/apis/v1alpha1/repository.go
+@@ -35,15 +35,15 @@ type RepositorySpec struct {
+ 	// be overwritten. If IMMUTABLE is specified, all image tags within the repository
+ 	// will be immutable which will prevent them from being overwritten.
+ 	ImageTagMutability *string `json:&quot;imageTagMutability,omitempty&quot;`
+-	// The Amazon Web Services account ID associated with the registry to create
+-	// the repository. If you do not specify a registry, the default registry is
+-	// assumed.
+-	RegistryID *string `json:&quot;registryID,omitempty&quot;`
+ 	// The name to use for the repository. The repository name may be specified
+ 	// on its own (such as nginx-web-app) or it can be prepended with a namespace
+ 	// to group the repository into a category (such as project-a/nginx-web-app).
+ 	// +kubebuilder:validation:Required
+-	RepositoryName *string `json:&quot;repositoryName&quot;`
++	Name *string `json:&quot;name&quot;`
++	// The Amazon Web Services account ID associated with the registry to create
++	// the repository. If you do not specify a registry, the default registry is
++	// assumed.
++	RegistryID *string `json:&quot;registryID,omitempty&quot;`
+ 	// The metadata that you apply to the repository to help you categorize and
+ 	// organize them. Each tag consists of a key and an optional value, both of
+ 	// which you define. Tag keys can have a maximum character length of 128 characters,
+diff --git a/apis/v1alpha1/zz_generated.deepcopy.go b/apis/v1alpha1/zz_generated.deepcopy.go
+index 93919be..88dd4c0 100644
+--- a/apis/v1alpha1/zz_generated.deepcopy.go
++++ b/apis/v1alpha1/zz_generated.deepcopy.go
+@@ -421,13 +421,13 @@ func (in *RepositorySpec) DeepCopyInto(out *RepositorySpec) {
+ 		*out = new(string)
+ 		**out = **in
+ 	}
+-	if in.RegistryID != nil {
+-		in, out := &amp;in.RegistryID, &amp;out.RegistryID
++	if in.Name != nil {
++		in, out := &amp;in.Name, &amp;out.Name
+ 		*out = new(string)
+ 		**out = **in
+ 	}
+-	if in.RepositoryName != nil {
+-		in, out := &amp;in.RepositoryName, &amp;out.RepositoryName
++	if in.RegistryID != nil {
++		in, out := &amp;in.RegistryID, &amp;out.RegistryID
+ 		*out = new(string)
+ 		**out = **in
+ 	}
+diff --git a/config/crd/bases/ecr.services.k8s.aws_repositories.yaml b/config/crd/bases/ecr.services.k8s.aws_repositories.yaml
+index 438785e..9657569 100644
+--- a/config/crd/bases/ecr.services.k8s.aws_repositories.yaml
++++ b/config/crd/bases/ecr.services.k8s.aws_repositories.yaml
+@@ -61,17 +61,17 @@ spec:
+                   all image tags within the repository will be immutable which will
+                   prevent them from being overwritten.
+                 type: string
+-              registryID:
+-                description: The Amazon Web Services account ID associated with the
+-                  registry to create the repository. If you do not specify a registry,
+-                  the default registry is assumed.
+-                type: string
+-              repositoryName:
++              name:
+                 description: The name to use for the repository. The repository name
+                   may be specified on its own (such as nginx-web-app) or it can be
+                   prepended with a namespace to group the repository into a category
+                   (such as project-a/nginx-web-app).
+                 type: string
++              registryID:
++                description: The Amazon Web Services account ID associated with the
++                  registry to create the repository. If you do not specify a registry,
++                  the default registry is assumed.
++                type: string
+               tags:
+                 description: The metadata that you apply to the repository to help
+                   you categorize and organize them. Each tag consists of a key and
+@@ -92,7 +92,7 @@ spec:
+                   type: object
+                 type: array
+             required:
+-            - repositoryName
++            - name
+             type: object
+           status:
+             description: RepositoryStatus defines the observed state of Repository
+diff --git a/generator.yaml b/generator.yaml
+index cb7045a..ed0130f 100644
+--- a/generator.yaml
++++ b/generator.yaml
+@@ -2,3 +2,16 @@ ignore:
+   resource_names:
+     #- Repository
+     - PullThroughCacheRule
++resources:
++  Repository:
++    renames:
++      operations:
++        CreateRepository:
++          input_fields:
++            RepositoryName: Name
++        DeleteRepository:
++          input_fields:
++            RepositoryName: Name
++        DescribeRepositories:
++          input_fields:
++            RepositoryName: Name
+diff --git a/helm/crds/ecr.services.k8s.aws_repositories.yaml b/helm/crds/ecr.services.k8s.aws_repositories.yaml
+index 438785e..9657569 100644
+--- a/helm/crds/ecr.services.k8s.aws_repositories.yaml
++++ b/helm/crds/ecr.services.k8s.aws_repositories.yaml
+@@ -61,17 +61,17 @@ spec:
+                   all image tags within the repository will be immutable which will
+                   prevent them from being overwritten.
+                 type: string
+-              registryID:
+-                description: The Amazon Web Services account ID associated with the
+-                  registry to create the repository. If you do not specify a registry,
+-                  the default registry is assumed.
+-                type: string
+-              repositoryName:
++              name:
+                 description: The name to use for the repository. The repository name
+                   may be specified on its own (such as nginx-web-app) or it can be
+                   prepended with a namespace to group the repository into a category
+                   (such as project-a/nginx-web-app).
+                 type: string
++              registryID:
++                description: The Amazon Web Services account ID associated with the
++                  registry to create the repository. If you do not specify a registry,
++                  the default registry is assumed.
++                type: string
+               tags:
+                 description: The metadata that you apply to the repository to help
+                   you categorize and organize them. Each tag consists of a key and
+@@ -92,7 +92,7 @@ spec:
+                   type: object
+                 type: array
+             required:
+-            - repositoryName
++            - name
+             type: object
+           status:
+             description: RepositoryStatus defines the observed state of Repository
+diff --git a/pkg/resource/repository/delta.go b/pkg/resource/repository/delta.go
+index a15d260..57b54df 100644
+--- a/pkg/resource/repository/delta.go
++++ b/pkg/resource/repository/delta.go
+@@ -77,6 +77,13 @@ func newResourceDelta(
+ 			delta.Add(&quot;Spec.ImageTagMutability&quot;, a.ko.Spec.ImageTagMutability, b.ko.Spec.ImageTagMutability)
+ 		}
+ 	}
++	if ackcompare.HasNilDifference(a.ko.Spec.Name, b.ko.Spec.Name) {
++		delta.Add(&quot;Spec.Name&quot;, a.ko.Spec.Name, b.ko.Spec.Name)
++	} else if a.ko.Spec.Name != nil &amp;&amp; b.ko.Spec.Name != nil {
++		if *a.ko.Spec.Name != *b.ko.Spec.Name {
++			delta.Add(&quot;Spec.Name&quot;, a.ko.Spec.Name, b.ko.Spec.Name)
++		}
++	}
+ 	if ackcompare.HasNilDifference(a.ko.Spec.RegistryID, b.ko.Spec.RegistryID) {
+ 		delta.Add(&quot;Spec.RegistryID&quot;, a.ko.Spec.RegistryID, b.ko.Spec.RegistryID)
+ 	} else if a.ko.Spec.RegistryID != nil &amp;&amp; b.ko.Spec.RegistryID != nil {
+@@ -84,13 +91,6 @@ func newResourceDelta(
+ 			delta.Add(&quot;Spec.RegistryID&quot;, a.ko.Spec.RegistryID, b.ko.Spec.RegistryID)
+ 		}
+ 	}
+-	if ackcompare.HasNilDifference(a.ko.Spec.RepositoryName, b.ko.Spec.RepositoryName) {
+-		delta.Add(&quot;Spec.RepositoryName&quot;, a.ko.Spec.RepositoryName, b.ko.Spec.RepositoryName)
+-	} else if a.ko.Spec.RepositoryName != nil &amp;&amp; b.ko.Spec.RepositoryName != nil {
+-		if *a.ko.Spec.RepositoryName != *b.ko.Spec.RepositoryName {
+-			delta.Add(&quot;Spec.RepositoryName&quot;, a.ko.Spec.RepositoryName, b.ko.Spec.RepositoryName)
+-		}
+-	}
+ 	if !reflect.DeepEqual(a.ko.Spec.Tags, b.ko.Spec.Tags) {
+ 		delta.Add(&quot;Spec.Tags&quot;, a.ko.Spec.Tags, b.ko.Spec.Tags)
+ 	}
+diff --git a/pkg/resource/repository/resource.go b/pkg/resource/repository/resource.go
+index e15d755..a2dd27e 100644
+--- a/pkg/resource/repository/resource.go
++++ b/pkg/resource/repository/resource.go
+@@ -88,7 +88,7 @@ func (r *resource) SetIdentifiers(identifier *ackv1alpha1.AWSIdentifiers) error
+ 	if identifier.NameOrID == &quot;&quot; {
+ 		return ackerrors.MissingNameIdentifier
+ 	}
+-	r.ko.Spec.RepositoryName = &amp;identifier.NameOrID
++	r.ko.Spec.Name = &amp;identifier.NameOrID
+ 
+ 	f2, f2ok := identifier.AdditionalKeys[&quot;registryID&quot;]
+ 	if f2ok {
+diff --git a/pkg/resource/repository/sdk.go b/pkg/resource/repository/sdk.go
+index 4366244..61a0053 100644
+--- a/pkg/resource/repository/sdk.go
++++ b/pkg/resource/repository/sdk.go
+@@ -132,9 +132,9 @@ func (rm *resourceManager) sdkFind(
+ 			ko.Status.ACKResourceMetadata.ARN = &amp;tmpARN
+ 		}
+ 		if elem.RepositoryName != nil {
+-			ko.Spec.RepositoryName = elem.RepositoryName
++			ko.Spec.Name = elem.RepositoryName
+ 		} else {
+-			ko.Spec.RepositoryName = nil
++			ko.Spec.Name = nil
+ 		}
+ 		if elem.RepositoryUri != nil {
+ 			ko.Status.RepositoryURI = elem.RepositoryUri
+@@ -158,7 +158,7 @@ func (rm *resourceManager) sdkFind(
+ func (rm *resourceManager) requiredFieldsMissingFromReadManyInput(
+ 	r *resource,
+ ) bool {
+-	return r.ko.Spec.RepositoryName == nil
++	return r.ko.Spec.Name == nil
+ 
+ }
+ 
+@@ -172,9 +172,9 @@ func (rm *resourceManager) newListRequestPayload(
+ 	if r.ko.Spec.RegistryID != nil {
+ 		res.SetRegistryId(*r.ko.Spec.RegistryID)
+ 	}
+-	if r.ko.Spec.RepositoryName != nil {
++	if r.ko.Spec.Name != nil {
+ 		f3 := []*string{}
+-		f3 = append(f3, r.ko.Spec.RepositoryName)
++		f3 = append(f3, r.ko.Spec.Name)
+ 		res.SetRepositoryNames(f3)
+ 	}
+ 
+@@ -253,9 +253,9 @@ func (rm *resourceManager) sdkCreate(
+ 		ko.Status.ACKResourceMetadata.ARN = &amp;arn
+ 	}
+ 	if resp.Repository.RepositoryName != nil {
+-		ko.Spec.RepositoryName = resp.Repository.RepositoryName
++		ko.Spec.Name = resp.Repository.RepositoryName
+ 	} else {
+-		ko.Spec.RepositoryName = nil
++		ko.Spec.Name = nil
+ 	}
+ 	if resp.Repository.RepositoryUri != nil {
+ 		ko.Status.RepositoryURI = resp.Repository.RepositoryUri
+@@ -298,8 +298,8 @@ func (rm *resourceManager) newCreateRequestPayload(
+ 	if r.ko.Spec.RegistryID != nil {
+ 		res.SetRegistryId(*r.ko.Spec.RegistryID)
+ 	}
+-	if r.ko.Spec.RepositoryName != nil {
+-		res.SetRepositoryName(*r.ko.Spec.RepositoryName)
++	if r.ko.Spec.Name != nil {
++		res.SetRepositoryName(*r.ko.Spec.Name)
+ 	}
+ 	if r.ko.Spec.Tags != nil {
+ 		f5 := []*svcsdk.Tag{}
+@@ -362,8 +362,8 @@ func (rm *resourceManager) newDeleteRequestPayload(
+ 	if r.ko.Spec.RegistryID != nil {
+ 		res.SetRegistryId(*r.ko.Spec.RegistryID)
+ 	}
+-	if r.ko.Spec.RepositoryName != nil {
+-		res.SetRepositoryName(*r.ko.Spec.RepositoryName)
++	if r.ko.Spec.Name != nil {
++		res.SetRepositoryName(*r.ko.Spec.Name)
+ 	}
+ 
+ 	return res, nil
+</code></pre><p>You will note that there were changes made to the <code>repository.go</code> file, the <code>pkg/resource/repository/sdk.go</code>.</p><h3 id=renaming-things-with-different-names-in-input-and-output-shapes>Renaming things with different names in input and output shapes<a href=#renaming-things-with-different-names-in-input-and-output-shapes class=anchor aria-hidden=true>#</a></h3><p>The second reason we might need to rename a field is when the same field goes by different names in the <em>shapes</em> (i.e., expected syntax) of the input and output. An hypothetical example of this might be a field that is called <code>EnableEncryption</code> in an input shape and <code>EncryptionEnabled</code> in an output shape. In order to inform the code generator that these fields are actually the same, we would rename one of the fields to match the other.</p><p>[<strong><em>TODO</em></strong> this needs a concrete example of renaming with both <code>input_fields</code> and <code>output_fields</code>]</p><h2 id=ignoring-things>Ignoring things<a href=#ignoring-things class=anchor aria-hidden=true>#</a></h2><p>Sometimes you want to instruct the code generator to simply ignore a particular API Operation, or a particular field in an API Shape. See <a href=https://github.com/aws-controllers-k8s/s3-controller/pull/89>here</a> for a real world motivating example of such a need.</p><p>You will use the <a href=https://github.com/aws-controllers-k8s/code-generator/blob/f6dd767f12429832bc7b4321fb7b763a9fa997c7/pkg/config/config.go#L50-L66><code>ignore:</code></a> block of configuration options to do this.</p><p>To ignore a specific field in an API Shape, you can list the field via fieldpath in the <code>ignore.fieldpaths</code> configuration option.</p><p>An <a href=https://github.com/aws-controllers-k8s/s3-controller/blob/9adb7703fa9e8c422a583ec1c8da35ecb21c8917/generator.yaml#L8-L12>example</a> of this can be found in the S3 controller&rsquo;s <code>generator.yaml</code> file:</p><pre><code class="language-yaml=">ignore:
+  field_paths:
+    # We cannot support MFA, so if it is set we cannot unset
+    - &quot;VersioningConfiguration.MFADelete&quot;
+    # This subfield struct has no members...
+    - &quot;NotificationConfiguration.EventBridgeConfiguration&quot;
+</code></pre><p>When you specify a field path in <code>ignore.field_paths</code>, the code generator will skip over that field when inferring custom resource definition <code>Spec</code> and <code>Status</code> structures.</p><h2 id=tags>Tags<a href=#tags class=anchor aria-hidden=true>#</a></h2><p><em>Most</em> resources in AWS service APIs can have one or more tags associated with them. Tags are <em>typically</em> simple string key/value pairs; however, the representation of tags across different AWS service APIs is not consistent. Some APIs use a <code>map[string]string</code> to represent tags. Others use a <code>[]struct{}</code> where the struct has a <code>Key</code> and a <code>Value</code> field. Others use more complex structures.</p><h3 id=telling-ack-code-generator-that-a-resource-does-not-support-tags>Telling ACK code generator that a resource does not support tags<a href=#telling-ack-code-generator-that-a-resource-does-not-support-tags class=anchor aria-hidden=true>#</a></h3><p>There are some API resources that <em>do not</em> support tags at all, and we want a way to skip the generation of code that handles tagging for those resources. By default, for all resources, ACK generates some code that handles conversion between the ACK standard representation of tags (i.e., <code>map[string]string</code>) and the AWS service-specific representation of tags (e.g., <code>[]struct{}</code>, etc).</p><p>If you attempt to generate a resource manager for a resource that does not support tags, you will receive an error from the code generator. ECR&rsquo;s <a href=https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_CreatePullThroughCacheRule.html><code>PassThroughCacheRule</code></a> is an example of a resource that does not support tags. If we unignore the <code>PassThroughCacheRule</code> resource in the ECR controller&rsquo;s <a href=https://github.com/aws-controllers-k8s/ecr-controller/blob/cefc45b65e1a560b9666a1544f26f955c6f84d36/generator.yaml#L78><code>generator.yaml</code></a> file and regenerate the controller, we will stumble upon this error:</p><pre><code>[jaypipes@thelio code-generator]$ make build-controller SERVICE=ecr
+building ack-generate ... ok.
+==== building ecr-controller ====
+Copying common custom resource definitions into ecr
+Building Kubernetes API objects for ecr
+Generating deepcopy code for ecr
+Generating custom resource definitions for ecr
+Building service controller for ecr
+Error: template: /home/jaypipes/go/src/github.com/aws-controllers-k8s/code-generator/templates/pkg/resource/manager.go.tpl:282:20: executing &quot;/home/jaypipes/go/src/github.com/aws-controllers-k8s/code-generator/templates/pkg/resource/manager.go.tpl&quot; at &lt;.CRD.GetTagField&gt;: error calling GetTagField: tag field path Tags does not exist inside PullThroughCacheRule crd
+make: *** [Makefile:41: build-controller] Error 1
+</code></pre><p>To fix this error, we used the <code>tags.ignore</code> configuration option in <a href=https://github.com/aws-controllers-k8s/ecr-controller/blob/cefc45b65e1a560b9666a1544f26f955c6f84d36/generator.yaml#L78><code>generator.yaml</code></a>:</p><pre><code class="language-yaml=">ignore:
+  resources:
+    #- Repository
+    #- PullThroughCacheRule
+resources:
+  Repository:
+    renames:
+      operations:
+        CreateRepository:
+          input_fields:
+            RepositoryName: Name
+        DeleteRepository:
+          input_fields:
+            RepositoryName: Name
+        DescribeRepositories:
+          input_fields:
+            RepositoryName: Name
+  PullThroughCacheRule:
+    fields:
+      ECRRepositoryPrefix:
+        is_primary_key: true
+ &gt;  tags:
+ &gt;    ignore: true
+</code></pre><h2 id=resource-configuration>Resource configuration<a href=#resource-configuration class=anchor aria-hidden=true>#</a></h2><h3 id=understanding-resource-identifying-fields>Understanding resource identifying fields<a href=#understanding-resource-identifying-fields class=anchor aria-hidden=true>#</a></h3><p>All resources in the AWS world have one or more fields that serve as primary key identifiers. Most people are familiar with the <code>ARN</code> fields that most modern AWS resources have. However, the <code>ARN</code> field is not the only field that can serve as a primary key for a resource. ACK&rsquo;s code generator reads an API model file and attempts to determine which fields on a resource can be used to uniquely identify that resource. Sometimes, though, the code generator needs to be instructed which field or fields comprise this primary key. <a href=#Field-level-configuration-of-identifying-fields>See below</a> for an example from ECR&rsquo;s <code>PullThroughCacheRule</code>.</p><p>There are resource-level and field-level configuration options that inform the code generator about identifying fields.</p><h4 id=resource-level-configuration-of-identifying-fields>Resource-level configuration of identifying fields<a href=#resource-level-configuration-of-identifying-fields class=anchor aria-hidden=true>#</a></h4><p>The <code>resource[$resource].is_arn_primary_key</code> configuration option is a boolean, defaulting to <code>false</code> that instructs the code generator to use the <code>ARN</code> field when calling the &ldquo;ReadOne&rdquo; (i.e., &ldquo;Describe&rdquo; or &ldquo;Get&rdquo;) operation for that resource. When <code>false</code>, the code generator will look for &ldquo;identifier fields&rdquo; with field names such as <code>ID</code> or <code>Name</code> (along with variants that include the resource name as a prefix, e.g., &ldquo;BucketName&rdquo;).</p><p>Use the <code>is_arn_primary_key=true</code> configuration option <em>when the resource has no other identifying fields</em>. An example of this is SageMaker&rsquo;s <code>ModelPackage</code> resource that has no <code>Name</code> or <code>ID</code> field and can only be identified via an <code>ARN</code> field:</p><pre><code class="language-yaml=">resources:
+  ModelPackage:
+    is_arn_primary_key: true
+</code></pre><p><em>[NOTE(jaypipes): Probably want to reevaluate this particular config option and use the field-centric is_primary_key option instead&mldr;]</em></p><h4 id=field-level-configuration-of-identifying-fields>Field-level configuration of identifying fields<a href=#field-level-configuration-of-identifying-fields class=anchor aria-hidden=true>#</a></h4><p>Sometimes a resource&rsquo;s primary key field is non-obvious (like <code>Name</code> or <code>ID</code>). Use the <code>resources[$resource]fields[$field].is_primary_key</code> configuration option to tell the code generator about these fields.</p><p>An example here is ECR&rsquo;s <a href=https://github.com/aws-controllers-k8s/ecr-controller/blob/cefc45b65e1a560b9666a1544f26f955c6f84d36/generator.yaml#L57><code>PullThroughCacheRule</code></a> resource, which <a href=https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_CreatePullThroughCacheRule.html>has a primary key field</a> called <code>ECRRepositoryPrefix</code>:</p><pre><code class="language-yaml=">resources:
+  PullThroughCacheRule:
+    fields:
+      ECRRepositoryPrefix:
+        is_primary_key: true
+</code></pre><p><em>[NOTE(jljaco): If we discard <code>is_arn_primary_key</code> in favor of only <code>is_primary_key</code>, this sub-section should be moved into the <code>Field Configuration</code> section]</em></p><h3 id=correcting-exception-codes>Correcting exception codes<a href=#correcting-exception-codes class=anchor aria-hidden=true>#</a></h3><p>An ACK controller needs to understand which HTTP exception code means &ldquo;this resource was not found&rdquo;; otherwise, the controller&rsquo;s logic that determines whether to create or update a resource falls apart.</p><p>For the majority of AWS service APIs, the ACK code generator can figure out which HTTP exception codes map to which HTTP fault behaviours. However, some AWS service API model definitions do not include exception metadata. Other service API models include straight-up incorrect information that does not match what the actual AWS service returns.</p><p>To address these issues, you can use the <code>resource[$resource].exceptions</code> configuration block.</p><p>An example of an API model that does not indicate the exception code representing a resource not found is DynamoDB. When calling DynamoDB&rsquo;s <a href=https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html><code>DescribeTable</code></a> API call with a table name that does not exist, you will get back a <code>400</code> error code instead of <code>404</code> and the exception code string is <code>ResourceNotFoundException</code>.</p><p>To tell the ACK code generator how to deal with this, use the <code>exceptions</code> <a href=https://github.com/aws-controllers-k8s/code-generator/blob/160b839fe09dd7e1f321e094604ffc3b6ae2a285/pkg/config/resource.go#L251>configuration option</a>:</p><pre><code class="language-yaml=">resources:
+  Table:
+    exceptions:
+      errors:
+        404:
+          code: ResourceNotFoundException
+</code></pre><p>This configuration instructs the code generator to <a href=https://github.com/aws-controllers-k8s/dynamodb-controller/blob/eb1405d3d10050c8a866dc0e2dc0ec72c8213886/pkg/resource/table/sdk.go#L79-L84>produce code</a> that looks for <code>ResourceNotFoundException</code> in the error response of the API call and interprets it properly as a <code>404</code> or &ldquo;resource not found&rdquo; error.</p><h4 id=specifying-terminal-codes-to-indicate-terminal-state>Specifying terminal codes to indicate terminal state<a href=#specifying-terminal-codes-to-indicate-terminal-state class=anchor aria-hidden=true>#</a></h4><p>An <code>ACK.Terminal</code> <code>Condition</code> is placed on a custom resource (inside of its <code>Status</code>) when the controller realizes that, without the user changing the resource&rsquo;s <code>Spec</code>, the resource will not be able to be reconciled (i.e., the desired state will never match the actual state).</p><p>When an ACK controller gets a response back from an AWS service containing an error code, the controller evaluates whether that error code should result in the <code>ACK.Terminal</code> <code>Condition</code> being placed on the resource. Examples of these &ldquo;terminal codes&rdquo; are things such as:</p><ul><li>improper input being supplied</li><li>a duplicate resource already existing</li><li>conflicting input values</li></ul><p>AWS service API responses having a <code>4XX</code> HTTP status code will have a corresponding exception string code (e.g., <code>InvalidParameterValue</code> or <code>EntityExistsException</code>). Use the <code>resource[$resource].exceptions.terminal_codes</code> configuration option to tell the code generation which of these exception string codes it should consider to be a <em>terminal state</em> for the resource.</p><p>Here is <a href=https://github.com/aws-controllers-k8s/rds-controller/blob/f97b026cdd72e222390f42a18770fb0de49c3b41/generator.yaml#L97>an example from the RDS controller</a>, where we indicate the set of exception string code that will set the resource into a <em>terminal state</em>:</p><pre><code class="language-yaml=">resources:
+  DBCluster:
+    exceptions:
+      terminal_codes:
+        - DBClusterQuotaExceededFault
+        - DBSubnetGroupDoesNotCoverEnoughAZs
+        - InsufficientStorageClusterCapacity
+        - InvalidParameter
+        - InvalidParameterValue
+        - InvalidParameterCombination
+        - InvalidSubnet
+        - StorageQuotaExceeded
+</code></pre><h3 id=controlling-reconciliation-and-requeue-logic>Controlling reconciliation and requeue logic<a href=#controlling-reconciliation-and-requeue-logic class=anchor aria-hidden=true>#</a></h3><p>By default, an ACK controller will requeue a resource for future reconciliation only when the resource is in some transitional state.</p><p>For example, when you create an RDS <a href=https://github.com/aws-controllers-k8s/rds-controller/blob/f97b026cdd72e222390f42a18770fb0de49c3b41/generator.yaml#L184><code>DBInstance</code></a> resource, the resource initially goes into a <code>CREATING</code> transitional state and then eventually will arrive at an <code>AVAILABLE</code> state. When the RDS controller for ACK initially creates the RDS <code>DBInstance</code> resource, it calls the RDS <a href=https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CreateDBInstance.html><code>CreateDBInstance</code></a> API call, sees the state of the DB instance is <code>CREATING</code>, adds an <code>ACK.ResourceSynced=False</code> <code>Condition</code> to the resource and <em>requeues</em> the resource to be processed again in a few seconds.</p><p>When the resource is processed in the next reconciliation loop, the controller calls the <a href=https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DeleteDBInstance.html><code>DescribeDBInstance</code></a> API endpoint and checks to see if the DB instance is in the <code>AVAILABLE</code> state. If it is not, then the controller requeues the resource again. If it is in the <code>AVAILABLE</code> state, then the controller sets the <code>ACK.ResourceSynced</code> <code>Condition</code> to <code>True</code>, which is the indication to the ACK runtime that the resource should <em>not</em> be requeued.</p><p>Sometimes, you may want to have the ACK controller requeue certain resources <em>even after a successful reconciliation loop that leaves the resource in the <code>ACK.ResourceSynced=True</code> state</em>. If this is the case, you should use the <code>resources[$resource].reconcile.requeue_on_success_seconds</code> configuration option. The value of this option should be the amount of time (in seconds) after which the reconciler should requeue the resource.</p><p>Here is an example of this configuration option as used in the SageMaker controller&rsquo;s <a href=https://github.com/aws-controllers-k8s/sagemaker-controller/blob/c77c6def970cf80322bacaa6aa5ff58dde671dbf/generator.yaml#L595><code>NotebookInstance</code> resource</a>:</p><pre><code class="language-yaml=">resources:
+  NotebookInstance:
+    # Resource state/status can be modified in Sagemaker Console
+    # Need to reconcile to catch these state/status changes
+    reconcile: 
+      requeue_on_success_seconds: 60
+</code></pre><p>We set this <code>requeue_on_success_seconds</code> value to <code>60</code> here because the values of various fields in this Sagemaker resource tend to change often and we want the <code>Status</code> section of our custom resource to contain values that are fresher than the default requeue period (10 hours as of this writing).</p><h2 id=field-configuration>Field configuration<a href=#field-configuration class=anchor aria-hidden=true>#</a></h2><p><strong>TODO</strong></p><h3 id=marking-a-field-as-required>Marking a field as required<a href=#marking-a-field-as-required class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=controlling-a-fields-go-type>Controlling a field&rsquo;s Go type<a href=#controlling-a-fields-go-type class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=controlling-how-a-fields-values-are-compared>Controlling how a field&rsquo;s values are compared<a href=#controlling-how-a-fields-values-are-compared class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=mutable-vs-immutable-fields>Mutable vs. immutable fields<a href=#mutable-vs-immutable-fields class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=controlling-where-a-fields-definition-comes-from>Controlling where a field&rsquo;s definition comes from<a href=#controlling-where-a-fields-definition-comes-from class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=annotating-a-field-as-a-printer-column>Annotating a field as a &ldquo;Printer Column&rdquo;<a href=#annotating-a-field-as-a-printer-column class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=controlling-field-late-initialization>Controlling field &ldquo;late initialization&rdquo;<a href=#controlling-field-late-initialization class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=informing-the-code-generator-that-a-field-refers-to-another-resource>Informing the code generator that a field refers to another Resource<a href=#informing-the-code-generator-that-a-field-refers-to-another-resource class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h3 id=adding-custom-fields>Adding custom fields<a href=#adding-custom-fields class=anchor aria-hidden=true>#</a></h3><p><strong>TODO</strong></p><h2 id=custom-code-hook-points>Custom code hook points<a href=#custom-code-hook-points class=anchor aria-hidden=true>#</a></h2><p>The code generator will generate Go code that implements the <code>aws-sdk-go</code> SDK &ldquo;binding&rdquo; calls. Sometimes you will want to inject bits of custom code at various points in the code generation pipeline.</p><p>Custom code <a href=https://github.com/aws-controllers-k8s/code-generator/blob/160b839fe09dd7e1f321e094604ffc3b6ae2a285/pkg/generate/ack/hook.go#L28>hook points</a> do this injection. They should be preferred versus using complete overrides (e.g., <code>resources[$resource].update_operation.custom_method_name</code>). The reason that custom code hooks are preferred is because generally you want to maximize the amount of <em>generated</em> code and minimize the amount of <em>hand-written</em> code in each controller. <em>[NOTE(jljaco): decide later whether to bother documenting complete overrides via <code>update_operation.custom_method_name</code>]</em></p><p><strong>TODO</strong></p><h2 id=attribute-based-apis>Attribute-based APIs<a href=#attribute-based-apis class=anchor aria-hidden=true>#</a></h2><p><strong>OMG TODO.</strong></p><h2 id=miscellaneousmaybe-cover-laterdocumentation-backlog>Miscellaneous/maybe cover later/documentation backlog<a href=#miscellaneousmaybe-cover-laterdocumentation-backlog class=anchor aria-hidden=true>#</a></h2><h3 id=what-does-prefixconfig-do>What does PrefixConfig do?<a href=#what-does-prefixconfig-do class=anchor aria-hidden=true>#</a></h3><h3 id=what-if-the-code-generator-cannot-figure-out-my-services-api-model-name>What if the code generator cannot figure out my service&rsquo;s API model name?<a href=#what-if-the-code-generator-cannot-figure-out-my-services-api-model-name class=anchor aria-hidden=true>#</a></h3><h3 id=list_operationmatch_fields>list_operation.match_fields<a href=#list_operationmatch_fields class=anchor aria-hidden=true>#</a></h3><p class=edit-page><a href=https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/contributor-docs/code-generator-config.md><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828.0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit this page on GitHub</a></p><div class=my-n3></div></main></div></div></div><footer class="footer mt-auto text-muted"><div class=container><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Powered by <a href=https://gohugo.io/>Hugo</a> and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://aws-controllers-k8s.github.io/community/js/bootstrap.min.586171fec3966d1a44fa8aa2edb24b861dc3a72be8cc24aa4e0dabe4c312a0dae5fe1eaa7c93180a6211fa4d7c5461b0d228fdf741be2eae279a376dfa1e7d81.js integrity="sha512-WGFx/sOWbRpE+oqi7bJLhh3DpyvozCSqTg2r5MMSoNrl/h6qfJMYCmIR+k18VGGw0ij990G+Lq4nmjdt+h59gQ==" crossorigin=anonymous defer></script>
+<script src=https://aws-controllers-k8s.github.io/community/js/highlight.min.b9c3f53f62ede0586acf2866d3772ea55bf34115611a96523af51b289a2a58f9f60b82ffd4103276a6adc1a3bc7113c6ead0cf0799144d35605ff1e9108981bc.js integrity="sha512-ucP1P2Lt4Fhqzyhm03cupVvzQRVhGpZSOvUbKJoqWPn2C4L/1BAydqatwaO8cRPG6tDPB5kUTTVgX/HpEImBvA==" crossorigin=anonymous defer></script>
+<script src=https://aws-controllers-k8s.github.io/community/main.min.491f43bd0e1cabe525a61ecfcb2738d89c578585b04b9ebbaf9d125b55595f3b76e5497375a1da0c840e16966c9a910aae60fba0790088c7869bee07c3be997c.js integrity="sha512-SR9DvQ4cq+Ulph7Pyyc42JxXhYWwS567r50SW1VZXzt25UlzdaHaDIQOFpZsmpEKrmD7oHkAiMeGm+4Hw76ZfA==" crossorigin=anonymous defer></script>
+<script src=https://aws-controllers-k8s.github.io/community/index.min.9cba9256eb6dfacdb69977269652399a9a02986dea165cdd8f70ea3ec3036d5cf4429fd09c015c6a6116c607ad14d7fdddfe9b449e6f12ad890b2783d07718b7.js integrity="sha512-nLqSVutt+s22mXcmllI5mpoCmG3qFlzdj3DqPsMDbVz0Qp/QnAFcamEWxgetFNf93f6bRJ5vEq2JCyeD0HcYtw==" crossorigin=anonymous defer></script></body></html>
