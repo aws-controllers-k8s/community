@@ -11,7 +11,7 @@ toc: true
 ---
 Using ACK service controller for EMR on EKS, customers have the ability to define and run EMR jobs directly from their Kubernetes clusters. EMR on EKS manages the lifecycle of these jobs and it is [3.5 times faster than open-source Spark](https://aws.amazon.com/blogs/big-data/amazon-emr-on-amazon-eks-provides-up-to-61-lower-costs-and-up-to-68-performance-improvement-for-spark-workloads/) because it uses highly optimized EMR runtime  
 
-To get started, you can download the EMR on EKS controller image from [Amazon ECR](https://gallery.ecr.aws/aws-controllers-k8s/emrcontainers-controller) and run Spark jobs in minutes. ACK service controller for EMR on EKS is available as **developer preview** and is not recommended for production use. To learn more, visit the [EMR on EKS documentation](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html).
+To get started, you can download the EMR on EKS controller image from [Amazon ECR](https://gallery.ecr.aws/aws-controllers-k8s/emrcontainers-controller) and run Spark jobs in minutes. ACK service controller for EMR on EKS is **generally available**. To learn more about EMR on EKS, visit our [documentation](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html).
 
 ## Installation steps
 Here are the steps involved for installing EMR on EKS controller.
