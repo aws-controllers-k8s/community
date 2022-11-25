@@ -734,11 +734,289 @@ We set this `requeue_on_success_seconds` value to `60` here because the values o
 
 ## Custom code hook points
 
-The code generator will generate Go code that implements the `aws-sdk-go` SDK "binding" calls. Sometimes you will want to inject bits of custom code at various points in the code generation pipeline.
+The code generator will generate Go code that implements the `aws-sdk-go` SDK "binding" calls.  Sometimes you will want to inject bits of custom code at various points in the code generation pipeline.
 
-Custom code [hook points](https://github.com/aws-controllers-k8s/code-generator/blob/160b839fe09dd7e1f321e094604ffc3b6ae2a285/pkg/generate/ack/hook.go#L28) do this injection. They should be preferred versus using complete overrides (e.g.,  `resources[$resource].update_operation.custom_method_name`). The reason that custom code hooks are preferred is because generally you want to maximize the amount of *generated* code and minimize the amount of *hand-written* code in each controller.  *[NOTE(jljaco): decide later whether to bother documenting complete overrides via `update_operation.custom_method_name`]*
+Custom code [hook points](https://github.com/aws-controllers-k8s/code-generator/blob/160b839fe09dd7e1f321e094604ffc3b6ae2a285/pkg/generate/ack/hook.go#L28) do this injection.  They should be preferred versus using complete overrides (e.g.,  `resources[$resource].update_operation.custom_method_name`).  The reason that custom code hooks are preferred is because you generally want to maximize the amount of *generated* code and minimize the amount of *hand-written* code in each controller.  *[NOTE(jljaco): decide later whether to bother documenting complete overrides via `update_operation.custom_method_name`]*
 
-**TODO**
+### The `sdk.go` hook points
+
+First, some background.  Within the `pkg/resources/$resource/sdk.go` file, there are 4 primary resource manager methods that control CRUD operations on a resource:
+
+* `sdkFind` reads a single resource record from a backend AWS service API, then populates a custom resource representation of that record and returns it back to the reconciler.
+* `sdkCreate` takes the desired custom resource state (in the `Spec` struct of the CR).  It calls AWS service APIs to create the resource in AWS, then sets certain fields on the custom resource's `Status` struct that represent the latest observed state of that resource.
+* `sdkUpdate` takes the desired custom resource state (from the `Spec` struct of the CR), the latest observed resource state, and a representation of the differences between those (called a `Delta` struct). It calls one or more AWS service APIs to modify a resource's attributes, then populates the custom resource's `Status` struct with the latest (post-modification) observed state of the resource.
+* `sdkDelete` calls one or more AWS service APIs to delete a resource.
+
+For all 4 of these main ResourceManager methods, there is a consistent code path that looks like this:
+
+1. **Construct the SDK Input shape**. For `sdkFind` and `sdkDelete`, this Input shape will contain the identifier of the resource (e.g. an `ARN`). For `sdkCreate` and `sdkUpdate`, this Input shape will also contain various desired state fields for the resource. This is called the "**Set SDK**" stage and corresponds to code generator functions in code-generator's [`pkg/generate/code/set_sdk.go`](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_sdk.go).
+2. **Pass the SDK Input shape** to the `aws-sdk-go` API method.
+    - For `sdkFind`, this API method will be *either* the `ReadOne` operation for the resource (e.g., ECR's `GetRepository` or RDS's `DescribeDBInstance`) or the `ReadMany` operation (e.g., S3's `ListBuckets` or EC2's `DescribeInstances`).
+    - For the `sdkCreate`, `sdkUpdate` and `sdkDelete` methods, the API operation will correspond to the `Create`, `Update` and `Delete` operation types.
+4. **Process the error/return code** from the API call. If there is an error that appears in the list of Terminal codes (**TODO link to docs**), then the custom resource will have a Terminal condition applied to it, and a Terminal error is returned to the reconciler. The reconciler will subsequently add a `ACK.Terminal` Condition to the custom resource.
+5. **Process the Output shape** from the API call.  If no error was returned from the API call, the Output shape representing the HTTP response content will then be processed, resulting in fields in either the `Spec` or `Status` of the custom resource being set to the value of matching fields on the Output shape.  This is called the "**Set Resource**" stage and corresponds to code generator functions in code-generator's [`pkg/generate/code/set_resource.go`](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go).
+
+Along with the above 4 main ResourceManager methods, there are a number of generated helper methods and functions that will:
+* create the SDK input shape used when making HTTP requests to AWS APIs
+* process responses from those AWS APIs
+
+#### `sdk_*_pre_build_request`
+
+The `sdk_*_pre_build_request` hooks are called _before_ the call to construct the Input shape that is used in the API operation and therefore _before_ any call to validate that Input shape.
+
+Use this custom hook point if you want to short-circuit the processing of the resource for some reason **OR** if you want to process certain resource fields (e.g., Tags) separately from the main resource fields.
+
+##### Example: Short-circuiting
+
+Here is an example from the DynamoDB controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/dynamodb-controller/blob/ce5980c26538b0d9310a2526a845a77da2d2f611/generator.yaml#L1) file that uses a [`pre_build_request`](https://github.com/aws-controllers-k8s/dynamodb-controller/blob/ce5980c26538b0d9310a2526a845a77da2d2f611/generator.yaml#L36) custom code hook for Table resources:
+
+```yaml=
+resources:
+  Table:
+    hooks:
+      sdk_delete_pre_build_request:
+        template_path: hooks/table/sdk_delete_pre_build_request.go.tpl
+```
+
+As you can see, the hook is for the Delete operation.  You can specify the filepath to a template which contains Go code that you wish to inject at this custom hook point. Here is the [Go code from that template](https://github.com/aws-controllers-k8s/dynamodb-controller/blob/1e4563776d5efe9455cb7a347d73cc298f6f16b9/templates/hooks/table/sdk_delete_pre_build_request.go.tpl#L0-L1):
+
+```go=
+	if isTableDeleting(r) {
+		return nil, requeueWaitWhileDeleting
+	}
+	if isTableUpdating(r) {
+		return nil, requeueWaitWhileUpdating
+	}
+```
+
+The snippet of Go code above simply requeues the resource to be deleted in the future if the Table is currently either being updated (via [`UpdateTable`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html)) or deleted (via [`DeleteTable`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html)).
+
+After running `make build-controller` for DynamoDB, the above `generator.yaml` configuration and corresponding template file produces the following Go code implementation for `sdkDelete` inside of the `sdk.go` file for Table resources:
+
+```go=
+// sdkDelete deletes the supplied resource in the backend AWS service API
+func (rm *resourceManager) sdkDelete(
+	ctx context.Context,
+	r *resource,
+) (latest *resource, err error) {
+	rlog := ackrtlog.FromContext(ctx)
+	exit := rlog.Trace("rm.sdkDelete")
+	defer func() {
+		exit(err)
+	}()
+>	if isTableDeleting(r) {
+>		return nil, requeueWaitWhileDeleting
+>	}
+>	if isTableUpdating(r) {
+>		return nil, requeueWaitWhileUpdating
+>	}
+	input, err := rm.newDeleteRequestPayload(r)
+	if err != nil {
+		return nil, err
+	}
+	var resp *svcsdk.DeleteTableOutput
+	_ = resp
+	resp, err = rm.sdkapi.DeleteTableWithContext(ctx, input)
+	rm.metrics.RecordAPICall("DELETE", "DeleteTable", err)
+	return nil, err
+}
+```
+
+In the example above, we've highlighted the lines (with `>`) that were injected into the `sdkDelete` method using this custom hook point.
+
+##### Example: Custom field processing
+
+Another example of a `pre_build_request` custom hook comes from the IAM controller's [Role resource](https://github.com/aws-controllers-k8s/iam-controller/blob/3f60454e25ce47c050d429773aa826253bb21507/generator.yaml#L122) and this `generator.yaml` snippet:
+
+```yaml=
+resources:
+  Role:
+    hooks:
+      sdk_update_pre_build_request:
+        template_path: hooks/role/sdk_update_pre_build_request.go.tpl
+```
+
+which has the following [Go code in the template file](https://github.com/aws-controllers-k8s/iam-controller/blob/3f60454e25ce47c050d429773aa826253bb21507/generator.yaml#L122):
+
+```go=
+	if delta.DifferentAt("Spec.Policies") {
+		err = rm.syncPolicies(ctx, desired, latest)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if delta.DifferentAt("Spec.Tags") {
+		err = rm.syncTags(ctx, desired, latest)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if delta.DifferentAt("Spec.PermissionsBoundary") {
+		err = rm.syncRolePermissionsBoundary(ctx, desired)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if !delta.DifferentExcept("Spec.Tags", "Spec.Policies", "Spec.PermissionsBoundary") {
+		return desired, nil
+	}
+```
+
+What you can see above is the use of the `pre_build_request` hook point to update the Role's policy collection, tag collection, and permissions boundary _before_ calling the `UpdateRole` API call.  The reason for this is because a Role's policies, tags, and permissions boundary are set using a different set of AWS API calls.
+
+> **TOP TIP (1)**:
+> Note the use of `delta.DifferentAt()` in the code above.  This is the recommended best practice for determining whether a particular field at a supplied field path has diverged between the desired and latest observed resource state.
+
+#### `sdk_*_post_build_request`
+
+The `post_build_request` hooks are called AFTER the call to construct the Input shape but _before_ the API operation.
+
+Use this custom hook point if you want to add custom validation of the Input shape.
+
+Here's an example of a [`post_build_request` custom hook point](https://github.com/aws-controllers-k8s/rds-controller/blob/f97b026cdd72e222390f42a18770fb0de49c3b41/generator.yaml#L196) from the RDS controller's DBInstance resource:
+
+```yaml=
+resources:
+  DBInstance:
+    hooks:
+      sdk_update_post_build_request:
+        template_path: hooks/db_instance/sdk_update_post_build_request.go.tpl
+```
+
+and here's the [Go code in that template](https://github.com/aws-controllers-k8s/rds-controller/blob/b0d7dadfce38d293df637b24479ac0a85c764ad9/templates/hooks/db_instance/sdk_update_post_build_request.go.tpl#L0-L1):
+
+```go=
+    // ModifyDBInstance call will return ValidationError when the
+    // ModifyDBInstanceRequest contains the same DBSubnetGroupName
+    // as the DBInstance. So, if there is no delta between
+    // desired and latest for Spec.DBSubnetGroupName, exclude it
+    // from ModifyDBInstanceRequest
+    if !delta.DifferentAt("Spec.DBSubnetGroupName") {
+        input.DBSubnetGroupName = nil
+    }
+
+    // RDS will not compare diff value and accept any modify db call
+    // for below values, MonitoringInterval, CACertificateIdentifier
+    // and user master password, NetworkType
+    // hence if there is no delta between desired
+    // and latest, exclude it from ModifyDBInstanceRequest
+    if !delta.DifferentAt("Spec.MonitoringInterval") {
+        input.MonitoringInterval = nil
+    }
+    if !delta.DifferentAt("Spec.CACertificateIdentifier") {
+        input.CACertificateIdentifier = nil
+    }
+    if !delta.DifferentAt("Spec.MasterUserPassword.Name") {
+        input.MasterUserPassword = nil
+    }
+    if !delta.DifferentAt("Spec.NetworkType") {
+        input.NetworkType = nil
+    }
+
+    // For dbInstance inside dbCluster, it's either aurora or
+    // multi-az cluster case, in either case, the below params
+    // are not controlled in instance level.
+    // hence when DBClusterIdentifier appear, set them to nil
+    // Please refer to doc : https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DeleteDBInstance.html
+    if desired.ko.Spec.DBClusterIdentifier != nil {
+        input.AllocatedStorage = nil
+        input.BackupRetentionPeriod = nil
+        input.PreferredBackupWindow = nil
+        input.DeletionProtection = nil
+    }
+```
+
+As you can see, we add some custom validation and normalization of the Input shape for a DBInstance before calling the `ModifyDBInstance` API call.
+
+> **TOP TIP (2)**:
+> Note the verbose usage of nil-checks. **_This is very important_**.  `aws-sdk-go` does not have automatic protection against `nil` pointer dereferencing.  *All* fields in an `aws-sdk-go` shape are **pointer types**.  This means you should **always** do your own nil-checks when dereferencing **any** field in **any** shape.
+
+#### `sdk_*_post_request`
+
+The `post_request` hooks are called IMMEDIATELY AFTER the API operation `aws-sdk-go` client call.  These hooks will have access to a Go variable named `resp` that refers to the `aws-sdk-go` client response and a Go variable named `respErr` that refers to any error returned from the `aws-sdk-go` client call.
+
+#### `sdk_*_pre_set_output`
+
+The `pre_set_output` hooks are called BEFORE the code that processes the Outputshape (the `pkg/generate/code.SetOutput` function). These hooks will have access to a Go variable named `ko` that represents the concrete Kubernetes CR object that will be returned from the main method (`sdkFind`, `sdkCreate`, etc). This `ko` variable will have been defined immediately before the `pre_set_output` hooks as a copy of the resource that is supplied to the main method, like so:
+
+```go
+	// Merge in the information we read from the API call above to the copy of
+	// the original Kubernetes object we passed to the function
+	ko := r.ko.DeepCopy()
+```
+
+#### `sdk_*_post_set_output`
+
+The `post_set_output` hooks are called AFTER the the information from the API call is merged with the copy of the original Kubernetes object. These hooks will have access to the updated Kubernetes object `ko`, the response of the API call (and the original Kubernetes CR object if it's `sdkUpdate`).
+
+#### `sdk_file_end`
+
+The `sdk_file_end` is a generic hook point that occurs outside the scope of any specific `AWSResourceManager` method and can be used to place commonly-generated code inside the `sdk.go` file.
+
+**_NOTE(jaypipes): This is the weirdest of the hooks... need to cleanly explain this!_**
+
+### The comparison hook points
+
+#### `delta_pre_compare`
+
+The `delta_pre_compare` hooks are called _before_ the generated code that compares two resources.
+TODO
+
+#### `delta_post_compare`
+
+The `delta_post_compare` hooks are called _after_ the generated code that compares two resources.
+TODO
+### The late initialization hook points
+
+#### `late_initialize_pre_read_one`
+
+The `late_initialize_pre_read_one` hooks are called _before_ making the `readOne` call inside the `AWSResourceManager.LateInitialize()` method.
+TODO
+#### `late_initialize_post_read_one`
+
+The `late_initialize_post_read_one` hooks are called _after_ making the `readOne` call inside the `AWSResourceManager.LateInitialize()` method.
+TODO
+### The reference hook points
+
+#### `references_pre_resolve`
+
+The `references_pre_resolve` hook is called _before_ resolving the references for all Reference fields inside the `AWSResourceManager.ResolveReferences()` method.
+TODO
+#### `references_post_resolve`
+
+The `references_post_resolve` hook is called _after_ resolving the references for all Reference fields inside the `AWSResourceManager.ResolveReferences()` method.
+TODO
+### The tags hook points
+
+#### `ensure_tags`
+
+The `ensure_tags` hook provides a complete custom implementation for the `AWSResourceManager.EnsureTags()` method.
+TODO
+
+#### `convert_tags`
+
+The `convert_tags` hook provides a complete custom implementation for the `ToACKTags` and `FromACKTags` methods.
+TODO
+
+#### `convert_tags_pre_to_ack_tags`
+
+The `convert_tags_pre_to_ack_tags` hooks are called _before_ converting the K8s resource tags into ACK tags.
+TODO
+
+#### `convert_tags_post_to_ack_tags`
+
+The `convert_tags_post_to_ack_tags` hooks are called _after_ converting the K8s resource tags into ACK tags.
+TODO
+
+#### `convert_tags_pre_from_ack_tags`
+
+The `convert_tags_pre_from_ack_tags` hooks are called _before_ converting the ACK tags into K8s resource tags.
+TODO
+
+#### `convert_tags_post_from_ack_tags`
+
+The `convert_tags_post_from_ack_tags` hooks are called _after_ converting the ACK tags into K8s resource tags.
+TODO
 
 ## Attribute-based APIs
 
