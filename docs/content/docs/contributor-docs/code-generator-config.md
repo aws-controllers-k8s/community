@@ -1,3 +1,15 @@
+---
+title: "Understanding generator.yaml configuration"
+description: "Understanding the ACK generator.yaml configuration file"
+lead: ""
+draft: false
+menu:
+  docs:
+    parent: "code-generation"
+weight: 21
+toc: true
+---
+
 # Understanding generator.yaml Configuration
 
 This document describes the various configuration fields in a `generator.yaml` file that can be used to control the API inference and code generation for an ACK controller.
@@ -14,7 +26,7 @@ For the ECR controller, the `generator.yaml` file would look like this:
 
 ```yaml=
 ignore:
-  resources:
+  resource_names:
     - Repository
     - PullThroughCacheRule
 ```
@@ -89,7 +101,7 @@ To begin generating a particular resource manager, comment out the name of the r
 
 ```yaml=
 ignore:
-  resources:
+  resource_names:
 >   #- Repository
     - PullThroughCacheRule
 ```
@@ -169,7 +181,7 @@ For this example, let's go ahead and "destutter" the `RepositoryName` field. To 
 
 ```yaml=
 ignore:
-  resources:
+  resource_names:
     #- Repository
     - PullThroughCacheRule
 resources:
@@ -555,7 +567,7 @@ To fix this error, we used the `tags.ignore` configuration option in [`generator
 
 ```yaml=
 ignore:
-  resources:
+  resource_names:
     #- Repository
     #- PullThroughCacheRule
 resources:
@@ -589,7 +601,7 @@ There are resource-level and field-level configuration options that inform the c
 
 #### Resource-level configuration of identifying fields
 
-The `resource[$resource].is_arn_primary_key` configuration option is a boolean, defaulting to `false` that instructs the code generator to use the `ARN` field when calling the "ReadOne" (i.e., "Describe" or "Get") operation for that resource. When `false`, the code generator will look for "identifier fields" with field names such as `ID` or `Name` (along with variants that include the resource name as a prefix, e.g., "BucketName").
+The `resources[$resource].is_arn_primary_key` configuration option is a boolean, defaulting to `false` that instructs the code generator to use the `ARN` field when calling the "ReadOne" (i.e., "Describe" or "Get") operation for that resource. When `false`, the code generator will look for "identifier fields" with field names such as `ID` or `Name` (along with variants that include the resource name as a prefix, e.g., "BucketName").
 
 Use the `is_arn_primary_key=true` configuration option *when the resource has no other identifying fields*. An example of this is SageMaker's `ModelPackage` resource that has no `Name` or `ID` field and can only be identified via an `ARN` field:
 
@@ -623,7 +635,7 @@ An ACK controller needs to understand which HTTP exception code means "this reso
  
 For the majority of AWS service APIs, the ACK code generator can figure out which HTTP exception codes map to which HTTP fault behaviours. However, some AWS service API model definitions do not include exception metadata. Other service API models include straight-up incorrect information that does not match what the actual AWS service returns.
 
-To address these issues, you can use the `resource[$resource].exceptions` configuration block.
+To address these issues, you can use the `resources[$resource].exceptions` configuration block.
 
 An example of an API model that does not indicate the exception code representing a resource not found is DynamoDB. When calling DynamoDB's [`DescribeTable`](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html) API call with a table name that does not exist, you will get back a `400` error code instead of `404` and the exception code string is `ResourceNotFoundException`.
 
@@ -650,7 +662,7 @@ When an ACK controller gets a response back from an AWS service containing an er
 - a duplicate resource already existing
 - conflicting input values
 
-AWS service API responses having a `4XX` HTTP status code will have a corresponding exception string code (e.g., `InvalidParameterValue` or `EntityExistsException`). Use the `resource[$resource].exceptions.terminal_codes` configuration option to tell the code generation which of these exception string codes it should consider to be a *terminal state* for the resource.
+AWS service API responses having a `4XX` HTTP status code will have a corresponding exception string code (e.g., `InvalidParameterValue` or `EntityExistsException`). Use the `resources[$resource].exceptions.terminal_codes` configuration option to tell the code generation which of these exception string codes it should consider to be a *terminal state* for the resource.
 
 Here is [an example from the RDS controller](https://github.com/aws-controllers-k8s/rds-controller/blob/f97b026cdd72e222390f42a18770fb0de49c3b41/generator.yaml#L97), where we indicate the set of exception string code that will set the resource into a *terminal state*:
 
@@ -694,23 +706,126 @@ We set this `requeue_on_success_seconds` value to `60` here because the values o
 
 ## Field configuration
 
-**TODO**
+When `ack-generate` first [infers the definition of a resource][api-inference] from the AWS API model, it collects the various member fields of a resource. This documentation section discusses the configuration options that instruct the code generator about a particular resource field.
+
+[api-inference]: https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/
+
+### Manually marking a field as belonging to the resource `Status` struct
+
+During API inference, `ack-generate` automatically determines which fields belong in the custom resource definition's `Spec` or `Status` struct. Fields that can be modified by the user go in the `Spec` and fields that cannot be modified go in the `Status`.
+
+Use the `resources[$resource].fields[$field].is_read_only` configuration option to override whether a field should go in the `Status` struct.
+
+Here is an example from the Lambda controller's [generator.yaml](https://github.com/aws-controllers-k8s/lambda-controller/blob/2ee7a2969ee23c900a18f6265a272669b058b62e/generator.yaml#L52-L53) file that instructs the code generator to treat the `LayerStatuses` field as a read-only field (and thus should belong in the `Status` struct for the Function resource):
+
+```yaml
+resources:
+  Function:
+    fields:
+      LayerStatuses:
+        is_read_only: true
+```
+
+Typically, you will see this configuration option used for fields that have two different Go types representing the modifiable version of the field and the non-modifiable version of the field (as is the case for a Lambda Function's Layers information) or when you need to create a custom field.
 
 ### Marking a field as required
 
-**TODO**
+If an AWS API model file marks a particular member field as required, `ack-generate` will usually infer that the associated custom resource field is required. Sometimes, however, you may want to override whether or not a field should be required. Use the `resources[$resource].fields[$field].is_required` configuration option to do so.
+
+Here is an example from the EC2 controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/ec2-controller/blob/3b1ba705df02f9b7db1a8079ed7729af7a4f213a/generator.yaml#L206-L209) file that instructs the code generator to treat the Instance custom resource's MinCount and MaxCount fields as **not required**, even though the API model definition marks these fields as required in the Create Operation's Input shape.
+
+NOTE: The reason for this is because the EC2 controller only deals with single Instance resources, not batches of instances
+
+```yaml
+resources:
+  Instance:
+    fields:
+      MaxCount:
+        is_required: false
+      MinCount:
+        is_required: false
+```
 
 ### Controlling a field's Go type
 
-**TODO**
+Use the `resources[$resource].fields[$field].type` configuration option to override a field's Go type. You will typically use this configuration option for custom fields that are not inferred by `ack-generate` by looking at the AWS API model definition.
+
+An example of this is the Policies field for a Role custom resource definition in the IAM controller. The IAM controller uses some custom hook code to allow a Kubernetes user to specify one or more Policy ARNs for a Role simply by specifying `Spec.Policies`. To define this custom field as a list of string pointers, the IAM controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/generator.yaml#L164-L168) file uses the following:
+
+```yaml
+resources:
+  Role:
+    fields:
+      # In order to support attaching zero or more policies to a Role, we use
+      # custom update code path code that uses the Attach/DetachGroupPolicy API
+      # calls to manage the set of PolicyARNs attached to this Role.
+      Policies:
+        type: "[]*string"
+```
 
 ### Controlling how a field's values are compared
 
-**TODO**
+Use the `resources[$resource].fields[$field].compare` configuration option to control how the value of a field is compared between two resources. This configuration option has two boolean subfields, `is_ignored` and `nil_equals_zero_value` (TODO(jljaco): `nil_equals_zero_value` not yet implemented or used).
+
+#### Marking a field as ignored
+
+Use the `is_ignored` subfield to instruct the code generator to exclude this particular field from automatic value comparisons when building the `Delta` struct that compares two resources.
+
+Typically, you will want to mark a field as ignored for comparison operations because the Go type of the field does not natively support deterministic equality operations. For example, a slice of `Tag` structs where the code generator does not know how to sort the slice means that the default `reflect.DeepEqual` call will produce non-deterministic results. These types of fields you will want to mark with `compare.is_ignored: true` and include a custom comparison function using the `delta_pre_compare` hook, <a name="#delta_pre_compare_example_1"></a>as this example from the IAM controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/generator.yaml#L172-L174) does for the Role resource:
+
+```yaml
+  Role:
+    hooks:
+      delta_pre_compare:
+        code: compareTags(delta, a, b)
+    fields:
+      Tags:
+        compare:
+          is_ignored: true
+```
 
 ### Mutable vs. immutable fields
 
-**TODO**
+Use the `resources[$resource].fields[$field].is_immutable` configuration option to mark a field as immutable -- meaning the user cannot update the field after initially setting its value.
+
+A good example of the use of `is_immutable` comes from the RDS controller's DBInstance resource's [AvailabilityZone field](https://github.com/aws-controllers-k8s/rds-controller/blob/f8b5d69f822bfc809cbfa25ef7ad60b58a4af22e/generator.yaml#L209-L212):
+
+```yaml=
+resources:
+  DBInstance:
+    fields:
+      AvailabilityZone:
+        late_initialize: {}
+        is_immutable: true
+```
+
+In the case of an DBInstance resource, once the AvailabilityZone field is set by the user, it cannot be modified.
+
+By telling the code generator that this field is immutable, it will generate code in the `sdk.go` file that [checks for whether a user has modified any immutable fields](https://github.com/aws-controllers-k8s/rds-controller/blob/f8b5d69f822bfc809cbfa25ef7ad60b58a4af22e/pkg/resource/db_instance/sdk.go#L2768) and set a Condition on the resource if so:
+
+
+
+```go=
+// sdkUpdate patches the supplied resource in the backend AWS service API and
+// returns a new resource with updated fields.
+func (rm *resourceManager) sdkUpdate(
+	ctx context.Context,
+	desired *resource,
+	latest *resource,
+	delta *ackcompare.Delta,
+) (updated *resource, err error) {
+	rlog := ackrtlog.FromContext(ctx)
+	exit := rlog.Trace("rm.sdkUpdate")
+	defer func() {
+		exit(err)
+	}()
+	if immutableFieldChanges := rm.getImmutableFieldChanges(delta); len(immutableFieldChanges) > 0 {
+		msg := fmt.Sprintf("Immutable Spec fields have been modified: %s", strings.Join(immutableFieldChanges, ","))
+		return nil, ackerr.NewTerminalError(fmt.Errorf(msg))
+	}
+    ...
+}
+```
 
 ### Controlling where a field's definition comes from
 
@@ -960,12 +1075,56 @@ The `sdk_file_end` is a generic hook point that occurs outside the scope of any 
 #### `delta_pre_compare`
 
 The `delta_pre_compare` hooks are called _before_ the generated code that compares two resources.
-TODO
+
+**NOTE**: If you specified that a particular field should have its **comparison code ignored**, you almost always will want to use a `delta_pre_compare` hook to handle the comparison logic for that field. See the [example above](#delta_pre_compare_example_1) in the section on "*Marking a field as ignored*" for an illustration of this.
+
+The canonical example of when and how to use this custom code hook point is for handling the correct comparison of slices of Tag structs.
+
+By default, if the code generator does not know how to generate specialized comparison code for a Go type, it will generate a call to `reflect.DeepEqual` for this comparison. However, for some types (e.g., lists-of-structs), `reflect.DeepEqual` will return `true` *even when the only difference between two lists lies in the order by which the structs are sorted*. This sort order needs to be ignored in order that the comparison logic properly returns `false` for lists-of-structs that are identical regardless of sort order.
+
+The IAM controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/iam-controller/blob/3f60454e25ce47c050d429773aa826253bb21507/generator.yaml#L124) file contains this snippet:
+
+```yaml
+  Role:
+    hooks:
+      delta_pre_compare:
+        code: compareTags(delta, a, b)
+    fields:
+      Tags:
+        compare:
+          is_ignored: true
+```
+
+and the `delta_pre_compare` hook code is an inline Go code function call to `compareTags`. This function is [defined in the `hooks.go` file](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/pkg/resource/role/hooks.go#L188-L202) for the Role resource and looks like this:
+
+```go=
+// compareTags is a custom comparison function for comparing lists of Tag
+// structs where the order of the structs in the list is not important.
+func compareTags(
+	delta *ackcompare.Delta,
+	a *resource,
+	b *resource,
+) {
+	if len(a.ko.Spec.Tags) != len(b.ko.Spec.Tags) {
+		delta.Add("Spec.Tags", a.ko.Spec.Tags, b.ko.Spec.Tags)
+	} else if len(a.ko.Spec.Tags) > 0 {
+		if !commonutil.EqualTags(a.ko.Spec.Tags, b.ko.Spec.Tags) {
+			delta.Add("Spec.Tags", a.ko.Spec.Tags, b.ko.Spec.Tags)
+		}
+	}
+}
+```
+
+[`commonutil.EqualTags`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/pkg/util/tags.go#L22-L59) properly handles the comparison of lists of Tag structs.
 
 #### `delta_post_compare`
 
 The `delta_post_compare` hooks are called _after_ the generated code that compares two resources.
-TODO
+
+This hook is not commonly used, since the `delta_pre_compare` custom code hook point is generally used to inject custom code for comparing special fields.
+
+However, the `delta_post_compare` hook point can be useful if you want to add some code that can post-process the Delta struct *after all fields* have been compared. For example, if you wanted to output some debugging information about the comparison operations.
+
 ### The late initialization hook points
 
 #### `late_initialize_pre_read_one`
