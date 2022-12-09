@@ -704,6 +704,10 @@ resources:
 
 We set this `requeue_on_success_seconds` value to `60` here because the values of various fields in this Sagemaker resource tend to change often and we want the `Status` section of our custom resource to contain values that are fresher than the default requeue period (10 hours as of this writing).
 
+### Including additional printer columns
+
+**TODO(jljaco)**
+
 ## Field configuration
 
 When `ack-generate` first [infers the definition of a resource][api-inference] from the AWS API model, it collects the various member fields of a resource. This documentation section discusses the configuration options that instruct the code generator about a particular resource field.
@@ -771,7 +775,7 @@ Use the `resources[$resource].fields[$field].compare` configuration option to co
 
 Use the `is_ignored` subfield to instruct the code generator to exclude this particular field from automatic value comparisons when building the `Delta` struct that compares two resources.
 
-Typically, you will want to mark a field as ignored for comparison operations because the Go type of the field does not natively support deterministic equality operations. For example, a slice of `Tag` structs where the code generator does not know how to sort the slice means that the default `reflect.DeepEqual` call will produce non-deterministic results. These types of fields you will want to mark with `compare.is_ignored: true` and include a custom comparison function using the `delta_pre_compare` hook, <a name="#delta_pre_compare_example_1"></a>as this example from the IAM controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/generator.yaml#L172-L174) does for the Role resource:
+Typically, you will want to mark a field as ignored for comparison operations because the Go type of the field does not natively support deterministic equality operations. For example, a slice of `Tag` structs where the code generator does not know how to sort the slice means that the default `reflect.DeepEqual` call will produce non-deterministic results.  These types of fields you will want to mark with `compare.is_ignored: true` and include a custom comparison function using the `delta_pre_compare` hook, <a name="#delta_pre_compare_example_1"></a>as this example from the IAM controller's [`generator.yaml`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/generator.yaml#L172-L174) does for the Role resource:
 
 ```yaml
   Role:
@@ -829,23 +833,180 @@ func (rm *resourceManager) sdkUpdate(
 
 ### Controlling where a field's definition comes from
 
-**TODO**
+During API inference, `ack-generate` inspects the AWS service API model definition and discovers resource fields by looking at the Input and Output shapes of the `Create` API call for that resource.  Members of the Input shape will go in the `Spec` and members of the Output shape *that are not also in the Input shape* will go into the `Status`.
+
+This works for a majority of the field definitions, however sometimes you want to "grab a field" from a different location (i.e., other than either the Input or Output shapes of the `Create` API call).
+
+Each Resource typically also has a `ReadOne` Operation. The ACK service controller will call this `ReadOne` Operation to get the latest observed state of a particular resource in the backend AWS API service.  The service controller sets the observed Resource's `Spec` and `Status` fields from the Output shape of the `ReadOne` Operation.  The code generator is responsible for producing the Go code that performs these "setter" methods on the Resource.
+
+The way the code generator determines how to set the `Spec` or `Status` fields from the Output shape's member fields is by looking at the data type of the `Spec` or `Status` field with the same name as the Output shape's member field.
+
+Importantly, in producing this "setter" Go code the code generator **assumes that the data types (Go types) in the source (the Output shape's member field) and target (the Spec or Status field) are the same**.
+
+There are some APIs, however, where the Go type of the field in the `Create` Operation's Input shape is actually different from the same-named field in the `ReadOne` Operation's Output shape.  A good example of this is the Lambda [`CreateFunction`](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateFunction.html) API call, which has a `Code` member of its Input shape that looks like this:
+
+```json
+"Code": {
+   "ImageUri": "string",
+   "S3Bucket": "string",
+   "S3Key": "string",
+   "S3ObjectVersion": "string",
+   "ZipFile": blob
+},
+```
+
+The [`GetFunction`](https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunction.html) API call's Output shape has a same-named field called `Code` in it, but this field looks like this:
+
+```json
+"Code": {
+   "ImageUri": "string",
+   "Location": "string",
+   "RepositoryType": "string",
+   "ResolvedImageUri": "string"
+},
+```
+
+This presents a conundrum to the ACK code generator, which, as noted above, assumes the data types of same-named fields in the `Create` Operation's Input shape and `ReadOne` Operation's Output shape are the same.
+
+Use the `resources[$resource].fields[$field].from` configuration option to handle these situations.
+
+For the Lambda `Function` Resource's `Code` field, we can inform the code generator to create three new `Status` fields (read-only) from the `Location`, `RepositoryType` and `ResolvedImageUri` fields in the `Code` member of the [`ReadOne`](https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunction.html) Operation's Output shape:
+
+```yaml
+resources:
+  Function:
+    fields:
+      CodeLocation:
+        is_read_only: true
+        from:
+          operation: GetFunction
+          path: Code.Location
+      CodeRepositoryType:
+        is_read_only: true
+        from:
+          operation: GetFunction
+          path: Code.RepositoryType
+      CodeRegisteredImageURI:
+        is_read_only: true
+        from:
+          operation: GetFunction
+          path: Code.RegisteredImageUri
+```
+
+**NOTE on maintainability:** Another way of solving this particular problem would be to use a completely new custom field. However, *we only use this as a last resort*.  The reason why we prefer to use the `from:` configuration option is because this approach will adapt over time with changes to the AWS service API model, including documentation *about* those fields, whereas completely new custom fields will always need to be hand-rolled and no API documentation will be auto-generated for them.
 
 ### Annotating a field as a "Printer Column"
 
-**TODO**
+If we want to add one of a Resource's fields to the output of the `kubectl get` command, we can do so by annotating that field's configuration with a `print:` section.  An example of this is in the EC2 controller's [`ElasticIPAddress` Resource](https://github.com/aws-controllers-k8s/ec2-controller/blob/b161bb67b0e5d8b24588676ae29d0f1e587bd42a/generator.yaml#L244), for which we would like to include the `PublicIP` field in the output of `kubectl get`:
+
+```yaml=
+resources:
+  ...
+  ElasticIPAddress:
+    ...
+    fields:
+      ...
+>     PublicIp:
+>       print:
+>         name: PUBLIC-IP
+```
+Including this in the field's configuration will cause the code generator to produce `kubebuilder` markers in the appropriate place in its generated code, which will result in the field being included in the `kubectl get` output.
+
+**NOTE** this configuration is used to include printer columns in the output at the level of individual fields.  One can also create [additional printer columns](#including-additional-printer-columns) at the level of Resources.
 
 ### Controlling field "late initialization"
 
-**TODO**
+[Late initialization of a field](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#controller-assigned-defaults-aka-late-initialization) is a Kubernetes Resource Model concept that allows for a nil-valued field to be defaulted to some value *after the resource has been successfully created*.  This is akin to a database table field's "default value".
+
+Late initialized fields are slightly awkward for an ACK controller to handle, primarily because late initialized fields end up being erroneously identified as having different values in the [Delta comparisons](#the-comparison-hook-points).  The desired state of the field is `nil` but the server-side default value of that field is some non-`nil` value.
+
+ACK's code generator can output Go code that handles this server-side defaulting behaviour (we call this "late initialization"). To instruct the code generator to generate late initialization code for a field, use the `resources[$resource].fields[$field].late_initialize` configuration option.
+
+A good example of late initialization can be found in the RDS controller. For `DBInstance` resources, if the user does not specify an availability zone when creating the `DBInstance`, RDS chooses one for the user.  To ensure that the RDS controller understands that the `AvailabilityZone` field is set to a default value after creation, the [following configuration](https://github.com/aws-controllers-k8s/rds-controller/blob/f97b026cdd72e222390f42a18770fb0de49c3b41/generator.yaml#L211) is set in the `generator.yaml`:
+
+```yaml=
+resources:
+  DBInstance:
+    fields:
+      AvailabilityZone:
+>        late_initialize: {}
+```
+
+**NOTE**: the `late_initialize:` configuration option is currently a struct with a couple member fields that are not yet implemented (as of Dec 2022), which is why you need to use the `{}` notation.
 
 ### Informing the code generator that a field refers to another Resource
 
-**TODO**
+One custom resource can refer to another custom resource using something called Resource References. The Go code that handles the validation and resolution of Resource References is generated by `ack-generate`.
+
+Use the `resources[$resource].fields[$field].references` configuration option to inform the code generator what *kind* of Resource a field references and which *field* within that Resource is the identifier field.
+
+Here is an example from the API Gateway v2 controller that shows an [Integration Resource](https://github.com/aws-controllers-k8s/apigatewayv2-controller/blob/f94a6ba88adda9790a25540729c89a84f7645ccb/generator.yaml#L63) referencing an API and a VPCLink Resource:
+
+```yaml=
+resources:
+  Integration:
+    fields:
+      ApiId:
+        references:
+          resource: API
+          path: Status.APIID
+      ConnectionId:
+        references:
+          resource: VPCLink
+          path: Status.VPCLinkID
+```
+
+After regenerating the controller, the Integration resource will have two *new* fields, one called `APIRef` and another called `ConnectionRef`. The [Go type of these fields](https://github.com/aws-controllers-k8s/apigatewayv2-controller/blob/5e346c359c25cf29be93b3f3bca30c59cc21a9bf/apis/v1alpha1/integration.go#L26-L31) will be a pointer to an `AWSResourceReferenceWrapper`:
+
+```go=
+type IntegrationSpec struct {
+	APIID  *string                                  `json:"apiID,omitempty"`
+	APIRef *ackv1alpha1.AWSResourceReferenceWrapper `json:"apiRef,omitempty"`
+
+	ConnectionID  *string                                  `json:"connectionID,omitempty"`
+	ConnectionRef *ackv1alpha1.AWSResourceReferenceWrapper `json:"connectionRef,omitempty"`
+    ...
+}
+```
+
+**NOTE**: The generated name of the reference fields will always be the field name, stripped of any "Id", "Name", or "ARN" suffix, plus "Ref".
+
+In the above example, both the API and VPCLink Resources are managed by the API Gateway v2 controller. It is possible to reference Resources that are managed by a *different* ACK controller by specifying the `resources[$resource].fields[$field].references.service_name` configuration option, as shown in this example from the RDS controller, which has the [DBCluster resource reference the KMS controller's Key resource](https://github.com/aws-controllers-k8s/rds-controller/blob/f8b5d69f822bfc809cbfa25ef7ad60b58a4af22e/generator.yaml#L111-L115):
+
+```yaml=
+resources:
+  DBCluster:
+    fields:
+      KmsKeyId:
+        references:
+          resource: Key
+          service_name: kms
+          path: Status.ACKResourceMetadata.ARN
+```
 
 ### Adding custom fields
 
-**TODO**
+`resources[$resource].fields[$field].type` *overrides* the inferred Go type of a field. This is required for custom fields that are not inferred (either as a `Create` Input/Output shape or via the `SourceFieldConfig` attribute).
+
+As an example, assume you have a `Role` Resource where you want to add a custom `Spec` field called `Policies` that is a slice of string pointers.
+
+The `generator.yaml` file for the IAM controller [looks like this](https://github.com/aws-controllers-k8s/iam-controller/blob/3f60454e25ce47c050d429773aa826253bb21507/generator.yaml#L172):
+
+```yaml=
+resources:
+  Role:
+    fields:
+      Policies:
+        type: []*string
+```
+
+There is no `Policies` field in either the `CreateRole` Input or Output shapes, therefore in order to create a new custom field, we simply add a `Policies` object in the `fields` configuration mapping and tell the code generator what Go type this new field will have -- in this case, `[]*string`.
+
+**NOTE on maintainability**: Use custom fields as a last resort! When you use custom fields, you will not get the benefit of auto-generated documentation for your field like you will with auto-inferred or `from:`-configured fields. **You will be required to use custom code hooks to populate and set any custom fields**.
+
+**NOTE: (DEPRECATED)** This can also be accomplished by using [`custom_field:`](https://github.com/aws-controllers-k8s/ec2-controller/blob/b161bb67b0e5d8b24588676ae29d0f1e587bd42a/generator.yaml#L361), however we intend to move away from this approach.
+
+[Relevant `TODO` for combining CustomShape stuff into `type:` override](https://github.com/aws-controllers-k8s/ec2-controller/blob/b161bb67b0e5d8b24588676ae29d0f1e587bd42a/generator.yaml#L361)
 
 ## Custom code hook points
 
@@ -868,7 +1029,7 @@ For all 4 of these main ResourceManager methods, there is a consistent code path
 2. **Pass the SDK Input shape** to the `aws-sdk-go` API method.
     - For `sdkFind`, this API method will be *either* the `ReadOne` operation for the resource (e.g., ECR's `GetRepository` or RDS's `DescribeDBInstance`) or the `ReadMany` operation (e.g., S3's `ListBuckets` or EC2's `DescribeInstances`).
     - For the `sdkCreate`, `sdkUpdate` and `sdkDelete` methods, the API operation will correspond to the `Create`, `Update` and `Delete` operation types.
-4. **Process the error/return code** from the API call. If there is an error that appears in the list of Terminal codes (**TODO link to docs**), then the custom resource will have a Terminal condition applied to it, and a Terminal error is returned to the reconciler. The reconciler will subsequently add a `ACK.Terminal` Condition to the custom resource.
+4. **Process the error/return code** from the API call. If there is an error that appears in the list of Terminal codes (**TODO(jljaco) link to docs**), then the custom resource will have a Terminal condition applied to it, and a Terminal error is returned to the reconciler. The reconciler will subsequently add a `ACK.Terminal` Condition to the custom resource.
 5. **Process the Output shape** from the API call.  If no error was returned from the API call, the Output shape representing the HTTP response content will then be processed, resulting in fields in either the `Spec` or `Status` of the custom resource being set to the value of matching fields on the Output shape.  This is called the "**Set Resource**" stage and corresponds to code generator functions in code-generator's [`pkg/generate/code/set_resource.go`](https://github.com/aws-controllers-k8s/code-generator/blob/main/pkg/generate/code/set_resource.go).
 
 Along with the above 4 main ResourceManager methods, there are a number of generated helper methods and functions that will:
