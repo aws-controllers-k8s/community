@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.8
 
 import argparse
+import collections
 import os
 import pathlib
 import pprint
@@ -22,6 +23,7 @@ DisplayNameMap = Mapping[str, str]
 
 @dataclass
 class TemplateArgs:
+    summary_table: str # Rendered service summary Markdown table
     services_table: str # Rendered service overview Markdown table
     service_display_names: DisplayNameMap # Maps from service package name to display name
     controllers: Mapping[str, controller.Controller] # Maps from service package name to controller
@@ -74,6 +76,33 @@ def build_controller_table(controllers: List[controller.Controller], display_nam
         ])
     return t
 
+
+def build_summary_table(controllers: List[controller.Controller]):
+    t = prettytable.PrettyTable()
+    t.set_style(prettytable.MARKDOWN)
+
+    counts = collections.defaultdict(int)
+
+    t.field_names = [
+        "Maintenance Phase",
+        "# Services",
+    ]
+    t.align = "l"
+    t.align["# Services"] = "r"
+    for key, c in controllers.items():
+        maint_phase = f"`{c.maintenance_phase}`"
+        if maint_phase == "NONE":
+            continue
+        counts[maint_phase] += 1
+
+    for maint_phase, count in counts.items():
+        t.add_row([
+            maint_phase,
+            count,
+        ])
+    return t
+
+
 def create_display_names(controllers) -> DisplayNameMap:
     names = {}
 
@@ -85,6 +114,20 @@ def create_display_names(controllers) -> DisplayNameMap:
             names[key] = proper_name
             continue
 
+        # Some full names start with "AWS" but not "AWS " or "Amazon" but not
+        # "Amazon " (e.g. "AmazonApiGatewayV2"). Here, we handle these cases to
+        # ensure that the proper name is always "AWS" or "Amazon", a space, and
+        # the abbreviated or full name stripped of "AWS" or "Amazon"
+        # prefixes...
+        if proper_name.startswith("AWS"):
+            proper_name = proper_name[4:]
+            names[key] = f"AWS {proper_name}"
+            continue
+
+        if proper_name.startswith("Amazon"):
+            proper_name = proper_name[7:]
+
+        # Default service names' proper name to "Amazon {service}"
         names[key] = f"Amazon {proper_name}"
 
     return names
@@ -114,9 +157,11 @@ def main(
 
     display_names = create_display_names(controllers)
 
+    summary_table = build_summary_table(active_controllers)
     table = build_controller_table(active_controllers, display_names)
 
     args = TemplateArgs(
+        summary_table=summary_table,
         services_table=table,
         service_display_names=display_names,
         controllers=active_controllers
