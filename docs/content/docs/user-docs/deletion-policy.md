@@ -62,7 +62,7 @@ metadata:
  name: retain-s3-namespace
 ```
 
-## For a single ACK resource
+### For a single ACK resource
 
 If you want to just retain a single specific resource, you can override the
 default behavior by setting an annotation directly onto the resource.
