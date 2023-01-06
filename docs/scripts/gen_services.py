@@ -15,7 +15,7 @@ from jinja2.loaders import FileSystemLoader
 from pathlib import Path
 from typing import List, Mapping, NewType
 
-from ackdiscover import awssdkgo, controller, ecrpublic, printer, service, project_stages
+from ackdiscover import awssdkgo, controller, ecrpublic, printer, service, project_stages, maintenance_phases
 
 DEFAULT_CACHE_DIR = os.path.join(pathlib.Path.home(), ".cache", "ack-discover")
 
@@ -90,9 +90,9 @@ def build_summary_table(controllers: List[controller.Controller]):
     t.align = "l"
     t.align["# Services"] = "r"
     for key, c in controllers.items():
-        maint_phase = f"`{c.maintenance_phase}`"
-        if maint_phase == "NONE":
+        if c.maintenance_phase == maintenance_phases.NONE:
             continue
+        maint_phase = f"`{c.maintenance_phase}`"
         counts[maint_phase] += 1
 
     for maint_phase, count in counts.items():
