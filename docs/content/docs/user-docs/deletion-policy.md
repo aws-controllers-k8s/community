@@ -1,5 +1,5 @@
 ---
-title: "Retain AWS Resources after Deletion"
+title: "Retain AWS Resources after CR Deletion"
 description: "Using the ACK deletion policy configuration"
 lead: "Using the ACK deletion policy configuration"
 draft: false
@@ -43,6 +43,8 @@ Each of these configuration options supports the following values:
 
 To set a controller-wide deletion policy, which will apply to all ACK resources
 owned by the ACK controller, you can set the `deletionPolicy` Helm chart value.
+This Helm chart value accepts the same values as the deletion policy
+configuration described above.
 
 For example, to retain all AWS resources when installing the Helm chart through
 the Helm CLI: `helm install ... --set=deletionPolicy=retain`
@@ -81,4 +83,4 @@ spec:
 
 *Note: The key for annotating a single resource is not the same as the key when
 annotating a namespace. You do not need to provide the name of the service as a
-suffix for a single resource.*
+prefix for a single resource.*
