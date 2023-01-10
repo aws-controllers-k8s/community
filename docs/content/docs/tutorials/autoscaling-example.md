@@ -142,7 +142,7 @@ Get the Application Auto Scaling Helm chart and make it available on the client 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=applicationautoscaling
-export RELEASE_VERSION=v0.2.0
+export RELEASE_VERSION=v0.2.15
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
