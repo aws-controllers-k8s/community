@@ -5,8 +5,8 @@ lead: ""
 draft: false
 menu:
   docs:
-    parent: "code-generation"
-weight: 21
+    parent: "contributor"
+weight: 55
 toc: true
 ---
 
