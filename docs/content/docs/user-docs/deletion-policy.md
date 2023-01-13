@@ -25,12 +25,12 @@ controller without deleting the resource altogether.
 
 All ACK controllers support "deletion policy" configuration, which lets the
 controller know which resources should be deleted from AWS (or left untouched)
-before deleting their K8s resources. This configuration can be defined at any of
-the following levels (with increasing order of precedence):
-- Within the controller command-line using the `--deletion-policy` argument
+before deleting their K8s resources. The controller looks for deletion policy configuration
+in the following order:
+- Within an ACK resource annotation as `services.k8s.aws/deletion-policy`
 - Within a `Namespace` annotation as
   `{service}.services.k8s.aws/deletion-policy`
-- Within an ACK resource annotation as `services.k8s.aws/deletion-policy`
+- Within the controller command-line using the `--deletion-policy` argument
 
 Each of these configuration options supports the following values:
 - `delete` - **(Default)** Deletes the resource from AWS before deleting it from
