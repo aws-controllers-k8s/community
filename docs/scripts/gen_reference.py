@@ -236,6 +236,7 @@ def main(
 
     overviews.append(generate_runtime_resources(src_parent))
 
+    service_controller_overviews: List[ServiceOverview] = []
     for controller_repo in src_parent.glob("*-controller"):
         if not controller_repo.is_dir() or \
             controller_repo.stem.startswith("template"):
@@ -260,7 +261,12 @@ def main(
         resources = write_service_pages(service, service_bases_path, page_output_path)
         overview = ServiceOverview(service, resources, metadata)
 
-        overviews.append(overview)
+        service_controller_overviews.append(overview)
+
+    # Ensure they are sorted by short name for the table of contents
+    service_controller_overviews.sort(key=lambda x: x.service_metadata.service.short_name)
+
+    overviews.extend(service_controller_overviews)
 
     write_overview_page(overviews, data_output_path)
     return 0
