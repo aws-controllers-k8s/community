@@ -28,8 +28,8 @@ Please ensure that you have [properly installed Go][install-go].
 
 [install-go]: https://golang.org/doc/install
 
-{{% hint title="Go version" %}}
-We recommend to use a Go version of `1.15` or above for development.
+{{% hint title="Go version" type="info" %}}
+Our repositories require a Go version of `1.19` or above for development.
 {{% /hint %}}
 
 ## Fork upstream repositories
