@@ -61,7 +61,7 @@ def build_controller_table(controllers: List[controller.Controller], display_nam
 
         doc_anchor_link = display_name.lower().replace(" ", "-")
         service_name = f"{display_name_split[0]} [{display_name_split[1]}](#{doc_anchor_link})"
-        
+
         proj_stage = f"`{c.project_stage}`"
         maint_phase = f"`{c.maintenance_phase}`"
         con_version = "n/a"
@@ -125,7 +125,7 @@ def create_display_names(controllers) -> DisplayNameMap:
             continue
 
         if proper_name.startswith("Amazon"):
-            proper_name = proper_name[7:]
+            proper_name = proper_name[6:]
 
         # Default service names' proper name to "Amazon {service}"
         names[key] = f"Amazon {proper_name}"
