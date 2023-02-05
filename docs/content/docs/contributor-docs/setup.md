@@ -73,6 +73,15 @@ Make sure in your `$GOPATH/src` that you have directories for the
 mkdir -p $GOPATH/src/github.com/aws-controllers-k8s
 ```
 
+{{% hint type="info" title="Contributing to ACK core repositories" %}} 
+If you plan to make changes to one of the ACK core repositories e.g.,
+`code-generator `, you might see errors in your IDE, such as `Unresolved Type
+"Operation"`. This is because some packages, like
+`github.com/aws/aws-sdk-go/private/model/api` use Go build tags which some IDEs
+do not enable by default. For Goland, build tag documentation can be found
+[here](https://www.jetbrains.com/help/go/configuring-build-constraints-and-vendoring.html#configure-build-constraints-for-your-project).
+{{% /hint %}}
+
 ## `git clone` forked repositories and add upstream remote
 
 For each of your forked repositories, you will `git clone` the repository into
