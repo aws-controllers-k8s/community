@@ -169,7 +169,7 @@ pkg/
 
 Note the new files under `pkg/resource/repository/`, `apis/v1alpha1/repository.go` and `config/crd/bases/`.  These files represent the Go type for the generated `Repository` custom resource definition (CRD), the resource manager package and the YAML representation for the CRD, respectively.
 
-## Renaming things
+## `renames`: Renaming things
 
 Why might we want to rename fields or resources? Generally, there are two reasons for this:
  - reducing stutter in the input shape
@@ -515,7 +515,7 @@ The second reason we might need to rename a field is when the same field goes by
 [**_TODO_** this needs a concrete example of renaming with both `input_fields` and `output_fields`]
 
 
-## Ignoring things
+## `ignore`: Ignoring things
 
 Sometimes you want to instruct the code generator to simply ignore a particular API Operation, or a particular field in an API Shape.  See [here](https://github.com/aws-controllers-k8s/s3-controller/pull/89) for a real world motivating example of such a need.
 
@@ -544,7 +544,7 @@ When you specify a field path in `ignore.field_paths`, the code generator will s
 
 *Most* resources in AWS service APIs can have one or more tags associated with them.  Tags are *typically* simple string key/value pairs; however, the representation of tags across different AWS service APIs is not consistent.  Some APIs use a `map[string]string` to represent tags. Others use a `[]struct{}` where the struct has a `Key` and a `Value` field. Others use more complex structures.
 
-### Telling ACK code generator that a resource does not support tags
+### `tags.ignore`: Telling ACK code generator that a resource does not support tags
 
 There are some API resources that *do not* support tags at all, and we want a way to skip the generation of code that handles tagging for those resources. By default, for all resources, ACK generates some code that handles conversion between the ACK standard representation of tags (i.e., `map[string]string`) and the AWS service-specific representation of tags (e.g., `[]struct{}`, etc).
 
@@ -593,13 +593,13 @@ resources:
 
 ## Resource configuration
 
-### Understanding resource identifying fields
+### Understanding resource-identifying fields
 
 All resources in the AWS world have one or more fields that serve as primary key identifiers. Most people are familiar with the `ARN` fields that most modern AWS resources have. However, the `ARN` field is not the only field that can serve as a primary key for a resource. ACK's code generator reads an API model file and attempts to determine which fields on a resource can be used to uniquely identify that resource. Sometimes, though, the code generator needs to be instructed which field or fields comprise this primary key.  [See below](#Field-level-configuration-of-identifying-fields) for an example from ECR's `PullThroughCacheRule`.
 
 There are resource-level and field-level configuration options that inform the code generator about identifying fields.
 
-#### Resource-level configuration of identifying fields
+#### `is_arn_primary_key`: Resource-level configuration of identifying fields
 
 The `resources[$resource].is_arn_primary_key` configuration option is a boolean, defaulting to `false` that instructs the code generator to use the `ARN` field when calling the "ReadOne" (i.e., "Describe" or "Get") operation for that resource. When `false`, the code generator will look for "identifier fields" with field names such as `ID` or `Name` (along with variants that include the resource name as a prefix, e.g., "BucketName").
 
@@ -613,7 +613,7 @@ resources:
 
 *[NOTE(jaypipes): Probably want to reevaluate this particular config option and use the field-centric is_primary_key option instead...]*
 
-#### Field-level configuration of identifying fields
+#### `is_primary_key`: Field-level configuration of identifying fields
 
 Sometimes a resource's primary key field is non-obvious (like `Name` or `ID`). Use the `resources[$resource]fields[$field].is_primary_key` configuration option to tell the code generator about these fields.
 
@@ -629,7 +629,7 @@ resources:
 
 *[NOTE(jljaco):  If we discard `is_arn_primary_key` in favor of only `is_primary_key`, this sub-section should be moved into the `Field Configuration` section]*
 
-### Correcting exception codes
+### `exceptions`: Correcting exception codes
 
 An ACK controller needs to understand which HTTP exception code means "this resource was not found"; otherwise, the controller's logic that determines whether to create or update a resource falls apart.
  
@@ -652,7 +652,7 @@ resources:
 
 This configuration instructs the code generator to [produce code](https://github.com/aws-controllers-k8s/dynamodb-controller/blob/eb1405d3d10050c8a866dc0e2dc0ec72c8213886/pkg/resource/table/sdk.go#L79-L84) that looks for `ResourceNotFoundException` in the error response of the API call and interprets it properly as a `404` or "resource not found" error.
 
-#### Specifying terminal codes to indicate terminal state
+#### `terminal_codes`: Specifying terminal codes to indicate terminal state
 
 An `ACK.Terminal` `Condition` is placed on a custom resource (inside of its `Status`) when the controller realizes that, without the user changing the resource's `Spec`, the resource will not be able to be reconciled (i.e., the desired state will never match the actual state).
 
@@ -681,7 +681,7 @@ resources:
         - StorageQuotaExceeded
 ```
 
-### Controlling reconciliation and requeue logic
+### `reconcile`: Controlling reconciliation and requeue logic
 
 By default, an ACK controller will requeue a resource for future reconciliation only when the resource is in some transitional state.
 
@@ -714,7 +714,7 @@ When `ack-generate` first [infers the definition of a resource][api-inference] f
 
 [api-inference]: https://aws-controllers-k8s.github.io/community/docs/contributor-docs/api-inference/
 
-### Manually marking a field as belonging to the resource `Status` struct
+### `is_read_only`: Manually marking a field as belonging to the resource `Status` struct
 
 During API inference, `ack-generate` automatically determines which fields belong in the custom resource definition's `Spec` or `Status` struct. Fields that can be modified by the user go in the `Spec` and fields that cannot be modified go in the `Status`.
 
@@ -732,7 +732,7 @@ resources:
 
 Typically, you will see this configuration option used for fields that have two different Go types representing the modifiable version of the field and the non-modifiable version of the field (as is the case for a Lambda Function's Layers information) or when you need to create a custom field.
 
-### Marking a field as required
+### `is_required`: Marking a field as required
 
 If an AWS API model file marks a particular member field as required, `ack-generate` will usually infer that the associated custom resource field is required. Sometimes, however, you may want to override whether or not a field should be required. Use the `resources[$resource].fields[$field].is_required` configuration option to do so.
 
@@ -750,7 +750,7 @@ resources:
         is_required: false
 ```
 
-### Controlling a field's Go type
+### `type`: controlling a field's Go type
 
 Use the `resources[$resource].fields[$field].type` configuration option to override a field's Go type. You will typically use this configuration option for custom fields that are not inferred by `ack-generate` by looking at the AWS API model definition.
 
@@ -767,11 +767,11 @@ resources:
         type: "[]*string"
 ```
 
-### Controlling how a field's values are compared
+### `compare`: Controlling how a field's values are compared
 
 Use the `resources[$resource].fields[$field].compare` configuration option to control how the value of a field is compared between two resources. This configuration option has two boolean subfields, `is_ignored` and `nil_equals_zero_value` (TODO(jljaco): `nil_equals_zero_value` not yet implemented or used).
 
-#### Marking a field as ignored
+#### `is_ignored`: marking a field as ignored
 
 Use the `is_ignored` subfield to instruct the code generator to exclude this particular field from automatic value comparisons when building the `Delta` struct that compares two resources.
 
@@ -788,7 +788,7 @@ Typically, you will want to mark a field as ignored for comparison operations be
           is_ignored: true
 ```
 
-### Mutable vs. immutable fields
+### `is_immutable`: Mutable vs. immutable fields
 
 Use the `resources[$resource].fields[$field].is_immutable` configuration option to mark a field as immutable -- meaning the user cannot update the field after initially setting its value.
 
@@ -803,7 +803,7 @@ resources:
         is_immutable: true
 ```
 
-In the case of an DBInstance resource, once the AvailabilityZone field is set by the user, it cannot be modified.
+In the case of a DBInstance resource, once the AvailabilityZone field is set by the user, it cannot be modified.
 
 By telling the code generator that this field is immutable, it will generate code in the `sdk.go` file that [checks for whether a user has modified any immutable fields](https://github.com/aws-controllers-k8s/rds-controller/blob/f8b5d69f822bfc809cbfa25ef7ad60b58a4af22e/pkg/resource/db_instance/sdk.go#L2768) and set a Condition on the resource if so:
 
@@ -831,7 +831,7 @@ func (rm *resourceManager) sdkUpdate(
 }
 ```
 
-### Controlling where a field's definition comes from
+### `from`: Controlling the source of a field's definition
 
 During API inference, `ack-generate` inspects the AWS service API model definition and discovers resource fields by looking at the Input and Output shapes of the `Create` API call for that resource.  Members of the Input shape will go in the `Spec` and members of the Output shape *that are not also in the Input shape* will go into the `Status`.
 
@@ -895,7 +895,7 @@ resources:
 
 **NOTE on maintainability:** Another way of solving this particular problem would be to use a completely new custom field. However, *we only use this as a last resort*.  The reason why we prefer to use the `from:` configuration option is because this approach will adapt over time with changes to the AWS service API model, including documentation *about* those fields, whereas completely new custom fields will always need to be hand-rolled and no API documentation will be auto-generated for them.
 
-### Annotating a field as a "Printer Column"
+### `print`: Controlling a field's output as printer columns in `kubectl get`
 
 If we want to add one of a Resource's fields to the output of the `kubectl get` command, we can do so by annotating that field's configuration with a `print:` section.  An example of this is in the EC2 controller's [`ElasticIPAddress` Resource](https://github.com/aws-controllers-k8s/ec2-controller/blob/b161bb67b0e5d8b24588676ae29d0f1e587bd42a/generator.yaml#L244), for which we would like to include the `PublicIP` field in the output of `kubectl get`:
 
@@ -914,7 +914,7 @@ Including this in the field's configuration will cause the code generator to pro
 
 **NOTE** this configuration is used to include printer columns in the output at the level of individual fields.  One can also create [additional printer columns](#including-additional-printer-columns) at the level of Resources.
 
-### Controlling field "late initialization"
+### `late_initialize`: Late initialization of a field
 
 [Late initialization of a field](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#controller-assigned-defaults-aka-late-initialization) is a Kubernetes Resource Model concept that allows for a nil-valued field to be defaulted to some value *after the resource has been successfully created*.  This is akin to a database table field's "default value".
 
@@ -934,7 +934,7 @@ resources:
 
 **NOTE**: the `late_initialize:` configuration option is currently a struct with a couple member fields that are not yet implemented (as of Dec 2022), which is why you need to use the `{}` notation.
 
-### Informing the code generator that a field refers to another Resource
+### `references`: Making a field refer to another Resource
 
 One custom resource can refer to another custom resource using something called Resource References. The Go code that handles the validation and resolution of Resource References is generated by `ack-generate`.
 
@@ -1036,7 +1036,7 @@ Along with the above 4 main ResourceManager methods, there are a number of gener
 * create the SDK input shape used when making HTTP requests to AWS APIs
 * process responses from those AWS APIs
 
-#### `sdk_*_pre_build_request`
+#### `sdk_*_pre_build_request`: before validation and construction of Input shape
 
 The `sdk_*_pre_build_request` hooks are called _before_ the call to construct the Input shape that is used in the API operation and therefore _before_ any call to validate that Input shape.
 
@@ -1143,7 +1143,7 @@ What you can see above is the use of the `pre_build_request` hook point to updat
 > **TOP TIP (1)**:
 > Note the use of `delta.DifferentAt()` in the code above.  This is the recommended best practice for determining whether a particular field at a supplied field path has diverged between the desired and latest observed resource state.
 
-#### `sdk_*_post_build_request`
+#### `sdk_*_post_build_request`: after construction of Input shape
 
 The `post_build_request` hooks are called AFTER the call to construct the Input shape but _before_ the API operation.
 
@@ -1207,13 +1207,13 @@ As you can see, we add some custom validation and normalization of the Input sha
 > **TOP TIP (2)**:
 > Note the verbose usage of nil-checks. **_This is very important_**.  `aws-sdk-go` does not have automatic protection against `nil` pointer dereferencing.  *All* fields in an `aws-sdk-go` shape are **pointer types**.  This means you should **always** do your own nil-checks when dereferencing **any** field in **any** shape.
 
-#### `sdk_*_post_request`
+#### `sdk_*_post_request`: after the API operation
 
 The `post_request` hooks are called IMMEDIATELY AFTER the API operation `aws-sdk-go` client call.  These hooks will have access to a Go variable named `resp` that refers to the `aws-sdk-go` client response and a Go variable named `respErr` that refers to any error returned from the `aws-sdk-go` client call.
 
-#### `sdk_*_pre_set_output`
+#### `sdk_*_pre_set_output`: before validation of Output shape
 
-The `pre_set_output` hooks are called BEFORE the code that processes the Outputshape (the `pkg/generate/code.SetOutput` function). These hooks will have access to a Go variable named `ko` that represents the concrete Kubernetes CR object that will be returned from the main method (`sdkFind`, `sdkCreate`, etc). This `ko` variable will have been defined immediately before the `pre_set_output` hooks as a copy of the resource that is supplied to the main method, like so:
+The `pre_set_output` hooks are called BEFORE the code that processes the Output shape (the `pkg/generate/code.SetOutput` function). These hooks will have access to a Go variable named `ko` that represents the concrete Kubernetes CR object that will be returned from the main method (`sdkFind`, `sdkCreate`, etc). This `ko` variable will have been defined immediately before the `pre_set_output` hooks as a copy of the resource that is supplied to the main method, like so:
 
 ```go
 	// Merge in the information we read from the API call above to the copy of
@@ -1221,11 +1221,11 @@ The `pre_set_output` hooks are called BEFORE the code that processes the Outputs
 	ko := r.ko.DeepCopy()
 ```
 
-#### `sdk_*_post_set_output`
+#### `sdk_*_post_set_output`: after merging data from API response & k8s object
 
 The `post_set_output` hooks are called AFTER the the information from the API call is merged with the copy of the original Kubernetes object. These hooks will have access to the updated Kubernetes object `ko`, the response of the API call (and the original Kubernetes CR object if it's `sdkUpdate`).
 
-#### `sdk_file_end`
+#### `sdk_file_end`:  miscellaneous catch-all
 
 The `sdk_file_end` is a generic hook point that occurs outside the scope of any specific `AWSResourceManager` method and can be used to place commonly-generated code inside the `sdk.go` file.
 
@@ -1233,7 +1233,7 @@ The `sdk_file_end` is a generic hook point that occurs outside the scope of any 
 
 ### The comparison hook points
 
-#### `delta_pre_compare`
+#### `delta_pre_compare`: before comparing resources
 
 The `delta_pre_compare` hooks are called _before_ the generated code that compares two resources.
 
@@ -1278,7 +1278,7 @@ func compareTags(
 
 [`commonutil.EqualTags`](https://github.com/aws-controllers-k8s/iam-controller/blob/b6a62ca48c1aea7ab78e62fb3ad6845335c1f1c2/pkg/util/tags.go#L22-L59) properly handles the comparison of lists of Tag structs.
 
-#### `delta_post_compare`
+#### `delta_post_compare`: after comparing resources
 
 The `delta_post_compare` hooks are called _after_ the generated code that compares two resources.
 
@@ -1288,52 +1288,52 @@ However, the `delta_post_compare` hook point can be useful if you want to add so
 
 ### The late initialization hook points
 
-#### `late_initialize_pre_read_one`
+#### `late_initialize_pre_read_one`: before the `readOne`
 
 The `late_initialize_pre_read_one` hooks are called _before_ making the `readOne` call inside the `AWSResourceManager.LateInitialize()` method.
 TODO
-#### `late_initialize_post_read_one`
+#### `late_initialize_post_read_one`: after the `readOne`
 
 The `late_initialize_post_read_one` hooks are called _after_ making the `readOne` call inside the `AWSResourceManager.LateInitialize()` method.
 TODO
 ### The reference hook points
 
-#### `references_pre_resolve`
+#### `references_pre_resolve`: before resolving references
 
 The `references_pre_resolve` hook is called _before_ resolving the references for all Reference fields inside the `AWSResourceManager.ResolveReferences()` method.
 TODO
-#### `references_post_resolve`
+#### `references_post_resolve`: after resolving references
 
 The `references_post_resolve` hook is called _after_ resolving the references for all Reference fields inside the `AWSResourceManager.ResolveReferences()` method.
 TODO
 ### The tags hook points
 
-#### `ensure_tags`
+#### `ensure_tags`: custom `EnsureTags` method
 
 The `ensure_tags` hook provides a complete custom implementation for the `AWSResourceManager.EnsureTags()` method.
 TODO
 
-#### `convert_tags`
+#### `convert_tags`: custom `ToACKTags` and `FromACKTags` methods
 
 The `convert_tags` hook provides a complete custom implementation for the `ToACKTags` and `FromACKTags` methods.
 TODO
 
-#### `convert_tags_pre_to_ack_tags`
+#### `convert_tags_pre_to_ack_tags`: before converting k8s tags to ACK tags
 
 The `convert_tags_pre_to_ack_tags` hooks are called _before_ converting the K8s resource tags into ACK tags.
 TODO
 
-#### `convert_tags_post_to_ack_tags`
+#### `convert_tags_post_to_ack_tags`: after converting k8s tags to ACK tags
 
 The `convert_tags_post_to_ack_tags` hooks are called _after_ converting the K8s resource tags into ACK tags.
 TODO
 
-#### `convert_tags_pre_from_ack_tags`
+#### `convert_tags_pre_from_ack_tags`: before converting ACK tags to k8s tags
 
 The `convert_tags_pre_from_ack_tags` hooks are called _before_ converting the ACK tags into K8s resource tags.
 TODO
 
-#### `convert_tags_post_from_ack_tags`
+#### `convert_tags_post_from_ack_tags`: after converting ACK tags to k8s tags
 
 The `convert_tags_post_from_ack_tags` hooks are called _after_ converting the ACK tags into K8s resource tags.
 TODO
