@@ -110,8 +110,6 @@ Everyone is welcome to participate.
   * Notes from each meeting are captured here.
 * **When:** every Thursday at 9:00-9:30AM Pacific Time
 * **Where:** [Zoom meeting][zoom-meeting-link]
-* **Past Meeting Recordings:** TBD
-  * Meetings are recorded and posted to Youtube.
 
 [zoom-meeting-link]: https://zoom.us/j/95069096871?pwd=OXc3eWk1NVluUlozcVg3b1VtdGl5Zz09
 [meeting-notes]: https://docs.google.com/document/d/1G9Nl-vBXuOBRoOt-9N-fQMpY05V8fCP8vPg94iTZ9gA
