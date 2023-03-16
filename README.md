@@ -108,11 +108,12 @@ Everyone is welcome to participate.
 #### Details 
 * **Agenda/Notes**: [link][meeting-notes]
   * Notes from each meeting are captured here.
-* **When:** every Thursday at 9:00-9:30AM Pacific Time
+* **When:** every Thursday at 16:00 [GMT/UTC][utc-timezone]
 * **Where:** [Zoom meeting][zoom-meeting-link]
 
 [zoom-meeting-link]: https://zoom.us/j/95069096871?pwd=OXc3eWk1NVluUlozcVg3b1VtdGl5Zz09
 [meeting-notes]: https://docs.google.com/document/d/1G9Nl-vBXuOBRoOt-9N-fQMpY05V8fCP8vPg94iTZ9gA
+[utc-timezone]: https://dateful.com/convert/utc?t=4pm
 
 ## License
 
