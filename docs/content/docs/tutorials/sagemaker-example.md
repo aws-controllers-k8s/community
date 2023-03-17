@@ -141,7 +141,7 @@ Get the SageMaker Helm chart and make it available on the client machine with th
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=sagemaker
-export RELEASE_VERSION=v0.5.1
+export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
 export CHART_EXPORT_PATH=/tmp/chart
 export CHART_REF=$SERVICE-chart
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$CHART_REF
