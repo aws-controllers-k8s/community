@@ -14,8 +14,8 @@ Amazon Simple Queue Service (SQS) is a fully managed message queuing service for
 serverless applications. SQS lets you send, store, and receive messages between software components
 without losing messages or requiring other services to be available.
 
-In this tutorial you will learn how to create and manage [SQS](https://aws.amazon.com/rds/aurora/serverless/) queues
-from an Amazon Elastic Kubernetes (EKS) deployment.
+In this tutorial you will learn how to create and manage [SQS](https://aws.amazon.com/sqs) queues from an Amazon Elastic
+Kubernetes (EKS) deployment.
 
 ## Setup
 
