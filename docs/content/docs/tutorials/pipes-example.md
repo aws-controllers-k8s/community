@@ -54,7 +54,7 @@ aws ecr-public get-login-password --region us-east-1 | helm registry login --use
 Deploy the ACK service controller for Amazon Pipes using the [pipes-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/pipes-chart). Resources should be created in the `us-east-1` region:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/pipes-chart --version=v0.0.3 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/pipes-chart --version=v1.0.0 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/pipes-controller/blob/main/helm/values.yaml).
