@@ -54,7 +54,7 @@ aws ecr-public get-login-password --region us-east-1 | helm registry login --use
 Deploy the ACK service controller for Amazon Pipes using the [pipes-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/pipes-chart). Resources should be created in the `us-east-1` region:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/pipes-chart --version=v0.0.3 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/pipes-chart --version=v1.0.0 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/pipes-controller/blob/main/helm/values.yaml).
@@ -327,21 +327,41 @@ supported Kubernetes custom resources and fields.
 
 ### Cleanup
 
-Remove all the resource created in this tutorial using `kubectl delete` command.
+Remove all the Pipes resources created in this tutorial using `kubectl delete` command.
 
 ```bash
-kubectl -n ${QUEUE_NAMESPACE} delete -f pipe-sqs-to-sqs.yaml
+kubectl -n ${PIPE_NAMESPACE} delete -f pipe-sqs-to-sqs.yaml
+kubectl delete ns ${PIPE_NAMESPACE}
 ```
 
 The output of delete command should look like
 
 ```bash
 pipe.pipes.services.k8s.aws "pipes-sqs-to-sqs" deleted
+namespace "pipes-example" deleted
 ```
 
 {{% hint type="info" title="Deleting Delays" %}}
 It might take some time for the Pipe to be deleted as the operation is performed asynchronously in the API.
 {{% /hint %}}
+
+Remove the manually created SQS resources.
+
+```bash
+aws sqs delete-queue --queue-url https://sqs.${AWS_REGION}.amazonaws.com/${AWS_ACCOUNT_ID}/${SOURCE_QUEUE}
+aws sqs delete-queue --queue-url https://sqs.${AWS_REGION}.amazonaws.com/${AWS_ACCOUNT_ID}/${TARGET_QUEUE}
+```
+
+If the command executes successfully, no output is generated.
+
+Remove the manually created IAM resources.
+
+```bash
+aws iam delete-role-policy --role-name ${PIPE_ROLE} --policy-name ${PIPE_POLICY}
+aws iam delete-role --role-name ${PIPE_ROLE}
+```
+
+If the command executes successfully, no output is generated.
 
 To remove the Pipes ACK service controller, related CRDs, and namespaces, see [ACK Cleanup][cleanup].
 
