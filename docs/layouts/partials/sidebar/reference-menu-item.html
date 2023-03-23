@@ -1,10 +1,10 @@
 {{ $root := . }}
 <li class="mb-1">
   {{ $serviceActive := eq $root.currentService $root.service.name }}
-  <button class="btn btn-toggle align-items-center rounded {{ if not $serviceActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ .service.name }}" aria-expanded="{{ if not $root.serviceActive }} false{{ else }}true{{ end }}">
+  <button class="btn btn-toggle align-items-center rounded {{ if not $serviceActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ .service.name }}" aria-expanded="{{ if not $serviceActive }} false{{ else }}true{{ end }}">
     {{ $root.service.service_metadata.service.short_name }}
   </button>
-  <div class="collapse position-relative{{ if $serviceActive }} show{{ end }}" id="section-{{ $root.service.name }}">
+  <div class="collapse position-relative{{ if not $serviceActive }} collapsed{{ else }} show{{ end }}" id="section-{{ $root.service.name }}" aria-expanded="{{ if not $root.serviceActive }} false{{ else }} true{{ end }}">
     {{ range $api_version := sort $root.service.service_metadata.api_versions }}
       {{ $versionActive := and $serviceActive (eq $root.currentVersion ($api_version.api_version | lower)) }}
       <button class="btn btn-toggle align-items-center rounded ms-2 small{{ if not $versionActive }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ $root.service.name }}-{{ $api_version.api_version }}" aria-expanded="{{ if not $versionActive }} false{{ else }}true{{ end }}">

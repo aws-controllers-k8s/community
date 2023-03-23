@@ -5,11 +5,11 @@
   {{- $active := or ($currentPage.IsMenuCurrent "docs" .) ($currentPage.HasMenuCurrent "docs" .) -}}
   {{- $active = or $active (eq $currentPage.Section .Identifier) -}}
     <li class="mb-1">
-      <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#section-{{ .Identifier }}" aria-expanded="true">
+      <button class="btn btn-toggle align-items-center rounded{{ if not $active }} collapsed{{ end }}" data-bs-toggle="collapse" data-bs-target="#section-{{ .Identifier }}" aria-expanded="{{ if not $active }}false{{ else }}true{{ end }}">
         {{ .Name }}
       </button>
       {{ if .HasChildren -}}
-      <div class="collapse show" id="section-{{ .Identifier }}">
+      <div class="collapse{{ if $active }} show{{ else }} collapsed{{ end }}" id="section-{{ .Identifier }}">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         {{ range .Children -}}
           {{- $active := or ($currentPage.IsMenuCurrent "docs" .) ($currentPage.HasMenuCurrent "docs" .) -}}
