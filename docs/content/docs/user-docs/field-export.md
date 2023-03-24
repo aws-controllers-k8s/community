@@ -95,7 +95,7 @@ metadata:
 spec:
   containers:
   - name: field-export-demo-container
-    image: k8s.gcr.io/busybox
+    image: registry.k8s.io/busybox
     command: [ "/bin/sh", "-c", "env" ]
     env:
     - name: USER_DATA_BUCKET_LOCATION
