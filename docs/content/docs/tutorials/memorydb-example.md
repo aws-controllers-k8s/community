@@ -17,7 +17,7 @@ In this tutorial we will install ACK service controller for Amazon MemoryDB for 
 
 ## Setup
 
-Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes.
+Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. If this is your first time creating an Amazon EKS cluster, see [Amazon EKS Setup](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-eks-setup.html). For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) and create your cluster with Amazon EC2 Linux managed nodes. If you follow this document, install AWS CLI first. Use `aws configure` to access IAM permissions before creating EKS cluster.
 
 ### Prerequisites
 
@@ -46,14 +46,16 @@ You can install the Helm chart to deploy the ACK service controller for Amazon M
 For example, to specify that the Amazon MemoryDB API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=v0.0.1 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=v1.0.0 --generate-name --set=aws.region=us-east-1
 ```
+You can find the latest version of ACK MemoryDB controller on GitHub [release page](https://github.com/aws-controllers-k8s/memorydb-controller/releases).
+Replace value for `--version` to the desired version.
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/memorydb-controller/blob/main/helm/values.yaml).
 
 ### Configure IAM permissions
 
-Once the service controller is deployed, you will need to [configure the IAM permissions][irsa-permissions] for the controller to query the Amazon MemoryDB API. For full details, please review the AWS Controllers for Kubernetes documentation for [how to configure the IAM permissions][irsa-permissions]. If you follow the examples in the documentation, use the value of `memorydb` for `SERVICE`.
+Once the service controller is deployed, you will need to [configure the IAM permissions][irsa-permissions] for the controller to query the Amazon MemoryDB API. For full details, please review the AWS Controllers for Kubernetes documentation for [how to configure the IAM permissions][irsa-permissions]. If you follow the examples in the documentation, use the value of `memorydb` for `SERVICE`. Install wget, [oc](https://docs.openshift.com/container-platform/4.8/cli_reference/openshift_cli/getting-started-cli.html#installing-openshift-cli), [jq](https://github.com/stedolan/jq/wiki/Installation), sed first. Skip Next Steps in the documentation.
 
 ## Create Amazon MemoryDB Cluster Instances
 
@@ -64,7 +66,7 @@ You can create Amazon MemoryDB Clusters using the `Cluster` custom resource. The
 To create a Amazon MemoryDB Cluster, create a `Cluster` custom resource. The examples below shows how to provision a Amazon MemoryDB Cluster :
 * The first example creates a Amazon MemoryDB Cluster in default VPC
 * The second example creates a Amazon MemoryDB Cluster in specific VPC subnets and security groups.
-You may choose any option from these examples.
+You may choose any option from these examples. You can check more [yaml examples](https://github.com/aws-controllers-k8s/examples/tree/main/resources/memorydb/v1alpha1) of all MemoryDB resources.
 
 #### Create Amazon MemoryDB Cluster in default VPC
 The following YAML creates a MemoryDB Cluster using the default VPC subnets and security group.
@@ -90,6 +92,7 @@ To create a Amazon MemoryDB Cluster using specific subnets from a VPC, create a 
 
 ##### Create Amazon MemoryDB subnet group
 The following example uses the VPC ID of the EKS Cluster. You may specify any other VPC ID by updating the `VPC_ID` variable in the following example.
+Replace `EKS_CLUSTER_NAME` to the eks cluster name you created under 'Prerequisites' section.
 ```bash
 EKS_CLUSTER_NAME="example-eks-cluster"
 AWS_REGION="us-east-1"
