@@ -32,6 +32,7 @@ This guide assumes that you have:
     - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html) - A command line tool for working with EKS clusters.
     - [yq](https://mikefarah.gitbook.io/yq) - A command line tool for YAML processing. (For Linux environments, use the [`wget` plain binary installation](https://mikefarah.gitbook.io/yq/#wget))
     - [Helm 3.7+](https://helm.sh/docs/intro/install/) - A tool for installing and managing Kubernetes applications.
+    - [curl](https://everything.curl.dev/get) - A command line tool for transmitting data with URLs.
 
 ### Configure IAM permissions
 
