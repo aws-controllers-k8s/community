@@ -66,6 +66,16 @@ cdk8s can create the Kubernetes resources and ACK uses those resources to create
 ## Troubleshooting
 
 {{% hint type="success" title="Question" %}}
+Why are my AWS resources sometimes not being fully deleted when trying to delete via `kubectl delete ... --cascade=foreground ...` (or via ArgoCD uninstalling my Helm chart)?
+{{% /hint %}}
+
+{{% hint type="answer" title="Answer" %}}
+There is a [known issue with foreground cascading deletion](https://github.com/aws-controllers-k8s/community/issues/1759) in the ACK runtime that potentially impacts all controllers.
+
+Until the above issue is resolved, you should use [background cascading deletion](https://kubernetes.io/docs/tasks/administer-cluster/use-cascading-deletion/#use-background-cascading-deletion) (the default behavior of `kubectl`) to delete resources.
+{{% /hint %}}
+
+{{% hint type="success" title="Question" %}}
 Why am I seeing `Error: manifest does not contain minimum number of descriptors (2), descriptors found: 1` when trying to install the Helm chart?
 {{% /hint %}}
 
