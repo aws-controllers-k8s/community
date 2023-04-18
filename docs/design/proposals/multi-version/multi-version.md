@@ -190,6 +190,19 @@ The Cert Manager part will be discuss bellow.
 
 ### Code Generation
 
+```go
+// APIVersion represents an API version of the generated CRD.
+type APIVersion struct {
+	// Name of the API version, e.g. v1beta1
+	Name string `json:"name"`
+	// Served whether this version is enabled or not
+	Served *bool `json:"served,omitempty"`
+	// Storage whether this version is the storage version.
+	// One and only one version can be set as the storage version.
+	Storage *bool `json:"storage,omitempty"`
+}
+```
+
 https://github.com/aws-controllers-k8s/code-generator/pull/122
 [TODO AMINE EXPAND THIS SECTION]
 
@@ -205,6 +218,95 @@ any webhooks.
 
 Cert manager will probably be added as an optional install to the helm charts, and will
 be installed by default when running multi-version e2e tests.
+
+# Implementation details
+
+Goal is whatever generated code it should keep things backward compatible
+
+## How to use multi-version with code-gen
+
+Scenarios:
+Renaming a field
+```yaml
+resources:
+  FunctionURLConfig:
+    apiVersions:
+    # introduce a new version for FunctionURLConfigs
+    - name: v1alpha2
+      served: true # api is still served by the controller
+      storage: true # api is storage version of the CRD (usually it should be the last one)
+    # Renaming FunctionName to Function
+    renames:
+      operations:
+        CreateFunctionURLConfig:
+          input_fields:
+            FunctionName: Function
+        ...
+```
+
+How it should work.
+1. Pick field from old name
+
+Generated code
+```go
+```
+
+
+Removing a field
+```yaml
+```
+generated code
+
+Adding fields:
+1. Going-up: Look up the field values from annotations
+2. Going-down: Store new value in annotation
+
+Making a field a secret
+```yaml
+```
+
+spec.Password
+
+1. Going-up: Look up the field values from annotations
+2. Going down: Store secret name/namespace in annotations
+
+lambda.services.k8s.aws/field-name:{
+  "v1alpha2-v1alpha1": {
+    "name": "***"
+    "namespace": "***"
+    "key": "***"
+  },
+  "v1alpha2-v1alpha1": {
+    "name": "***"
+    "namespace": "***"
+    "key": "***"
+  }
+}
+
+lambda.services.k8s.aws/multi-version:{
+  "field-name": {
+    "v1alpha2-v1alpha1": {
+      "name": "***"
+      "namespace": "***"
+      "key": "***"
+    },
+  },
+  {
+    "field-2":
+    "v1alpha2-v1alpha1": {
+      "name": "***"
+      "namespace": "***"
+      "key": "***"
+    }
+  }
+}
+ 
+backward compatibility
+
+Making a field a reference
+```yaml
+```
+
 
 ## Testing
 
