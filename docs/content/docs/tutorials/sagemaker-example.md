@@ -142,7 +142,7 @@ Get the SageMaker Helm chart and make it available on the client machine with th
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=sagemaker
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
 
 if [[ -z "$RELEASE_VERSION" ]]; then
   RELEASE_VERSION=v1.2.0

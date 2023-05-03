@@ -84,7 +84,7 @@ eksctl create iamidentitymapping \
 Now we can go ahead and install EMR on EKS controller. First, let's export environment variables needed for setup
 ```
 export SERVICE=emrcontainers
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
 export ACK_SYSTEM_NAMESPACE=ack-system
 ```
 We cam use Helm for the installation
@@ -104,7 +104,7 @@ REVISION: 1
 TEST SUITE: None
 NOTES:
 emrcontainers-chart has been installed.
-This chart deploys "public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.6".
+This chart deploys "public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:0.0.6".
 
 Check its status by running:
   kubectl --namespace ack-system get pods -l "app.kubernetes.io/instance=ack-emrcontainers-controller"

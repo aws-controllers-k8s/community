@@ -19,7 +19,7 @@ a ACK service controller's release artifacts.
 
 Once ACK service controller changes are tested by the service team and they wish to
 release latest artifacts, service team only needs to create a new release for service-controller
-github repository with a semver tag (Ex: v0.0.1).
+github repository with a semver tag (Ex: `0.0.1`).
 Steps below show how to create a new release with semver tag.
 
 {{% hint type="info" title="Semver" %}}
@@ -49,12 +49,12 @@ controllers:
 
 The container image is built and pushed with an image tag that indicates the
 release version for the controller along with the AWS service. For example,
-assume a release semver tag of `v0.1.0` that includes service controllers for
+assume a release semver tag of `0.1.0` that includes service controllers for
 S3 and SNS. There would be two container images built for this release, one each
 containing the ACK service controllers for S3 and SNS. The container images would
-have the following image tags: `s3-v0.1.0` and `sns-v0.1.0`. Note
+have the following image tags: `s3-0.1.0` and `sns-0.1.0`. Note
 that the full image name would be
-`public.ecr.aws/aws-controllers-k8s/controller:s3-v0.1.0`
+`public.ecr.aws/aws-controllers-k8s/s3-controller:0.1.0`
 
 The Helm chart artifact can be used to install the ACK service controller as a
 Kubernetes Deployment; the Deployment's Pod image will refer to the exact
@@ -121,7 +121,7 @@ whenever there is a code push on `stable` git branch. Follow the steps below
 to cut a stable release for an ACK controller.
 
 1) Checkout the ACK controller release which will be marked as stable.
-Example below uses s3-controller v0.0.19 release.
+Example below uses s3-controller `0.0.19` release.
 ```bash
 cd $GOSRC/github.com/aws-controllers-k8s
 export SERVICE=s3
@@ -135,8 +135,8 @@ git checkout -b stable-$STABLE_RELEASE $STABLE_RELEASE
 nomenclature of stable branch and helm chart version please read our
 [release phase guide](../../community/releases/).
 
-For the above example, replace `version: v0.0.19` inside `helm/Chart.yaml`
-with `version: v0-stable`. Without this update the postsubmit prowjob will
+For the above example, replace `version: 0.0.19` inside `helm/Chart.yaml`
+with `version: 0-stable`. Without this update the postsubmit prowjob will
 fail because validation error due to chart version mismatch.
 
 3) Commit your changes from step2

@@ -20,7 +20,7 @@ controller will automatically ensure are on all resources that it manages.
 
 The two default tags added by ACK controller are `services.k8s.aws/controller-version`
 and `services.k8s.aws/namespace`. The *controller-version* tag value is the name of
-corresponding AWS service and version for that controller(Ex: `s3-v0.1.3`).
+corresponding AWS service and version for that controller(Ex: `s3-0.1.3`).
 And the *namespace* tag value is the Kubernetes namespace for the ACK
 resource.(Ex: `default`)
 
@@ -56,7 +56,7 @@ aws ecr list-tags-for-resource --resource-arn arn:aws:ecr:us-west-2:************
     "tags": [
         {
             "Key": "services.k8s.aws/controller-version",
-            "Value": "ecr-v0.1.4"
+            "Value": "ecr-0.1.4"
         },
         {
             "Key": "first",

@@ -42,7 +42,7 @@ Before installing a Helm chart, you can query the controller repository to find 
 
 ```bash
 export SERVICE=s3
-export RELEASE_VERSION=`curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4`
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
 export ACK_SYSTEM_NAMESPACE=ack-system
 export AWS_REGION=us-west-2
 
@@ -81,8 +81,8 @@ helm list --namespace $ACK_SYSTEM_NAMESPACE -o yaml
 The `helm list` command should return your newly-deployed Helm chart release information:
 
 ```bash
-app_version: v0.1.1
-chart: s3-chart-v0.1.1
+app_version: 0.1.1
+chart: s3-chart-0.1.1
 name: ack-s3-controller
 namespace: ack-system
 revision: "1"
