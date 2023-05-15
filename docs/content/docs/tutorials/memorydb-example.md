@@ -46,7 +46,7 @@ You can install the Helm chart to deploy the ACK service controller for Amazon M
 For example, to specify that the Amazon MemoryDB API calls go to the `us-east-1` region, you can deploy the service controller with the following command:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=v1.0.0 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/memorydb-chart --version=1.0.0 --generate-name --set=aws.region=us-east-1
 ```
 You can find the latest version of ACK MemoryDB controller on GitHub [release page](https://github.com/aws-controllers-k8s/memorydb-controller/releases).
 Replace value for `--version` to the desired version.

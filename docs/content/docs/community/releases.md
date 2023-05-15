@@ -135,7 +135,7 @@ will be incremented. If the commits simply fix bugs and do not introduce any
 features or interface changes, the patch version ("Z") will be incremented.
 
 Releases of any ACK component that have a zero major release number (e.g.
-`v0.0.2`) may have breaking changes to the public API or interfaces exposed by
+`0.0.2`) may have breaking changes to the public API or interfaces exposed by
 that component.
 
 This is by design, and [per the Semantic Versioning specification][semver-zero]:

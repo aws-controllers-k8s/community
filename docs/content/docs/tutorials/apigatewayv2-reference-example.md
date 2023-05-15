@@ -50,7 +50,7 @@ aws ecr-public get-login-password --region us-east-1 | helm registry login --use
 Deploy the ACK service controller for Amazon APIGatewayv2 using the [apigatewayv2-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/apigatewayv2-chart). Resources should be created in the `us-east-1` region:
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/apigatewayv2-chart --version=v0.0.17 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/apigatewayv2-chart --version=0.0.17 --generate-name --set=aws.region=us-east-1
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/apigatewayv2-controller/blob/main/helm/values.yaml).
