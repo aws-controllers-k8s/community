@@ -105,10 +105,6 @@ that installs the controller into a target Kubernetes cluster. Both these
 artifacts will have tags that correspond to the Semantic Version Git tag
 applied against the source code repository for the controller.
 
-Service controllers may have a [Stable Helm Chart](#stable-helm-charts) that
-will install a version of the service controller binary that the maintainer
-team is confident will hold up to production use.
-
 ### Semantic Versioning
 
 ACK is a collection of custom Kubernetes controllers, one for each supported
@@ -152,7 +148,7 @@ the SemVer version.
 
 For example, if a Git tag of `v1.2.6` was created on the
 [github.com/aws-controllers-k8s/s3-controller][s3-ctrl] repository, a container
-image with a tag `v1.2.6` would be published to the
+image with a tag `1.2.6` would be published to the
 [public.ecr.aws/aws-controllers-k8s/s3-controller][ecr-ack-ctrl] ECR Public
 repository.
 
@@ -171,7 +167,7 @@ an artifact tag including the SemVer version.
 
 For example, a Git tag of `v1.2.6` on the
 [github.com/aws-controllers-k8s/s3-controller][s3-ctrl]
-repository means a Helm chart with a tag `v1.2.6` would be published to the
+repository means a Helm chart with a tag `1.2.6` would be published to the
 [public.ecr.aws/aws-controllers-k8s/s3-chart][ecr-ack-chart] ECR Public
 repository.
 
@@ -199,69 +195,6 @@ dependency line in the ACK code generator's `go.mod` file, thereby allowing
 Go's module infrastructure to pin the dependency between the code generator and
 the common runtime.
 {{% /hint %}}
-
-### Stable Helm Charts
-
-{{% hint type="success" title="Tip" %}}
-We [recommend](../../user-docs/install/#install-an-ack-service-controller-with-helm-recommended) using Helm to install an ACK service
-controller.
-{{% /hint %}}
-
-
-Some ACK service controllers will have Helm Charts with a
-`v$MAJOR_VERSION-stable` tag, referred from here out as just a
-"`stable` artifact tag". There will only be one of these tags for the ACK
-service controller **in a major version series**. For example, the full
-`stable` artifact tag for the ElastiCache ACK service controller's "v1" major
-version series would be
-`public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable`.
-
-This `stable` artifact tag points to a Helm chart that has configuration values
-that have been tested with a specific SemVer container image.
-
-Typically these tests are "soak" tests and allow the team maintaining that ACK
-controller's source code to have a high degree of confidence in the
-controller's long-running operation.
-
-{{% hint %}}
-Please note that not all ACK service controllers will have a Helm chart
-with a `stable` artifact tag. Furthermore, there will only ever be a single
-`stable` Helm Chart tag **per major version series of a controller**.
-{{% /hint %}}
-
-
-This `stable` Helm Chart tag (an OCI Artifact tag) will point to different
-Helm Chart packages over time. From time to time, the maintainer team for a
-service controller may update the configuration values and associated SemVer
-container image tag for the controller binary to point to a newer image.
-
-For example, consider the ElastiCache ACK service controller maintainer team
-has executed a series of long-running tests of the
-`public.ecr.aws/aws-controllers-k8s/elasticache-controller` image tagged with
-the `v1.2.6` SemVer tag. The maintainer team is confident that the controller
-is stable for production use. In the `stable` Git branch of the ElastiCache
-service controller's source repository, the team would update the Helm Chart's
-Deployment, setting the `Deployment.spec.template.spec.containers[0].image` to
-`public.ecr.aws/aws-controllers-k8s/elasticache-controller:v1.2.6`.
-
-They then package the Helm Chart and publish it as an OCI Artifact to the
-`public.ecr.aws/aws-controllers-k8s/elasticache-chart` registry, using an OCI
-artifact tag of `v1-stable`.
-
-A couple months later, the maintainer team has added a few minor, non-breaking
-features to their controller along with a number of bug fixes. The latest
-SemVer tag for the ElastiCache controller image is at `v1.3.9`.
-
-The maintainer team has separately been executing long-running tests against
-the `v1.3.2` controller image and are confident that this release is
-appropriate for production use. The maintainer team would update the Helm Chart
-in their `stable` Git branch to have its
-`Deployment.spec.template.spec.containers[0].image` set to
-`public.ecr.aws/aws-controllers-k8s/elasticache-controller:v1.3.2`. They would
-then package this Helm Chart and push overwrite the
-`public.ecr.aws/aws-controllers-k8s/elasticache-chart:v1-stable` OCI Artifact
-tag to point to this newly-updated Helm Chart that refers to the `v1.3.2`
-controller image.
 
 ## Maintenance Phases
 
@@ -294,7 +227,7 @@ through long-running "soak" tests and are recommended for production use by the
 team maintaining that controller.
 
 All ACK controllers in the `General Availability` Maintenance Phase will have a
-Helm Chart with the `stable` artifact tag.
+Helm Chart tagged with the major version >0 (eg. `1.0.0`).
 
 Users who submit bug reports using Github Issues that reference a `General
 Availability` controller will have their bug reports prioritized by the
