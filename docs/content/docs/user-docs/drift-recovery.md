@@ -16,15 +16,15 @@ the current desired state of the system and compare it to the actual state,
 using the difference to determine the action required to get to the desired end
 result.
 
-Once a controller has reconciled a resource to it's desired state, the
-controller shouldn't need to continue reconciling - the actual state of the
-resource meets the specification. However, this is only true for closed systems,
-where the controller is the only actor interacting with a resource.
-Unfortunately, ACK controllers don't act in a closed system. ACK controllers are
-not the only actor capable of modifying the actual state of any AWS resources -
-other programs, or even people, may have their own privileges. When another
-actor modifies a resource after the ACK controller has reconciled it to its
-desired state, that's called "Drift".
+Once a controller has reconciled a resource to its desired state, the controller
+shouldn't need to continue reconciling - the actual state of the resource meets
+the specification. However, this is only true for closed systems, where the
+controller is the only actor interacting with a resource. Unfortunately, ACK
+controllers don't act in a closed system. ACK controllers are not the only actor
+capable of modifying the actual state of any AWS resources - other programs, or
+even people, may have their own privileges. When another actor modifies a
+resource after the ACK controller has reconciled it to its desired state, that's
+called "drift".
 
 ACK controllers detect drift by continuing to reconcile resources after they
 have reached their desired state, but with much longer delays between
@@ -51,7 +51,8 @@ All override periods are logged to stdout when the controller is started.
 
 If you would like to decrease the drift remediation period for *all* resources
 owned by a controller, update the `reconcile.defaultResyncPeriod` value in the
-`values.yaml` file with the number of seconds for the new period, like so:
+Helm chart `values.yaml` file with the number of seconds for the new period,
+like so:
 
 ```yaml
 reconcile:

@@ -56,10 +56,10 @@ information it received from S3.
 ## Drift Detection and Remediation
 
 There are times where a resource that an ACK service controller is managing is
-modified outside of ACK, e.g. through the AWS CLI or the console. Every 10 hours,
-an ACK service controller will look for any drift and attempt to remediate. As
-part of the remediation, an ACK service controller will reconfigure the managed
-resource based on the `Spec`.
+modified outside of ACK, e.g. through the AWS CLI or the console. An ACK service
+controller will look for any drift and attempt to remediate every 10 hours
+(unless a different frequency is configured). As part of the remediation, an ACK
+service controller will reconfigure the managed resource based on the `Spec`.
 
 For more information about configuring the drift remediation period, see
 [Recovering from Drift][drift]
