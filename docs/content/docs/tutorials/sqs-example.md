@@ -44,15 +44,18 @@ This guide assumes that you have:
 
 ### Install the ACK service controller for SQS
 
+> **_NOTE:_** This guide assumes you're using `us-east-1` as the region where the ACK controller will be deployed, as well as the Amazon SQS resource. If you want to create the object in another resource, simply change the region name to your region of choice.
+
 Log into the Helm registry that stores the ACK charts:
 ```bash
-aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+CONTROLLER_REGION=us-east-1
+aws ecr-public get-login-password --region $CONTROLLER_REGION | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
-Deploy the ACK service controller for Amazon SQS using the [sqs-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/sqs-chart). Resources should be created in the `us-east-1` region:
+Deploy the ACK service controller for Amazon SQS using the [sqs-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/sqs-chart). We're defaulting the controller to deploy resources in the `us-east-1` region. If you're looking to deploy resources to other regions, please refer to the [Manage Resources In Multiple Regions]([url](https://aws-controllers-k8s.github.io/community/docs/user-docs/multi-region-resource-management/)) documentation.
 
 ```bash
-helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/sqs-chart --version=v0.0.3 --generate-name --set=aws.region=us-east-1
+helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/sqs-chart --version=v1.0.4 --generate-name --set=aws.region=$CONTROLLER_REGION
 ```
 
 For a full list of available values to the Helm chart, please [review the values.yaml file](https://github.com/aws-controllers-k8s/sqs-controller/blob/main/helm/values.yaml).
