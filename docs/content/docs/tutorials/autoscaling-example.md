@@ -143,7 +143,7 @@ Get the Application Auto Scaling Helm chart and make it available on the client 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=applicationautoscaling
-export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 
 if [[ -z "$RELEASE_VERSION" ]]; then
   RELEASE_VERSION=1.0.2

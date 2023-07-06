@@ -46,7 +46,7 @@ Install Helm chart:
 ```bash
 export SERVICE=ec2
 export AWS_REGION=<aws region id>
-export RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/ec2-chart "--version=${RELEASE_VERSION}" --generate-name --set=aws.region=${AWS_REGION}
 ```
 

@@ -50,9 +50,9 @@ To manage an Aurora Serverless v2 cluster from Kubernetes / Amazon EKS, you will
 
 Define environment variables
 
-```
+```bash
 SERVICE=rds
-RELEASE_VERSION=$(curl -sL "https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
+RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 ACK_SYSTEM_NAMESPACE=ack-system
 AWS_REGION=<ADD-REGION-HERE>
 ```
