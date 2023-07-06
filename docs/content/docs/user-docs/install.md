@@ -42,7 +42,7 @@ Before installing a Helm chart, you can query the controller repository to find 
 
 ```bash
 export SERVICE=s3
-export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/$SERVICE-controller/releases/latest | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//')
 export ACK_SYSTEM_NAMESPACE=ack-system
 export AWS_REGION=us-west-2
 
