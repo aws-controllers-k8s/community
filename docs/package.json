@@ -58,7 +58,7 @@
     "set-value": ">=4.0.1",
     "shelljs": ">=0.8.5",
     "shx": "^0.3.3",
-    "stylelint": "^13.13",
+    "stylelint": "^15.10",
     "stylelint-config-standard": "^22.0"
   },
   "otherDependencies": {
