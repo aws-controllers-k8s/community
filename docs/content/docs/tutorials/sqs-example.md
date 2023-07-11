@@ -48,13 +48,13 @@ This guide assumes that you have:
 
 Log into the Helm registry that stores the ACK charts:
 ```bash
-CONTROLLER_REGION=us-east-1
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 ```
 
 Deploy the ACK service controller for Amazon SQS using the [sqs-chart Helm chart](https://gallery.ecr.aws/aws-controllers-k8s/sqs-chart). If you're looking to deploy resources to multiple regions, please refer to the [Manage Resources In Multiple Regions]([url](https://aws-controllers-k8s.github.io/community/docs/user-docs/multi-region-resource-management/)) documentation.
 
 ```bash
+CONTROLLER_REGION=us-east-1
 helm install --create-namespace -n ack-system oci://public.ecr.aws/aws-controllers-k8s/sqs-chart --version=1.0.4 --generate-name --set=aws.region=$CONTROLLER_REGION
 ```
 
