@@ -72,6 +72,8 @@ ACK_WATCH_NAMESPACE=
 AWS_REGION=us-west-2
 AWS_ENDPOINT_URL=
 ACK_RESOURCE_TAGS=hellofromocp
+ENABLE_LEADER_ELECTION=true
+LEADER_ELECTION_NAMESPACE=
 ```
 
 Now use `config.txt` to create a `ConfigMap` in your OpenShift cluster:
