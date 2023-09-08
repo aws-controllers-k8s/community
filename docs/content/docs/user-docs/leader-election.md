@@ -1,7 +1,6 @@
 ---
-title: "Leader election"
+title: "Managing multiple instances of ACK with leader election"
 description: "Configure leader election for ACK controllers"
-lead: "How to enable leader election for ACK controllers"
 draft: false
 menu:
   docs:
@@ -10,23 +9,23 @@ weight: 60
 toc: true
 ---
 
-In a Kubernetes cluster, multiple instances of a controller maybe running
-simultaneously to manage resources and perform tasks. However, to avoid conflicts
-and ensure proper resource management, it's necessary to designate one instance
-as the leader, which takes responsibility for executing certain operations while
-the other instances remain passive. In the event that the leader instance fails,
-[leader election][leader-election] ensures the seamless transition of leadership
-to another healthy instance.
+In a Kubernetes cluster, you may want to run multiple instances of any ACK
+controller - configured for different accounts or regions, or for fail state 
+rollover. 
+However, to avoid conflicts and ensure proper resource management, it's necessary
+to designate one instance as the leader, which takes responsibility for executing
+certain operations while the other instances remain passive. In the event that
+the leader instance fails, [leader election][leader-election] ensures the seamless
+transition of leadership to another healthy instance.
 
-In ACK land, by default, the feature of leader election is disabled. To utilize
-it, users can configure leader election using either Helm chart values or
-controller flags. Once enabled, you have the flexibility to scale the default
-deployment of ACK controllers from a single replica (1) to a higher number.
+By default, leader election is disabled in the ACK Helm charts. However, once
+enabled, you gain the flexibility to scale the default deployment of ACK controllers
+from a single replica (1) to a higher number.
 
 ## Enabling Leader Election for ACK Controllers
 
-If you would like to enable leader election for your ACK controllers, set the
-`leaderElection.enabled` to true in the helm chart `values.yaml` like:
+To enable leader election when installing an ACK controller, set the
+`leaderElection.enabled` to `true` in the helm chart `values.yaml` like:
 
 ```yaml
 leaderElection:
@@ -42,9 +41,9 @@ deployment:
     replicas: 3
 ```
 
-## Configuring Leader Election namespace
+## Configuring Leader Election `Namespace`
 
-The Leader Election Namespace is a controller configuration setting that
+The leader election namespace is a controller configuration setting that
 determines the namespace where controllers manage leader election. Under the 
 hood it is used for storing `coordination.k8s.io/lease` objects, which help
 controllers reach consensus and choose a leader. If not specified, the system
