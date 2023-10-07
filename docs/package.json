@@ -52,7 +52,7 @@
     "markdownlint-cli": "^0.31.1",
     "mermaid": "^9.3.0",
     "nanoid": ">=3.1.31",
-    "postcss": "^8.3",
+    "postcss": "^8.4",
     "postcss-cli": "^8.3",
     "purgecss-whitelister": "^2.4",
     "set-value": ">=4.0.1",
