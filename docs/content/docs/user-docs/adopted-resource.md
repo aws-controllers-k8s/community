@@ -39,11 +39,20 @@ The full spec for the `AdoptedResource` CRD is located [in the API
 reference][api-ref]. The spec contains two parts: the AWS resource reference and
 the Kubernetes target.
 
+### AWS Resource
+
 The AWS resource reference requires the unique identifier for the object, either
 as an ARN or as the name or ID of the object. Which of these is required depends
-on the service and the particular resource. You can find which field is required
-by finding the unique identifier field used by the `Describe*` or `List*` API
+on the service and the particular resource. 
+You can find which field is required
+by finding the unique identifier field used by the `Describe*`, `List*`, or `Get*` API
 calls for that resource.
+
+If we were adopting for an IAM Role, since the [IAM Get Role API][iamrole-get] call requires `RoleName`, you should set `.spec.aws.nameOrId` to the name of the role you would like to adopt.
+
+If we were adopting for an IAM Policy, since the [IAM Get Policy API][iampolicy-get] call requires `PolicyArn`, you should set `.spec.aws.arn` to the ARN of the policy you would like to adopt.
+
+### Kubernetes Target
 
 The Kubernetes target requires the `group` and `kind` - these identify from
 which service and resource you wish to adopt. For example, to adopt an S3
@@ -113,6 +122,7 @@ spec:
     kind: Integration
 ```
 
-[apigw-integration]:
-    https://aws-controllers-k8s.github.io/community/reference/apigatewayv2/v1alpha1/integration/#spec
+[apigw-integration]: https://aws-controllers-k8s.github.io/community/reference/apigatewayv2/v1alpha1/integration/#spec
 [integ-describe]: https://docs.aws.amazon.com/sdk-for-go/api/service/apigatewayv2/#GetIntegrationInput
+[iamrole-get]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetRole.html
+[iampolicy-get]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicy.html
