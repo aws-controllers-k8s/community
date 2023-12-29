@@ -170,7 +170,7 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate documentation service release phase pages")
-    parser.add_argument("--debug", type=bool, default=False,
+    parser.add_argument("--debug", action=argparse.BooleanOptionalAction,
         help="Enables debugging logging")
     parser.add_argument("--page_output_path", type=str, default="./content/docs/community",
         help="Relative path to the documentation output directory, relative to the `docs` directory")
