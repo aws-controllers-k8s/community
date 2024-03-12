@@ -74,6 +74,7 @@ AWS_ENDPOINT_URL=
 ACK_RESOURCE_TAGS=hellofromocp
 ENABLE_LEADER_ELECTION=true
 LEADER_ELECTION_NAMESPACE=
+RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS=1
 ```
 
 Now use `config.txt` to create a `ConfigMap` in your OpenShift cluster:
