@@ -14,6 +14,5 @@ If you are open to others contacting you about your use of ACK on the Kubernets 
 
 | Organization | Description | Contacts | Link |
 | --- | --- | --- | --- |
-| Anycompany | provisioning S3 Bucket as part of the application delivery | `@Any User` |  |
 | Adobe | Global Kubernetes cluster provisioning, stateful service infrastructure provisioning using multiple ACK controllers | `@eadasiak` |  |
 
