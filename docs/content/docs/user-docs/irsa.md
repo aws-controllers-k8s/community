@@ -114,9 +114,12 @@ ACK_CONTROLLER_IAM_ROLE_ARN=$(aws iam get-role --role-name=$ACK_CONTROLLER_IAM_R
 
 ### Attach IAM policy to the IAM role
 
-{{% hint type="info" title="Note" %}}
-The command below will attach the ACK recommended policy to the IAM role. If you
-wish to use any other permissions, change `IAM_POLICY_ARN` variable
+{{% hint type="warning" title="Note" %}}
+ACK provides some example IAM policies that you can use for quick installation and testing purposes. If you
+wish to use any other permissions, change `IAM_POLICY_ARN` variable.
+For production environments, it is highly recommended that users craft their own IAM policies, narrowed down to grant
+only the necessary permissions required for their specific use case. The example policies provided are broad and should
+not be used in production environments without careful review and modification.
 {{% /hint %}}
 
 ```bash
