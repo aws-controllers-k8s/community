@@ -84,7 +84,7 @@ data:
 
 The `ConfigMap` data contains a new key-value pair. The key is the namespace and
 name of the `FieldExport` that created it, and the value is the resolved value
-from the resourc. This value can then be included as an environment variable in
+from the resource. This value can then be included as an environment variable in
 a pod like so:
 
 ```yaml
