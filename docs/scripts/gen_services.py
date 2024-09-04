@@ -152,7 +152,7 @@ def main(
     repo = awssdkgo.get_repo(writer, gh_token, cache_dir)
     services = service.collect_all(writer, repo)
 
-    controllers = controller.collect_all(writer, gh, ep_client, services)
+    controllers = controller.collect_all(writer, gh, services)
     active_controllers = filter_actively_developed_controllers(controllers)
 
     display_names = create_display_names(controllers)
