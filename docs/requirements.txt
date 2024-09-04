@@ -1,3 +1,3 @@
-acktools @ git+https://github.com/aws-controllers-k8s/test-infra.git@37943dd8dd38544ab7b901af762998b625a1cdd9#subdirectory=tools
+acktools @ git+https://github.com/aws-controllers-k8s/test-infra.git@0585d0671b593e1b1a1d070614af41eb022c695a#subdirectory=tools
 PyGitHub==1.55
 Jinja2==3.0.1
