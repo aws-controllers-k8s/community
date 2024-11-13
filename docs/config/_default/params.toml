@@ -48,6 +48,7 @@ lqipWidth = "20x"
 # Footer
 footer = "Powered by <a href=\"https://gohugo.io/\">Hugo</a> and <a href=\"https://getdoks.org/\">Doks</a>"
 copyRight = "Copyright (c) 2021 Amazon"
+cloudflareToken: "3a362beadddb423a87cf9174ed4c0a20"
 
 # Alert
 alert = true
