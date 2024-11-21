@@ -22,7 +22,7 @@ AWS SDK or the AWS CLI to make API requests to authorized AWS services.
 
 Quicklinks:
 * [Setup IRSA for EKS cluster](./#step-1-create-an-oidc-identity-provider-for-your-cluster)
-* [Setup IRSA for non-EKS cluster](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md)
+* [Setup IRSA for non-EKS cluster](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html)
 
 Follow the quicklink OR continue reading for more details about IRSA.
 {{% /hint %}}
