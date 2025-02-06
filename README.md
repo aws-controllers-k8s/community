@@ -108,7 +108,7 @@ Everyone is welcome to participate.
 #### Details 
 * **Agenda/Notes**: [link][meeting-notes]
   * Notes from each meeting are captured here.
-* **When:** every Thursday at 9:00 AM [PST][pst-timezone]
+* **When:** on the last Thursday of each month, at 9:00 AM [PST][pst-timezone]
 * **Where:** [Zoom meeting][zoom-meeting-link]
 
 [zoom-meeting-link]: https://zoom.us/j/95069096871?pwd=OXc3eWk1NVluUlozcVg3b1VtdGl5Zz09
