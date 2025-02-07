@@ -46,7 +46,7 @@
     "highlight.js": "^11.9.0",
     "hugo-installer": "^3.1.0",
     "instant.page": "^5.2.0",
-    "katex": "^0.13.24",
+    "katex": "^0.16.21",
     "lazysizes": "^5.3.2",
     "markdown-it": "^14.0.0",
     "markdownlint-cli": "^0.31.1",
