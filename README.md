@@ -102,7 +102,7 @@ You can also learn more about our [Governance](/GOVERNANCE.md) structure.
 
 ## Community Meeting
 
-ACK Community meeting is held every week.
+ACK Community meeting is held on the last Thursday of every month.
 Everyone is welcome to participate.
 
 #### Details 
@@ -111,7 +111,7 @@ Everyone is welcome to participate.
 * **When:** on the last Thursday of each month, at 9:00 AM [PST][pst-timezone]
 * **Where:** [Zoom meeting][zoom-meeting-link]
 
-[zoom-meeting-link]: https://zoom.us/j/95069096871?pwd=OXc3eWk1NVluUlozcVg3b1VtdGl5Zz09
+[zoom-meeting-link]: https://us06web.zoom.us/j/89253759548?pwd=8aFOQvBRZO16BFIJZ6S0JPNav3W2e4.1
 [meeting-notes]: https://docs.google.com/document/d/1G9Nl-vBXuOBRoOt-9N-fQMpY05V8fCP8vPg94iTZ9gA
 [utc-timezone]: https://dateful.com/convert/pst-pdt-pacific-time?t=9am
 
