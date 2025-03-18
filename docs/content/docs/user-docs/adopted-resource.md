@@ -12,7 +12,7 @@ toc: true
 
 {{% hint type="warning" title="Warning" %}}
 This is no longer the recommended approach for adopting resources in ACK. The
-recommended feature can be found [HERE](../user-docs/features.md#resourceadoption)
+recommended feature can be found [HERE](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
 {{% /hint %}}
 
 The ACK controllers are intended to manage the complete lifecycle of an AWS
