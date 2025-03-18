@@ -10,8 +10,10 @@ weight: 66
 toc: true
 ---
 
-**WARNING** This is no longer the recommended approach for adopting resources.
-The recommended feature can be found [HERE](features#resourceadoption)
+{{% hint type="warning" title="Warning" %}}
+This is no longer the recommended approach for adopting resources in ACK. The
+recommended feature can be found [HERE](../user-docs/features.md#resourceadoption)
+{{% /hint %}}
 
 The ACK controllers are intended to manage the complete lifecycle of an AWS
 resource, from creation through deletion. However, you may already be
