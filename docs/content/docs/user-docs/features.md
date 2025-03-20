@@ -13,7 +13,7 @@ toc: true
 Currently we support 4 feature gates for our controllers.
 
 ### ResourceAdoption
-This feature allows users to adopt AWS resources by specifying the adoption policy as an annotation `services.k8s.aws/adoption-policyy` (currently only supporting `adopt` as a value), and providing the fields required for a read operation in an annotation called `services.k8s.aws/adoption-fields` in json format, and an empty spec.
+This feature allows users to adopt AWS resources by specifying the adoption policy as an annotation `services.k8s.aws/adoption-policy` (currently only supporting `adopt` as a value), and providing the fields required for a read operation in an annotation called `services.k8s.aws/adoption-fields` in json format, and an empty spec.
 Here's an example for how to adopt an EKS cluster:
 
 ```yaml
