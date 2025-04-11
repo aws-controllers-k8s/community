@@ -11,9 +11,14 @@ toc: true
 ---
 
 Currently we support 4 feature gates for our controllers.
+To use these feature, ensure you enable the [feature gates](https://github.com/aws-controllers-k8s/ec2-controller/blob/b6dff777c35d03335ebb0c3ffca5ee7577e70f18/helm/values.yaml#L164-L172) during helm install, as they are disabled by default.
 
 ### ResourceAdoption
-This feature allows users to adopt AWS resources by specifying the adoption policy as an annotation `services.k8s.aws/adoption-policy` (currently only supporting `adopt` as a value), and providing the fields required for a read operation in an annotation called `services.k8s.aws/adoption-fields` in json format, and an empty spec.
+This feature allows users to adopt AWS resources by specifying the adoption policy as an annotation `services.k8s.aws/adoption-policy`.
+This annotation currenlty supports two values, `adopt` and `adopt-or-create`.
+`adopt` adoption policy strictly adopts resources as they are in AWS, and it is highly recommended to provide an empty spec (as it will be overriden
+if adoption is successful) and `services.k8s.aws/adoption-fields` annotation with all the fields necessary for to retrieve the resource from AWS 
+(this would be the `name` for EKS cluster, `queueURL` for SQS queues, `vpcID` for VPCs, or `arn` for SNS Topic, etc.)
 Here's an example for how to adopt an EKS cluster:
 
 ```yaml
@@ -29,8 +34,45 @@ metadata:
         }
 ```
 Applying the above manifest allows users to adopt an existing EKS cluster named `my-cluster`.
-After reconciliation, all the fields in the spec and status will be filled by the controleler.
-This feature is currently available for the s3 controller, and we'll see more releases in the future for other controllers
+After reconciliation, all the fields in the spec and status will be populated by the controller.
+
+When you want the controller to create resources if they don't exist, you can set
+`adopt-or-create` adoption policy. With this policy, as the name suggests, the controller
+will adopt the resource if it exists, or create it if it doesn't.
+For `adopt-or-create` the controller expects the spec to be populated by the user with all the 
+fields necessary for a find/create. If the read operation required field is in the status
+the `adoption-fields` annotation will be used to retrieve such fields.
+If the adoption is successful for `adopt-or-create`, the controller will attempt updating
+your AWS resource, to ensure your ACK manifest is the source of truth. 
+Here's a sample manifests:
+S3 Bucket
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: mybucket
+  annotations:
+    services.k8s.aws/adoption-policy: adopt-or-create
+spec:
+  name: mybucket
+```
+VPC
+```yaml
+apiVersion: ec2.services.k8s.aws/v1alpha1
+kind: VPC
+metadata:
+  name: hello
+  annotations:
+    services.k8s.aws/adoption-policy: adopt-or-create
+    services.k8s.aws/adoption-fields: |
+      {"vpcID": "vpc-123456789012"}
+spec:
+  cidrBlocks: 
+  - "2.0.0.0/16"
+  tags:
+  - key: k1
+    value: v1
+```
 
 ### ReadOnlyResources
 This feature allows users to mark a resource as read only, as in, it would ensure that the resource will not call any update operation, and will not be patching anything in the spec, but instead, it will be reconciling the status and ensuring it matches the resource it points to.
