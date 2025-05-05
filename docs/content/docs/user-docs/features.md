@@ -15,9 +15,9 @@ To use these feature, ensure you enable the [feature gates](https://github.com/a
 
 ### ResourceAdoption
 This feature allows users to adopt AWS resources by specifying the adoption policy as an annotation `services.k8s.aws/adoption-policy`.
-This annotation currenlty supports two values, `adopt` and `adopt-or-create`.
+This annotation currently supports two values, `adopt` and `adopt-or-create`.
 `adopt` adoption policy strictly adopts resources as they are in AWS, and it is highly recommended to provide an empty spec (as it will be overriden
-if adoption is successful) and `services.k8s.aws/adoption-fields` annotation with all the fields necessary for to retrieve the resource from AWS 
+if adoption is successful) and `services.k8s.aws/adoption-fields` annotation with all the fields necessary to retrieve the resource from AWS 
 (this would be the `name` for EKS cluster, `queueURL` for SQS queues, `vpcID` for VPCs, or `arn` for SNS Topic, etc.)
 Here's an example for how to adopt an EKS cluster:
 
@@ -44,17 +44,26 @@ fields necessary for a find/create. If the read operation required field is in t
 the `adoption-fields` annotation will be used to retrieve such fields.
 If the adoption is successful for `adopt-or-create`, the controller will attempt updating
 your AWS resource, to ensure your ACK manifest is the source of truth. 
-Here's a sample manifests:
-S3 Bucket
+Here are some sample manifests:
+EKS Cluster
 ```yaml
-apiVersion: s3.services.k8s.aws/v1alpha1
-kind: Bucket
+apiVersion: eks.services.k8s.aws/v1alpha1
+kind: Cluster
 metadata:
-  name: mybucket
+  name: my-cluster
   annotations:
-    services.k8s.aws/adoption-policy: adopt-or-create
+    services.k8s.aws/adoption-policy: "adopt-or-create"
 spec:
-  name: mybucket
+  name: my-cluster
+  roleARN: arn:role:123456789/myrole
+  version: "1.32"
+  resourcesVPCConfig:
+    endpointPrivateAccess: true
+    endpointPublicAccess: true
+    subnetIDs:
+      - subnet-312ensdj2313dnsa2
+      - subnet-1e323124ewqe43213
+
 ```
 VPC
 ```yaml
