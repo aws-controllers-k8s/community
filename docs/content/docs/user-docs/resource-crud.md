@@ -87,7 +87,7 @@ Indicates that an adopted resource custom resource has been successfully reconci
 
 * **True**: Resource has been successfully adopted
 * **False**: Resource adoption failed
-* **Unknown**: Resource adoption in progress
+* **Unknown**: Resource adoption status cannot be determined
 
 #### ACK.ResourceSynced
 
@@ -105,7 +105,7 @@ Indicates that the custom resource Spec needs to be updated before any further s
 * **False**: Resource is not in terminal state
 * **Unknown**: Terminal state cannot be determined
 
-Examples include:
+Possible Causes:
 * Invalid arguments in input YAML
 * Resource creation failed in AWS
 
@@ -117,7 +117,7 @@ Indicates errors that may be resolved without updating the custom resource spec.
 * **False**: Error is not recoverable
 * **Unknown**: Recovery status cannot be determined
 
-Examples include:
+Possible Causes:
 * Transient AWS service unavailability
 * Access denied exceptions requiring credential updates
 
@@ -129,7 +129,7 @@ Indicates advisory information present in the resource.
 * **False**: No advisory condition
 * **Unknown**: Advisory status cannot be determined
 
-Examples include:
+Possible Causes:
 * Attempting to modify an immutable field after resource creation
 
 #### ACK.LateInitialized
@@ -146,7 +146,7 @@ Indicates whether all AWSResourceReference type references have been resolved.
 
 * **True**: All references resolved
 * **False**: Reference resolution failed
-* **Unknown**: Resolution in progress
+* **Unknown**: Resolution status cannot be determined
 * Not present: No references to resolve
 
 ## Next Steps
