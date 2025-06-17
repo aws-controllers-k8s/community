@@ -73,7 +73,78 @@ kubectl delete -f bucket.yaml
 kubectl get bucket/$BUCKET_NAME
 ```
 
-## Next Steps
 
-Now that you have verified ACK service controller functionality, [checkout ACK
-functionality for creating resources in multiple AWS regions.](../multi-region-resource-management)
+## Understanding ACK Controller Conditons
+
+
+ACK controllers use conditions to indicate the state of custom resources and their corresponding AWS service resources. These conditions are exposed in the `Status.Conditions` collection of each custom resource.
+
+### Condition Types
+
+#### ACK.Adopted
+
+Indicates that an adopted resource custom resource has been successfully reconciled and the target has been created.
+
+* **True**: Resource has been successfully adopted
+* **False**: Resource adoption failed
+* **Unknown**: Resource adoption in progress
+
+#### ACK.ResourceSynced
+
+Indicates whether the state of the resource in the backend AWS service is in sync with the ACK service controller.
+
+* **True**: Resource is fully synced
+* **False**: Resource is out of sync
+* **Unknown**: Sync status cannot be determined
+
+#### ACK.Terminal
+
+Indicates that the custom resource Spec needs to be updated before any further sync can occur.
+
+* **True**: Resource is in terminal state
+* **False**: Resource is not in terminal state
+* **Unknown**: Terminal state cannot be determined
+
+Examples include:
+* Invalid arguments in input YAML
+* Resource creation failed in AWS
+
+#### ACK.Recoverable
+
+Indicates errors that may be resolved without updating the custom resource spec.
+
+* **True**: Error is recoverable
+* **False**: Error is not recoverable
+* **Unknown**: Recovery status cannot be determined
+
+Examples include:
+* Transient AWS service unavailability
+* Access denied exceptions requiring credential updates
+
+#### ACK.Advisory
+
+Indicates advisory information present in the resource.
+
+* **True**: Advisory condition exists
+* **False**: No advisory condition
+* **Unknown**: Advisory status cannot be determined
+
+Examples include:
+* Attempting to modify an immutable field after resource creation
+
+#### ACK.LateInitialized
+
+Indicates the status of late initialization of fields.
+
+* **True**: Late initialization completed
+* **False**: Late initialization in progress
+* Not present: No late initialization needed
+
+#### ACK.ReferencesResolved
+
+Indicates whether all AWSResourceReference type references have been resolved.
+
+* **True**: All references resolved
+* **False**: Reference resolution failed
+* **Unknown**: Resolution in progress
+* Not present: No references to resolve
