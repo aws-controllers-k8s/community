@@ -148,3 +148,8 @@ Indicates whether all AWSResourceReference type references have been resolved.
 * **False**: Reference resolution failed
 * **Unknown**: Resolution in progress
 * Not present: No references to resolve
+
+## Next Steps
+
+Now that you have verified ACK service controller functionality, [checkout ACK
+functionality for creating resources in multiple AWS regions.](../multi-region-resource-management)
