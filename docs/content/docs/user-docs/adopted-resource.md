@@ -53,7 +53,7 @@ You can find which field is required
 by finding the unique identifier field used by the `Describe*`, `List*`, or `Get*` API
 calls for that resource.
 
-If we were adopting for an IAM Role, since the [IAM Get Role API][iamrole-get] call requires `RoleName`, you should set `.spec.aws.nameOrId` to the name of the role you would like to adopt.
+If we were adopting for an IAM Role, since the [IAM Get Role API][iamrole-get] call requires `RoleName`, you should set `.spec.aws.nameOrID` to the name of the role you would like to adopt.
 
 If we were adopting for an IAM Policy, since the [IAM Get Policy API][iampolicy-get] call requires `PolicyArn`, you should set `.spec.aws.arn` to the ARN of the policy you would like to adopt.
 
