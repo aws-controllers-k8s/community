@@ -2,7 +2,7 @@
 title: "Creating a Certificate Authority (CA) Hierarchy with the AWS Private CA ACK Controller"
 lead: "Use the AWS Private CA ACK Controller to create a CA Hierarchy with a Root and Subordinate CA"
 draft: false
-menu: 
+menu:
   docs:
     parent: "tutorials"
 weight: 40
@@ -13,11 +13,11 @@ The CA hierarchy will consist of a root CA that signs the certificate of a subor
 
 ## Setup
 
-Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster. 
+Although it is not necessary to use Amazon Elastic Kubernetes Service (Amazon EKS) with ACK, this guide assumes that you have access to an Amazon EKS cluster.
 
-For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html). 
+For automated cluster creation using `eksctl`, see [Getting started with Amazon EKS - `eksctl`](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html).
 
-## Prerequisites 
+## Prerequisites
 
 This guide assumes that you have:
 - Created an EKS cluster with Kubernetes version 1.16 or higher
@@ -39,23 +39,23 @@ export REGION=us-east-1
 ### 2. Install the latest version of the AWS Private Certificate Authority ACK controller into the EKS cluster
 
 ```
-export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws- controllers-k8s/acmpca-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")') 
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws- controllers-k8s/acmpca-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 
-aws ecr-public get-login-password --region us-east-1 | helm registry login -- username AWS --password-stdin public.ecr.aws 
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 
-helm install --create-namespace -n ack-system ack-acmpca-controller \ oci://public.ecr.aws/aws-controllers-k8s/acmpca-chart -- version=$RELEASE_VERSION --set=aws.region=$REGION 
+helm install --create-namespace -n ack-system ack-acmpca-controller \ oci://public.ecr.aws/aws-controllers-k8s/acmpca-chart -- version=$RELEASE_VERSION --set=aws.region=$REGION
 ```
 
 You can verify the installation succeeded by doing the following:
 
 ```
-kubectl --namespace ack-system get pods -l "app.kubernetes.io/instance=ack-acmpca-controller" 
+kubectl --namespace ack-system get pods -l "app.kubernetes.io/instance=ack-acmpca-controller"
 ```
 
 The output from the above command should look like this. The STATUS of Running shows us that the pod has come up successfully:
 
 ```
-NAME                                                                           READY STATUS  RESTARTS AGE 
+NAME                                                                           READY STATUS  RESTARTS AGE
 ack-acmpca-controller-acmpca-chart-8664d4979b-fcm5h                            1/1   Running 0        20h
 ```
 
@@ -228,7 +228,7 @@ Explanation of the resources listed in the file above:
   - `CertificateAuthorityActivation`: This resource is responsible for taking an AWS Private CA that is in the PENDING_CERTIFICATE state into an ACTIVE state by having you pass in a Certificate Authority as well as the signed CA CSR and the chain of trust for that CA.
   - `Certificate`: A certificate issued by the referenced CA with the given CSR.
 
-If you want to have a closer look at the fields that can be passed into the resources, you can find that [here](https://aws-controllers-k8s.github.io/community/reference/) under the `PCA` header. 
+If you want to have a closer look at the fields that can be passed into the resources, you can find that [here](https://aws-controllers-k8s.github.io/community/reference/) under the `PCA` header.
 
 Run the following command to create the hierarchy:
 
@@ -306,7 +306,7 @@ Here we see a `Status: ACTIVE` which indicates the successful creation of the su
 
 If the CA Status ends up in a `FAILED` state, there should be messages in the status that should explain why. Remedy this issue and retry creating the CA hierarchy. First you should run `kubectl delete -f certificate_hierarchy.yaml` to clean up what you have done thus far. Afterwards return to step 4 and reattempt creating the CA hierarchy.
 
-## Importing an Existing CA into ACK 
+## Importing an Existing CA into ACK
 
 If you already have an existing activated CA that you want to now manage via the ACK controller, you can do the following.
 
@@ -319,7 +319,7 @@ apiVersion: services.k8s.aws/v1alpha1
 kind: AdoptedResource
 metadata:
   name: adopted-ca
-spec:  
+spec:
   aws:
     arn: arn:aws:acm-pca:us-east-1:111111111111:certificate-authority/9f0d73ed-be9c-49bb-a8bf-009bee09fdc8
   kubernetes:
