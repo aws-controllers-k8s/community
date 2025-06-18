@@ -39,7 +39,7 @@ export REGION=us-east-1
 ### 2. Install the latest version of the AWS Private Certificate Authority ACK controller into the EKS cluster
 
 ```
-export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws- controllers-k8s/acmpca-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
+export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/acmpca-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 
