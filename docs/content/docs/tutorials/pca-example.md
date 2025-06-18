@@ -43,7 +43,7 @@ export RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws- controllers-
 
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 
-helm install --create-namespace -n ack-system ack-acmpca-controller \ oci://public.ecr.aws/aws-controllers-k8s/acmpca-chart -- version=$RELEASE_VERSION --set=aws.region=$REGION
+helm install --create-namespace -n ack-system ack-acmpca-controller \ oci://public.ecr.aws/aws-controllers-k8s/acmpca-chart --version=$RELEASE_VERSION --set=aws.region=$REGION
 ```
 
 You can verify the installation succeeded by doing the following:
