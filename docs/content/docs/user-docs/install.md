@@ -98,6 +98,12 @@ See [Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK contro
 
 To upgrade the ACK Controllers using Helm:
 
+{{% hint type="warning" title="NOTE" %}}
+Check for any Custom Resource Definition (CRD) changes that might affect your existing resources.
+Check for changes with the versions that also might affect your existing resources.
+Check [Helm Documentation](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
+{{% /hint %}} for the same. 
+
 ```bash
 export SERVICE=s3 
 export LATEST_RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")') 
