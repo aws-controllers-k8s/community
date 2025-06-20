@@ -96,6 +96,22 @@ ACK controllers need access to AWS IAM credentials to manage AWS resources.
 See [Next Steps](#Next-steps) for configuring AWS IAM credentials for ACK controller.
 {{% /hint %}}
 
+To upgrade the ACK Controllers using Helm:
+
+{{% hint type="warning" title="NOTE" %}}
+Check for any Custom Resource Definition (CRD) changes that might affect your existing resources.
+Check for changes with the versions that also might affect your existing resources.
+Check [Helm Documentation](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
+{{% /hint %}} for the same. 
+
+```bash
+export SERVICE=s3 
+export LATEST_RELEASE_VERSION=$(curl -sL https://api.github.com/repos/aws-controllers-k8s/${SERVICE}-controller/releases/latest | jq -r '.tag_name | ltrimstr("v")') 
+
+aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+helm upgrade ack-$SERVICE-controller \ oci://public.ecr.aws/aws-controllers-k8s/$SERVICE-chart --namespace $ACK_SYSTEM_NAMESPACE --version=$LATEST_RELEASE_VERSION --set=aws.region=$AWS_REGION
+```
+
 ## Install an ACK service controller with static Kubernetes manifests
 
 If you prefer not to use Helm, you may install an ACK service controller using static Kubernetes manifests that are included in the source repository.
