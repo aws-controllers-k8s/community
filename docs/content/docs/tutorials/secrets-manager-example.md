@@ -10,8 +10,8 @@ weight: 43
 toc: true
 ---
 
-The ACK service controller for AWS Secrets Manager lets you create Secrets directly from Kubernetes.
-This guide shows you how to create a new Secret in AWS Secrets Manager using a reference to a Kubernetes Secret.
+The ACK service controller for AWS Secrets Manager lets you create secrets directly from Kubernetes.
+This guide shows you how to create a new secret in AWS Secrets Manager using a reference to a Kubernetes Secret.
 
 ## Setup
 
@@ -58,7 +58,7 @@ value of `secretsmanager` for `SERVICE`.
 
 ### Create Kubernetes Secret
 
-Now that the ACK secretsmanager-controller is setup we'll need to create a Kubernetes Secret to store our sensitive data. 
+Now that the ACK secretsmanager-controller is setup we'll need to create a Kubernetes Secret. 
 
 ```bash
 cat <<EOF > secret.yaml
@@ -77,8 +77,8 @@ EOF
 kubectl apply -f secret.yaml
 ```
 
-### Create AWS Secret
-Finally, we'll create an AWS Secret referencing the k8s Secret we just created. 
+### Create ACK Secret
+Finally, we'll create an ACK Secret referencing the Kubernetes Secret we just created. 
 
 ```bash
 cat <<EOF > aws-secret.yaml
@@ -96,14 +96,22 @@ spec:
 EOF
 ```
 
-You can delete your AWS and k8s Secrets using the `kubectl delete` command:
+```bash
+kubectl apply -f aws-secret.yaml
+```
+
+You can verify that the secret was created with the AWS CLI.
+
+```bash
+aws secretsmanager describe-secret sample-aws-secret
+```
+
+### Cleanup
+You can delete your ACK and Kubernetes Secrets using the `kubectl delete` command:
 
 ```bash
 kubectl delete -f secret.yaml && kubectl delete -f aws-secret.yaml
 ```
-
-### Cleanup
-You can delete the AWS Secret
 
 To remove the Secrets Manager ACK service controller, related CRDs, and namespaces, see [ACK Cleanup][cleanup].
 
