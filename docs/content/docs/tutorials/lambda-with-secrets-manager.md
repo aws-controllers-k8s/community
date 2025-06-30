@@ -266,10 +266,3 @@ To delete your EKS clusters, see [Amazon EKS - Deleting a cluster][cleanup-eks].
 [cleanup]: ../../user-docs/cleanup/
 [cleanup-eks]: https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html
 
-
-
-
-
-
-
-
