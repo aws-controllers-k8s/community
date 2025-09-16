@@ -2,6 +2,7 @@
 *.swp
 *~
 .idea
+.vscode
 /docs/site
 bin
 build
