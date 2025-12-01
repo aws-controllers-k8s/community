@@ -15,6 +15,7 @@
   <body class="{{ .Scratch.Get "class" }} d-flex flex-column h-100 dark">
     {{ partial "header/header.html" . }}
     <div class="wrap container" role="document">
+      {{ partial "deprecation-banner.html" . }}
       <div class="content">
         {{ block "main" . }}{{ end }}
       </div>

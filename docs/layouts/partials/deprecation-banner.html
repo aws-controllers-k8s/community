@@ -1,0 +1,135 @@
+{{- /* Deprecation banner - shows warning on all pages */ -}}
+{{- with .Site.Data.deprecation -}}
+  {{- $newSiteBase := .new_site_base_url -}}
+  {{- $currentPath := $.RelPermalink | replaceRE "^/" "" | replaceRE "/$" "" -}}
+
+  {{- /* Check if this page should redirect */ -}}
+  {{- $shouldRedirect := false -}}
+  {{- $redirectUrl := "" -}}
+  {{- range $oldPath, $newPath := .redirects -}}
+    {{- /* Match exact path or prefix (for sections like reference/*) */ -}}
+    {{- if or (eq $currentPath $oldPath) (hasPrefix $currentPath (printf "%s/" $oldPath)) -}}
+      {{- $shouldRedirect = true -}}
+      {{- $redirectUrl = printf "%s%s" $newSiteBase $newPath -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- if $shouldRedirect -}}
+    {{- /* Show redirect notice with JS fallback */ -}}
+    <script>window.location.href = "{{ $redirectUrl }}";</script>
+    <noscript>
+    <div class="deprecation-banner deprecation-redirect" role="alert">
+      <div class="deprecation-icon">&#x26A0;</div>
+      <div class="deprecation-content">
+        <strong>Redirecting...</strong>
+        <p>This page has moved. <a href="{{ $redirectUrl }}">Click here</a> if you are not redirected automatically.</p>
+      </div>
+    </div>
+    </noscript>
+  {{- else -}}
+    {{- /* Check if this page has a mapped equivalent */ -}}
+    {{- $newUrl := "" -}}
+    {{- range $oldPath, $newPath := .page_mappings -}}
+      {{- if eq $currentPath $oldPath -}}
+        {{- $newUrl = printf "%s%s" $newSiteBase $newPath -}}
+      {{- end -}}
+    {{- end -}}
+
+    <div class="deprecation-banner" role="alert">
+      <div class="deprecation-icon">&#x26A0;</div>
+      <div class="deprecation-content">
+        <strong>This documentation site is deprecated.</strong>
+        {{- if $newUrl }}
+        <p>This page has moved to the new documentation site. <a href="{{ $newUrl }}">View the updated version</a>.</p>
+        {{- else }}
+        <p>Please visit the <a href="{{ $newSiteBase }}">new ACK documentation site</a> for up-to-date information.</p>
+        {{- end }}
+      </div>
+    </div>
+  {{- end -}}
+{{- end -}}
+
+<style>
+.deprecation-banner {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.deprecation-banner.deprecation-redirect {
+  border-left-color: #10b981;
+}
+
+.deprecation-icon {
+  font-size: 18px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.deprecation-content {
+  flex: 1;
+}
+
+.deprecation-content strong {
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.deprecation-redirect .deprecation-content strong {
+  color: #065f46;
+}
+
+.deprecation-content p {
+  margin: 4px 0 0 0;
+  color: #475569;
+  font-size: 13px;
+}
+
+.deprecation-redirect .deprecation-content p {
+  color: #065f46;
+}
+
+.deprecation-content a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.deprecation-content a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode support */
+.dark .deprecation-banner {
+  background: #1e293b;
+  border-color: #475569;
+  border-left-color: #60a5fa;
+}
+
+.dark .deprecation-content strong {
+  color: #f1f5f9;
+}
+
+.dark .deprecation-content p {
+  color: #94a3b8;
+}
+
+.dark .deprecation-content a {
+  color: #60a5fa;
+}
+
+.dark .deprecation-banner.deprecation-redirect {
+  border-left-color: #34d399;
+}
+
+.dark .deprecation-redirect .deprecation-content strong,
+.dark .deprecation-redirect .deprecation-content p {
+  color: #a7f3d0;
+}
+</style>
