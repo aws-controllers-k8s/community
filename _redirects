@@ -1,1 +1,34 @@
 # redirects for Netlify - https://www.netlify.com/docs/redirects/
+# Page aliases
+
+# Deprecation redirects to new documentation site
+/docs/user-docs/ack-tags/ https://aws-controllers-k8s.github.io/docs/guides/tags/ 302
+/docs/user-docs/ack-tags https://aws-controllers-k8s.github.io/docs/guides/tags/ 302
+/docs/user-docs/adopted-resource/ https://aws-controllers-k8s.github.io/docs/guides/adoption/ 302
+/docs/user-docs/adopted-resource https://aws-controllers-k8s.github.io/docs/guides/adoption/ 302
+/docs/user-docs/authentication/ https://aws-controllers-k8s.github.io/docs/guides/permissions/ 302
+/docs/user-docs/authentication https://aws-controllers-k8s.github.io/docs/guides/permissions/ 302
+/docs/user-docs/authorization/ https://aws-controllers-k8s.github.io/docs/guides/permissions/ 302
+/docs/user-docs/authorization https://aws-controllers-k8s.github.io/docs/guides/permissions/ 302
+/docs/user-docs/cross-account-resource-management/ https://aws-controllers-k8s.github.io/docs/guides/cross-account/ 302
+/docs/user-docs/cross-account-resource-management https://aws-controllers-k8s.github.io/docs/guides/cross-account/ 302
+/docs/user-docs/deletion-policy/ https://aws-controllers-k8s.github.io/docs/guides/deletion-policy/ 302
+/docs/user-docs/deletion-policy https://aws-controllers-k8s.github.io/docs/guides/deletion-policy/ 302
+/docs/user-docs/drift-recovery/ https://aws-controllers-k8s.github.io/docs/guides/drift/ 302
+/docs/user-docs/drift-recovery https://aws-controllers-k8s.github.io/docs/guides/drift/ 302
+/docs/user-docs/field-export/ https://aws-controllers-k8s.github.io/docs/guides/field-export/ 302
+/docs/user-docs/field-export https://aws-controllers-k8s.github.io/docs/guides/field-export/ 302
+/docs/user-docs/install/ https://aws-controllers-k8s.github.io/docs/getting-started/ 302
+/docs/user-docs/install https://aws-controllers-k8s.github.io/docs/getting-started/ 302
+/docs/user-docs/irsa/ https://aws-controllers-k8s.github.io/docs/guides/configure-iam/ 302
+/docs/user-docs/irsa https://aws-controllers-k8s.github.io/docs/guides/configure-iam/ 302
+/docs/user-docs/leader-election/ https://aws-controllers-k8s.github.io/docs/guides/leader-election/ 302
+/docs/user-docs/leader-election https://aws-controllers-k8s.github.io/docs/guides/leader-election/ 302
+/docs/user-docs/multi-region-resource-management/ https://aws-controllers-k8s.github.io/docs/guides/multi-region/ 302
+/docs/user-docs/multi-region-resource-management https://aws-controllers-k8s.github.io/docs/guides/multi-region/ 302
+/docs/user-docs/resource-crud/ https://aws-controllers-k8s.github.io/docs/guides/create-resource/ 302
+/docs/user-docs/resource-crud https://aws-controllers-k8s.github.io/docs/guides/create-resource/ 302
+/reference/ https://aws-controllers-k8s.github.io/docs/api-reference/ 302
+/reference https://aws-controllers-k8s.github.io/docs/api-reference/ 302
+/services/ https://aws-controllers-k8s.github.io/docs/controllers/ 302
+/services https://aws-controllers-k8s.github.io/docs/controllers/ 302
