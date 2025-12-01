@@ -142,10 +142,11 @@ def convert_crd_to_resource(crd: Dict, service: str, crd_package_path: str = "")
         res_spec.append(convert_field(field_name, field, required))
 
     status = schema['properties']['status']
-    status_properties = status['properties']
-    for field_name, field in status_properties.items():
-        required  = field_name in status['required'] if 'required' in status else False
-        res_status.append(convert_field(field_name, field, required))
+    if 'properties' in status:
+        status_properties = status['properties']
+        for field_name, field in status_properties.items():
+            required  = field_name in status['required'] if 'required' in status else False
+            res_status.append(convert_field(field_name, field, required))
 
     return Resource(
         name=crd['spec']['names']['kind'],
