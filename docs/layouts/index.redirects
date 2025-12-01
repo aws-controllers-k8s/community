@@ -1,6 +1,15 @@
 # redirects for Netlify - https://www.netlify.com/docs/redirects/
+# Page aliases
 {{- range $p := .Site.Pages -}}
 {{- range .Aliases }}
 {{ . }} {{ $p.RelPermalink -}}
 {{- end }}
+{{- end }}
+
+# Deprecation redirects to new documentation site
+{{- $deprecation := .Site.Data.deprecation -}}
+{{- $newSiteBase := $deprecation.new_site_base_url -}}
+{{- range $oldPath, $newPath := $deprecation.redirects }}
+/{{ $oldPath }}/ {{ $newSiteBase }}{{ $newPath }} 302
+/{{ $oldPath }} {{ $newSiteBase }}{{ $newPath }} 302
 {{- end -}}

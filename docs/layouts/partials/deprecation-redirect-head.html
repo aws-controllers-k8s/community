@@ -1,0 +1,13 @@
+{{- /* This partial outputs redirect meta tags for the head section */ -}}
+{{- with .Site.Data.deprecation -}}
+  {{- $newSiteBase := .new_site_base_url -}}
+  {{- $currentPath := $.RelPermalink | replaceRE "^/" "" | replaceRE "/$" "" -}}
+  {{- range $oldPath, $newPath := .redirects -}}
+    {{- /* Match exact path or prefix (for sections like reference/*) */ -}}
+    {{- if or (eq $currentPath $oldPath) (hasPrefix $currentPath (printf "%s/" $oldPath)) -}}
+      {{- $redirectUrl := printf "%s%s" $newSiteBase $newPath -}}
+  <meta http-equiv="refresh" content="0; url={{ $redirectUrl }}">
+  <link rel="canonical" href="{{ $redirectUrl }}">
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

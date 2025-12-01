@@ -1,0 +1,50 @@
+# Deprecation configuration for ACK community docs
+# Maps old pages to their equivalents on the new docs site
+
+# Base URL of the new documentation site
+new_site_base_url: "https://aws-controllers-k8s.github.io/docs"
+
+# Default deprecation message (used when no new_url is available)
+default_message: "This documentation site is deprecated. Please visit the new ACK documentation site for up-to-date information."
+
+# Pages that should show a warning banner with link to new equivalent (no redirect)
+# Only top-level pages - sub-pages with mappings redirect directly
+page_mappings:
+  "docs/community/overview": "/intro/"
+  "docs/community/how-it-works": "/concepts/"
+
+# Pages that should redirect directly (302) to new site
+redirects:
+  # API Reference
+  "reference": "/api-reference/"
+
+  # Services -> Controllers
+  "services": "/controllers/"
+
+  # User Documentation (sub-pages redirect)
+  "docs/user-docs/install": "/getting-started/"
+  "docs/user-docs/resource-crud": "/guides/create-resource/"
+  "docs/user-docs/ack-tags": "/guides/tags/"
+  "docs/user-docs/adopted-resource": "/guides/adoption/"
+  "docs/user-docs/authentication": "/guides/permissions/"
+  "docs/user-docs/authorization": "/guides/permissions/"
+  "docs/user-docs/cross-account-resource-management": "/guides/cross-account/"
+  "docs/user-docs/deletion-policy": "/guides/deletion-policy/"
+  "docs/user-docs/drift-recovery": "/guides/drift/"
+  "docs/user-docs/field-export": "/guides/field-export/"
+  "docs/user-docs/irsa": "/guides/configure-iam/"
+  "docs/user-docs/leader-election": "/guides/leader-election/"
+  "docs/user-docs/multi-region-resource-management": "/guides/multi-region/"
+
+# Pages without equivalents (will show generic deprecation message)
+# These are explicitly listed for documentation purposes
+no_equivalent:
+  - "docs/user-docs/cleanup"
+  - "docs/user-docs/features"
+  - "docs/user-docs/openshift"
+  - "docs/contributor-docs/*"
+  - "docs/community/background"
+  - "docs/community/discussions"
+  - "docs/community/faq"
+  - "docs/community/releases"
+  - "docs/tutorials/*"
