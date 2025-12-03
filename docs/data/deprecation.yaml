@@ -21,27 +21,29 @@ redirects:
   # Services -> Controllers
   "services": "/controllers/"
 
-  # User Documentation (sub-pages redirect)
+  # User Documentation (sub-pages redirect - only to pages with actual content)
+  "docs/user-docs/getting-started": "/getting-started/"
+  "docs/user-docs/reconciliation": "/concepts/"
+  "docs/user-docs/conditions": "/concepts/"
   "docs/user-docs/install": "/getting-started/"
   "docs/user-docs/resource-crud": "/guides/create-resource/"
-  "docs/user-docs/ack-tags": "/guides/tags/"
   "docs/user-docs/adopted-resource": "/guides/adoption/"
   "docs/user-docs/authentication": "/guides/permissions/"
   "docs/user-docs/authorization": "/guides/permissions/"
   "docs/user-docs/cross-account-resource-management": "/guides/cross-account/"
   "docs/user-docs/deletion-policy": "/guides/deletion-policy/"
-  "docs/user-docs/drift-recovery": "/guides/drift/"
   "docs/user-docs/field-export": "/guides/field-export/"
   "docs/user-docs/irsa": "/guides/configure-iam/"
-  "docs/user-docs/leader-election": "/guides/leader-election/"
   "docs/user-docs/multi-region-resource-management": "/guides/multi-region/"
 
-# Pages without equivalents (will show generic deprecation message)
-# These are explicitly listed for documentation purposes
+# Pages without equivalents or new page is stub (will show generic deprecation message)
 no_equivalent:
   - "docs/user-docs/cleanup"
   - "docs/user-docs/features"
   - "docs/user-docs/openshift"
+  - "docs/user-docs/ack-tags"
+  - "docs/user-docs/drift-recovery"
+  - "docs/user-docs/leader-election"
   - "docs/contributor-docs/*"
   - "docs/community/background"
   - "docs/community/discussions"
