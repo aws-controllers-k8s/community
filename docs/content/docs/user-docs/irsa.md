@@ -133,6 +133,9 @@ INLINE_POLICY_URL=${BASE_URL}/config/iam/recommended-inline-policy
 INLINE_POLICY="$(wget -qO- ${INLINE_POLICY_URL})"
 
 while IFS= read -r POLICY_ARN; do
+    if [ -z "$POLICY_ARN" ]; then
+        continue
+    fi
     echo -n "Attaching $POLICY_ARN ... "
     aws iam attach-role-policy \
         --role-name "${ACK_CONTROLLER_IAM_ROLE}" \
