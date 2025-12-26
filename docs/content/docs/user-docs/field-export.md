@@ -10,6 +10,10 @@ weight: 65
 toc: true
 ---
 
+{{% hint type="warning" title="Warning" %}}
+FieldExport is deprecated and will be removed on October 31, 2024. The recommended alternative is [KRO (Kubernetes Resource Orchestrator)](https://kro.run/docs/overview/). Please migrate your FieldExport resources to KRO for continued functionality.
+{{% /hint %}}
+
 ACK controllers are intended to manage your AWS infrastructure using Kubernetes
 custom resources. Their responsibilities end after managing the lifecycle of
 your AWS resource and do not extend into binding to applications running in the
