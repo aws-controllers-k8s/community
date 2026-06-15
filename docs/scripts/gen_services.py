@@ -10,7 +10,7 @@ import sys
 import github
 import prettytable
 from dataclasses import dataclass, asdict
-from jinja2 import Environment
+from jinja2 import Environment, select_autoescape
 from jinja2.loaders import FileSystemLoader
 from pathlib import Path
 from typing import List, Mapping, NewType
@@ -29,7 +29,7 @@ class TemplateArgs:
     controllers: Mapping[str, controller.Controller] # Maps from service package name to controller
 
 def write_services_page(args: TemplateArgs, page_output_path: Path):
-    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True)
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True, autoescape=select_autoescape())
     template = env.get_template("services.jinja2")
     with open(page_output_path, "w") as out:
         print(template.render(asdict(args)), file=out)

@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Union
-from jinja2 import Environment
+from jinja2 import Environment, select_autoescape
 from jinja2.loaders import FileSystemLoader
 
 @dataclass(frozen=True)
@@ -180,7 +180,7 @@ def write_service_pages(
         page_path = page_output_path / resource.output_path(service)
         page_path.parent.mkdir(parents=True, exist_ok=True)
 
-        env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True)
+        env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'), trim_blocks=True, lstrip_blocks=True, autoescape=select_autoescape())
         template = env.get_template("resource.jinja2")
         with open(page_path, "w") as out:
             print(template.render(asdict(resource)), file=out)
