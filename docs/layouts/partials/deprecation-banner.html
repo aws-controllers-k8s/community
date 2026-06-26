@@ -51,25 +51,44 @@
 
 <style>
 .deprecation-banner {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-left: 4px solid #3b82f6;
-  border-radius: 4px;
-  padding: 12px 16px;
-  margin: 0 0 20px 0;
+  position: sticky;
+  /* Sit just below the fixed page header (body padding-top is 3.5625rem) */
+  top: 3.5625rem;
+  z-index: 1020;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 8px solid #f59e0b;
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin: 0 0 28px 0;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+}
+
+/* On smaller screens the header is taller (body padding-top is 4rem) */
+@media (max-width: 767.98px) {
+  .deprecation-banner {
+    top: 4rem;
+  }
 }
 
 .deprecation-banner.deprecation-redirect {
+  background: #ffffff;
+  border-color: #e2e8f0;
   border-left-color: #10b981;
 }
 
 .deprecation-icon {
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: 32px;
+  line-height: 1.3;
   flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.deprecation-redirect .deprecation-icon {
+  color: #10b981;
 }
 
 .deprecation-content {
@@ -77,18 +96,25 @@
 }
 
 .deprecation-content strong {
-  color: #1e293b;
-  font-size: 14px;
+  display: block;
+  color: #0f172a;
+  font-size: 20px;
+  line-height: 1.3;
 }
 
 .deprecation-redirect .deprecation-content strong {
-  color: #065f46;
+  color: #0f172a;
 }
 
 .deprecation-content p {
-  margin: 4px 0 0 0;
+  margin: 8px 0 0 0;
   color: #475569;
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.deprecation-redirect .deprecation-content p {
+  color: #475569;
 }
 
 .deprecation-redirect .deprecation-content p {
@@ -96,9 +122,13 @@
 }
 
 .deprecation-content a {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
+  color: #b45309;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.deprecation-redirect .deprecation-content a {
+  color: #047857;
 }
 
 .deprecation-content a:hover {
@@ -108,28 +138,43 @@
 /* Dark mode support */
 .dark .deprecation-banner {
   background: #1e293b;
-  border-color: #475569;
-  border-left-color: #60a5fa;
+  border-color: #334155;
+  border-left-color: #fbbf24;
+}
+
+.dark .deprecation-icon {
+  color: #fbbf24;
+}
+
+.dark .deprecation-redirect .deprecation-icon {
+  color: #34d399;
 }
 
 .dark .deprecation-content strong {
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 .dark .deprecation-content p {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .dark .deprecation-content a {
-  color: #60a5fa;
+  color: #fcd34d;
 }
 
 .dark .deprecation-banner.deprecation-redirect {
   border-left-color: #34d399;
 }
 
-.dark .deprecation-redirect .deprecation-content strong,
+.dark .deprecation-redirect .deprecation-content strong {
+  color: #f8fafc;
+}
+
 .dark .deprecation-redirect .deprecation-content p {
-  color: #a7f3d0;
+  color: #cbd5e1;
+}
+
+.dark .deprecation-redirect .deprecation-content a {
+  color: #6ee7b7;
 }
 </style>
