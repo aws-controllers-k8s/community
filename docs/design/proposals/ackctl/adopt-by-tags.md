@@ -1,8 +1,13 @@
-# `ack-cli adopt`: adoption by tags
+# `ack adopt`: adoption by tags
 
-`ack-cli` is a local command-line tool for ACK. It queries AWS APIs and writes
-Kubernetes manifests to stdout, so it needs no cluster access; `adopt` and
-`list adoptable` are its commands today.
+`ack` is a local command-line tool for ACK; `adopt` and `list adoptable` are
+its commands today, and it is expected to grow commands that read and act on ACK
+resources in a cluster.
+
+`adopt` is not one of them, and is not intended to become one. It queries AWS APIs
+and writes Kubernetes manifests to stdout, so it needs no cluster access, no
+kubeconfig and no Kubernetes permissions — see §1 for why that stays true even
+once other commands hold a kubeconfig.
 
 This proposal covers `adopt`: how bulk adoption works, what each flag means, and how
 the CLI is released as new ACK resources land upstream.
@@ -44,12 +49,20 @@ carry no type label and shared prefixes like `rds:db:…` are ambiguous across k
 then piped through once it looks right:
 
 ```console
-$ ack-cli adopt --service eks --kind Nodegroup --tags "Environment=prod" \
+$ ack adopt --service eks --kind Nodegroup --tags "Environment=prod" \
     | kubectl create -f -
 ```
 
 Writing to the cluster is left to `kubectl`, which already handles context selection,
-namespace defaults and RBAC errors.
+namespace defaults and RBAC errors — and, importantly, per-object `AlreadyExists`,
+which is what makes re-running `adopt` pick up exactly the delta.
+
+**This is permanent, not a first-cut limitation.** `ack` is expected to gain
+commands that talk to a cluster, so it is worth being explicit that `adopt` will
+not: an `--apply` would reimplement everything above and get its edge cases wrong,
+and it would remove the review step from the riskiest operation here — handing
+live production infrastructure to a controller on the strength of an identifier
+mapping that can be wrong (§3). The pause to read the manifest is the feature.
 
 **Use `create` (POST), not `apply` (patch).** `create` is atomic, and the API server
 rejects a duplicate name with `AlreadyExists`, so one AWS resource cannot end up
@@ -62,8 +75,8 @@ which re-asserts `read-only: "true"` over a set already handed to ACK (§2.3). I
 treats the manifests as desired state, when they are only a starting point: the
 controller populates `spec` from the live resource once adoption succeeds.
 
-**Scope: 207 of ACK's 261 resources** are adoptable this way. The other 54 are not
-discoverable by tag or not decomposable from their ARN; `ack-cli list adoptable
+**Scope: 202 of ACK's 261 resources** are adoptable this way. The other 59 are not
+discoverable by tag or not decomposable from their ARN; `ack list adoptable
 --unsupported` reports each with a reason, and they remain adoptable one at a time
 by hand-writing the `adoption-fields` annotation per the [ACK adoption
 docs][adoption].
@@ -75,7 +88,7 @@ docs][adoption].
 ## 2. Flags
 
 ```
-ack-cli adopt --service SERVICE --kind KIND --tags "K=V ..." [flags]
+ack adopt --service SERVICE --kind KIND --tags "K=V ..." [flags]
 ```
 
 | Flag | Meaning |
@@ -83,13 +96,13 @@ ack-cli adopt --service SERVICE --kind KIND --tags "K=V ..." [flags]
 | `--service` | ACK service, e.g. `eks`. **Required** |
 | `--kind` | ACK resource kind, e.g. `Nodegroup`. **Required** |
 | `--tags "K=V K=V"` | Tag selector, given once as space-separated pairs. All must match (AND). A bare `KEY` matches any value. **Required** |
-| `--adoption-set NAME` | Names the collection this adopts; applied as the `ack.k8s.aws/adoption-set` label. Generated from the service, kind and a short run suffix when omitted. Does **not** affect CR names |
+| `--adoption-set NAME` | Names the collection this adopts; applied as the `ack.k8s.aws/adoption-set` label. Derived from the service, kind, region and tag selector when omitted — a digest of the selector, not a per-run value, so identical runs stay byte-identical. Does **not** affect CR names |
 | `--policy` | ACK adoption policy: `adopt` (default). `adopt-or-create` is refused (§2.3) |
 | `--read-only` | Emit `services.k8s.aws/read-only`. Default `true`; pass `--read-only=false` to let ACK manage the resource (§2.3) |
 | `--deletion-policy` | Emit `services.k8s.aws/deletion-policy`: `retain` (default) or `delete` (§2.3) |
 | `--region` | AWS region. Defaults to the environment; fails if none resolves (§2.2) |
 | `--namespace` | Namespace on emitted CRs |
-| `--debug` | Log discovery and resolution to stderr (also `ACK_CLI_DEBUG=1`) |
+| `--debug` | Log discovery and resolution to stderr (also `ACK_DEBUG=1`) |
 
 Output always goes to stdout; writing to a file is a shell redirect
 (`> nodegroups.yaml`).
@@ -105,11 +118,11 @@ must match, so each one narrows the result:
 
 ```console
 # nodegroups tagged Environment=prod AND team=platform
-$ ack-cli adopt --service eks --kind Nodegroup --adoption-set platform-prod \
+$ ack adopt --service eks --kind Nodegroup --adoption-set platform-prod \
     --tags "Environment=prod team=platform"
 
 # bare key: any nodegroup carrying an `Environment` tag, whatever its value
-$ ack-cli adopt --service eks --kind Nodegroup --adoption-set platform-prod \
+$ ack adopt --service eks --kind Nodegroup --adoption-set platform-prod \
     --tags "Environment"
 ```
 
@@ -138,7 +151,7 @@ adopting a same-named resource that happens to exist there.
 
 **The annotation is written from the query region, not the ARN.** `GetResources` is
 regional, so the queried region is authoritative for everything it returns —
-including resources whose ARN omits the region. 22 of the 207 adoptable ARN
+including resources whose ARN omits the region. 22 of the 202 adoptable ARN
 templates have an empty region slot (`iam:role`, `route53:hosted_zone`,
 `cloudfront:distribution`, `s3:bucket`, `rds:global-cluster`, …), and `s3:Bucket` is
 regional despite that, so the region is never inferred per resource.
@@ -202,8 +215,8 @@ metadata:
   `spec,omitempty`, so a CR with no spec validates; `spec: {}` is present-but-empty,
   gets checked against spec's own required fields, which most kinds have, and is
   rejected by the API server.
-- **`--adoption-set` is the handle for the collection**, generated when the flag is
-  omitted. It is a label, never part of a name, so one value can span several runs and
+- **`--adoption-set` is the handle for the collection**, derived from the run's
+  selector when the flag is omitted. It is a label, never part of a name, so one value can span several runs and
   still select them all — which is also how a user verifies the adoption took:
 
   ```console
@@ -276,22 +289,41 @@ Two inputs, both machine-read, neither requiring anything of ACK contributors:
 Keys bind to placeholders **by name**, after normalizing away the repetition of the
 resource type that the two sides spell differently — an `ecr:repository`'s
 `${RepositoryName}` placeholder binds to its `name` key. Matching by name rather than
-position keeps the mapping independent of segment order: a wafv2 web ACL's ARN is
-`${Scope}/webacl/${Name}/${Id}` while its ACK keys are `[name, id, scope]`.
+position keeps the mapping independent of segment order: a
+`bedrockagentcorecontrol:AgentRuntimeEndpoint`'s ARN is
+`runtime/${RuntimeId}/runtime-endpoint/${Name}` while its ACK keys are
+`[name, agentRuntimeID]`.
+
+Binding is solved as an exact matching problem over candidate sets, not a greedy scan.
+A greedy first-match let a bare `name` key claim the first placeholder that merely
+looked plausible — `${ClusterName}` ahead of `${ServiceName}` — and the resulting
+`adoption-fields` was well-formed while naming a different real resource. Requiring a
+complete assignment makes that impossible, and genuine ambiguity is refused rather
+than resolved by a coin flip.
 
 A resource is adoptable only if **every** identifier key binds and it has a type
 filter; anything else goes to `unsupported` with a reason. A partial mapping is
 never shipped, because without a type filter the query cannot be scoped and without
 every key the resulting `adoption-fields` would point at the wrong resource.
 
-That yields **207 adoptable of 261 known resources**, across 68 tagged controller
-repos.
+That yields **207 adoptable of 261 known resources**, across 64 released controller
+repos. The 54 that are not adoptable each carry a reason the user sees:
+
+| Reason | Count |
+|--------|-------|
+| sub-resource not independently taggable | 14 |
+| no matching resource type in the ARN grammar | 13 |
+| required key not in ARN | 12 |
+| no Tagging API type filter | 7 |
+| ARN shape indistinguishable from `rds:*` | 3 |
+| Tagging API indexes the service only per-service (`wafv2`) | 3 |
+| the controller declares no adoption identifiers | 2 |
 
 ### 4.1 Overrides
 
 An override is a hand-written catalog entry for a kind that automatic name matching
 cannot map. It supplies the type filter, the ARN template, and the bindings, in the
-same shape the generator emits. The table holds 24 entries today and is maintained
+same shape the generator emits. The table holds 39 entries today and is maintained
 by this project — **contributors adding a new ACK resource never touch it.** The
 generator validates that every override binds all of its kind's identifier keys and
 fails the build if one does not, so a typo cannot ship a wrong mapping.
@@ -346,6 +378,34 @@ wrong resource. Those kinds stay unsupported with that reason —
 sub-resources that carry no tags of their own (`route53:RecordSet`, `kms:Grant`,
 `efs:MountTarget`) — and are adopted individually by hand instead.
 
+### 4.2 How the Tagging API names resource types
+
+The type filter cannot be derived from the ARN grammar's resource label, and getting it
+wrong is silent. `GetResources` accepts almost any well-formed `service:type` string —
+measured, including `notaservice:notatype` — and rejects only malformed syntax. A wrong
+filter therefore returns zero results, indistinguishable from an account with no such
+resources.
+
+Two shapes were measured against real resources, and both differ from the grammar:
+
+**The type is the ARN's resource path with identifier segments removed.** For
+apigateway, `/apis/{id}` is `apigateway:apis` and `/apis/{id}/stages/{name}` is
+`apigateway:apis/stages`; the grammar's singular `api` and `stage` match nothing. This
+rule also reproduces `eks:nodegroup`, `rds:db` and `dynamodb:table`, so it may be
+general — but only 31 filters can currently be verified, and changing all 207 at once
+would risk a silent regression. The remaining apigateway filters are set by the rule
+and marked as derived in the override table.
+
+**Some services are indexed only at service granularity.** A `wafv2` IP set is returned
+by the bare `wafv2` filter and by none of `wafv2:ipset`, `wafv2:regional/ipset`,
+`wafv2:global/ipset` or `wafv2:ip-set`. A bare service filter would work for discovery
+but over-matches every other kind in that service, and nothing yet distinguishes an
+expected over-match from a genuine resolution failure, so those kinds are unsupported.
+
+A parent kind's filter can over-match its children even when correct: `apigateway:apis`
+returns stages as well as APIs. The resolver rejects the extras by template, so nothing
+wrong is emitted, but they appear as skips on stderr.
+
 ---
 
 ## 5. Rollout: releasing the CLI as resources land upstream
@@ -377,9 +437,9 @@ trigger the existing `ack-chart-release` job uses.
 4. Build and publish the CLI, tagged with the `ack-chart` version that triggered the
    run.
 
-**The `ack-chart` version is the CLI version.** `ack-cli 1.0.42` was built from
+**The `ack-chart` version is the CLI version.** `ack 1.0.42` was built from
 `ack-chart 1.0.42`, so "which controllers does my binary know about?" has a single
-answer, and `ack-cli version` reports it. No separate versioning scheme to
+answer, and `ack version` reports it. No separate versioning scheme to
 reconcile.
 
 Every step must pass before publish, so a bad mapping fails the release instead of
@@ -392,3 +452,69 @@ A new upstream resource therefore needs no maintainer work: the controller relea
 `ack-chart` is re-tagged, the job regenerates and validates, and the resource shows
 up in `list adoptable` in the next CLI release. Work is only needed when a resource
 lands in `unsupported` for a reason an override could fix (§4.1).
+
+
+---
+
+## 6. Testing
+
+Three layers, split by what they can prove.
+
+**Hermetic (no AWS).** A round-trip validator fills every placeholder in each ARN
+template with a unique sentinel, re-parses the synthetic ARN, and asserts each key
+recovers its own sentinel. That catches an unbound key, a malformed type filter and a
+miscounted ARN header, but *not* a key bound to the wrong placeholder — the expected
+values come from the same bindings under test, so swapping two of them still passes.
+The independent check is the ACK key's own name, applied by the same `naming` package
+the generator uses to choose bindings, plus real-ARN cases for the hierarchical kinds.
+Generator tests parse controller `resource.go` fixtures directly, since
+`PopulateResourceFromAnnotation` is the adoption contract.
+
+**Integration, read-only (real AWS).** A sweep asks whether each filter returns
+anything, which finds only malformed filters. A cross-check does better: it queries the
+bare service filter, attributes each returned ARN to the kind whose template matches it,
+and requires that kind's own filter to return it too. When it does not, the filter is
+proven wrong, because the resource demonstrably exists and is demonstrably indexed.
+That is what caught both filter bugs above. Both are lower bounds — a kind with no
+resources in the probed account stays unproven.
+
+**Integration, mutating (real AWS).** Creates real resources, runs the built binary
+against them, and checks the emitted manifests against what the AWS create APIs
+reported. The oracle is the create response, never the resolver, and the manifest is
+re-parsed into a struct declared in the test so the assertions cannot agree with the
+code under test by construction. Fixtures cover ARN *shapes* rather than services: an
+empty ARN envelope (`s3:Bucket`), an ARN-primary resource that skips template matching
+(`sns:Topic`), and a nested multi-key template whose AWS namespace differs from the ACK
+service name (`apigatewayv2:Stage`). All are free of charge; each is named and tagged
+with a run-unique value, and teardown deletes only identifiers captured at creation, so
+concurrent runs cannot see each other's resources.
+
+**E2E, cluster (proposed).** Bootstrap, adopt, `kubectl create`, wait for
+`ACK.ResourceSynced`, tear down with `deletion-policy: retain`. Not built.
+
+Every layer runs as a prow presubmit in `test-infra`. The AWS-touching jobs are optional
+for now: `GetResources` throttles per account and its index is eventually consistent, so
+a flaky required check would train reviewers to ignore it.
+
+---
+
+## 7. Known limitations
+
+- **"Adoptable" is only partly a measurement.** It means the kind's ARN can be
+  decomposed; whether `GetResources` returns the kind is a separate question AWS answers
+  only indirectly (§4.2). A filter is known good once it has returned a resource — 31 so
+  far, in one account and one region. The rest are unproven, not disproven, and the
+  proven set is a union across runs.
+- **Double adoption outside this CLI.** Identity-derived names stop `ack` from
+  adopting a resource twice, but a hand-written CR for the same resource under a
+  different name is not detected. A sound fix belongs in the ACK runtime as a cross-CR
+  ownership guard.
+- **12 kinds need a `Describe` fallback.** Their identifier is simply absent from the
+  ARN, so no template can recover it.
+- **Single region per run.** `GetResources` is regional, so adopting across regions
+  means one run per region. Output concatenates safely because names include the ARN
+  digest.
+- **Catalog correctness rests on name matching.** A binding is judged correct by whether
+  the ACK key and the ARN placeholder agree after normalization. That is a strong signal
+  and it caught five real errors, but it is a heuristic, and the hermetic tests share its
+  implementation rather than providing a second opinion.
