@@ -20,20 +20,26 @@ registers for every controller.
 ## Metrics endpoint
 
 Each controller serves its metrics in Prometheus text format at the `/metrics`
-path. The address is controlled by the `--metrics-addr` flag and defaults to
-`0.0.0.0:8080`, so metrics are available at `http://<pod-ip>:8080/metrics`.
+path. The controller listens on the container port set by `deployment.containerPort`
+in the Helm chart, which defaults to `8080`, so metrics are available at
+`http://<pod-ip>:8080/metrics`.
 
 You can confirm the endpoint is working by port-forwarding to the controller pod
-and curling it:
+and curling it. Look the pod up by label so this works regardless of the Helm
+release name:
 
 ```bash
-kubectl -n ack-system port-forward deployment/ack-s3-controller 8080:8080
+kubectl -n ack-system port-forward \
+  $(kubectl -n ack-system get pod -l app.kubernetes.io/instance=ack-s3-controller -o name | head -1) 8080:8080
 curl -s http://localhost:8080/metrics | grep ack_
 ```
 
-To scrape it, point Prometheus at the controller pod on that port. If you use
-the Prometheus Operator, a `PodMonitor` or `ServiceMonitor` selecting the
-controller pods (port `8080`, path `/metrics`) is the usual approach.
+To scrape it, point Prometheus at the controller pods on that port. If you use
+the Prometheus Operator, a `PodMonitor` selecting the controller pods (port
+`8080`, path `/metrics`) works out of the box. A `ServiceMonitor` additionally
+requires the chart's metrics Service, which is off by default — install with
+`--set metrics.service.create=true`. That Service exposes a port named
+`metricsport` targeting the container port `http`.
 
 ## ACK-specific metrics
 
@@ -47,12 +53,23 @@ requests made by the controller. It carries the labels:
 - `op_type` – the type of operation, such as `CREATE`, `READ_ONE`, `UPDATE`, or `DELETE`.
 - `op_id` – the specific AWS API call, such as `CreateBucket`.
 
-`ack_outbound_api_requests_error_total` counts the outbound requests that came
-back with a 4XX or 5XX HTTP status code. Its labels are:
+`ack_outbound_api_requests_error_total` counts the outbound requests that
+returned an error. The controller increments it for **any** non-nil error from
+the SDK call — this includes non-API errors and expected ones such as `NotFound`
+during a `ReadOne` (for example right after a create, or during adoption), so a
+nonzero count is normal. Its labels are:
 
 - `service` – the AWS service the controller manages.
 - `op_id` – the specific AWS API call that failed.
-- `status_code` – the HTTP status code returned by the API.
+- `status_code` – despite the name, this is **not** an HTTP status code. It is
+  the string form of smithy's `ErrorFault` classification returned by
+  [`ackerr.HTTPStatusCode()`][ackerr-fault], with only these values:
+    - `"-1"` – the error was not an AWS API error
+    - `"0"` – unknown fault
+    - `"1"` – server fault (AWS-side, 5XX-class)
+    - `"2"` – client fault (4XX-class, e.g. throttling, access denied, validation)
+
+[ackerr-fault]: https://github.com/aws-controllers-k8s/runtime/blob/main/pkg/errors/error.go#L97-L103
 
 Because both are counters, you typically look at their rate rather than the raw
 value.
@@ -78,8 +95,10 @@ minutes:
 sum by (service, op_id) (rate(ack_outbound_api_requests_total[5m]))
 ```
 
-Error ratio of outbound AWS API calls per service, which is a good signal that a
-controller is being throttled or is hitting permission or validation errors:
+Error ratio of outbound AWS API calls per service. Because expected errors (such
+as `NotFound` on `ReadOne`) are counted too, a nonzero ratio is normal — watch it
+as a trend rather than an absolute, or filter to `status_code="1"` to isolate
+AWS-side server faults:
 
 ```promql
 sum by (service) (rate(ack_outbound_api_requests_error_total[5m]))
@@ -87,10 +106,18 @@ sum by (service) (rate(ack_outbound_api_requests_error_total[5m]))
 sum by (service) (rate(ack_outbound_api_requests_total[5m]))
 ```
 
-Throttled requests (HTTP 429) per operation:
+Client-side faults (4XX-class errors such as throttling, access denied, or
+validation) per operation. Note the metric cannot separate throttling from other
+client faults — they all share `status_code="2"`:
 
 ```promql
-sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="429"}[5m]))
+sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="2"}[5m]))
+```
+
+Server-side faults (AWS-side 5XX-class errors) per operation:
+
+```promql
+sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m]))
 ```
 
 Reconcile error rate per controller, from the controller-runtime metrics:
@@ -100,6 +127,15 @@ sum by (controller) (rate(controller_runtime_reconcile_errors_total[5m]))
 ```
 
 Watching the outbound-request rate and error ratio before and after upgrading a
-controller is a practical way to catch regressions early. Running a workload in a
-staging environment and comparing these metrics across controller versions gives
-you a baseline before you upgrade in production.
+controller is a practical way to catch regressions early. For example, compare the
+current server-fault rate against the same window a day earlier to spot a change
+introduced by an upgrade:
+
+```promql
+sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m]))
+  -
+sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m] offset 1d))
+```
+
+Running a workload in a staging environment and comparing these metrics across
+controller versions gives you a baseline before you upgrade in production.
