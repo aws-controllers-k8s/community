@@ -131,6 +131,42 @@ To mitigate this problem, the ACK controller will only export fields from
 resources that exist in the same namespace as the `FieldExport` resource
 requesting it. {{% /hint %}}
 
+## Exporting to a different namespace
+
+`spec.to.namespace` is optional. When set to a namespace other than the FieldExport's
+own namespace, the controller writes the ConfigMap or Secret into that target namespace.
+
+```yaml
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: export-db-endpoint
+  namespace: app-ns
+spec:
+  from:
+    path: ".status.endpoint"
+    resource:
+      group: rds.services.k8s.aws
+      kind: DBInstance
+      name: my-database
+  to:
+    kind: configmap
+    name: db-config
+    namespace: other-ns   # write into a different namespace
+```
+
+{{% hint type="warning" title="Requires --enable-cross-namespace" %}}
+Targeting a namespace other than the FieldExport's own namespace counts as a
+cross-namespace operation. The controller must have `--enable-cross-namespace=true`
+(Helm: `enableCrossNamespace: true`) set. When the flag is `true`, the export works but
+the FieldExport gets an `ACK.Advisory` / `CrossNamespaceOptInRequired` condition. When
+the flag is `false` (the upcoming default), the FieldExport fails with a terminal error.
+
+See [Cross-namespace references][cross-namespace-docs] for how to audit, opt in, or
+migrate.
+{{% /hint %}}
+
 [spec-reference]: ../../../reference/common/v1alpha1/fieldexport/
 [bucket-spec]: ../../../reference/s3/v1alpha1/fieldexport/bucket/#spec
 [rds-tutorial]: ../../tutorials/rds-example/
+[cross-namespace-docs]: ../features/#cross-namespace-references---enable-cross-namespace
