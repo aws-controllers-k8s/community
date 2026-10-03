@@ -152,3 +152,102 @@ data:
   s3.team-a: "arn:aws:iam::111111111111:role/team-a-s3-role"
   dynamodb.team-a: "arn:aws:iam::111111111111:role/team-a-dynamodb-role"
 ```
+
+### Cross-namespace references (`--enable-cross-namespace`)
+
+`--enable-cross-namespace` is a **controller flag**, not a feature gate. It is available
+on controllers built on ACK runtime v0.60.0 or newer and must be set independently for
+each controller you run. See [Opting in](#opting-in) below for how to set it.
+
+#### What the flag gates
+
+The flag controls whether a controller allows operations that cross a namespace boundary:
+
+- Resource reference fields (`*Ref`) whose referenced resource is in a **different** namespace
+- `SecretKeyReference` fields where `namespace` differs from the resource's namespace
+- [`FieldExport`][field-export] `spec.to.namespace` targeting a different namespace
+
+Everything within a single namespace works regardless of the flag value.
+
+#### Behavior
+
+| Flag value | Cross-namespace operation result | `ACK.Advisory` condition set? |
+| --- | --- | --- |
+| `true` (current default, changing to `false`) | Resolves successfully | Yes — `reason: CrossNamespaceOptInRequired` (migration-period warning) |
+| `false` (upcoming default) | Fails with a terminal error | No |
+
+Same-namespace usage works in both cases and is never flagged.
+
+The terminal error looks like:
+
+```text
+cross-namespace resource reference is not allowed. Set --enable-cross-namespace=true to allow it.
+sourceNamespace:..., targetNamespace:..., name:...
+```
+
+#### Finding affected resources
+
+Controllers on runtime v0.60.0+ already flag cross-namespace usage. Check a resource's
+conditions for the advisory:
+
+```bash
+kubectl get <kind> <name> -n <namespace> -o yaml
+# look under status.conditions for:
+#   type: ACK.Advisory
+#   reason: CrossNamespaceOptInRequired
+```
+
+To sweep a namespace across all ACK kinds:
+
+```bash
+for kind in $(kubectl api-resources --api-group=services.k8s.aws -o name); do
+  kubectl get "$kind" -n <namespace> -o json 2>/dev/null \
+    | jq -r --arg kind "$kind" '.items[]
+        | select(any(.status.conditions[]?; .reason == "CrossNamespaceOptInRequired"))
+        | "\($kind)/\(.metadata.name)"'
+done
+```
+
+Replace the API group for each controller you run (e.g. `s3.services.k8s.aws`,
+`rds.services.k8s.aws`).
+
+#### Opting in
+
+To keep cross-namespace behavior working after the default changes, set the flag in each
+controller's Helm values:
+
+```yaml
+# values.yaml
+enableCrossNamespace: true
+```
+
+Or pass the CLI flag directly to the controller binary:
+
+```bash
+--enable-cross-namespace=true
+```
+
+Note that this is a per-controller setting — each ACK controller you run needs it set
+independently.
+
+#### Recommended migration
+
+To move to namespace-local behavior (the recommended path):
+
+1. Audit for the advisory using the commands above.
+2. For each hit, move the referenced object into the resource's namespace, or move the
+   resource into the referenced object's namespace.
+3. Re-apply and confirm the advisory condition clears.
+
+{{% hint type="warning" title="Known gap: Secret writes" %}}
+The `--enable-cross-namespace` flag currently gates only the cross-namespace **read**
+path. Secret writes — the ACM `Certificate` `spec.exportTo` and ACMPCA
+`certificateOutput.secretReference` cross-namespace export features — are **not** yet
+validated by the flag and still cross namespaces even when the flag is `false`. Tracked
+in [#3030](https://github.com/aws-controllers-k8s/community/issues/3030).
+{{% /hint %}}
+
+For the rollout timeline and the minimum controller version required per service, see
+[#3031](https://github.com/aws-controllers-k8s/community/issues/3031).
+
+[field-export]: ../field-export/
