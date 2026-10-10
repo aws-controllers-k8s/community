@@ -111,6 +111,9 @@ sum by (service) (rate(ack_outbound_api_requests_total[5m]))
 
 Errors per operation, broken down by fault class (see the `status_code` values above):
 
+```promql
+sum by (op_id, status_code) (rate(ack_outbound_api_requests_error_total[5m]))
+```
 
 Reconcile error rate per controller, from the controller-runtime metrics:
 
@@ -120,9 +123,16 @@ sum by (controller) (rate(controller_runtime_reconcile_errors_total[5m]))
 
 Watching the outbound-request rate and error ratio before and after upgrading a
 controller is a practical way to catch regressions early. For example, compare the
-current server-fault rate against the same window a day earlier to spot a change
+current error ratio against the same window a day earlier to spot a change
 introduced by an upgrade:
 
+```promql
+sum by (service) (rate(ack_outbound_api_requests_error_total[5m]))
+  / sum by (service) (rate(ack_outbound_api_requests_total[5m]))
+-
+sum by (service) (rate(ack_outbound_api_requests_error_total[5m] offset 1d))
+  / sum by (service) (rate(ack_outbound_api_requests_total[5m] offset 1d))
+```
 
 Running a workload in a staging environment and comparing these metrics across
 controller versions gives you a baseline before you upgrade in production.
