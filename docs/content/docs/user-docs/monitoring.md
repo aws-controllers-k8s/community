@@ -20,9 +20,11 @@ registers for every controller.
 ## Metrics endpoint
 
 Each controller serves its metrics in Prometheus text format at the `/metrics`
-path. The controller listens on the container port set by `deployment.containerPort`
-in the Helm chart, which defaults to `8080`, so metrics are available at
-`http://<pod-ip>:8080/metrics`.
+path. The controller binds its metrics server to `--metrics-addr`, which
+defaults to `0.0.0.0:8080`, so metrics are available at
+`http://<pod-ip>:8080/metrics`. The Helm chart does not set this flag; it only
+declares the port on the pod (named `http`) using `deployment.containerPort`.
+Leave `deployment.containerPort` at its default of `8080` so the two match.
 
 You can confirm the endpoint is working by port-forwarding to the controller pod
 and curling it. Look the pod up by label so this works regardless of the Helm
@@ -65,9 +67,11 @@ nonzero count is normal. Its labels are:
   the string form of smithy's `ErrorFault` classification returned by
   [`ackerr.HTTPStatusCode()`][ackerr-fault], with only these values:
     - `"-1"` – the error was not an AWS API error
-    - `"0"` – unknown fault
-    - `"1"` – server fault (AWS-side, 5XX-class)
-    - `"2"` – client fault (4XX-class, e.g. throttling, access denied, validation)
+    - `"0"` – the error isn't defined in the AWS API model for that operation, so its
+      fault class is unknown. In practice this covers many errors, often including
+      throttling and 5XX responses.
+    - `"1"` – a server fault that the operation's API model defines
+    - `"2"` – a client fault that the operation's API model defines (for example `NoSuchBucket`)
 
 [ackerr-fault]: https://github.com/aws-controllers-k8s/runtime/blob/main/pkg/errors/error.go#L97-L103
 
@@ -97,8 +101,7 @@ sum by (service, op_id) (rate(ack_outbound_api_requests_total[5m]))
 
 Error ratio of outbound AWS API calls per service. Because expected errors (such
 as `NotFound` on `ReadOne`) are counted too, a nonzero ratio is normal — watch it
-as a trend rather than an absolute, or filter to `status_code="1"` to isolate
-AWS-side server faults:
+as a trend rather than an absolute value:
 
 ```promql
 sum by (service) (rate(ack_outbound_api_requests_error_total[5m]))
@@ -106,19 +109,8 @@ sum by (service) (rate(ack_outbound_api_requests_error_total[5m]))
 sum by (service) (rate(ack_outbound_api_requests_total[5m]))
 ```
 
-Client-side faults (4XX-class errors such as throttling, access denied, or
-validation) per operation. Note the metric cannot separate throttling from other
-client faults — they all share `status_code="2"`:
+Errors per operation, broken down by fault class (see the `status_code` values above):
 
-```promql
-sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="2"}[5m]))
-```
-
-Server-side faults (AWS-side 5XX-class errors) per operation:
-
-```promql
-sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m]))
-```
 
 Reconcile error rate per controller, from the controller-runtime metrics:
 
@@ -131,11 +123,6 @@ controller is a practical way to catch regressions early. For example, compare t
 current server-fault rate against the same window a day earlier to spot a change
 introduced by an upgrade:
 
-```promql
-sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m]))
-  -
-sum by (op_id) (rate(ack_outbound_api_requests_error_total{status_code="1"}[5m] offset 1d))
-```
 
 Running a workload in a staging environment and comparing these metrics across
 controller versions gives you a baseline before you upgrade in production.
