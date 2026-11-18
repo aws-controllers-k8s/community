@@ -68,7 +68,7 @@ Helm (recommended) or manually using the raw Kubernetes manifests contained in
 the individual ACK service controller's source repository.
 
 [services]: https://aws-controllers-k8s.github.io/docs/services/
-[install]: https://aws-controllers-k8s.github.io/docs/installation/
+[install]: https://aws-controllers-k8s.github.io/docs/getting-started#choose-your-installation-method
 
 Once installed, Kubernetes users may apply a custom resource (CR) corresponding
 to one of the resources exposed by the ACK service controller for the service.
